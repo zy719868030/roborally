@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Client {
@@ -20,6 +22,9 @@ public class Client {
     private final Gson gson = new Gson();
     private final String protocol = "Version 0.1";
     private volatile boolean isAI = false;
+    private Integer ID;
+    private final Map<Integer, String> usernames = new HashMap<>();
+
 
     /**
      * Establishes a connection to the server and initializes communication streams.
@@ -107,7 +112,7 @@ public class Client {
 //                    case "MapSelected" -> handleBodyMapSelected(json);
 //                    case "GameStarted" -> handleBodyGameStarted(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
-//                    case "Error" -> handleBodyError(json);
+                    case "Error" -> handleBodyError(json);
 //                    case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
 //                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
@@ -142,6 +147,8 @@ public class Client {
         }
     }
 
+
+
     /**
      * Handles the BodyHelloClient message received from the server.
      * This method processes the JSON message, extracts connection protocol information,
@@ -154,7 +161,7 @@ public class Client {
         String protocol = message.messageBody().protocol();
         System.out.println("Connected to server using protocol: " + protocol);
 
-        writer.println(gson.toJson(new Message<BodyHelloServer>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
+        writer.println(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
     }
 
     /**
@@ -176,6 +183,9 @@ public class Client {
      */
     private void handleBodyWelcome(String json) {
         Message<BodyWelcome> msg = JsonUtil.parseMessage(json, BodyWelcome.class);
+        if (ID == null)
+            throw new IllegalStateException("Client ID already initialized.");
+        this.ID = msg.messageBody().clientID();
         System.out.println("Your client ID: " + msg.messageBody().clientID());
     }
 
@@ -188,8 +198,15 @@ public class Client {
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (body.isPrivate())
-            System.out.println(body.from() + " whispers to you: " + body.message());
+            System.out.println(usernames.get(body.from()) + " whispers to you: " + body.message());
         System.out.println(body.from() + ": " + body.message());
+    }
+
+    /****/
+    private void handleBodyError(String json) {
+        Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
+        System.err.println("Error: " + msg.messageBody().error());
+        closeAll();
     }
 
     /**

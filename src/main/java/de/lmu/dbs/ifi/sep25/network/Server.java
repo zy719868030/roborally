@@ -7,9 +7,8 @@ import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server {
@@ -21,6 +20,8 @@ public class Server {
     private final Gson gson = new Gson();
     private final AtomicInteger clientIDCounter = new AtomicInteger(1);
     private volatile boolean running = true;
+    private final String protocol = "Version 0.1";
+    private final ConcurrentMap<ClientHandler, Boolean> isAI = new ConcurrentHashMap<>();
 
 
     /**
@@ -98,15 +99,13 @@ public class Server {
                 ClientHandler handler = new ClientHandler(clientSocket);
                 new Thread(handler).start();
 
-                //TODO implement connection protocol
+                // Send HelloClient
+                handler.sendMessage(gson.toJson(new Message<>(new BodyHelloClient(protocol))));
 
                 int newClientID = clientIDCounter.getAndIncrement();
                 clients.put(handler, newClientID);
 
-                // Send HelloClient
-                handler.sendMessage(gson.toJson(new Message<BodyHelloClient>(new BodyHelloClient("Version 0.1"))));
-
-                // Send Welcome with assigned client ID
+                // Send Welcome with an assigned client ID
                 handler.sendMessage(gson.toJson(new Message<>(new BodyWelcome(newClientID))));
 
             }
@@ -133,6 +132,7 @@ public class Server {
                 return false;
             } catch (Exception e) {
                 System.err.println("Removing client due to send failure: " + e.getMessage());
+                handler.sendMessage(gson.toJson(new Message<>(new BodyError("Failed to send message."))));
                 handler.closeAll();
                 return true;
             }
@@ -211,6 +211,7 @@ public class Server {
             for (ClientHandler client : clients.keySet()) {
                 if (!client.isAlive()) {
                     System.err.println("Client did not respond to Alive. Disconnecting...");
+                    client.sendMessage(gson.toJson(new Message<>(new BodyError("Client did not respond to Alive."))));
                     client.closeAll();
                 } else {
                     client.checkLiveness();
@@ -230,13 +231,32 @@ public class Server {
     }
 
     /**
+     * Retrieves the map indicating whether each connected client is AI or not.
+     *
+     * @return a ConcurrentMap where the keys are ClientHandler instances representing connected clients,
+     *         and the values are Booleans indicating whether the respective client is an AI (true) or not (false).
+     */
+    public ConcurrentMap<ClientHandler, Boolean> getIsAI() {
+        return isAI;
+    }
+
+    /**
+     * Retrieves the protocol used by the server.
+     *
+     * @return a string indicating the protocol used by the server
+     */
+    public String getProtocol() {
+        return protocol;
+    }
+
+
+    /**
      * The main entry point for the application. It starts the server and then stops it.
      *
      * @param args command-line arguments passed to the application
      * @throws IOException if an I/O error occurs while starting or stopping the server
      */
     public static void main(String[] args) throws IOException {
-        getInstance().start();
-        getInstance().stop();
+        getInstance(12345).start();
     }
 }

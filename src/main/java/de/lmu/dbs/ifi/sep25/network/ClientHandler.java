@@ -34,7 +34,6 @@ public class ClientHandler implements Runnable{
         this.writer = new PrintWriter(socket.getOutputStream(), true);
     }
 
-
     /**
      * Executes the main logic for handling incoming messages from a client.
      * This method reads JSON-formatted messages from the client's input stream,
@@ -65,7 +64,7 @@ public class ClientHandler implements Runnable{
                 //TODO implement the handle methods.
                 switch (messageType) {
                     case "Alive" -> handleBodyAlive(json);
-//                    case "HelloServer" -> handleBodyHelloServer(json);
+                    case "HelloServer" -> handleBodyHelloServer(json);
 //                    case "PlayerValues" -> handleBodyPlayerValues(json);
 //                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
 //                    case "SetStatus" -> handleBodySetStatus(json);
@@ -75,7 +74,7 @@ public class ClientHandler implements Runnable{
 //                    case "GameStarted" -> handleBodyGameStarted(json);
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
-//                    case "Error" -> handleBodyError(json);
+                    case "Error" -> handleBodyError(json);
 //                    case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
 //                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
@@ -110,6 +109,18 @@ public class ClientHandler implements Runnable{
     }
 
     /**
+     * Handles the processing of errors related to message bodies. This method is used to
+     * forward the error message, represented as a JSON string, for further transmission
+     * or handling via the {@link #sendMessage(String)} method.
+     *
+     * @param json the JSON string representing the error details of the message body
+     */
+    private void handleBodyError(String json) {
+        sendMessage(json);
+        closeAll();
+    }
+
+    /**
      * Handles the processing of a "BodyAlive" message.
      * This method sets the internal alive state to true, indicating that the client
      * connection is active. The provided JSON may optionally contain additional details
@@ -120,6 +131,25 @@ public class ClientHandler implements Runnable{
      */
     private void handleBodyAlive(String json) {
         alive = true;
+    }
+
+    /**
+     * Handles the processing of a "HelloServer" message body. This method parses the incoming JSON,
+     * validates the protocol against the server's protocol, and updates the AI status for the client
+     * connection. If the protocol does not match the server's protocol, the connection is refused,
+     * an error message is sent, and the connection is terminated.
+     *
+     * @param json the raw JSON string representing a "BodyHelloServer" message containing
+     *             protocol details and AI status
+     */
+    private void handleBodyHelloServer(String json) {
+        Message<BodyHelloServer> message = JsonUtil.parseMessage(json, BodyHelloServer.class);
+        BodyHelloServer body = message.messageBody();
+        if (!body.protocol().equalsIgnoreCase(Server.getInstance().getProtocol())){
+            sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + Server.getInstance().getProtocol())));
+            closeAll();
+        }
+        Server.getInstance().getIsAI().put(this, body.isAI());
     }
 
     /**
@@ -135,9 +165,9 @@ public class ClientHandler implements Runnable{
         BodySendChat body = message.messageBody();
         Integer from = Server.getInstance().getClients().getByKey(this);
         if (body.to() == -1)
-            Server.getInstance().broadcastMessage(new Message<BodyReceivedChat>(new BodyReceivedChat(body.message(), from, false)));
+            Server.getInstance().broadcastMessage(new Message<>(new BodyReceivedChat(body.message(), from, false)));
         else
-            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<BodyReceivedChat>(new BodyReceivedChat(body.message(), from, true)));
+            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message(), from, true)));
     }
 
     /**
@@ -165,7 +195,7 @@ public class ClientHandler implements Runnable{
      */
     public void checkLiveness(){
         alive = false;
-        sendMessage(new Message<BodyAlive>(new BodyAlive()));
+        sendMessage(new Message<>(new BodyAlive()));
     }
 
     /**
