@@ -16,14 +16,20 @@ import java.util.Scanner;
 
 public class Client {
 
+    // 1. Constants / configuration
+    private final Gson gson = new Gson();
+    private final String protocol = "Version 0.1";
+    private final Map<Integer, String> usernames = new HashMap<>();
+
+    // 2. Main identity/data
+    private Integer ID;
+    private volatile boolean isAI = false;
+
+    // 3. Networking / I/O
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
-    private final Gson gson = new Gson();
-    private final String protocol = "Version 0.1";
-    private volatile boolean isAI = false;
-    private Integer ID;
-    private final Map<Integer, String> usernames = new HashMap<>();
+
 
 
     /**
@@ -202,7 +208,16 @@ public class Client {
         System.out.println(body.from() + ": " + body.message());
     }
 
-    /****/
+    /**
+     * Handles an error response message received from the server.
+     *
+     * This method processes a JSON string representing a "BodyError" message,
+     * extracts the error details, and logs the error description to the
+     * standard error stream. After handling the error, it releases all
+     * associated resources by invoking the {@code closeAll} method.
+     *
+     * @param json the JSON string containing the serialized BodyError message
+     */
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         System.err.println("Error: " + msg.messageBody().error());

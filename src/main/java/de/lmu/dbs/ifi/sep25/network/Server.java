@@ -13,15 +13,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server {
 
+    // 0. Singleton instance
     private static Server instance;
 
-    private final ServerSocket serverSocket;
-    private final ConcurrentBidirectionalMap<ClientHandler, Integer> clients = new ConcurrentBidirectionalMap<>();
-    private final Gson gson = new Gson();
-    private final AtomicInteger clientIDCounter = new AtomicInteger(1);
-    private volatile boolean running = true;
+    // 1. Constants / configuration
     private final String protocol = "Version 0.1";
+    private final Gson gson = new Gson();
+
+    // 2. Core data / state
+    private final AtomicInteger clientIDCounter = new AtomicInteger(1);
+    private final ConcurrentBidirectionalMap<ClientHandler, Integer> clients = new ConcurrentBidirectionalMap<>();
     private final ConcurrentMap<ClientHandler, Boolean> isAI = new ConcurrentHashMap<>();
+
+    // 3. Networking / I/O
+    private final ServerSocket serverSocket;
+
+    // 4. State flags
+    private volatile boolean running = true;
 
 
     /**

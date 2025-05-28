@@ -12,10 +12,15 @@ import java.net.Socket;
 
 public class ClientHandler implements Runnable{
 
-    private final Socket socket;
+    // 1. Constants / configuration
     private final Gson gson = new Gson();
+
+    // 2. Networking / I/O
+    private final Socket socket;
     private final BufferedReader reader;
     private final PrintWriter writer;
+
+    // 3. State flags
     private volatile boolean alive = true;
 
 
