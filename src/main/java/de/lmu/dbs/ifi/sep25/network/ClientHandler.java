@@ -3,7 +3,7 @@ package de.lmu.dbs.ifi.sep25.network;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,37 +14,52 @@ public class ClientHandler implements Runnable{
 
     private final Socket socket;
     private final Gson gson = new Gson();
-    private BufferedReader reader;
-    private PrintWriter writer;
+    private final BufferedReader reader;
+    private final PrintWriter writer;
 
 
-    /**Constructor
-     * @param socket
-     * **/
+    /**
+     * Constructs a new ClientHandler to handle communication with a specific
+     * client socket. Initializes input and output streams for data exchange.
+     *
+     * @param socket the client socket representing the connection
+     *               between the server and client
+     * @throws IOException if an I/O error occurs when creating input
+     *                     or output stream objects
+     */
     public ClientHandler(Socket socket) throws IOException {
         this.socket = socket;
-        BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
-        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+        this.reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
+        this.writer = new PrintWriter(socket.getOutputStream(), true);
     }
 
 
-    /**Main method in client handler. Checks different message types and calls corresponding handler method.
-     * No deserialization yet. Add more cases with more message types.
-     * **/
+    /**
+     * Executes the main loop for handling incoming client messages. Reads JSON strings
+     * from the input stream, parses the message type, and delegates handling of the message
+     * to the appropriate method based on its type.
+     *
+     * The recognized message types are:
+     * - "SendChat": Processes an outgoing chat message from the client.
+     * - "ReceivedChat": Passes a received chat message to the client.
+     *
+     * For unknown message types, an {@link IllegalArgumentException} is thrown.
+     *
+     * This method continuously runs until the input stream is exhausted or an I/O error occurs.
+     *
+     * Exceptions:
+     * - Catches {@link IOException} during stream reading and prints the stack trace.
+     */
     @Override
     public void run() {
         try{
             String json;
             while ((json = reader.readLine()) != null) {
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                String messageType = obj.get("messageType").getAsString();
-
+                String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
                 //TODO implement the handle methods.
-
                 switch (messageType) {
 //                    case "Alive" -> handleBodyAlive(json);
 //                    case "HelloServer" -> handleBodyHelloServer(json);
-//                    case "Welcome" -> handleBodyWelcome(json);
 //                    case "PlayerValues" -> handleBodyPlayerValues(json);
 //                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
 //                    case "SetStatus" -> handleBodySetStatus(json);
@@ -52,8 +67,8 @@ public class ClientHandler implements Runnable{
 //                    case "SelectMap" -> handleBodySelectMap(json);
 //                    case "MapSelected" -> handleBodyMapSelected(json);
 //                    case "GameStarted" -> handleBodyGameStarted(json);
-//                    case "SendChat" -> handleBodySendChat(json);
-//                    case "ReceivedChat" -> handleBodyReceivedChat(json);
+                    case "SendChat" -> handleBodySendChat(json);
+                    case "ReceivedChat" -> handleBodyReceivedChat(json);
 //                    case "Error" -> handleBodyError(json);
 //                    case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
@@ -88,21 +103,90 @@ public class ClientHandler implements Runnable{
         }
     }
 
-    /**Sends a message to the corresponding client
-     * takes a json as input and sends it as json to client
-     * @param message
-     * **/
-    public void sendMessage(String message) throws IOException {
-        writer.println(message);
+
+    /**
+     * Handles the processing of a "SendChat" message body. This method parses the incoming JSON,
+     * resolves the sender and recipient, and then either broadcasts the message or sends it
+     * directly to the intended recipient based on the message details.
+     *
+     * @param json the raw JSON string representing a "SendChat" message containing
+     *             the message content and recipient details
+     */
+    private void handleBodySendChat(String json) {
+        Message<BodySendChat> message = JsonUtil.parseMessage(json, BodySendChat.class);
+        BodySendChat body = message.messageBody();
+        Integer from = Server.getInstance().getClients().getByKey(this);
+        if (body.to() == -1)
+            Server.getInstance().broadcastMessage(new Message<BodyReceivedChat>(new BodyReceivedChat(body.message(), from, false)));
+        else
+            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<BodyReceivedChat>(new BodyReceivedChat(body.message(), from, true)));
     }
 
+    /**
+     * Handles the processing of a received chat message in JSON format.
+     * Delegates the JSON string to the {@link #sendMessage(String)} method for further transmission.
+     *
+     * @param json the JSON string representing the received chat message
+     */
+    private void handleBodyReceivedChat(String json) {
+        this.sendMessage(json);
+    }
 
-    /**Properly closes everything and "leaves" server
-     * @param reader
-     * @param socket
-     * @param writer
-     * **/
-    public void closeAll(Socket socket, BufferedReader reader, PrintWriter writer) {
+    /**
+     * Sends a message to the client through the established connection.
+     * This method writes the provided message to the output stream
+     * and ensures it is flushed for immediate transmission.
+     *
+     * @param message the text message to be sent to the connected client
+     */
+    public void sendMessage(String message) {
+        try {
+            writer.println(message);
+            writer.flush();
+        } catch (Exception e) {
+            System.err.println("Failed to send message: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Serializes a given {@link Message} object to its JSON string representation
+     * and sends it to the client. The method utilizes a JSON library to perform
+     * serialization and delegates the actual transmission to the overloaded
+     * {@link #sendMessage(String)} method.
+     *
+     * If serialization or transmission fails, the exception is caught and an
+     * error message is printed to the error output stream.
+     *
+     * @param msg the {@link Message} object to be serialized and sent
+     */
+    public void sendMessage(Message<?> msg){
+        try {
+            String json = gson.toJson(msg);
+            sendMessage(json);
+        } catch (Exception e) {
+            System.err.println("Failed to serialize and send message: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Closes all resources associated with the client connection and removes the client
+     * handler from the server's list of active clients. This includes closing the reader,
+     * writer, and socket, along with any other operations required for cleanup.
+     *
+     * This method performs the following steps safely:
+     * - Removes the client handler from the server using {@code Server.getInstance().removeClientHandler(this)}.
+     * - Closes the input stream (reader) if it is not already closed.
+     * - Closes the output stream (writer) if it is not already closed.
+     * - Closes the client socket if it is open.
+     * - Logs a message to indicate successful closure.
+     *
+     * In the event of an exception (e.g., {@link IOException}) during resource cleanup,
+     * an error message is logged to the console.
+     *
+     * This method is designed to be idempotent, meaning it can be safely called multiple
+     * times without causing additional issues.
+     */
+    public void closeAll() {
         try {
             Server.getInstance().removeClientHandler(this);
             if (reader != null)
@@ -113,7 +197,7 @@ public class ClientHandler implements Runnable{
                 socket.close();
             System.out.println("Closed connection for client handler.");
         } catch (IOException e) {
-            System.err.println("Error closing client resources: " + e.getMessage());
+            System.err.println("Error closing resources for client: " + e.getMessage());
         }
     }
 
