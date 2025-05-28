@@ -1,15 +1,11 @@
-    Client
+TODO  MS2
+    - UML
+    - GUI Verknüpfung
+    - Umbenennung Variablen
 
-
-
-    ClientHandler
-
-
-
-    Server
-
-
-
-    MessageDefinitons
-
-adapt map design
+TODO  MS3 - Protokoll 0.1
+    - Lobby
+    - Map design anpassen
+    - Spielkarten
+    - Spielzug
+    - Aktionen, Ereignisse & Effekte
