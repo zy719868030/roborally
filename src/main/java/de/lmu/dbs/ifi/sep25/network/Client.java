@@ -86,7 +86,7 @@ public class Client {
                 String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
                 switch (messageType) {
                     case "HelloClient" -> handleBodyHelloClient(json);
-//                    case "Alive" -> handleBodyAlive(json);
+                    case "Alive" -> handleBodyAlive(json);
                     case "Welcome" -> handleBodyWelcome(json);
 //                    case "PlayerValues" -> handleBodyPlayerValues(json);
 //                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
@@ -131,7 +131,6 @@ public class Client {
         }
     }
 
-
     /**
      * Handles the BodyHelloClient message received from the server.
      * This method processes the JSON message, extracts connection protocol information,
@@ -145,6 +144,16 @@ public class Client {
         System.out.println("Connected to server using protocol: " + protocol);
 
         writer.println(gson.toJson(new Message<BodyHelloServer>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
+    }
+
+    /**
+     * Handles the "BodyAlive" message received from the server.
+     * This method writes the provided JSON string directly to the server output stream.
+     *
+     * @param json the JSON string containing the serialized BodyAlive message
+     */
+    private void handleBodyAlive(String json) {
+        writer.println(json);
     }
 
     /**

@@ -16,6 +16,7 @@ public class ClientHandler implements Runnable{
     private final Gson gson = new Gson();
     private final BufferedReader reader;
     private final PrintWriter writer;
+    private volatile boolean alive = true;
 
 
     /**
@@ -58,7 +59,7 @@ public class ClientHandler implements Runnable{
                 String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
                 //TODO implement the handle methods.
                 switch (messageType) {
-//                    case "Alive" -> handleBodyAlive(json);
+                    case "Alive" -> handleBodyAlive(json);
 //                    case "HelloServer" -> handleBodyHelloServer(json);
 //                    case "PlayerValues" -> handleBodyPlayerValues(json);
 //                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
@@ -103,6 +104,18 @@ public class ClientHandler implements Runnable{
         }
     }
 
+    /**
+     * Handles the processing of a "BodyAlive" message.
+     * This method sets the internal alive state to true, indicating that the client
+     * connection is active. The provided JSON may optionally contain additional details
+     * related to the "BodyAlive" message, but it is not explicitly processed in this method.
+     *
+     * @param json the JSON string representing the "BodyAlive" message
+     *             received from the client
+     */
+    private void handleBodyAlive(String json) {
+        alive = true;
+    }
 
     /**
      * Handles the processing of a "SendChat" message body. This method parses the incoming JSON,
@@ -130,6 +143,24 @@ public class ClientHandler implements Runnable{
      */
     private void handleBodyReceivedChat(String json) {
         this.sendMessage(json);
+    }
+
+    /**
+     * Validates the liveness state of the client connection and sends a "BodyAlive" message
+     * to the client to indicate activity. This method performs the following actions:
+     *
+     * - Sets the {@code alive} flag to {@code false}, potentially signaling that the client's
+     *   connection or activity needs to be verified.
+     * - Sends a message containing a {@link BodyAlive} object to the client. The message is
+     *   serialized using the {@link Message} wrapper and dispatched using the
+     *   {@link #sendMessage(Message)} method.
+     *
+     * This method may be used for periodic health checks to ensure that the client is responsive
+     * and able to receive and process messages properly.
+     */
+    public void checkLiveness(){
+        alive = false;
+        sendMessage(new Message<BodyAlive>(new BodyAlive()));
     }
 
     /**
@@ -199,6 +230,15 @@ public class ClientHandler implements Runnable{
         } catch (IOException e) {
             System.err.println("Error closing resources for client: " + e.getMessage());
         }
+    }
+
+    /**
+     * Checks whether the client connection is currently active.
+     *
+     * @return {@code true} if the client connection is alive, {@code false} otherwise
+     */
+    public boolean isAlive(){
+        return alive;
     }
 
 }

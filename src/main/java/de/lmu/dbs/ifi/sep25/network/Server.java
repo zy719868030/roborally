@@ -7,6 +7,9 @@ import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server {
@@ -62,31 +65,31 @@ public class Server {
     }
 
     /**
-     * Starts the server and begins accepting client connections.
+     * Starts the server and initializes the process for handling client connections.
      *
-     * The method initializes the server's listening loop, continuously accepting
-     * incoming client connections as long as the server is running. Each accepted
-     * connection is handled by creating a new {@code ClientHandler} instance,
-     * which runs on a separate thread. The method performs the following steps:
+     * This method performs the following actions:
+     * - Prints status messages to indicate the server is starting and waiting for clients.
+     * - Calls the `initHeartbeat` method to start monitoring client connectivity.
+     * - Enters into a loop to accept and handle incoming client connections as long
+     *   as the server is running.
+     * - For each new connection:
+     *   - Accepts the client's socket connection.
+     *   - Creates a new `ClientHandler` instance for the connection.
+     *   - Starts a new thread to manage the interaction with the client.
+     *   - Assigns a unique client ID using a shared counter and updates the client map.
+     *   - Sends a "HelloClient" message to the client with version information.
+     *   - Sends a "Welcome" message to the client with the assigned ID.
      *
-     * - Accepts new client connections using the {@link ServerSocket#accept()} method.
-     * - Assigns each client a unique identifier and stores the client handler in the
-     *   server's internal client management structure.
-     * - Sends an initial greeting message ("HelloClient") to the connected client.
-     * - Sends a welcome message ("Welcome") to the client, including the assigned
-     *   unique identifier.
+     * If an `IOException` occurs while the server is running, an error message is logged.
+     * If the server is not running, no further connections are accepted.
      *
-     * If an {@code IOException} is encountered during the process, the server
-     * logs the error message to the standard error stream, provided the server
-     * is still in the running state. The method will terminate if the server's
-     * running status is set to {@code false}.
-     *
-     * Note: This method is designed to run in a continuous loop and should
-     * be called in a condition where the server is intended to remain operational.
+     * Note: The connection protocol and additional client handling logic must be implemented where indicated.
      */
     public void start() {
         System.out.println("Server started!");
         System.out.println("Waiting for clients...");
+        initHeartbeat();
+
         try {
             while (running) {
                 Socket clientSocket = serverSocket.accept();
@@ -183,6 +186,37 @@ public class Server {
      */
     public void removeClientHandler(ClientHandler clientHandler) {
         clients.removeByKey(clientHandler);
+    }
+
+    /**
+     * Initializes and starts the server's heartbeat mechanism to monitor
+     * the connectivity of all connected client handlers.
+     *
+     * This method schedules a recurring task that executes every 5 seconds.
+     * On each execution, it iterates through the currently connected clients
+     * and performs the following actions:
+     * - If a client fails the liveness check (`isAlive` returns false),
+     *   an error message is logged, and the client is disconnected by
+     *   invoking `closeAll`.
+     * - If a client is alive, its liveness status is updated using
+     *   the `checkLiveness` method.
+     *
+     * The heartbeat mechanism ensures that non-responsive clients
+     * are detected and removed in a timely manner.
+     */
+    private void initHeartbeat() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        scheduler.scheduleAtFixedRate(() -> {
+            for (ClientHandler client : clients.keySet()) {
+                if (!client.isAlive()) {
+                    System.err.println("Client did not respond to Alive. Disconnecting...");
+                    client.closeAll();
+                } else {
+                    client.checkLiveness();
+                }
+            }
+        }, 0, 5, TimeUnit.SECONDS);
     }
 
     /**
