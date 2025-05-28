@@ -66,9 +66,8 @@ public class ClientHandler implements Runnable{
             String json;
             while ((json = reader.readLine()) != null) {
                 String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
-                //TODO implement the handle methods.
                 switch (messageType) {
-                    case "Alive" -> handleBodyAlive(json);
+                    case "Alive" -> handleBodyAlive();
                     case "HelloServer" -> handleBodyHelloServer(json);
 //                    case "PlayerValues" -> handleBodyPlayerValues(json);
 //                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
@@ -126,15 +125,16 @@ public class ClientHandler implements Runnable{
     }
 
     /**
-     * Handles the processing of a "BodyAlive" message.
-     * This method sets the internal alive state to true, indicating that the client
-     * connection is active. The provided JSON may optionally contain additional details
-     * related to the "BodyAlive" message, but it is not explicitly processed in this method.
+     * Handles the "BodyAlive" operation by updating the state of the client handler
+     * to mark the connection as active. This is typically invoked upon receiving a
+     * "BodyAlive" message from the client, serving as a heartbeat to ensure that
+     * the connection remains valid and responsive.
      *
-     * @param json the JSON string representing the "BodyAlive" message
-     *             received from the client
+     * This method sets the {@code alive} flag to {@code true}, indicating that the
+     * client is active and reachable. It does not return a value and operates
+     * directly on the {@code alive} field of the {@code ClientHandler} instance.
      */
-    private void handleBodyAlive(String json) {
+    private void handleBodyAlive() {
         alive = true;
     }
 
@@ -158,12 +158,17 @@ public class ClientHandler implements Runnable{
     }
 
     /**
-     * Handles the processing of a "SendChat" message body. This method parses the incoming JSON,
-     * resolves the sender and recipient, and then either broadcasts the message or sends it
-     * directly to the intended recipient based on the message details.
+     * Handles the processing of a "BodySendChat" message. This method parses the incoming JSON
+     * to extract the message details and determines if the chat message should be broadcast
+     * to all clients or sent to a specific recipient.
      *
-     * @param json the raw JSON string representing a "SendChat" message containing
-     *             the message content and recipient details
+     * The following actions are performed:
+     * - Parses the JSON string into a Message object containing a BodySendChat instance.
+     * - Retrieves the sender's ID from the server's client mapping.
+     * - If the target is set to `-1`, broadcasts the message to all clients.
+     * - Otherwise, sends the message to the specified recipient.
+     *
+     * @param json the raw JSON string representing a "BodySendChat" message
      */
     private void handleBodySendChat(String json) {
         Message<BodySendChat> message = JsonUtil.parseMessage(json, BodySendChat.class);
@@ -172,7 +177,7 @@ public class ClientHandler implements Runnable{
         if (body.to() == -1)
             Server.getInstance().broadcastMessage(new Message<>(new BodyReceivedChat(body.message(), from, false)));
         else
-            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message(), from, true)));
+            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message().split(" ", 3)[2], from, true)));
     }
 
     /**
@@ -240,22 +245,20 @@ public class ClientHandler implements Runnable{
     }
 
     /**
-     * Closes all resources associated with the client connection and removes the client
-     * handler from the server's list of active clients. This includes closing the reader,
-     * writer, and socket, along with any other operations required for cleanup.
+     * Closes all resources associated with the client handler, including the client
+     * socket, input/output streams, and the handler itself. This method ensures the
+     * proper cleanup of resources to avoid potential resource leaks.
      *
-     * This method performs the following steps safely:
-     * - Removes the client handler from the server using {@code Server.getInstance().removeClientHandler(this)}.
-     * - Closes the input stream (reader) if it is not already closed.
-     * - Closes the output stream (writer) if it is not already closed.
-     * - Closes the client socket if it is open.
-     * - Logs a message to indicate successful closure.
+     * The following actions are performed in sequence:
+     * - Removes this client handler from the server's list of active client handlers.
+     * - Closes the input stream (`reader`) if it is not null.
+     * - Closes the output stream (`writer`) if it is not null.
+     * - Closes the socket connection if it is not already closed.
+     * - Sets the `alive` state of the client handler to `false` to indicate it is no longer active.
+     * - Logs a message confirming the closure of the client connection.
      *
-     * In the event of an exception (e.g., {@link IOException}) during resource cleanup,
-     * an error message is logged to the console.
-     *
-     * This method is designed to be idempotent, meaning it can be safely called multiple
-     * times without causing additional issues.
+     * If an `IOException` occurs during the closing of any resource, it is handled and
+     * an error message is logged.
      */
     public void closeAll() {
         try {
@@ -266,6 +269,7 @@ public class ClientHandler implements Runnable{
                 writer.close();
             if (socket != null && !socket.isClosed())
                 socket.close();
+            alive = false;
             System.out.println("Closed connection for client handler.");
         } catch (IOException e) {
             System.err.println("Error closing resources for client: " + e.getMessage());

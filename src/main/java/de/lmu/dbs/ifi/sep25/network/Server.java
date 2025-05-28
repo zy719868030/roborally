@@ -74,25 +74,27 @@ public class Server {
     }
 
     /**
-     * Starts the server and initializes the process for handling client connections.
+     * Starts the server and begins listening for client connections.
      *
      * This method performs the following actions:
-     * - Prints status messages to indicate the server is starting and waiting for clients.
-     * - Calls the `initHeartbeat` method to start monitoring client connectivity.
-     * - Enters into a loop to accept and handle incoming client connections as long
-     *   as the server is running.
-     * - For each new connection:
-     *   - Accepts the client's socket connection.
-     *   - Creates a new `ClientHandler` instance for the connection.
-     *   - Starts a new thread to manage the interaction with the client.
-     *   - Assigns a unique client ID using a shared counter and updates the client map.
-     *   - Sends a "HelloClient" message to the client with version information.
-     *   - Sends a "Welcome" message to the client with the assigned ID.
+     * - Prints messages to indicate the server has started and is waiting for clients.
+     * - Initializes a heartbeat mechanism to monitor client connectivity by calling {@link #initHeartbeat()}.
+     * - Enters a loop where it:
+     *   - Accepts incoming client socket connections.
+     *   - Logs a message when a new client connects.
+     *   - Creates a new {@link ClientHandler} for the client and starts it in its own thread.
+     *   - Sends a "HelloClient" message to the newly connected client to acknowledge the connection.
+     *   - Assigns a unique ID to the client using an atomic counter.
+     *   - Broadcasts a message to all clients announcing the new client connection.
+     *   - Maps the client handler to its assigned ID for future reference.
+     *   - Sends a "Welcome" message to the new client, including its unique ID.
      *
-     * If an `IOException` occurs while the server is running, an error message is logged.
-     * If the server is not running, no further connections are accepted.
+     * If an {@link IOException} occurs while accepting client connections, the error message is logged,
+     * provided the server is in a running state.
      *
-     * Note: The connection protocol and additional client handling logic must be implemented where indicated.
+     * This method assumes that the server socket and associated fields
+     * have already been properly initialized. It is designed to run until the server
+     * is stopped or an error forces termination.
      */
     public void start() {
         System.out.println("Server started!");
@@ -111,6 +113,7 @@ public class Server {
                 handler.sendMessage(gson.toJson(new Message<>(new BodyHelloClient(protocol))));
 
                 int newClientID = clientIDCounter.getAndIncrement();
+                broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
 
                 // Send Welcome with an assigned client ID
@@ -186,14 +189,21 @@ public class Server {
     }
 
     /**
-     * Removes a client handler from the server's client collection.
-     * This method is used to disconnect and manage clients actively connected
-     * to the server.
+     * Removes the specified client handler from the server's client management structures.
      *
-     * @param clientHandler the client handler to be removed from the server
+     * This method performs the following actions:
+     * - Removes the client handler from the client list.
+     * - Updates the server's tracking map for AI and non-AI clients by removing the specified client handler.
+     * - Broadcasts a message to all connected clients indicating that the client has disconnected.
+     * - Logs a message to the console about the disconnection.
+     *
+     * @param clientHandler the client handler to be removed from the server's list of managed clients
      */
     public void removeClientHandler(ClientHandler clientHandler) {
         clients.removeByKey(clientHandler);
+        isAI.remove(clientHandler);
+        broadcastMessage(gson.toJson(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false))));
+        System.out.println("Client disconnected.");
     }
 
     /**

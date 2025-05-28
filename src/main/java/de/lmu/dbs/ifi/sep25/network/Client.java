@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.network;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
+import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
@@ -19,7 +20,7 @@ public class Client {
     // 1. Constants / configuration
     private final Gson gson = new Gson();
     private final String protocol = "Version 0.1";
-    private final Map<Integer, String> usernames = new HashMap<>();
+    private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data
     private Integer ID;
@@ -31,19 +32,12 @@ public class Client {
     private PrintWriter writer;
 
 
-
     /**
-     * Establishes a connection to the server and initializes communication streams.
-     * This method attempts to connect to the specified server and port, creates a socket,
-     * and initializes the input and output streams for communication. It also starts a
-     * separate thread to listen for incoming messages from the server. The method allows
-     * the user to input messages via the console, which are then sent to the server.
+     * Establishes a connection to a server and initializes the necessary input and output streams
+     * for communication. The method also starts a thread that listens for messages from the server.
      *
-     * If an error occurs during the connection or while sending messages, the resources are
-     * properly closed to ensure no leaks.
-     *
-     * @param host the hostname or IP address of the server to connect to
-     * @param port the port number of the server to connect to
+     * @param host the server hostname or IP address to connect to
+     * @param port the port number on the server to connect to
      */
     public void start(String host, int port) {
         try {
@@ -51,7 +45,7 @@ public class Client {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
 
-            System.out.println("Connected to server.");
+            System.out.println("[SERVER] Connected to server.");
 
             // Start listening thread
             new Thread(this::listenForMessages).start();
@@ -60,18 +54,28 @@ public class Client {
 
             // Read user input and send messages
             // Example: Send chat message
+
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String userInput = scanner.nextLine();
                 String[] command = userInput.trim().split(" ", 3);
-                Message<BodySendChat> msg;
-                //TODO maybe change command[1] to check in server map(username, id) or smth
-                //rn only supports /w clientID msg, not /w username msg
-                if (command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper"))
-                    msg = new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1])));
+
+                if (userInput.equalsIgnoreCase("/help") || userInput.equalsIgnoreCase("/h") || userInput.equalsIgnoreCase("/commands") || userInput.equalsIgnoreCase("/cmds")) {
+                    System.out.println("Available commands:");
+                    System.out.println("/help                   - Show this help message");
+                    System.out.println("/whisper username msg   - Send a private message to a client");
+                    System.out.println("/exit                   - Exit the client");
+                    // Add more commands as needed
+                } else if (userInput.equalsIgnoreCase("/exit")) {
+                    System.out.println("Exiting...");
+                    closeAll();
+                } else if (command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper"))
+                    if (usernames.containsValue(command[1]))
+                        writer.println(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
+                    else
+                        System.err.println("User not found");
                 else
-                    msg = new Message<>(new BodySendChat(userInput, -1));
-                writer.println(gson.toJson(msg));
+                    writer.println(gson.toJson(new Message<>(new BodySendChat(userInput, -1))));
             }
 
         } catch (IOException e) {
@@ -165,7 +169,7 @@ public class Client {
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
-        System.out.println("Connected to server using protocol: " + protocol);
+        System.out.println("[SERVER] Connected to server using protocol: " + protocol);
 
         writer.println(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
     }
@@ -189,23 +193,38 @@ public class Client {
      */
     private void handleBodyWelcome(String json) {
         Message<BodyWelcome> msg = JsonUtil.parseMessage(json, BodyWelcome.class);
-        if (ID == null)
+        if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        System.out.println("Your client ID: " + msg.messageBody().clientID());
+        System.out.println("[SERVER] Your client ID: " + msg.messageBody().clientID());
     }
 
     /**
-     * Processes a received chat message body parsed from a JSON string. If the message is private,
-     * it is displayed with a "whispers to you" notation. Otherwise, it is displayed as a public message.
+     * Handles a "BodyReceivedChat" message from the server.
      *
-     * @param json the JSON string containing the serialized BodyReceivedChat message
+     * This method processes an incoming JSON string representing a chat message
+     * by deserializing it into a {@code BodyReceivedChat} object. Based on the
+     * message details, it displays the appropriate chat content in the console:
+     * - Private messages are displayed as whispers.
+     * - Messages from the server (identified by a {@code from} value of 0)
+     *   are prefixed with “[SERVER]”.
+     * - Public messages from other users display their usernames, resolved
+     *   with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.
+     *
+     * Messages sent by the current user (identified by {@code ID}) are ignored.
+     *
+     * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
      */
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
-        if (body.isPrivate())
-            System.out.println(usernames.get(body.from()) + " whispers to you: " + body.message());
-        System.out.println(body.from() + ": " + body.message());
+        if (!body.from().equals(ID)) {
+            if (body.isPrivate())
+                System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " whispers: " + body.message());
+            else if (body.from().equals(0))
+                System.out.println("[SERVER] " + body.message());
+            else
+                System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + ": " + body.message());
+        }
     }
 
     /**

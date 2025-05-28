@@ -85,5 +85,11 @@ public class ConcurrentBidirectionalMap<K, V> {
         return new HashSet<>(forward.keySet());
     }
 
+    public V getByKeyOrDefault(K key, V defaultValue) {
+        return forward.getOrDefault(key, defaultValue);
+    }
 
+    public K getByValueOrDefault(V value, K defaultKey) {
+        return reverse.getOrDefault(value, defaultKey);
+    }
 }
