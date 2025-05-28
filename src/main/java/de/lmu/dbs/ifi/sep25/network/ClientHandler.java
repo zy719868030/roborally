@@ -36,20 +36,25 @@ public class ClientHandler implements Runnable{
 
 
     /**
-     * Executes the main loop for handling incoming client messages. Reads JSON strings
-     * from the input stream, parses the message type, and delegates handling of the message
-     * to the appropriate method based on its type.
+     * Executes the main logic for handling incoming messages from a client.
+     * This method reads JSON-formatted messages from the client's input stream,
+     * determines the message type, and delegates processing to the appropriate handler method.
      *
-     * The recognized message types are:
-     * - "SendChat": Processes an outgoing chat message from the client.
-     * - "ReceivedChat": Passes a received chat message to the client.
+     * The method operates as follows:
+     * - Reads JSON messages from the input stream using the `reader` object.
+     * - Parses each message to extract the `messageType` field.
+     * - Based on the `messageType`, forwards the message to specific handler methods
+     *   (e.g., `handleBodyAlive`, `handleBodySendChat`, or `handleBodyReceivedChat`, among others).
      *
-     * For unknown message types, an {@link IllegalArgumentException} is thrown.
+     * If an unrecognized message type is encountered, it throws an `IllegalArgumentException`
+     * with a description of the unknown type.
      *
-     * This method continuously runs until the input stream is exhausted or an I/O error occurs.
+     * The method runs continuously within a loop until the input stream is closed or
+     * an exception occurs. Any `IOException` during execution is caught and logged using
+     * `printStackTrace` for debugging purposes.
      *
-     * Exceptions:
-     * - Catches {@link IOException} during stream reading and prints the stack trace.
+     * This method is invoked automatically when the thread associated with the
+     * `ClientHandler` instance is executed.
      */
     @Override
     public void run() {

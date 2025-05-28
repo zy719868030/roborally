@@ -70,14 +70,25 @@ public class Client {
     }
 
     /**
-     * Listens for incoming messages from the server.
-     * Continuously reads JSON-formatted messages from the server, determines the message type,
-     * and delegates handling to the appropriate method based on the message type.
-     * Supports different message types such as "HelloClient", "Welcome", and "ReceivedChat".
-     * For unsupported or unknown message types, an {@code IllegalArgumentException} is thrown.
+     * Continuously listens for and processes incoming messages from the server.
      *
-     * If the connection is lost or an {@code IOException} occurs, the method terminates,
-     * logs a disconnection message, and closes all resources using {@code closeAll()}.
+     * This method operates in a loop, reading messages from the server using the `reader` input stream.
+     * Each message is expected to be in JSON format, containing a `messageType` field that indicates the
+     * type of message being sent. Based on the `messageType`, a corresponding handler method is invoked
+     * to process the message. If an unsupported or unknown message type is encountered, an
+     * {@link IllegalArgumentException} is thrown.
+     *
+     * The processing includes handling specific types of server messages such as "HelloClient", "Alive",
+     * "Welcome", and "ReceivedChat". Additional message types can be enabled by uncommenting the relevant
+     * cases in the switch block. The method gracefully handles disconnections or errors by catching
+     * {@link IOException}, printing a disconnection message, and calling the {@code closeAll()} method
+     * to clean up resources.
+     *
+     * This method is designed to operate in its own thread, ensuring the client can continuously listen
+     * for server messages while performing other tasks.
+     *
+     * If an error occurs while reading from the input stream, or if the connection to the server is lost,
+     * the method exits the listening loop and releases all allocated resources.
      */
     private void listenForMessages() {
         try {

@@ -1,0 +1,13 @@
+Client
+    - implement handleError
+
+ClientHandler
+    - implement handleError
+    - implement handleHelloServer
+        - compare protocol versions client | server
+
+Server
+    - protocol version stuff
+
+MessageDefinitons
+    - adapt map design
