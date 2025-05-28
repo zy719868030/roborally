@@ -1,4 +1,4 @@
-package de.lmu.dbs.ifi.sep25;
+package de.lmu.dbs.ifi.sep25.ui;
 
 import fr.brouillard.oss.cssfx.CSSFX;
 import javafx.application.Application;

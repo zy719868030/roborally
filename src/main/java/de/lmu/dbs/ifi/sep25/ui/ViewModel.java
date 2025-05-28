@@ -1,4 +1,4 @@
-package de.lmu.dbs.ifi.sep25;
+package de.lmu.dbs.ifi.sep25.ui;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

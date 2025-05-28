@@ -1,4 +1,4 @@
-package de.lmu.dbs.ifi.sep25;
+package de.lmu.dbs.ifi.sep25.ui;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;

@@ -9,7 +9,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ListView?>
 <VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="de.lmu.dbs.ifi.sep25.ViewModel">
+      fx:controller="de.lmu.dbs.ifi.sep25.ui.ViewModel">
     <children>
         <Label text="Chat Nachrichten" />
         <ListView fx:id="list" VBox.vgrow="ALWAYS"/>
