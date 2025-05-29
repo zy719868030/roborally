@@ -226,7 +226,7 @@ public class ClientHandler implements Runnable {
 
     /**
      * Serializes a given {@link Message} object to its JSON string representation
-     * and sends it to the client. The method utilizes a JSON library to perform
+     * and sends it to the client. The method uses a JSON library to perform
      * serialization and delegates the actual transmission to the overloaded
      * {@link #sendMessage(String)} method.
      * <p>

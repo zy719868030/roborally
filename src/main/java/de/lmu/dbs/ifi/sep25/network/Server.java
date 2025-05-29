@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("unused")
 public class Server {
 
     // 0. Singleton instance

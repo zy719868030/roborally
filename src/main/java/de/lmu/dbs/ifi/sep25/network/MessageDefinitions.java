@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class MessageDefinitions {
 
     private MessageDefinitions() {
