@@ -84,22 +84,22 @@ public class Client {
 
     /**
      * Continuously listens for and processes incoming messages from the server.
-     *
+     * <p>
      * This method operates in a loop, reading messages from the server using the `reader` input stream.
      * Each message is expected to be in JSON format, containing a `messageType` field that indicates the
      * type of message being sent. Based on the `messageType`, a corresponding handler method is invoked
      * to process the message. If an unsupported or unknown message type is encountered, an
      * {@link IllegalArgumentException} is thrown.
-     *
+     * <p>
      * The processing includes handling specific types of server messages such as "HelloClient", "Alive",
      * "Welcome", and "ReceivedChat". Additional message types can be enabled by uncommenting the relevant
      * cases in the switch block. The method gracefully handles disconnections or errors by catching
      * {@link IOException}, printing a disconnection message, and calling the {@code closeAll()} method
      * to clean up resources.
-     *
+     * <p>
      * This method is designed to operate in its own thread, ensuring the client can continuously listen
      * for server messages while performing other tasks.
-     *
+     * <p>
      * If an error occurs while reading from the input stream, or if the connection to the server is lost,
      * the method exits the listening loop and releases all allocated resources.
      */
@@ -156,7 +156,6 @@ public class Client {
     }
 
 
-
     /**
      * Handles the BodyHelloClient message received from the server.
      * This method processes the JSON message, extracts connection protocol information,
@@ -200,19 +199,22 @@ public class Client {
     /**
      * Handles a "BodyReceivedChat" message from the server.
      *
-     * This method processes an incoming JSON string representing a chat message
+     * <p>This method processes an incoming JSON string representing a chat message
      * by deserializing it into a {@code BodyReceivedChat} object. Based on the
      * message details, it displays the appropriate chat content in the console:
-     * - Private messages are displayed as whispers.
-     * - Messages from the server (identified by a {@code from} value of 0)
-     *   are prefixed with “[SERVER]”.
-     * - Public messages from other users display their usernames, resolved
-     *   with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.
+     * <ul>
+     *   <li>Private messages are displayed as whispers.</li>
+     *   <li>Messages from the server (identified by a {@code from} value of 0)
+     *       are prefixed with “[SERVER]”.</li>
+     *   <li>Public messages from other users display their usernames, resolved
+     *       with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.</li>
+     * </ul>
      *
-     * Messages sent by the current user (identified by {@code ID}) are ignored.
+     * <p>Messages sent by the current user (identified by {@code ID}) are ignored.
      *
      * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
      */
+
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (!body.from().equals(ID)) {
@@ -228,13 +230,14 @@ public class Client {
     /**
      * Handles an error response message received from the server.
      *
-     * This method processes a JSON string representing a "BodyError" message,
+     * <p>This method processes a JSON string representing a {@code BodyError} message,
      * extracts the error details, and logs the error description to the
      * standard error stream. After handling the error, it releases all
      * associated resources by invoking the {@code closeAll} method.
      *
-     * @param json the JSON string containing the serialized BodyError message
+     * @param json the JSON string containing the serialized {@code BodyError} message
      */
+
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         System.err.println("Error: " + msg.messageBody().error());
@@ -243,13 +246,13 @@ public class Client {
 
     /**
      * Releases resources associated with the client connection.
-     *
+     * <p>
      * This method ensures the proper closure of the input stream `reader`,
      * output stream `writer`, and the socket connection. It first checks if
      * each resource is non-null (or in the case of the socket, not already
      * closed), and closes them in sequence. If an error occurs during this
      * process, an error message is logged to the standard error stream.
-     *
+     * <p>
      * This method is typically called to clean up resources when the client
      * disconnects or an issue occurs, ensuring no resource leaks.
      */
