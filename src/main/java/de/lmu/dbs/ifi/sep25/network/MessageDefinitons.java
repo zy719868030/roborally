@@ -4,6 +4,8 @@ import java.util.List;
 
 public class MessageDefinitons {
 
+    private MessageDefinitons(){}
+
     public record Message <T> (String messageType, T messageBody) {
 
         /**Secondary constructor for Message: infers messageType from class name**/

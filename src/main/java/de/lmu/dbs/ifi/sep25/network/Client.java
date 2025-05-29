@@ -58,8 +58,8 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String userInput = scanner.nextLine();
+                if (userInput.trim().isEmpty()) continue;
                 String[] command = userInput.trim().split(" ", 3);
-
                 if (userInput.equalsIgnoreCase("/help") || userInput.equalsIgnoreCase("/h") || userInput.equalsIgnoreCase("/commands") || userInput.equalsIgnoreCase("/cmds")) {
                     System.out.println("Available commands:");
                     System.out.println("/help                   - Show this help message");
