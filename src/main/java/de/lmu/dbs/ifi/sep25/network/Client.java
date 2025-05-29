@@ -1,8 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
@@ -107,7 +106,7 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
+                String messageType = JsonUtil.parseUnknown(json).messageType();
                 switch (messageType) {
                     case "HelloClient" -> handleBodyHelloClient(json);
                     case "Alive" -> handleBodyAlive(json);

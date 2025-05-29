@@ -1,13 +1,12 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -160,8 +159,7 @@ public class Server {
      */
     public void broadcastMessage(Message<?> message) {
         try {
-            String json = gson.toJson(message);
-            broadcastMessage(json);
+            broadcastMessage(gson.toJson(message));
         } catch (Exception e) {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }

@@ -1,8 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
@@ -65,7 +64,7 @@ public class ClientHandler implements Runnable {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
+                String messageType = JsonUtil.parseUnknown(json).messageType();
                 switch (messageType) {
                     case "Alive" -> handleBodyAlive();
                     case "HelloServer" -> handleBodyHelloServer(json);
@@ -108,7 +107,8 @@ public class ClientHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
+            closeAll();
         }
     }
 
