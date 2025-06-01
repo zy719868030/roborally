@@ -1,9 +1,9 @@
 package de.lmu.dbs.ifi.sep25.game;
 
 public class Board {
-    private Tile[][] tiles;
-    private int width;
-    private int height;
+    private final Tile[][] tiles;
+    private final int width;
+    private final int height;
 
     public Board(int width, int height) {
         this.width = width;
