@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.card;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
 public abstract class Card implements Cloneable {
@@ -8,6 +9,7 @@ public abstract class Card implements Cloneable {
         UPGRADE,
         DAMAGE
     }
+}
 
     protected String description;
     protected CardType type;
@@ -25,8 +27,11 @@ public abstract class Card implements Cloneable {
         return type;
     }
 
+
+    // Abstract Methods: Define roles for Robot in concrete subclasses.
     public abstract void execute(Robot robot);
 
     @Override
+    // Abstract cloning methods: subclasses need to implement deep copies
     public abstract Card clone();
 }

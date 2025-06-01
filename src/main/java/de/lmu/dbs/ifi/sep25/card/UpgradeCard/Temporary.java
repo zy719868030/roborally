@@ -1,6 +1,10 @@
 package de.lmu.dbs.ifi.sep25.card.UpgradeCard;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.game.Robot;
+
 public class Temporary extends UpgradeCard {
+    // Remaining availability, e.g. expires after 3 times
     private int usesRemaining;
 
     public Temporary(String description, int usesRemaining) {
@@ -15,10 +19,12 @@ public class Temporary extends UpgradeCard {
     @Override
     public void execute(Robot robot) {
         if (usesRemaining > 0) {
-            System.out.println("Robot " + robot.getId() + " nutzt temporäres Upgrade: " + description);
+            // Print a log of robot usage upgrades
+            System.out.println("Robot " + robot.getId() + " uses temporary upgrade: " + description);
             usesRemaining--;
         } else {
-            System.out.println("Keine Verwendungen mehr für: " + description);
+            // Prompts that there are no more times left
+            System.out.println("No more uses for " + description);
         }
     }
 
