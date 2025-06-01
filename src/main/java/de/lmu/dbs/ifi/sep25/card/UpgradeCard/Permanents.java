@@ -1,5 +1,8 @@
 package de.lmu.dbs.ifi.sep25.card.UpgradeCard;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.game.Robot;
+
 public class Permanents extends UpgradeCard {
     private String permanentEffect;
 
@@ -14,7 +17,8 @@ public class Permanents extends UpgradeCard {
 
     @Override
     public void execute(Robot robot) {
-        System.out.println("Robot " + robot.getId() + " aktiviert permanentes Upgrade: " + permanentEffect);
+        //Implementation of persistent upgrade effects
+        System.out.println("Robot " + robot.getId() + " activates permanent upgrade: " + permanentEffect);
     }
 
     @Override
