@@ -1,12 +1,13 @@
 package de.lmu.dbs.ifi.sep25.card;
 
+import de.lmu.dbs.ifi.sep25.game.Robot;
+
 public abstract class Card implements Cloneable {
     public enum CardType {
         PROGRAMMING,
         UPGRADE,
         DAMAGE
     }
-}
 
     protected String description;
     protected CardType type;

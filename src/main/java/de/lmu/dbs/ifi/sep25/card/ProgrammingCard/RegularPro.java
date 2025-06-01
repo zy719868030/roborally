@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
+import de.lmu.dbs.ifi.sep25.game.Robot;
+
 public class RegularPro extends ProgrammingCard {
     private int distance;
 
@@ -14,7 +16,7 @@ public class RegularPro extends ProgrammingCard {
 
     @Override
     public void execute(Robot robot) {
-        robot.applyMove(distance);
+        robot.moveForward(distance);
     }
 
     @Override

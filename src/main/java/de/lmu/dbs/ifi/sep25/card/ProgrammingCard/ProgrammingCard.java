@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
+
 public abstract class ProgrammingCard extends Card {
     protected String actionType;
 

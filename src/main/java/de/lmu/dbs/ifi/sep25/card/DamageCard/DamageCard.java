@@ -1,5 +1,8 @@
 package de.lmu.dbs.ifi.sep25.card.DamageCard;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.game.Robot;
+
 public class DamageCard extends Card {
     private String damageType;
 
