@@ -1,8 +1,9 @@
-package de.lmu.dbs.ifi.sep25.utils;
+package de.lmu.dbs.ifi.sep25.game;
 
 /**
- * Enum representing cardinal directions (NORTH, EAST, SOUTH, WEST) with associated
- * names, delta x (horizontal movement), and delta y (vertical movement) values.
+ * The Direction enum represents possible directions on a grid-based system.
+ * Each direction has a name and associated delta values (dx, dy) representing
+ * the change in X and Y coordinates when moving in that direction.
  */
 public enum Direction {
     NORTH("North", 0, -1),

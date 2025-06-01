@@ -1,16 +1,18 @@
-package de.lmu.dbs.ifi.sep25.game;
+package de.lmu.dbs.ifi.sep25.game.tile;
 
-public class Reboot extends FabricElement {
-    private static Reboot instance = null;
+import de.lmu.dbs.ifi.sep25.game.Robot;
 
-    private Reboot() {
+public class RebootTile extends TileElement {
+    private static RebootTile instance = null;
+
+    private RebootTile() {
         super("reboot");
         // Private constructor for singleton
     }
 
-    public static Reboot getInstance() {
+    public static RebootTile getInstance() {
         if (instance == null) {
-            instance = new Reboot();
+            instance = new RebootTile();
         }
         return instance;
     }

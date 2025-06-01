@@ -1,8 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.utils.Direction;
-import de.lmu.dbs.ifi.sep25.utils.Position;
-
 public class Robot {
     private Position position;
     private Direction direction;

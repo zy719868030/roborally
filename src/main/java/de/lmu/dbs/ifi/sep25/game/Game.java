@@ -7,7 +7,7 @@ public class Game {
     private Player currentPlayer;
     private List<Player> players;
     private List<Card> discardPile;
-    private Board board;
+    private final Board board;
 
     public Game() {
         players = new ArrayList<>();
