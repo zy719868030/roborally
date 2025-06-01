@@ -1,6 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.tile.Tile;
 import de.lmu.dbs.ifi.sep25.game.tile.TileElement;
 
 @SuppressWarnings({"unused"})

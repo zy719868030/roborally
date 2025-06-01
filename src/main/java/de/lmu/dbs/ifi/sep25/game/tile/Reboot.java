@@ -2,17 +2,17 @@ package de.lmu.dbs.ifi.sep25.game.tile;
 
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
-public class RebootTile extends TileElement {
-    private static RebootTile instance = null;
+public class Reboot extends TileElement {
+    private static Reboot instance = null;
 
-    private RebootTile() {
+    private Reboot() {
         super("reboot");
         // Private constructor for singleton
     }
 
-    public static RebootTile getInstance() {
+    public static Reboot getInstance() {
         if (instance == null) {
-            instance = new RebootTile();
+            instance = new Reboot();
         }
         return instance;
     }
