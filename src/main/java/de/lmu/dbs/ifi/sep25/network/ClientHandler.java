@@ -1,8 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
@@ -10,7 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class ClientHandler implements Runnable{
+public class ClientHandler implements Runnable {
 
     // 1. Constants / configuration
     private final Gson gson = new Gson();
@@ -43,29 +42,29 @@ public class ClientHandler implements Runnable{
      * Executes the main logic for handling incoming messages from a client.
      * This method reads JSON-formatted messages from the client's input stream,
      * determines the message type, and delegates processing to the appropriate handler method.
-     *
+     * <p>
      * The method operates as follows:
      * - Reads JSON messages from the input stream using the `reader` object.
      * - Parses each message to extract the `messageType` field.
      * - Based on the `messageType`, forwards the message to specific handler methods
-     *   (e.g., `handleBodyAlive`, `handleBodySendChat`, or `handleBodyReceivedChat`, among others).
-     *
+     * (e.g., `handleBodyAlive`, `handleBodySendChat`, or `handleBodyReceivedChat`, among others).
+     * <p>
      * If an unrecognized message type is encountered, it throws an `IllegalArgumentException`
      * with a description of the unknown type.
-     *
+     * <p>
      * The method runs continuously within a loop until the input stream is closed or
      * an exception occurs. Any `IOException` during execution is caught and logged using
      * `printStackTrace` for debugging purposes.
-     *
+     * <p>
      * This method is invoked automatically when the thread associated with the
      * `ClientHandler` instance is executed.
      */
     @Override
     public void run() {
-        try{
+        try {
             String json;
             while ((json = reader.readLine()) != null) {
-                String messageType = gson.fromJson(json, JsonObject.class).get("messageType").getAsString();
+                String messageType = JsonUtil.parseUnknown(json).messageType();
                 switch (messageType) {
                     case "Alive" -> handleBodyAlive();
                     case "HelloServer" -> handleBodyHelloServer(json);
@@ -108,7 +107,8 @@ public class ClientHandler implements Runnable{
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
+            closeAll();
         }
     }
 
@@ -129,7 +129,7 @@ public class ClientHandler implements Runnable{
      * to mark the connection as active. This is typically invoked upon receiving a
      * "BodyAlive" message from the client, serving as a heartbeat to ensure that
      * the connection remains valid and responsive.
-     *
+     * <p>
      * This method sets the {@code alive} flag to {@code true}, indicating that the
      * client is active and reachable. It does not return a value and operates
      * directly on the {@code alive} field of the {@code ClientHandler} instance.
@@ -150,7 +150,7 @@ public class ClientHandler implements Runnable{
     private void handleBodyHelloServer(String json) {
         Message<BodyHelloServer> message = JsonUtil.parseMessage(json, BodyHelloServer.class);
         BodyHelloServer body = message.messageBody();
-        if (!body.protocol().equalsIgnoreCase(Server.getInstance().getProtocol())){
+        if (!body.protocol().equalsIgnoreCase(Server.getInstance().getProtocol())) {
             sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + Server.getInstance().getProtocol())));
             closeAll();
         }
@@ -161,7 +161,7 @@ public class ClientHandler implements Runnable{
      * Handles the processing of a "BodySendChat" message. This method parses the incoming JSON
      * to extract the message details and determines if the chat message should be broadcast
      * to all clients or sent to a specific recipient.
-     *
+     * <p>
      * The following actions are performed:
      * - Parses the JSON string into a Message object containing a BodySendChat instance.
      * - Retrieves the sender's ID from the server's client mapping.
@@ -193,17 +193,17 @@ public class ClientHandler implements Runnable{
     /**
      * Validates the liveness state of the client connection and sends a "BodyAlive" message
      * to the client to indicate activity. This method performs the following actions:
-     *
+     * <p>
      * - Sets the {@code alive} flag to {@code false}, potentially signaling that the client's
-     *   connection or activity needs to be verified.
+     * connection or activity needs to be verified.
      * - Sends a message containing a {@link BodyAlive} object to the client. The message is
-     *   serialized using the {@link Message} wrapper and dispatched using the
-     *   {@link #sendMessage(Message)} method.
-     *
+     * serialized using the {@link Message} wrapper and dispatched using the
+     * {@link #sendMessage(Message)} method.
+     * <p>
      * This method may be used for periodic health checks to ensure that the client is responsive
      * and able to receive and process messages properly.
      */
-    public void checkLiveness(){
+    public void checkLiveness() {
         alive = false;
         sendMessage(new Message<>(new BodyAlive()));
     }
@@ -226,16 +226,16 @@ public class ClientHandler implements Runnable{
 
     /**
      * Serializes a given {@link Message} object to its JSON string representation
-     * and sends it to the client. The method utilizes a JSON library to perform
+     * and sends it to the client. The method uses a JSON library to perform
      * serialization and delegates the actual transmission to the overloaded
      * {@link #sendMessage(String)} method.
-     *
+     * <p>
      * If serialization or transmission fails, the exception is caught and an
      * error message is printed to the error output stream.
      *
      * @param msg the {@link Message} object to be serialized and sent
      */
-    public void sendMessage(Message<?> msg){
+    public void sendMessage(Message<?> msg) {
         try {
             String json = gson.toJson(msg);
             sendMessage(json);
@@ -245,21 +245,26 @@ public class ClientHandler implements Runnable{
     }
 
     /**
-     * Closes all resources associated with the client handler, including the client
-     * socket, input/output streams, and the handler itself. This method ensures the
-     * proper cleanup of resources to avoid potential resource leaks.
+     * Closes all resources associated with the client connection managed by this
+     * {@code ClientHandler}. This includes removing the client handler from the
+     * server's management, closing the input/output streams, and terminating
+     * the socket connection, if applicable.
      *
-     * The following actions are performed in sequence:
-     * - Removes this client handler from the server's list of active client handlers.
-     * - Closes the input stream (`reader`) if it is not null.
-     * - Closes the output stream (`writer`) if it is not null.
-     * - Closes the socket connection if it is not already closed.
-     * - Sets the `alive` state of the client handler to `false` to indicate it is no longer active.
-     * - Logs a message confirming the closure of the client connection.
+     * <p>This method performs the following actions:
+     * <ul>
+     *   <li>Removes the current client handler instance from the server's client handler list.</li>
+     *   <li>Closes the input stream reader if it is not null.</li>
+     *   <li>Closes the output stream writer if it is not null.</li>
+     *   <li>Closes the socket connection if it is open and not already closed.</li>
+     *   <li>Sets the {@code alive} flag to {@code false}, marking the client handler as inactive.</li>
+     *   <li>Outputs a log statement indicating the connection closure.</li>
+     * </ul>
      *
-     * If an `IOException` occurs during the closing of any resource, it is handled and
-     * an error message is logged.
+     * <p>Any {@code IOException} that occurs during the resource cleanup process is caught and
+     * logged to the error stream. The connection cleanup process continues for other resources
+     * even if an exception occurs.
      */
+
     public void closeAll() {
         try {
             Server.getInstance().removeClientHandler(this);
@@ -281,7 +286,7 @@ public class ClientHandler implements Runnable{
      *
      * @return {@code true} if the client connection is alive, {@code false} otherwise
      */
-    public boolean isAlive(){
+    public boolean isAlive() {
         return alive;
     }
 

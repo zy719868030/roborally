@@ -1,0 +1,35 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "de.lmu.dbs.ifi.sep25.network" {
+  class Client
+  class ClientHandler
+  class Server
+  class Message<T>
+}
+
+package "de.lmu.dbs.ifi.sep25.utils" {
+  class JsonUtil
+  class ConcurrentBidirectionalMap<K,V>
+}
+
+' === Core Relationships ===
+Client --> ClientHandler : communicates via socket
+Client --> JsonUtil : uses
+Client --> Message : sends/receives
+
+ClientHandler --> JsonUtil : uses
+ClientHandler --> Server : accesses
+ClientHandler --> Message : handles
+
+Server --> ClientHandler : manages
+Server --> Message : broadcasts
+Server --> ConcurrentBidirectionalMap : maps clients
+
+Message o-- "body" BodySendChat
+Message o-- "body" BodyReceivedChat
+Message o-- "body" BodyHelloClient
+Message o-- "body" BodyHelloServer
+Message o-- "body" BodyWelcome
+Message o-- "body" BodyError
+@enduml

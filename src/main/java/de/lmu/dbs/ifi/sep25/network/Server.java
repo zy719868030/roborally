@@ -1,16 +1,16 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitons.*;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("unused")
 public class Server {
 
     // 0. Singleton instance
@@ -75,23 +75,23 @@ public class Server {
 
     /**
      * Starts the server and begins listening for client connections.
-     *
+     * <p>
      * This method performs the following actions:
      * - Prints messages to indicate the server has started and is waiting for clients.
      * - Initializes a heartbeat mechanism to monitor client connectivity by calling {@link #initHeartbeat()}.
      * - Enters a loop where it:
-     *   - Accepts incoming client socket connections.
-     *   - Logs a message when a new client connects.
-     *   - Creates a new {@link ClientHandler} for the client and starts it in its own thread.
-     *   - Sends a "HelloClient" message to the newly connected client to acknowledge the connection.
-     *   - Assigns a unique ID to the client using an atomic counter.
-     *   - Broadcasts a message to all clients announcing the new client connection.
-     *   - Maps the client handler to its assigned ID for future reference.
-     *   - Sends a "Welcome" message to the new client, including its unique ID.
-     *
+     * - Accepts incoming client socket connections.
+     * - Logs a message when a new client connects.
+     * - Creates a new {@link ClientHandler} for the client and starts it in its own thread.
+     * - Sends a "HelloClient" message to the newly connected client to acknowledge the connection.
+     * - Assigns a unique ID to the client using an atomic counter.
+     * - Broadcasts a message to all clients announcing the new client connection.
+     * - Maps the client handler to its assigned ID for future reference.
+     * - Sends a "Welcome" message to the new client, including its unique ID.
+     * <p>
      * If an {@link IOException} occurs while accepting client connections, the error message is logged,
      * provided the server is in a running state.
-     *
+     * <p>
      * This method assumes that the server socket and associated fields
      * have already been properly initialized. It is designed to run until the server
      * is stopped or an error forces termination.
@@ -128,7 +128,7 @@ public class Server {
 
     /**
      * Broadcasts a JSON message to all connected clients.
-     *
+     * <p>
      * This method iterates over the set of client handlers and sends the provided JSON message
      * to each client. If an exception occurs during the sending of the message to a particular
      * client, the client handler is removed from the collection of active clients, and any
@@ -160,8 +160,7 @@ public class Server {
      */
     public void broadcastMessage(Message<?> message) {
         try {
-            String json = gson.toJson(message);
-            broadcastMessage(json);
+            broadcastMessage(gson.toJson(message));
         } catch (Exception e) {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
@@ -169,13 +168,13 @@ public class Server {
 
     /**
      * Stops the server by closing the server socket and halting the execution loop.
-     *
+     * <p>
      * This method sets the server's running state to {@code false}, signaling
      * that the server should stop accepting new client connections and perform
      * a clean shutdown. It then attempts to close the {@code serverSocket},
      * releasing the associated network resources. If an {@link IOException}
      * occurs while closing the socket, the error is logged to the standard error stream.
-     *
+     * <p>
      * Any ongoing client communication or background tasks associated with the server
      * may still need to be handled separately to ensure a graceful shutdown.
      */
@@ -190,7 +189,7 @@ public class Server {
 
     /**
      * Removes the specified client handler from the server's client management structures.
-     *
+     * <p>
      * This method performs the following actions:
      * - Removes the client handler from the client list.
      * - Updates the server's tracking map for AI and non-AI clients by removing the specified client handler.
@@ -209,16 +208,16 @@ public class Server {
     /**
      * Initializes and starts the server's heartbeat mechanism to monitor
      * the connectivity of all connected client handlers.
-     *
+     * <p>
      * This method schedules a recurring task that executes every 5 seconds.
      * On each execution, it iterates through the currently connected clients
      * and performs the following actions:
      * - If a client fails the liveness check (`isAlive` returns false),
-     *   an error message is logged, and the client is disconnected by
-     *   invoking `closeAll`.
+     * an error message is logged, and the client is disconnected by
+     * invoking `closeAll`.
      * - If a client is alive, its liveness status is updated using
-     *   the `checkLiveness` method.
-     *
+     * the `checkLiveness` method.
+     * <p>
      * The heartbeat mechanism ensures that non-responsive clients
      * are detected and removed in a timely manner.
      */
@@ -252,7 +251,7 @@ public class Server {
      * Retrieves the map indicating whether each connected client is AI or not.
      *
      * @return a ConcurrentMap where the keys are ClientHandler instances representing connected clients,
-     *         and the values are Booleans indicating whether the respective client is an AI (true) or not (false).
+     * and the values are Booleans indicating whether the respective client is an AI (true) or not (false).
      */
     public ConcurrentMap<ClientHandler, Boolean> getIsAI() {
         return isAI;

@@ -1,0 +1,118 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "de.lmu.dbs.ifi.sep25.network" {
+
+  class Client {
+    - gson : Gson
+    - protocol : String
+    - usernames : ConcurrentBidirectionalMap<Integer, String>
+    - ID : Integer
+    - isAI : boolean
+    - socket : Socket
+    - reader : BufferedReader
+    - writer : PrintWriter
+    + start(host : String, port : int)
+    - listenForMessages()
+    - handleBodyHelloClient(json : String)
+    - handleBodyAlive(json : String)
+    - handleBodyWelcome(json : String)
+    - handleBodyReceivedChat(json : String)
+    - handleBodyError(json : String)
+    - closeAll()
+  }
+
+  class ClientHandler {
+    - gson : Gson
+    - socket : Socket
+    - reader : BufferedReader
+    - writer : PrintWriter
+    - alive : boolean
+    + run()
+    + handleBodyAlive()
+    + handleBodyHelloServer(json : String)
+    + handleBodySendChat(json : String)
+    + handleBodyReceivedChat(json : String)
+    + handleBodyError(json : String)
+    + sendMessage(message : String)
+    + sendMessage(msg : Message<?>)
+    + closeAll()
+    + isAlive() : boolean
+    + checkLiveness()
+  }
+
+  class Server {
+    - protocol : String
+    - gson : Gson
+    - clientIDCounter : AtomicInteger
+    - clients : ConcurrentBidirectionalMap<ClientHandler, Integer>
+    - isAI : ConcurrentMap<ClientHandler, Boolean>
+    - serverSocket : ServerSocket
+    - running : boolean
+    + start()
+    + broadcastMessage(json : String)
+    + broadcastMessage(msg : Message<?>)
+    + stop()
+    + removeClientHandler(client : ClientHandler)
+    + getClients() : Map
+    + getIsAI() : Map
+    + getProtocol() : String
+    + getInstance(port : int) : Server
+  }
+
+  class Message<T> {
+    + messageType : String
+    + messageBody : T
+  }
+
+  note right of Message
+      Contains many additional Body* records
+      not shown for clarity.
+  end note
+
+  class BodySendChat
+  class BodyReceivedChat
+  class BodyHelloClient
+  class BodyHelloServer
+  class BodyWelcome
+  class BodyError
+}
+
+package "de.lmu.dbs.ifi.sep25.utils" {
+
+  class JsonUtil {
+    + parseMessage(json : String, bodyClass : Class<T>) : Message<T>
+    + parseUnknown(json : String) : Message<?>
+  }
+
+  class ConcurrentBidirectionalMap<K,V>
+}
+
+' === Detailed Relationships ===
+Client --> ClientHandler : communicates via socket
+Client --> JsonUtil : uses
+Client --> Message : sends/receives
+Client --> BodyHelloClient
+Client --> BodyWelcome
+Client --> BodyReceivedChat
+
+ClientHandler --> Server : uses singleton
+ClientHandler --> JsonUtil : parses messages
+ClientHandler --> BodySendChat
+ClientHandler --> BodyReceivedChat
+ClientHandler --> BodyHelloServer
+ClientHandler --> BodyError
+
+Server --> ClientHandler : manages
+Server --> ConcurrentBidirectionalMap : tracks clients
+Server --> Message : broadcasts
+Server --> BodyHelloClient
+Server --> BodyWelcome
+
+Message o-- BodySendChat
+Message o-- BodyReceivedChat
+Message o-- BodyHelloClient
+Message o-- BodyHelloServer
+Message o-- BodyWelcome
+Message o-- BodyError
+@enduml

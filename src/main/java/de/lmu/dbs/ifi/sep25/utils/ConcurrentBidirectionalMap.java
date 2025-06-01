@@ -5,7 +5,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@SuppressWarnings("unused")
 public class ConcurrentBidirectionalMap<K, V> {
+
     private final ConcurrentHashMap<K, V> forward = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<V, K> reverse = new ConcurrentHashMap<>();
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
