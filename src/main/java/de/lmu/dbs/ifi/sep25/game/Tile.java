@@ -1,20 +1,27 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Tile {
     private Robot robot;
     private int x;
     private int y;
-    private String type;
+    private List<FabricElement> elements;
 
-    public Tile(int x, int y, String type) {
+    public Tile(int x, int y) {
         this.x = x;
         this.y = y;
-        this.type = type; // e.g., "floor"
+        this.elements = new ArrayList<>();
+        this.elements.add(new Floor()); // Every tile has a floor by default
         this.robot = null;
     }
 
     public void applyEffect(Robot robot) {
-        // Stub: For future tile effects (e.g., conveyor, pit)
+        // Apply effects of all factory elements
+        for (FabricElement element : elements) {
+            element.applyEffect(robot);
+        }
     }
 
     public Robot getRobot() {
@@ -25,8 +32,12 @@ public class Tile {
         this.robot = robot;
     }
 
-    public String getType() {
-        return type;
+    public List<FabricElement> getElements() {
+        return elements;
+    }
+
+    public void addElement(FabricElement element) {
+        elements.add(element);
     }
 
     public int getX() {
