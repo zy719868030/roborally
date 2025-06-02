@@ -3,7 +3,6 @@ package de.lmu.dbs.ifi.sep25.network;
 import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
-import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -66,7 +65,7 @@ public class Client {
                 } else if (userInput.equalsIgnoreCase("/exit")) {
                     System.out.println("Exiting...");
                     closeAll();
-                } else if (command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper"))
+                } else if ((command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper")) && command.length == 3)
                     if (usernames.containsValue(command[1]))
                         writer.println(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
                     else

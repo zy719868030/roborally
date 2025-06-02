@@ -1,6 +1,8 @@
-package de.lmu.dbs.ifi.sep25.game;
+package de.lmu.dbs.ifi.sep25.game.tile;
 
-public class Reboot extends FabricElement {
+import de.lmu.dbs.ifi.sep25.game.Robot;
+
+public class Reboot extends TileElement {
     private static Reboot instance = null;
 
     private Reboot() {

@@ -2,7 +2,6 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
-import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,8 +1,7 @@
-package de.lmu.dbs.ifi.sep25.utils;
+package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 /**
  * Utility class for JSON serialization and deserialization of Message objects.
