@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+        <?import javafx.scene.control.*?>
+        <?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="de.lmu.dbs.ifi.sep25.ui.LobbyController"
+      spacing="20" alignment="CENTER" style="-fx-padding: 20">
+
+<Label text="Lobby – Spielerübersicht" style="-fx-font-size: 18px;" />
+
+<ListView fx:id="playerList" prefHeight="200" prefWidth="300"/>
+
+<HBox spacing="10" alignment="CENTER">
+    <Button fx:id="readyButton" text="Bereit" onAction="#handleReady"/>
+    <Button fx:id="notReadyButton" text="Nicht bereit" onAction="#handleNotReady"/>
+</HBox>
+
+<Label fx:id="statusLabel" text="Warten auf andere Spieler..."/>
+</VBox>

@@ -2,6 +2,8 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
+import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
+import de.lmu.dbs.ifi.sep25.ui.LobbyController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 
 import java.io.BufferedReader;
@@ -110,10 +112,10 @@ public class Client {
                     case "HelloClient" -> handleBodyHelloClient(json);
                     case "Alive" -> handleBodyAlive(json);
                     case "Welcome" -> handleBodyWelcome(json);
-//                    case "PlayerValues" -> handleBodyPlayerValues(json);
+//                   case "PlayerValues" -> handleBodyPlayerValues(json);
 //                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
 //                    case "SetStatus" -> handleBodySetStatus(json);
-//                    case "PlayerStatus" -> handleBodyPlayerStatus(json);
+                    case "PlayerStatus" -> handleBodyPlayerStatus(json);
 //                    case "SelectMap" -> handleBodySelectMap(json);
 //                    case "MapSelected" -> handleBodyMapSelected(json);
 //                    case "GameStarted" -> handleBodyGameStarted(json);
@@ -240,6 +242,19 @@ public class Client {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         System.err.println("Error: " + msg.messageBody().error());
         closeAll();
+    }
+    private void handleBodyPlayerStatus(String json) {
+        Message<BodyPlayerStatus> message = JsonUtil.parseMessage(json, BodyPlayerStatus.class);
+        BodyPlayerStatus body = message.messageBody();
+
+        int clientID = body.clientID();
+        boolean ready = body.ready();
+
+        // JavaFX-Thread für GUI-Update
+        javafx.application.Platform.runLater(() -> {
+            LobbyController controller = ControllerRegistry.getLobbyController();
+            controller.updatePlayerStatus(clientID, ready);
+        });
     }
 
     /**
