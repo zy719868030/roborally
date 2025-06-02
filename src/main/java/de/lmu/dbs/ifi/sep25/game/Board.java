@@ -2,6 +2,58 @@ package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.game.tile.TileElement;
 
+import java.util.ArrayList;
+import java.util.List;
+
+public class Board {
+    private List<TileElement>[][] elements;
+    private final int width;
+    private final int height;
+
+    @SuppressWarnings("unchecked")
+    public Board(int width, int height) {
+        this.width = width;
+        this.height = height;
+        this.elements = new ArrayList[width][height];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                elements[x][y] = new ArrayList<>();
+                elements[x][y].add(de.lmu.dbs.ifi.sep25.game.tile.Floor.getInstance());
+            }
+        }
+    }
+
+    public List<TileElement> getElements(int x, int y) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            return elements[x][y];
+        }
+        return new ArrayList<>();
+    }
+
+    public void placeRobot(Robot robot, int x, int y) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            robot.setPosition(x, y);
+        }
+    }
+
+    public void applyEffects(Robot robot, int x, int y) {
+        List<TileElement> elementsAt = getElements(x, y);
+        for (TileElement element : elementsAt) {
+            element.applyEffect(robot, this);
+        }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+}
+
+
+/*
 @SuppressWarnings({"unused"})
 public class Board {
     private final Tile[][] tiles;
@@ -43,3 +95,5 @@ public class Board {
 //        }
 //    }
 }
+
+*/

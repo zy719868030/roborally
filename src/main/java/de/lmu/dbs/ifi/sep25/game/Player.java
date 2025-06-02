@@ -1,5 +1,8 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,11 +14,11 @@ public class Player {
 
     public Player(String name, int startX, int startY) {
         this.name = name;
-        this.robot = new Robot(startX, startY, "north");
-        this.register = new ArrayList<>(5);
-        this.upgrades = new ArrayList<>();
+        this.robot = new Robot(startX, startY, Direction.NORTH);
+        this.register = new ArrayList<Card>(5); // Specify Card type
+        this.upgrades = new ArrayList<UpgradeCard>(); // Specify UpgradeCard type
         for (int i = 0; i < 5; i++) {
-            register.add(null); // 5 slots for program cards
+            register.add(null);
         }
     }
 

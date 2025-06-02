@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.game.tile;
 
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.Board;
 
 public class Reboot extends TileElement {
     private static Reboot instance = null;
@@ -18,7 +19,7 @@ public class Reboot extends TileElement {
     }
 
     @Override
-    public void applyEffect(Robot robot) {
+    public void applyEffect(Robot robot, Board board) {
         // Stub: Future reboot logic (e.g., reset robot position, damage)
     }
 }
