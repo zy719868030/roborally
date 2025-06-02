@@ -9,7 +9,6 @@ public abstract class Card implements Cloneable {
         UPGRADE,
         DAMAGE
     }
-}
 
     protected String description;
     protected CardType type;
