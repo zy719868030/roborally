@@ -4,16 +4,29 @@ public class Robot {
     private Position position;
     private Direction direction;
     private int damage;
+    private int id;
 
     public Robot(Position startPosition, Direction direction) {
         this.position = startPosition;
         this.direction = direction;
         this.damage = 0;
+        this.id = id;
     }
 
     public Robot(int x, int y, String direction) {
         this.position = new Position(x, y);
         this.direction = Direction.valueOf(direction);
+    }
+
+    // [YZ] Method for obtaining robot ID
+    public int getId() {
+        return this.id;
+    }
+
+    // [YZ] Method for damaging robots
+    public void takeDamage(int damageAmount) {
+        this.damage += damageAmount;
+        System.out.println("Robot " + id + " takes " + damageAmount + " damage. Total damage: " + this.damage);
     }
 
     /**
@@ -59,6 +72,24 @@ public class Robot {
      */
     public void moveBackward() {
         position = position.move(direction.turnAround());
+    }
+
+    /**
+     * Move the robot according to the given distance value.
+     * A positive value indicates forward movement, a negative value indicates backward movement, and 0 indicates no movement.
+     *
+     * @param distance The distance the robot needs to move, which can be a positive number, a negative number, or zero.
+     */
+    public void applyMove(int distance) {
+        if (distance > 0) {
+            // Positive values indicate forward movement.
+            moveForward(distance);
+        } else if (distance < 0) {
+            // Negative values indicate backward movement.
+            for (int i = 0; i < Math.abs(distance); i++) {
+                moveBackward();
+            }
+        }
     }
 
     /**

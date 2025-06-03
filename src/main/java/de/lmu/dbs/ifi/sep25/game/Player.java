@@ -1,5 +1,8 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
+
 import java.util.ArrayList;
 import java.util.List;
 
