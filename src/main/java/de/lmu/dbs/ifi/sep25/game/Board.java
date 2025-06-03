@@ -4,12 +4,15 @@ import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Floor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Board {
     private List<BoardElement>[][] elements;
     private final int width;
     private final int height;
+    private Map<Position, Robot> robotPositions = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     public Board(int width, int height) {
@@ -42,6 +45,28 @@ public class Board {
         for (BoardElement element : elementsAt) {
             element.applyEffect(robot, this);
         }
+    }
+
+    /**
+     * Checks whether the specified position is within the valid range of the game board.
+     *
+     * @param position The position to be checked.
+     * @return Returns true if the position is valid, otherwise returns false.
+     */
+    public boolean isValidPosition(Position position) {
+        int x = position.x();
+        int y = position.y();
+        return x >= 0 && x < width && y >= 0 && y < height;
+    }
+
+    /**
+     * Get the robot at the specified position.
+     *
+     * @param position The position to check.
+     * @return If there is a robot at that position, return the robot object; otherwise, return null.
+     */
+    public Robot getRobotAt(Position position) {
+        return robotPositions.get(position);
     }
 
     /**
