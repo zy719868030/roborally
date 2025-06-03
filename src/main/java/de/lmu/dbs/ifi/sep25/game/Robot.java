@@ -5,6 +5,7 @@ public class Robot {
     private Direction direction;
     private int damage;
     private int id;
+    private boolean programmingCancelled;
 
     public Robot(Position startPosition, Direction direction) {
         this.position = startPosition;
@@ -18,12 +19,12 @@ public class Robot {
         this.direction = Direction.valueOf(direction);
     }
 
-    // [YZ] Method for obtaining robot ID
+    // Method for obtaining robot ID
     public int getId() {
         return this.id;
     }
 
-    // [YZ] Method for damaging robots
+    // Method for damaging robots
     public void takeDamage(int damageAmount) {
         this.damage += damageAmount;
         System.out.println("Robot " + id + " takes " + damageAmount + " damage. Total damage: " + this.damage);
@@ -99,6 +100,23 @@ public class Robot {
      */
     public Position getPosition() {
         return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
+    public void setPosition(int x, int y) {
+        this.position = new Position(x, y);
+    }
+
+    /**
+     * Cancels the remaining programming for this round.
+     * This is used when the robot is rebooted or certain damage cards are activated.
+     */
+    public void cancelProgramming() {
+        this.programmingCancelled = true;
+        System.out.println("Robot " + id + " programming has been cancelled for this round.");
     }
 
     /**

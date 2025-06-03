@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.Board;
 
 public abstract class BoardElement {
     protected Position position;
@@ -44,6 +45,10 @@ public abstract class BoardElement {
      * @param robot Robot entering the element.
      */
     public abstract void activate(Robot robot);
+
+    public void applyEffect(Robot robot, Board board) {
+        activate(robot);
+    }
 
     /**
      * Checks whether the robot can pass through the element.
