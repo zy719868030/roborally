@@ -188,8 +188,7 @@ public class ClientHandler implements Runnable {
         Server server = Server.getInstance();
 
         if (server.assignFigure(body.figure(), this)) {
-            //TODO maybe keep track of figure in player class?
-            player = new Player(body.name());
+            player = new Player(body.name(), body.figure(), this);
             server.addToLobby(this);
             server.broadcastMessage(new Message<>(new BodyPlayerAdded(server.getClients().getByKey(this), body.name(), body.figure())));
         }
