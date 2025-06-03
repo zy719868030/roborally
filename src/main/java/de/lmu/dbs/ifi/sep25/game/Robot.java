@@ -6,9 +6,9 @@ public class Robot {
     private int damage;
     private int id;
 
-    public Robot(Position startPosition, Direction direction) {
-        this.position = startPosition;
-        this.direction = direction;
+    public Robot(int id) {
+//        this.position = startPosition;
+//        this.direction = direction; //TODO move to setPosition
         this.damage = 0;
         this.id = id;
     }
