@@ -395,6 +395,8 @@ public class Client {
      *             in this specific implementation.
      */
     public static void main(String[] args) {
-        new Client().start("localhost", 12345);
+        Client client = new Client();
+        ClientSingleton.set(client); //   für Zugriff aus GUI
+        client.start("localhost", 12345);
     }
 }

@@ -10,6 +10,10 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+
 public class LoginController {
 
     @FXML
@@ -35,19 +39,8 @@ public class LoginController {
             return;
         }
 
-        // JSON vorbereiten nach Protokoll
-        String json = String.format("""
-            {
-              "messageType": "PlayerValues",
-              "messageBody": {
-                "name": "%s",
-                "figure": %d
-              }
-            }
-            """, name, figure);
-
-        // TODO: ans Netzwerk senden
-        // NetworkService.send(json);
+        Message<BodyPlayerValues> msg = new Message<>(new BodyPlayerValues(name, figure));
+        ClientSingleton.getInstance().sendMessage(msg);
     }
 
     public void loginSuccess(String name, int figure) {
@@ -56,7 +49,7 @@ public class LoginController {
             Parent root = loader.load();
 
             LobbyController controller = loader.getController();
-            ControllerRegistry.setLobbyController(controller); // Bereit für Netzwerkverbindung
+            ControllerRegistry.setLobbyController(controller);
 
             Stage stage = (Stage) nameField.getScene().getWindow();
             stage.setScene(new Scene(root));

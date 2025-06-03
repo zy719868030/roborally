@@ -1,5 +1,8 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.collections.FXCollections;
@@ -16,7 +19,7 @@ public class LobbyController {
     @FXML
     private Label statusLabel;
 
-    private ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
+    private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -36,24 +39,14 @@ public class LobbyController {
     }
 
     private void sendReadyStatus(boolean ready) {
-        String json = String.format("""
-            {
-              "messageType": "SetStatus",
-              "messageBody": {
-                "ready": %s
-              }
-            }
-            """, ready);
-
-       // NetworkService.send(json);
+        Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
+        ClientSingleton.getInstance().sendMessage(msg);
     }
 
-    // Diese Methode kann von außen aufgerufen werden, um Spieler hinzuzufügen
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         players.add(new PlayerEntry(clientID, name, figure, ready));
     }
 
-    // Diese Methode kann genutzt werden, um Statusänderungen zu verarbeiten
     public void updatePlayerStatus(int clientID, boolean ready) {
         for (PlayerEntry player : players) {
             if (player.getClientID() == clientID) {
