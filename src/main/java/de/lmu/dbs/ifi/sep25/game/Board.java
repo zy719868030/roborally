@@ -13,6 +13,8 @@ public class Board {
     private final int width;
     private final int height;
     private Map<Position, Robot> robotPositions = new HashMap<>();
+    private Map<Robot, Position> robotToPosition = new HashMap<>();
+
 
     @SuppressWarnings("unchecked")
     public Board(int width, int height) {
@@ -96,8 +98,32 @@ public class Board {
     public int getHeight() {
         return height;
     }
-}
 
+    /**
+     * Update the robot's position on the map.
+     * This method should be called when the robot moves.
+     *
+     * @param robot       The moving robot.
+     * @param newPosition The robot's new position.
+     */
+    public void updateRobotPosition(Robot robot, Position newPosition) {
+        // Get the robot's old position
+        Position oldPosition = robotToPosition.get(robot);
+
+        // Remove robot from old location mapping
+        if (oldPosition != null) {
+            robotPositions.remove(oldPosition);
+        }
+
+        // Update location mapping
+        if (newPosition != null) {
+            robotPositions.put(newPosition, robot);
+            robotToPosition.put(robot, newPosition);
+        } else {
+            robotToPosition.remove(robot);
+        }
+    }
+}
 
 /*
 @SuppressWarnings({"unused"})
