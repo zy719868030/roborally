@@ -11,10 +11,11 @@ public class Player {
     private Robot robot;
     private List<Card> register;
     private List<UpgradeCard> upgrades;
+    private boolean ready = false;
 
-    public Player(String name, int startX, int startY) {
+    public Player(String name) {
         this.name = name;
-        this.robot = new Robot(startX, startY, Direction.NORTH);
+//        this.robot = new Robot(startX, startY, Direction.NORTH); ///has to be called in setRobotStart or smth, not constructor
         this.register = new ArrayList<Card>(5); // Specify Card type
         this.upgrades = new ArrayList<UpgradeCard>(); // Specify UpgradeCard type
         for (int i = 0; i < 5; i++) {
@@ -39,4 +40,13 @@ public class Player {
     public String getName() {
         return name;
     }
+
+    public void setReady(boolean ready) {
+        this.ready = ready;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
 }

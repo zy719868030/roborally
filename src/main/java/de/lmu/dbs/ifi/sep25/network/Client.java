@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -21,6 +22,7 @@ public class Client {
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data
+    private int figure;
     private Integer ID;
     private volatile boolean isAI = false;
 
@@ -48,7 +50,15 @@ public class Client {
             // Start listening thread
             new Thread(this::listenForMessages).start();
 
-            //TODO implement fx code to send messages/receive
+
+            //TODO for FX team: (in general replace the println methods)
+            // higher prio:
+            // - connect/replace console chat below with chat gui
+            // - send a message<BodyPlayerValues> via login screen
+            // - send a message<BodySetStatus> via ready screen
+            // lower prio:
+            // - send a message<BodyMapSelected> via map selection screen
+
 
             // Read user input and send messages
             // Example: Send chat message
@@ -69,11 +79,11 @@ public class Client {
                     closeAll();
                 } else if ((command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper")) && command.length == 3)
                     if (usernames.containsValue(command[1]))
-                        writer.println(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
+                        sendMessage(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
                     else
                         System.err.println("User not found");
                 else
-                    writer.println(gson.toJson(new Message<>(new BodySendChat(userInput, -1))));
+                    sendMessage(gson.toJson(new Message<>(new BodySendChat(userInput, -1))));
             }
 
         } catch (IOException e) {
@@ -112,12 +122,10 @@ public class Client {
                     case "HelloClient" -> handleBodyHelloClient(json);
                     case "Alive" -> handleBodyAlive(json);
                     case "Welcome" -> handleBodyWelcome(json);
-//                   case "PlayerValues" -> handleBodyPlayerValues(json);
-//                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
-//                    case "SetStatus" -> handleBodySetStatus(json);
+                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
                     case "PlayerStatus" -> handleBodyPlayerStatus(json);
-//                    case "SelectMap" -> handleBodySelectMap(json);
-//                    case "MapSelected" -> handleBodyMapSelected(json);
+                    case "SelectMap" -> handleBodySelectMap(json);
+                    case "MapSelected" -> handleBodyMapSelected(json);
 //                    case "GameStarted" -> handleBodyGameStarted(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
@@ -168,7 +176,7 @@ public class Client {
         String protocol = message.messageBody().protocol();
         System.out.println("[SERVER] Connected to server using protocol: " + protocol);
 
-        writer.println(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
+        sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
     }
 
     /**
@@ -178,7 +186,7 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
-        writer.println(json);
+        sendMessage(json);
     }
 
     /**
@@ -195,6 +203,86 @@ public class Client {
         this.ID = msg.messageBody().clientID();
         System.out.println("[SERVER] Your client ID: " + msg.messageBody().clientID());
     }
+
+    /**
+     * Handles a "BodyPlayerAdded" message received from the server.
+     * <p>
+     * This method processes a JSON string representing a {@code BodyPlayerAdded} message,
+     * deserializing it to extract the player's proposed username, client ID, and figure.
+     * If a conflict is detected in the proposed username (i.e., it already exists in the
+     * system), the method generates a unique username by appending a numeric suffix.
+     * Finally, the resolved username is added to the {@code usernames} map along with
+     * the client ID, and the player's figure is stored for further use.
+     *
+     * @param json the JSON string containing the serialized {@code BodyPlayerAdded} message
+     */
+    private void handleBodyPlayerAdded(String json) {
+        Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
+        BodyPlayerAdded body = message.messageBody();
+        String proposedName = body.name();
+        String username;
+
+        if (usernames.containsValue(proposedName)) {
+            int i = 1;
+            do {
+                username = proposedName + " #" + i;
+                i++;
+            } while (usernames.containsValue(username));
+        } else {
+            username = proposedName;
+        }
+        usernames.put(body.clientID(), username);
+        figure = body.figure();
+
+        //TODO implement fx code to display that player clientID = username with figure x or smth
+    }
+
+    /**
+     * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
+     * corresponding player's ready status in the lobby GUI.
+     *
+     * @param json the JSON string containing the serialized {@code BodyPlayerStatus} message
+     */
+    private void handleBodyPlayerStatus(String json) {
+        Message<BodyPlayerStatus> message = JsonUtil.parseMessage(json, BodyPlayerStatus.class);
+        BodyPlayerStatus body = message.messageBody();
+
+        int clientID = body.clientID();
+        boolean ready = body.ready();
+
+        // JavaFX-Thread für GUI-Update
+        javafx.application.Platform.runLater(() -> {
+            LobbyController controller = ControllerRegistry.getLobbyController();
+            controller.updatePlayerStatus(clientID, ready);
+        });
+    }
+
+    /**
+     * Handles the "BodySelectMap" message received from the server.
+     * This method processes a JSON string representing a {@code BodySelectMap} message, deserializing it
+     * to extract the list of available maps from the message body. It includes preparation for selecting
+     * a map from the list, where further logic can be implemented to handle the selection process.
+     * Finally, it creates a {@code BodyMapSelected} message with the chosen map and sends it to the server.
+     *
+     * @param json the JSON string containing the serialized {@code BodySelectMap} message
+     */
+    private void handleBodySelectMap(String json) {
+        Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
+
+        @SuppressWarnings("unused")
+        List<String> availableMaps = message.messageBody().availableMaps();
+        String selection = "Dizzy Highway"; //FIXME example
+
+        //TODO implement fx logic to select map
+
+        sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
+    }
+
+    /****/
+    private void handleBodyMapSelected(String json) {
+        //TODO implement fx display of selected map
+    }
+
 
     /**
      * Handles a "BodyReceivedChat" message from the server.
@@ -214,7 +302,6 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
      */
-
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (!body.from().equals(ID)) {
@@ -237,24 +324,44 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyError} message
      */
-
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         System.err.println("Error: " + msg.messageBody().error());
         closeAll();
     }
-    private void handleBodyPlayerStatus(String json) {
-        Message<BodyPlayerStatus> message = JsonUtil.parseMessage(json, BodyPlayerStatus.class);
-        BodyPlayerStatus body = message.messageBody();
 
-        int clientID = body.clientID();
-        boolean ready = body.ready();
+    /**
+     * Sends a text message through the output stream to the connected server or client.
+     * This method attempts to write the message using a PrintWriter instance.
+     * If an error occurs during the process, it logs the failure message to the error stream.
+     *
+     * @param message the text message to be sent
+     */
+    public void sendMessage(String message) {
+        try {
+            writer.println(message);
+            writer.flush();
+        } catch (Exception e) {
+            System.err.println("Failed to send message: " + e.getMessage());
+        }
+    }
 
-        // JavaFX-Thread für GUI-Update
-        javafx.application.Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            controller.updatePlayerStatus(clientID, ready);
-        });
+    /**
+     * Serializes the provided {@link Message} object into a JSON string and sends it
+     * through the established connection.
+     * This method utilizes the Gson library for serialization and delegates the actual
+     * sending to the overloaded {@code sendMessage(String message)} method.
+     * If serialization fails, an error message is logged to the standard error stream.
+     *
+     * @param msg the {@link Message} object to be serialized and sent
+     */
+    public void sendMessage(Message<?> msg) {
+        try {
+            String json = gson.toJson(msg);
+            sendMessage(json);
+        } catch (Exception e) {
+            System.err.println("Failed to serialize and send message: " + e.getMessage());
+        }
     }
 
     /**

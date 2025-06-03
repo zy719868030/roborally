@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 
 import java.io.BufferedReader;
@@ -8,6 +9,22 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+/**
+ * The ClientHandler class is responsible for managing communication
+ * between the server and a specific connected client. Each instance
+ * of this class runs on its own thread and listens for incoming
+ * messages from the client, processes them, and sends responses or
+ * broadcasts as appropriate.
+ * <p>
+ * The class supports a range of message types, each of which is handled
+ * by a specific method. It ensures the integrity of communication by
+ * adhering to the server protocol and allows clients to perform
+ * operations such as sending messages, setting their status, and more.
+ * <p>
+ * This class is intended to be used within the context of a server that
+ * supports multiple connected clients and provides mechanisms for
+ * broadcasting messages, client lifecycle management, and error handling.
+ */
 public class ClientHandler implements Runnable {
 
     // 1. Constants / configuration
@@ -20,6 +37,9 @@ public class ClientHandler implements Runnable {
 
     // 3. State flags
     private volatile boolean alive = true;
+
+    // 4. Game connection
+    private Player player;
 
 
     /**
@@ -67,12 +87,9 @@ public class ClientHandler implements Runnable {
                 switch (messageType) {
                     case "Alive" -> handleBodyAlive();
                     case "HelloServer" -> handleBodyHelloServer(json);
-//                    case "PlayerValues" -> handleBodyPlayerValues(json);
-//                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
-//                    case "SetStatus" -> handleBodySetStatus(json);
-//                    case "PlayerStatus" -> handleBodyPlayerStatus(json);
-//                    case "SelectMap" -> handleBodySelectMap(json);
-//                    case "MapSelected" -> handleBodyMapSelected(json);
+                    case "PlayerValues" -> handleBodyPlayerValues(json);
+                    case "SetStatus" -> handleBodySetStatus(json);
+                    case "MapSelected" -> handleBodyMapSelected(json);
 //                    case "GameStarted" -> handleBodyGameStarted(json);
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
@@ -154,6 +171,76 @@ public class ClientHandler implements Runnable {
             closeAll();
         }
         Server.getInstance().getIsAI().put(this, body.isAI());
+    }
+
+    /**
+     * Processes incoming JSON data representing player values and updates the server state
+     * based on the extracted information. If the player's figure assignment is successful,
+     * the player is added to the server lobby, and a broadcast message is sent to notify
+     * all clients about the new player.
+     *
+     * @param json the JSON string representing a "BodyPlayerValues" message, containing
+     *             the player's name and selected figure
+     */
+    private void handleBodyPlayerValues(String json) {
+        Message<BodyPlayerValues> message = JsonUtil.parseMessage(json, BodyPlayerValues.class);
+        BodyPlayerValues body = message.messageBody();
+        Server server = Server.getInstance();
+
+        if (server.assignFigure(body.figure(), this)) {
+            //TODO maybe keep track of figure in player class?
+            player = new Player(body.name());
+            server.addToLobby(this);
+            server.broadcastMessage(new Message<>(new BodyPlayerAdded(server.getClients().getByKey(this), body.name(), body.figure())));
+        }
+    }
+
+    /**
+     * Handles the processing of a "BodySetStatus" message. This method parses the incoming
+     * JSON to determine whether the associated player is ready and updates the server
+     * and client states accordingly. It also manages readiness logic for AI players and
+     * broadcasts status updates to all clients.
+     *
+     * @param json the raw JSON string representing a "BodySetStatus" message containing
+     *             the readiness status of the player
+     */
+    private void handleBodySetStatus(String json) {
+        Server server = Server.getInstance();
+        Message<BodySetStatus> message = JsonUtil.parseMessage(json, BodySetStatus.class);
+        boolean ready = message.messageBody().ready();
+        int clientID = server.getClients().getByKey(this);
+
+        player.setReady(ready);
+        server.broadcastMessage(new Message<>(new BodyPlayerStatus(clientID, ready)));
+
+        if (Boolean.TRUE.equals(server.getIsAI().get(this))) {
+            if (ready) {
+                if (server.readyIsEmpty()) {
+                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                } else {
+                    server.markReady(this);
+                }
+            } else {
+                server.unmarkReady(this);
+            }
+        }
+    }
+
+    /**
+     * Handles the processing of a "BodyMapSelected" message. This method parses the incoming
+     * JSON string into a {@link Message} object containing a {@link BodyMapSelected} message body.
+     * It then broadcasts the selected map information to all connected clients.
+     *
+     * @param json the JSON string representing a "BodyMapSelected" message containing
+     *             the selected map details
+     */
+    private void handleBodyMapSelected(String json) {
+        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
+        Server server = Server.getInstance();
+
+        server.broadcastMessage(new Message<>(new BodyMapSelected(message.messageBody().map())));
+
+        //TODO @lukas: implement game/board creation after game logic
     }
 
     /**
@@ -263,7 +350,6 @@ public class ClientHandler implements Runnable {
      * logged to the error stream. The connection cleanup process continues for other resources
      * even if an exception occurs.
      */
-
     public void closeAll() {
         try {
             Server.getInstance().removeClientHandler(this);
@@ -287,6 +373,15 @@ public class ClientHandler implements Runnable {
      */
     public boolean isAlive() {
         return alive;
+    }
+
+    /**
+     * Retrieves the {@link Player} associated with this client handler.
+     *
+     * @return the {@link Player} object representing the player linked to the client connection
+     */
+    public Player getPlayer() {
+        return player;
     }
 
 }
