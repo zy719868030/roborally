@@ -6,6 +6,7 @@ public class Robot {
     private int damage;
     private int id;
     private boolean programmingCancelled;
+    private int energy;
 
     public Robot(int id) {
 //        this.position = startPosition;
@@ -135,5 +136,15 @@ public class Robot {
      */
     public int getDamage() {
         return damage;
+    }
+
+    /**
+     * Increases the robot's energy value.
+     *
+     * @param amount The amount of energy to be increased.
+     */
+    public void addEnergy(int amount) {
+        this.energy += amount;
+        System.out.println("Robot " + id + " gained " + amount + " energy. Total energy: " + this.energy);
     }
 }
