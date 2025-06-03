@@ -9,25 +9,25 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * Represents a laser element on the game board.
  * Lasers deal damage to robots that end their movement on a laser's path.
  */
-public class Laser extends BoardElement {
+public class Lasers extends BoardElement {
     private int power;
 
-    public Laser() {
+    public Lasers() {
         super();
         this.power = 1;
     }
 
-    public Laser(Position position) {
+    public Lasers(Position position) {
         super(position);
         this.power = 1;
     }
 
-    public Laser(Position position, Direction direction) {
+    public Lasers(Position position, Direction direction) {
         super(position, direction);
         this.power = 1;
     }
 
-    public Laser(Position position, Direction direction, int power) {
+    public Lasers(Position position, Direction direction, int power) {
         super(position, direction);
         this.power = power;
     }
