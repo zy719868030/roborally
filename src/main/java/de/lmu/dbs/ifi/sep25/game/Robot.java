@@ -1,28 +1,21 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import java.util.UUID;
-
 public class Robot {
-    private final String id;
     private Position position;
     private Direction direction;
     private int damage;
     private int id;
 
-    /*
     public Robot(Position startPosition, Direction direction) {
         this.position = startPosition;
         this.direction = direction;
         this.damage = 0;
         this.id = id;
     }
-    */
 
-    public Robot(int x, int y, Direction direction) {
-        this.id = UUID.randomUUID().toString();
+    public Robot(int x, int y, String direction) {
         this.position = new Position(x, y);
-        this.direction = direction;
-        this.damage = 0;
+        this.direction = Direction.valueOf(direction);
     }
 
     // [YZ] Method for obtaining robot ID
@@ -40,7 +33,7 @@ public class Robot {
      * Rotates the robot 90 degrees to the left (counterclockwise) from its current direction.
      * The robot's direction is updated to reflect this change.
      */
-    public void turnL() {
+    public void turnLeft() {
         direction = direction.turnLeft();
     }
 
@@ -48,7 +41,7 @@ public class Robot {
      * Rotates the robot 90 degrees to the right (clockwise) from its current direction.
      * The robot's direction is updated to reflect this change.
      */
-    public void turnR() {
+    public void turnRight() {
         direction = direction.turnRight();
     }
 
@@ -57,10 +50,8 @@ public class Robot {
      * The robot's position is updated based on its current direction
      * using the logic defined in the Position class.
      */
-    public void applyMove(int distance) {
-        for (int i = 0; i < distance; i++) {
-            position = position.move(direction);
-        }
+    public void moveForward() {
+        position = position.move(direction);
     }
 
     /**
@@ -69,24 +60,19 @@ public class Robot {
      *
      * @param steps the number of steps the robot will move forward; must be a non-negative integer
      */
-    /*
     public void moveForward(int steps) {
         for (int i = 0; i < steps; i++)
             moveForward();
     }
-    */
-
 
     /**
      * Moves the robot one step backward in the direction opposite to its current orientation.
      * This method determines the reverse direction of the robot's current orientation
      * and updates the position accordingly by moving one step in that direction.
      */
-    /*
     public void moveBackward() {
         position = position.move(direction.turnAround());
     }
-    */
 
     /**
      * Move the robot according to the given distance value.
@@ -113,18 +99,6 @@ public class Robot {
      */
     public Position getPosition() {
         return position;
-    }
-
-    public void setPosition(int x, int y){
-        this.position = new Position(x, y);
-    }
-
-    public String getId(){
-        return id;
-    }
-
-    public void takeDamage(int amount){
-        damage += amount;
     }
 
     /**
