@@ -126,7 +126,7 @@ public class Client {
                     case "PlayerStatus" -> handleBodyPlayerStatus(json);
                     case "SelectMap" -> handleBodySelectMap(json);
                     case "MapSelected" -> handleBodyMapSelected(json);
-//                    case "GameStarted" -> handleBodyGameStarted(json);
+                    case "GameStarted" -> handleBodyGameStarted(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
 //                    case "PlayCard" -> handleBodyPlayCard(json);
@@ -282,6 +282,12 @@ public class Client {
     private void handleBodyMapSelected(String json) {
         //TODO implement fx display of selected map
     }
+
+    /****/
+    private void handleBodyGameStarted(String json) {
+        //TODO display the map to client in fx
+    }
+
 
 
     /**

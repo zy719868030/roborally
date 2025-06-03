@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 
@@ -11,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings("unused")
+
 public class Server {
 
     // 0. Singleton instance
@@ -36,6 +37,9 @@ public class Server {
     // 4. State flags
     private volatile boolean running = true;
     private final int MinPlayer;
+
+    // 5. Game logic
+    private Game game;
 
 
     /**
@@ -322,16 +326,22 @@ public class Server {
     }
 
     /**
-     * Adds the specified client handler to the server's lobby.
-     * The lobby is a collection of connected clients managed by the server.
+     * Adds a client handler to the lobby. If the lobby contains only AI players
+     * and meets the minimum player requirement, a random map is selected and
+     * broadcasted to all players.
      *
-     * @param handler the {@link ClientHandler} instance representing the client to be added to the lobby
+     * @param handler the client handler to be added to the lobby
      */
     public void addToLobby(ClientHandler handler) {
         lobby.add(handler);
-        //TODO depending on how to handle the map selection, check needed for minplayer exceeded -> ai check -> map selection
-        // - otherwise have to implement some sort of live function for the map seleciton, since connection can be broken, and no map could be selected.
-        // - probably implement a new message CheckDisconnect accessed via gamelogic
+
+        // Selects random available map if only ai in lobby
+        if (lobby.size() >= getInstance().MinPlayer && lobby.allAreAi(isAI)) {
+            Random random = new Random();
+            String map = availableMaps.get(random.nextInt(availableMaps.size()));
+            getInstance().newGame(map);
+            broadcastMessage(new Message<>(new BodyMapSelected(map)));
+        }
     }
 
     /**
@@ -342,6 +352,12 @@ public class Server {
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler); // adds in order, ignores duplicates
+
+        if (lobby.allReady() && game != null) {
+//            broadcastMessage(new Message<>(new BodyGameStarted(5, gson.toJson(game.getBoard().toString()))));
+            //FIXME @Lukas
+        }
+        //TODO check ready all and map chosen
     }
 
     /**
@@ -381,6 +397,19 @@ public class Server {
     public List<String> getAvailableMaps() {
         return List.copyOf(availableMaps);
     }
+
+    /**
+     * Initializes and starts the game with the specified map.
+     *
+     * @param mapName the name of the map to load for the game
+     */
+    public void newGame(String mapName) {
+        this.game = new Game(mapName);
+        for (ClientHandler client : clients.keySet()) {
+            game.addPlayer(client.getPlayer());
+        }
+    }
+
 
     /**
      * The main entry point for the application. It starts the server and then stops it.

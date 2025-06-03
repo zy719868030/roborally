@@ -5,6 +5,9 @@ TODO  MS2
 
 TODO  MS3 - Protokoll 0.1
     - Lobby
+        - Connection break error handleing
+            - map selection
+        - Map selection logic (rn only initial join from first player selects)
     - Map design anpassen
     - Spielkarten
     - Spielzug

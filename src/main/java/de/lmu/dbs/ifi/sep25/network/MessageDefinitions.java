@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
+import com.google.gson.JsonObject;
+
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -53,7 +55,7 @@ public class MessageDefinitions {
     }
 
     //FIXME implement map design
-    public record BodyGameStarted(Integer energy, List<Object> gameMap) {
+    public record BodyGameStarted(Integer energy, JsonObject gameMap) {
     }
 
     public record BodySendChat(String message, Integer to) {

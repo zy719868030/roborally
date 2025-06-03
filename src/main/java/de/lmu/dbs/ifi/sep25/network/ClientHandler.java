@@ -212,16 +212,15 @@ public class ClientHandler implements Runnable {
         player.setReady(ready);
         server.broadcastMessage(new Message<>(new BodyPlayerStatus(clientID, ready)));
 
-        if (Boolean.TRUE.equals(server.getIsAI().get(this))) {
-            if (ready) {
-                if (server.readyIsEmpty()) {
+        if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
+            if (ready)
+                if (server.readyIsEmpty())
                     sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
-                } else {
+                else
                     server.markReady(this);
-                }
-            } else {
+            else
                 server.unmarkReady(this);
-            }
+
         }
     }
 
@@ -235,11 +234,24 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
+        String map = message.messageBody().map();
         Server server = Server.getInstance();
 
-        server.broadcastMessage(new Message<>(new BodyMapSelected(message.messageBody().map())));
+        server.broadcastMessage(new Message<>(new BodyMapSelected(map)));
 
         //TODO @lukas: implement game/board creation after game logic
+
+        server.newGame(map);
+
+        /*  Skeletal structure:
+         *
+         *   server.newGame(
+         *       new Game(new Board(map)
+         *   )
+         * add lobby players
+         * can call start game
+         *
+         * */
     }
 
     /**

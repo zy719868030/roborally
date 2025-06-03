@@ -9,7 +9,7 @@ public class Game {
     private List<Card> discardPile;
     private Board board;
 
-    public Game() {
+    public Game(String mapName) {
         players = new ArrayList<>();
         discardPile = new ArrayList<>();
         board = new Board(12, 12);

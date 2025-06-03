@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings("unused")
@@ -21,9 +22,20 @@ public class Lobby {
         clients.remove(handler);
     }
 
+    public int size() {
+        return clients.size();
+    }
+
     public boolean allReady() {
         return !clients.isEmpty() &&
                 clients.stream().allMatch(h -> h.getPlayer() != null && h.getPlayer().isReady());
+    }
+
+    public boolean allAreAi(ConcurrentMap<ClientHandler, Boolean> isAI) {
+        for (ClientHandler client : clients)
+            if (!Boolean.TRUE.equals(isAI.get(client)))
+                return false;
+        return true;
     }
 
     public List<ClientHandler> getClients() {
