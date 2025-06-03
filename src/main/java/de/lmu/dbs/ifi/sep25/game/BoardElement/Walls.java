@@ -1,4 +1,4 @@
-package de.lmu.dbs.ifi.sep25.game.FabricElement;
+package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
@@ -11,7 +11,7 @@ import java.util.List;
  * The Walls class represents wall elements on the game board.
  * Walls prevent robots from passing through and can have multiple orientations (i.e., walls can block movement in multiple directions).
  */
-public class Walls extends FabricElement {
+public class Walls extends BoardElement {
     private List<Direction> blockedDirections;
 
     public Walls() {

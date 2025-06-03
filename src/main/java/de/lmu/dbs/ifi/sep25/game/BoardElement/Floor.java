@@ -1,4 +1,4 @@
-package de.lmu.dbs.ifi.sep25.game.tile;
+package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Robot;

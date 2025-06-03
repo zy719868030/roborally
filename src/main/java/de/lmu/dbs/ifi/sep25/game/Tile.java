@@ -1,7 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.tile.TileElement;
-
 import java.util.ArrayList;
 import java.util.List;
 

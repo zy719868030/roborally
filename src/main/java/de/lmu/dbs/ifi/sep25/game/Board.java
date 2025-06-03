@@ -1,6 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.tile.TileElement;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Floor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public class Board {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 elements[x][y] = new ArrayList<>();
-                elements[x][y].add(de.lmu.dbs.ifi.sep25.game.tile.Floor.getInstance());
+                elements[x][y].add(Floor.getInstance());
             }
         }
     }

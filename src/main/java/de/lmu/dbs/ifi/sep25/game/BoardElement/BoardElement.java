@@ -1,21 +1,21 @@
-package de.lmu.dbs.ifi.sep25.game.FabricElement;
+package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
-public abstract class FabricElement {
+public abstract class BoardElement {
     protected Position position;
     protected Direction direction;
 
-    public FabricElement() {
+    public BoardElement() {
     }
 
-    public FabricElement(Position position) {
+    public BoardElement(Position position) {
         this.position = position;
     }
 
-    public FabricElement(Position position, Direction direction) {
+    public BoardElement(Position position, Direction direction) {
         this.position = position;
         this.direction = direction;
     }
