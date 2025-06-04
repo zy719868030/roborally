@@ -1,9 +1,9 @@
 package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.Board;
 
 public class RegularPro extends ProgrammingCard {
-    // Indicates the distance traveled, e.g., 1, 2, or 3 frames forward.
     private int distance;
 
     public RegularPro(String description, String actionType, int distance) {
@@ -17,7 +17,36 @@ public class RegularPro extends ProgrammingCard {
 
     @Override
     public void execute(Robot robot) {
-        robot.applyMove(distance);
+        if (!canExecute(robot)) return;
+
+        Board board = robot.getBoard();
+        if (board == null) return;
+
+        switch (actionType.toLowerCase()) {
+            case "move":
+                robot.applyMove(board, distance);
+                break;
+            case "backup":
+                robot.applyMove(board, -distance);
+                break;
+            case "turnleft":
+                robot.turnLeft();
+                break;
+            case "turnright":
+                robot.turnRight();
+                break;
+            case "uturn":
+                robot.turnLeft();
+                robot.turnLeft();
+                break;
+            case "powerup":
+                robot.addEnergy(1);
+                break;
+        }
+    }
+
+    public boolean canExecute(Robot robot) {
+        return !robot.isPoweredDown();
     }
 
     @Override
