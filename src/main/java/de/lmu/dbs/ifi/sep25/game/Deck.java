@@ -1,16 +1,23 @@
 package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Stack;
 
 public class Deck {
     private Stack<Card> stack;
     private Stack<Card> discardPile;
+    private List<DamageCard> damageCards;
 
     public Deck() {
         this.stack = new Stack<>();
         this.discardPile = new Stack<>();
+        this.damageCards = new ArrayList<>();
+        initializeDamageCards();
     }
 
     public Deck(Card[] cards) {
@@ -25,6 +32,29 @@ public class Deck {
         Collections.shuffle(this.stack);
     }
 
+
+    // Add different types of damage cards to the deck.
+    private void initializeDamageCards() {
+        // SPAM Card - Causes damage
+        for (int i = 0; i < 20; i++) {
+            damageCards.add(new DamageCard("SPAM", DamageCard.DamageType.SPAM));
+        }
+
+        // WORM Card - Causes restart
+        for (int i = 0; i < 6; i++) {
+            damageCards.add(new DamageCard("WORM", DamageCard.DamageType.WORM));
+        }
+
+        // VIRUS Card - Spreads to nearby robots
+        for (int i = 0; i < 6; i++) {
+            damageCards.add(new DamageCard("VIRUS", DamageCard.DamageType.VIRUS));
+        }
+
+        // TROJAN HORSE Card - Causes additional damage
+        for (int i = 0; i < 6; i++) {
+            damageCards.add(new DamageCard("TROJAN HORSE", DamageCard.DamageType.TROJAN_HORSE));
+        }
+    }
 
     /**
      * Draw a card from the top of the deck.
@@ -41,6 +71,16 @@ public class Deck {
             }
         }
         return stack.pop();
+    }
+
+    // Obtain a specific type of damage card
+    public DamageCard getDamageCard(DamageCard.DamageType type) {
+        for (DamageCard card : damageCards) {
+            if (card.getDamageType() == type) {
+                return card.clone();
+            }
+        }
+        return null;
     }
 
     /**
@@ -102,6 +142,18 @@ public class Deck {
         if (card != null) {
             stack.push(card);
         }
+    }
+
+    public List<DamageCard> getDamageCards() {
+        return damageCards;
+    }
+
+    public Stack<Card> getStack() {
+        return stack;
+    }
+
+    public Stack<Card> getDiscardPile() {
+        return discardPile;
     }
 }
 

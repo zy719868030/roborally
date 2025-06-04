@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 
@@ -15,6 +16,7 @@ public class Robot {
     private int energy;
     private List<RegisterCard> programming = new ArrayList<>();
     private boolean isPoweredDown;
+    private Board currentBoard;  //
 
     public Robot(int startX, int startY, String direction, int id) {
 //        this.position = startPosition;
@@ -191,6 +193,7 @@ public class Robot {
      */
     public void cancelProgramming() {
         this.programmingCancelled = true;
+        programming.clear();
         System.out.println("Robot " + id + " programming has been cancelled for this round.");
     }
 
@@ -219,6 +222,36 @@ public class Robot {
      */
     public int getDamage() {
         return damage;
+    }
+
+    public void setBoard(Board board) {
+        this.currentBoard = board;
+    }
+
+    public Board getBoard() {
+        return currentBoard;
+    }
+
+    // Restart robot (for DamageCard call)
+    public void reboot() {
+        if (currentBoard != null) {
+            currentBoard.rebootRobot(this);
+        }
+    }
+
+
+    // Add damage cards to the discard pile.
+    // Since a complete card system has not yet been implemented, simplify the process for now.
+    public void addDamageCard(DamageCard damageCard) {
+        System.out.println("Robot " + id + " receives damage card: " + damageCard.getDamageType());
+        // TODO Consider increasing the damage value to simulate the effect of the damage card.
+        takeDamage(1);
+    }
+
+    // Replace damage cards. Currently simplified;
+    // TODO in actual gameplay, new cards need to be drawn from the deck.
+    public void replaceDamageCard() {
+        System.out.println("Robot " + id + " replaces damage card with programming card");
     }
 
     /**

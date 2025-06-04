@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.game;
 import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +14,19 @@ public class Game {
     public Game(String mapName) {
         players = new ArrayList<>();
         discardPile = new ArrayList<>();
+        Board.MapType mapType = parseMapName(mapName);
         board = new Board(12, 12);
         currentPlayer = null;
+    }
+
+    private Board.MapType parseMapName(String mapName) {
+        switch (mapName.toLowerCase()) {
+            case "risky crossing":
+                return Board.MapType.MAP1;
+            case "dizzy highway":
+            default:
+                return Board.MapType.DEFAULT;
+        }
     }
 
     public Player getCurrentPlayer() {
@@ -22,6 +35,40 @@ public class Game {
 
     public void determineTurn() {
         // Stub
+    }
+
+    // TODO game.initializeGame(); (in Server)
+    //Set Board references for all robots when initializing the game
+    public void initializeGame() {
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            robot.setBoard(board);
+        }
+    }
+
+    // Get all robots within the specified range (for use with VIRUS cards)
+    public List<Robot> getRobotsInRange(Position center, int range) {
+        List<Robot> robotsInRange = new ArrayList<>();
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            Position robotPos = robot.getPosition();
+            if (robotPos.distanceTo(center) <= range) {
+                robotsInRange.add(robot);
+            }
+        }
+        return robotsInRange;
+    }
+
+    // Virus Spread Effect (for DamageCard use)
+    public void spreadVirusFrom(Position virusSource) {
+        List<Robot> nearbyRobots = getRobotsInRange(virusSource, 6);
+
+        // Create a SPAM damage card and add it to the robot.
+        for (Robot robot : nearbyRobots) {
+            DamageCard spamCard = new DamageCard("SPAM", DamageCard.DamageType.SPAM);
+            robot.addDamageCard(spamCard);
+            System.out.println("Robot " + robot.getId() + " infected by virus!");
+        }
     }
 
     public void playRound() {

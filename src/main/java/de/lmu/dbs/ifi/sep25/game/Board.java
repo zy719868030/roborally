@@ -379,15 +379,32 @@ public class Board {
 
     // Reboots a fallen robot to the reboot point
     public void rebootRobot(Robot robot) {
-        if (fallenRobots.contains(robot)) {
-            Position rebootPos = getRebootPosition();
-            robot.setPosition(rebootPos.x(), rebootPos.y());
-            fallenRobots.remove(robot);
-            updateRobotPosition(robot, rebootPos);
-            robot.takeDamage(2); // Additional reboot penalty
-            robot.cancelProgramming();
-            System.out.println("Robot " + robot.getId() + " rebooted to " + rebootPos);
+        Position rebootPos = getRebootPosition();
+        robot.setPosition(rebootPos.x(), rebootPos.y());
+        updateRobotPosition(robot, rebootPos);
+        robot.takeDamage(2);
+        robot.cancelProgramming();
+        System.out.println("Robot " + robot.getId() + " rebooted to " + rebootPos);
+        fallenRobots.remove(robot);
+    }
+
+    /**
+     * Returns a list of all robots whose position is within a specified distance
+     * from the specified center.
+     *
+     * @param center the central position from which the distance is calculated
+     * @param range  the maximum distance (inclusive) from the center within which robots are detected
+     * @return List of robots whose position is at most {@code range} units away from {@code center}
+     */
+    public List<Robot> getRobotsInRange(Position center, int range) {
+        List<Robot> robotsInRange = new ArrayList<>();
+        for (Map.Entry<Position, Robot> entry : robotPositions.entrySet()) {
+            Position robotPos = entry.getKey();
+            if (center.distanceTo(robotPos) <= range) {
+                robotsInRange.add(entry.getValue());
+            }
         }
+        return robotsInRange;
     }
 
 }
