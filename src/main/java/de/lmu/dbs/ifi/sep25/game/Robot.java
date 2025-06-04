@@ -15,7 +15,7 @@ public class Robot {
     private boolean programmingCancelled;
     private int energy;
     private List<RegisterCard> programming = new ArrayList<>();
-    private boolean isPoweredDown;
+    public boolean isPoweredDown;
     private Board currentBoard;  //
 
     public Robot(int startX, int startY, String direction, int id) {
@@ -27,6 +27,10 @@ public class Robot {
         this.damage = 0;
         this.energy = 5; // Starting energy for upgrades
         this.isPoweredDown = false;
+    }
+
+    public boolean isPoweredDown() {
+        return this.isPoweredDown;
     }
 
     public Robot(int x, int y, String direction) {

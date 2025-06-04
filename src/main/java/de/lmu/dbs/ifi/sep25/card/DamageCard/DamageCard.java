@@ -5,10 +5,11 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Reboot;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 
 import java.util.List;
 
-public class DamageCard extends Card {
+public class DamageCard extends Card implements RegisterCard{
     public enum DamageType {
         SPAM,
         WORM,
