@@ -1,11 +1,12 @@
 package de.lmu.dbs.ifi.sep25.card.DamageCard;
 
 import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Reboot;
+import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
-import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class DamageCard extends Card implements RegisterCard{
 
     // Execute when damage is programmed in the register
     @Override
-    public void execute(Robot robot) {
+    public void execute(Robot robot, Player player) {
         switch (damageType) {
             case SPAM:
                 // SPAM Card: Simple damage, no additional effects.

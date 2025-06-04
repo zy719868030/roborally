@@ -1,13 +1,12 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-
+//TODO @yu add generic type to enable deck for: damage cards, register cards, upgrade cards....
 public class Deck {
     private Stack<Card> stack;
     private Stack<Card> discardPile;
@@ -154,6 +153,17 @@ public class Deck {
 
     public Stack<Card> getDiscardPile() {
         return discardPile;
+    }
+
+    /**
+     * Adds a list of cards to the deck by processing each card individually.
+     *
+     * @param cards A list of Card objects to be added to the deck. Each card in the list is added using the addCard(Card) method.
+     */
+    public void addCard(List<Card> cards) {
+        for (Card card : cards) {
+            addCard(card);
+        }
     }
 }
 

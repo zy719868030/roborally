@@ -1,7 +1,8 @@
 package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
-import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.Player;
+import de.lmu.dbs.ifi.sep25.game.Robot;
 
 public class SpecialPro extends ProgrammingCard {
     private String specialEffect;
@@ -16,7 +17,7 @@ public class SpecialPro extends ProgrammingCard {
     }
 
     @Override
-    public void execute(Robot robot) {
+    public void execute(Robot robot, Player player) {
         if (!canExecute(robot)) return;
 
         Board board = robot.getBoard();
@@ -26,7 +27,7 @@ public class SpecialPro extends ProgrammingCard {
                 executeAgain(robot, board);
                 break;
             case "energy routine":
-                robot.addEnergy(1);
+                player.addEnergy(1);
                 System.out.println("Robot " + robot.getId() + " executes Energy Routine - gained 1 energy");
                 break;
             case "speed routine":

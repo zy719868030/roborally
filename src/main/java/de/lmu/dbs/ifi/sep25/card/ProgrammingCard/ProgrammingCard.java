@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
 import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
 public abstract class ProgrammingCard extends Card implements RegisterCard{
@@ -17,7 +18,7 @@ public abstract class ProgrammingCard extends Card implements RegisterCard{
     }
 
     @Override
-    public abstract void execute(Robot robot);
+    public abstract void execute(Robot robot, Player player);
 
     @Override
     public abstract ProgrammingCard clone();

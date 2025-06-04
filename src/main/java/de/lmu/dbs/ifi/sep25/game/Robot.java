@@ -11,21 +11,19 @@ public class Robot {
     private Position position;
     private Direction direction;
     private int damage;
-    private int id;
+    private final int id;
     private boolean programmingCancelled;
-    private int energy;
+//    private int energy; //Moved to player class; can be deleted
     private List<RegisterCard> programming = new ArrayList<>();
     public boolean isPoweredDown;
     private Board currentBoard;  //
 
-    public Robot(int startX, int startY, String direction, int id) {
+    public Robot(int id) {
 //        this.position = startPosition;
 //        this.direction = direction; //TODO move to setPosition
-        this.position = new Position(startX, startY);
-        this.direction = Direction.valueOf(direction);
         this.id = id;
         this.damage = 0;
-        this.energy = 5; // Starting energy for upgrades
+//        this.energy = 5; // Starting energy for upgrades
         this.isPoweredDown = false;
     }
 
@@ -33,10 +31,6 @@ public class Robot {
         return this.isPoweredDown;
     }
 
-    public Robot(int x, int y, String direction) {
-        this.position = new Position(x, y);
-        this.direction = Direction.valueOf(direction);
-    }
 
     // Method for obtaining robot ID
     public int getId() {
@@ -258,13 +252,9 @@ public class Robot {
         System.out.println("Robot " + id + " replaces damage card with programming card");
     }
 
-    /**
-     * Increases the robot's energy value.
-     *
-     * @param amount The amount of energy to be increased.
-     */
-    public void addEnergy(int amount) {
-        this.energy += amount;
-        System.out.println("Robot " + id + " gained " + amount + " energy. Total energy: " + this.energy);
-    }
+
+//    public void addEnergy(int amount) {
+//        this.energy += amount;
+//        System.out.println("Robot " + id + " gained " + amount + " energy. Total energy: " + this.energy);
+//    }
 }

@@ -35,6 +35,10 @@ public abstract class Temporary extends UpgradeCard {
         return isUsed;
     }
 
+    public boolean isPermanent() {
+        return false;
+    }
+
     @Override
     public abstract Temporary clone();
 }

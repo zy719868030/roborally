@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.card.UpgradeCard;
 
 import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
 public abstract class UpgradeCard extends Card {
@@ -15,7 +16,7 @@ public abstract class UpgradeCard extends Card {
 
     // Upgrade cards are not executed in the register, but remain effective after being equipped.
     @Override
-    public void execute(Robot robot) {
+    public void execute(Robot robot, Player player) {
         activate(robot);
     }
 
@@ -38,6 +39,8 @@ public abstract class UpgradeCard extends Card {
     public void setActive(boolean active) {
         this.isActive = active;
     }
+
+    public abstract  boolean isPermanent();
 
     @Override
     public abstract UpgradeCard clone();

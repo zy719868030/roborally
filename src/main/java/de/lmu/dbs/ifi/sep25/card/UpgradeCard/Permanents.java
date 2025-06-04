@@ -20,6 +20,10 @@ public abstract class Permanents extends UpgradeCard {
     // Subclasses implement specific permanent effects.
     public abstract void applyPermanentEffect(Robot robot);
 
+    public boolean isPermanent() {
+        return true;
+    }
+
     @Override
     public abstract Permanents clone();
 }

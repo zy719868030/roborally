@@ -76,7 +76,7 @@ public class Game {
             List<Card> register = player.getRegister();
             for (int phase = 0; phase < 5; phase++) {
                 if (phase < register.size() && register.get(phase) != null) {
-                    register.get(phase).execute(player.getRobot());
+                    register.get(phase).execute(player.getRobot(), player);
                 }
             }
             Position pos = player.getRobot().getPosition();

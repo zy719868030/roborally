@@ -1,81 +1,96 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Player {
     private final String name;
     private final Robot robot;
+    private int energy = 5;
 
-    /*
-    private final List<Card> register = new ArrayList<>(5); //TODO maybe create a subytype of card: RegisterCard <- RegularProgramming, Damage (since dmg and prog cards can be played)
-    private final List<UpgradeCard> upgrades = new ArrayList<>(); //TODO need multiple upgrade lists, for permanent and temp
-    private final List<Card> discardPile = new ArrayList<>(); //TODO should be same subtype like register, personal discard pile; see gameplay loop
-    private final List<Card> hand = new ArrayList<>(); //TODO implement player card hand
-    */
     private final List<RegisterCard> register = new ArrayList<>(5);
     private final List<UpgradeCard> permanentUpgrades = new ArrayList<>();
     private final List<UpgradeCard> temporaryUpgrades = new ArrayList<>();
     private final List<RegisterCard> discardPile = new ArrayList<>();
     private final List<RegisterCard> hand = new ArrayList<>();
     private boolean ready = false;
+    private boolean readyRegister = false;
     private final ClientHandler connection;
     private final Deck programmingDeck = new Deck(); //TODO implement programming deck and card cycle with deck -> register -> discard <- damage ...
-    private static int nextId = 1;
 
-    public Player(String name, int startX, int startY, ClientHandler connection) {
+    public Player(String name, int robotID, ClientHandler connection) {
         this.name = name;
-        this.robot = new Robot(startX, startY, "NORTH", nextID++); //Use nextID
+        this.robot = new Robot(robotID); //Use nextID
         this.connection = connection;
         for (int i = 0; i < 5; i++) {
             register.add(null);
         }
     }
 
-    private void initializeHand() {
+    private void drawHand() {
         programmingDeck.shuffle();
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1); // Fewer cards if damaged
-        for (int i = 0; i < cardsToDraw && !programmingDeck.isEmpty(); i++) {
-            RegisterCard card = programmingDeck.drawCard();
-            if (card != null) {
-                hand.add(card);
-            }
+        for (int i = 0; i < cardsToDraw; i++) {
+            drawCard();
         }
     }
 
-    public void chooseCard(RegisterCard card, int slot) {
-        if (slot >= 0 && slot < 5 && hand.contains(card)) {
-            register.set(slot, card);
-            hand.remove(card);
-            if (connection != null) {
-                connection.sendMessage("Player " + name + " chose card " + card + " in slot " + slot);
+    public void chooseCard(RegisterCard card, int registerSlot) {
+        if (!readyRegister) {
+            if (registerSlot >= 0 && registerSlot < 5 ){
+                if (hand.contains(card)) {
+                    register.set(registerSlot, card);
+                    hand.remove(card);
+                    if (register.stream().noneMatch(Objects::isNull)) {
+                        setReadyRegister(true);
+                    }
+                } else {
+                    connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
+                }
+            } else {
+                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Invalid registerSlot number: " + registerSlot + " (must be between 0 and 4)")));
             }
-            if (register.stream().noneMatch(c -> c == null)) {
-                setReady(true);
-            }
+        } else {
+            connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("You already selected your registry cards!")));
         }
     }
 
     public void discardCard(RegisterCard card) {
         if (card != null) {
-            discardPile.add(card);
+            if (hand.contains(card)) {
+                discardPile.add(card);
+                hand.remove(card);
+            }
+            else {
+                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
+            }
         }
     }
 
-    public void addUpgrade(UpgradeCard upgrade, boolean isPermanent) {
-        if (upgrade != null && robot.getEnergy() >= upgrade.getCost()) {
-            robot.addEnergy(-upgrade.getCost());
-            if (isPermanent) {
-                permanentUpgrades.add(upgrade);
-                upgrade.applyPermanentEffect(robot);
+    public void addUpgrade(UpgradeCard upgrade) {
+        if (consumeEnergy(upgrade.getCost())) {
+            if (upgrade.isPermanent()) {
+                if (permanentUpgrades.size() == 3) {
+                    //TODO add logic to optionally remove 1 card to replace
+                } else {
+                    permanentUpgrades.add(upgrade);
+                }
             } else {
-                temporaryUpgrades.add(upgrade);
-                upgrade.applyTemporaryEffect(robot);
+                if (temporaryUpgrades.size() == 3) {
+                    //TODO add logic to optionally remove 1 card to replace
+                } else {
+                    temporaryUpgrades.add(upgrade);
+                }
             }
+        } else {
+            connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Not enough energy to upgrade!")));
         }
     }
 
@@ -83,39 +98,20 @@ public class Player {
         if (programmingDeck.isEmpty()) {
             recycleDiscardPile();
         }
-        RegisterCard card = programmingDeck.drawCard();
-        if (card != null) {
-            hand.add(card);
-        }
+        hand.add(programmingDeck.draw());
     }
 
     private void recycleDiscardPile() {
-        programmingDeck.addCards(discardPile);
+        programmingDeck.addCard(discardPile);
         discardPile.clear();
         programmingDeck.shuffle();
     }
 
-    public void endRound() {
-        for (RegisterCard card : register) {
-            if (card != null) {
-                discardCard(card);
-            }
-        }
-        register.clear();
-        for (int i = 0; i < 5; i++) {
-            register.add(null);
-        }
-        temporaryUpgrades.clear();
-        robot.resetProgramming();
-        initializeHand();
-        setReady(false);
-    }
+    //TODO fix as rounds are implemented in game class game main loop
+    //public void endRound(){}
 
-    public void applyDamageCard(RegisterCard card) {
-        if (card instanceof DamageCard) {
-            robot.takeDamage(1);
-            discardCard(card);
-        }
+    public void replaceDamageCard(int registerSlot) {
+        register.set(registerSlot, programmingDeck.draw());
     }
 
     public Robot getRobot() {
@@ -147,6 +143,31 @@ public class Player {
 
     public boolean isReady() {
         return ready;
+    }
+
+    public boolean isReadyRegister() {
+        return readyRegister;
+    }
+
+    public void setReadyRegister(boolean ready) {
+        readyRegister = ready;
+        //TODO call timer if first
+    }
+
+    public int getEnergy() {
+        return energy;
+    }
+
+    public void addEnergy(int amount) {
+        this.energy += amount;
+    }
+
+    public boolean consumeEnergy(int cost) {
+        if (energy >= cost) {
+            energy -= cost;
+            return true;
+        }
+        return false;
     }
 
 }

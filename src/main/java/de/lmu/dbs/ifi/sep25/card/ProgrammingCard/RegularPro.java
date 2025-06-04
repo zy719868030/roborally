@@ -1,7 +1,8 @@
 package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
-import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.Player;
+import de.lmu.dbs.ifi.sep25.game.Robot;
 
 public class RegularPro extends ProgrammingCard {
     private int distance;
@@ -16,7 +17,7 @@ public class RegularPro extends ProgrammingCard {
     }
 
     @Override
-    public void execute(Robot robot) {
+    public void execute(Robot robot, Player player) {
         if (!canExecute(robot)) return;
 
         Board board = robot.getBoard();
@@ -40,7 +41,7 @@ public class RegularPro extends ProgrammingCard {
                 robot.turnLeft();
                 break;
             case "powerup":
-                robot.addEnergy(1);
+                player.addEnergy(1);
                 break;
         }
     }
