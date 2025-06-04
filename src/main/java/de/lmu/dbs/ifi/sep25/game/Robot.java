@@ -48,6 +48,7 @@ public class Robot {
      * The robot's direction is updated to reflect this change.
      */
     public void turnLeft() {
+        if (isPoweredDown) return;
         direction = direction.turnLeft();
     }
 
@@ -56,11 +57,13 @@ public class Robot {
      * The robot's direction is updated to reflect this change.
      */
     public void turnRight() {
+        if (isPoweredDown) return;
         direction = direction.turnRight();
     }
 
     // Moves the robot forward one space, checking Board for validity
     public void moveForward(Board board) {
+        if (isPoweredDown) return;
         Position newPos = position.move(direction);
         if (board.isValidPosition(newPos)) {
             // Check if new position's tiles allow passage
@@ -78,6 +81,7 @@ public class Robot {
 
     // Moves the robot forward by the specified number of steps
     public void moveForward(Board board, int steps) {
+        if (isPoweredDown) return;
         if (steps < 0) return; // Ignore negative steps
         for (int i = 0; i < steps; i++) {
             Position currentPos = position; // Store current position
@@ -97,7 +101,7 @@ public class Robot {
     // Moves the robot backward one space
     public void moveBackward(Board board) {
         if (isPoweredDown) return;
-        Direction opposite = direction.opposite();
+        Direction opposite = direction.turnAround();
         Position newPos = position.move(opposite);
         if (board.isValidPosition(newPos)) {
             List<BoardElement> elements = board.getElements(newPos.x(), newPos.y());
@@ -109,6 +113,20 @@ public class Robot {
             }
         } else {
             board.handleFall(this);
+        }
+    }
+
+    // Moves the robot backward by the specified number of steps
+    public void moveBackward(Board board, int steps) {
+        if (isPoweredDown) return;
+        if (steps < 0) return; // Ignore negative steps
+        for (int i = 0; i < steps; i++) {
+            Position currentPos = position; // Store current position
+            moveBackward(board); // Move one step
+            // Stop if position didn't change (e.g., hit a Wall) or robot fell
+            if (position.equals(currentPos) || board.hasRobotFallen(this)) {
+                break;
+            }
         }
     }
 
@@ -139,7 +157,8 @@ public class Robot {
      *
      * @param distance The distance the robot needs to move, which can be a positive number, a negative number, or zero.
      */
-    public void applyMove(int distance) {
+    public void applyMove(Board board, int distance) {
+        if (isPoweredDown) return;
         if (distance > 0) {
             // Positive values indicate forward movement.
             moveForward(board, distance);

@@ -3,6 +3,12 @@ package de.lmu.dbs.ifi.sep25.game;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Floor;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Reboot;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Belts;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Gear;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Laser;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Pit;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Wall;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,14 +55,14 @@ public class Board {
                 Reboot rebootDefault = Reboot.getInstance();
                 rebootDefault.setPosition(new Position(5, 3));
                 grid[5][3].add(rebootDefault);
-                Checkpoint checkpointDefault = new Checkpoint();
+                CheckPoints checkpointDefault = new CheckPoints();
                 checkpointDefault.setPosition(new Position(10, 10));
                 grid[10][10].add(checkpointDefault);
-                Conveyor conveyorDefault = new Conveyor(Direction.NORTH);
-                conveyorDefault.setPosition(new Position(3, 3));
+                Belts conveyorDefault = new Belts(new Position(3,3), Direction.NORTH, Belts.BeltSpeed.SLOW);
+                //conveyorDefault.setPosition(new Position(3, 3));
                 grid[3][3].add(conveyorDefault);
-                Gear gearDefault = new Gear(true);
-                gearDefault.setPosition(new Position(4, 4));
+                Gear gearDefault = new Gear(new Position(4,4), Gear.RotationDirection.CLOCKWISE);
+
                 grid[4][4].add(gearDefault);
                 Wall wallDefault = new Wall();
                 wallDefault.setPosition(new Position(6, 6));
@@ -64,8 +70,8 @@ public class Board {
                 Pit pitDefault = new Pit();
                 pitDefault.setPosition(new Position(8, 8));
                 grid[8][8].add(pitDefault);
-                BoardLaser laserDefault = new BoardLaser(Direction.EAST);
-                laserDefault.setPosition(new Position(7, 7));
+                Laser laserDefault = new Laser(new Position(7,7), Direction.EAST);
+
                 grid[7][7].add(laserDefault);
 
                 break;
@@ -73,16 +79,16 @@ public class Board {
                 Reboot reboot = Reboot.getInstance();
                 reboot.setPosition(new Position(6, 6));
                 grid[6][6].add(reboot);
-                Checkpoint checkpoint1 = new Checkpoint();
+                CheckPoints checkpoint1 = new CheckPoints();
                 checkpoint1.setPosition(new Position(3, 3));
                 grid[3][3].add(checkpoint1);
-                Checkpoint checkpoint2 = new Checkpoint();
+                CheckPoints checkpoint2 = new CheckPoints();
                 checkpoint2.setPosition(new Position(9, 9));
                 grid[9][9].add(checkpoint2);
                 // North-South conveyor (moves down)
                 for (int y = 2; y <= 10; y++) {
                     if (y != 6) { // Skip (6,6) as it has Reboot
-                        Conveyor conveyorNS = new Conveyor(Direction.SOUTH);
+                        Belts conveyorNS = new Belts(new Position(6, y), Direction.SOUTH, Belts.BeltSpeed.SLOW);
                         conveyorNS.setPosition(new Position(6, y));
                         grid[6][y].add(conveyorNS);
                     }
@@ -90,15 +96,15 @@ public class Board {
                 // East-West conveyor (moves right)
                 for (int x = 2; x <= 10; x++) {
                     if (x != 6) { // Skip (6,6) as it has Reboot
-                        Conveyor conveyorEW = new Conveyor(Direction.EAST);
-                        conveyorEW.setPosition(new Position(x, 6));
+                        Belts conveyorEW = new Belts(new Position(x, 6), Direction.EAST, Belts.BeltSpeed.SLOW);
+
                         grid[x][6].add(conveyorEW);
                     }
                 }
-                BoardLaser laserNS = new BoardLaser(Direction.EAST);
+                Laser laserNS = new Laser(new Position(6,3), Direction.EAST);
                 laserNS.setPosition(new Position(6, 3));
                 grid[6][3].add(laserNS);
-                BoardLaser laserEW = new BoardLaser(Direction.SOUTH);
+                Laser laserEW = new Laser(new Position(3,6), Direction.SOUTH);
                 laserEW.setPosition(new Position(3, 6));
                 grid[3][6].add(laserEW);
                 Wall wall1 = new Wall();
@@ -349,7 +355,7 @@ public class Board {
         return count;
     }
     // Handles robots falling off the 12x12 grid
-    private void handleFall(Robot robot) {
+    public void handleFall(Robot robot) {
         // Set position to VOID_POINT (-1, -1)
         robot.setPosition(VOID_POINT);
         // Remove from board mappings
