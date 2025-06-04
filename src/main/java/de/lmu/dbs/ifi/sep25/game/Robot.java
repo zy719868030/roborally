@@ -1,5 +1,11 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class Robot {
     private Position position;
     private Direction direction;
@@ -7,12 +13,18 @@ public class Robot {
     private int id;
     private boolean programmingCancelled;
     private int energy;
+    private List<RegisterCard> programming = new ArrayList<>();
+    private boolean isPoweredDown;
 
-    public Robot(int id) {
+    public Robot(int startX, int startY, String direction, int id) {
 //        this.position = startPosition;
 //        this.direction = direction; //TODO move to setPosition
-        this.damage = 0;
+        this.position = new Position(startX, startY);
+        this.direction = Direction.valueOf(direction);
         this.id = id;
+        this.damage = 0;
+        this.energy = 5; // Starting energy for upgrades
+        this.isPoweredDown = false;
     }
 
     public Robot(int x, int y, String direction) {
@@ -47,24 +59,34 @@ public class Robot {
         direction = direction.turnRight();
     }
 
-    /**
-     * Moves the robot one step forward in its current direction.
-     * The robot's position is updated based on its current direction
-     * using the logic defined in the Position class.
-     */
-    public void moveForward() {
-        position = position.move(direction);
+    // Moves the robot forward one space, checking Board for validity
+    public void moveForward(Board board) {
+        Position newPos = position.move(direction);
+        if (board.isValidPosition(newPos)) {
+            // Check if new position's tiles allow passage
+            List<BoardElement> elements = board.getElements(newPos.x(), newPos.y());
+            boolean canPass = elements.stream().allMatch(e -> e.canPassThrough(this));
+            if (canPass && board.getRobotAt(newPos) == null) {
+                position = newPos;
+                board.updateRobotPosition(this, position);
+                pushRobot(board, direction);
+            }
+        } else {
+            board.handleFall(this);
+        }
     }
 
-    /**
-     * Moves the robot forward by the specified number of steps in its current direction.
-     * The position of the robot is updated step-by-step based on its direction.
-     *
-     * @param steps the number of steps the robot will move forward; must be a non-negative integer
-     */
-    public void moveForward(int steps) {
-        for (int i = 0; i < steps; i++)
-            moveForward();
+    // Moves the robot forward by the specified number of steps
+    public void moveForward(Board board, int steps) {
+        if (steps < 0) return; // Ignore negative steps
+        for (int i = 0; i < steps; i++) {
+            Position currentPos = position; // Store current position
+            moveForward(board); // Move one step
+            // Stop if position didn't change (e.g., hit a Wall) or robot fell
+            if (position.equals(currentPos) || board.hasRobotFallen(this)) {
+                break;
+            }
+        }
     }
 
     /**
@@ -72,8 +94,43 @@ public class Robot {
      * This method determines the reverse direction of the robot's current orientation
      * and updates the position accordingly by moving one step in that direction.
      */
-    public void moveBackward() {
-        position = position.move(direction.turnAround());
+    // Moves the robot backward one space
+    public void moveBackward(Board board) {
+        if (isPoweredDown) return;
+        Direction opposite = direction.opposite();
+        Position newPos = position.move(opposite);
+        if (board.isValidPosition(newPos)) {
+            List<BoardElement> elements = board.getElements(newPos.x(), newPos.y());
+            boolean canPass = elements.stream().allMatch(e -> e.canPassThrough(this));
+            if (canPass && board.getRobotAt(newPos) == null) {
+                position = newPos;
+                board.updateRobotPosition(this, position);
+                pushRobot(board, opposite);
+            }
+        } else {
+            board.handleFall(this);
+        }
+    }
+
+    // Pushes another robot in the given direction
+    public void pushRobot(Board board, Direction pushDirection) {
+        if (isPoweredDown) return;
+        Position nextPos = position.move(pushDirection);
+        Robot otherRobot = board.getRobotAt(nextPos);
+        if (otherRobot != null) {
+            Position otherNewPos = nextPos.move(pushDirection);
+            if (board.isValidPosition(otherNewPos)) {
+                List<BoardElement> elements = board.getElements(otherNewPos.x(), otherNewPos.y());
+                boolean canPass = elements.stream().allMatch(e -> e.canPassThrough(otherRobot));
+                if (canPass && board.getRobotAt(otherNewPos) == null) {
+                    otherRobot.setPosition(otherNewPos);
+                    board.updateRobotPosition(otherRobot, otherNewPos);
+                    otherRobot.pushRobot(board, pushDirection);
+                }
+            } else {
+                board.handleFall(otherRobot);
+            }
+        }
     }
 
     /**
@@ -85,13 +142,11 @@ public class Robot {
     public void applyMove(int distance) {
         if (distance > 0) {
             // Positive values indicate forward movement.
-            moveForward(distance);
+            moveForward(board, distance);
         } else if (distance < 0) {
             // Negative values indicate backward movement.
-            for (int i = 0; i < Math.abs(distance); i++) {
-                moveBackward();
+            moveBackward(board, Math.abs(distance));
             }
-        }
     }
 
     /**

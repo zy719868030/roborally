@@ -10,26 +10,185 @@ import java.util.List;
 import java.util.Map;
 
 public class Board {
-    private List<BoardElement>[][] grid;
+    private final List<BoardElement>[][] grid;
     private final int width;
     private final int height;
-    private Map<Position, Robot> robotPositions = new HashMap<>();
-    private Map<Robot, Position> robotToPosition = new HashMap<>();
+    private final Map<Position, Robot> robotPositions = new HashMap<>();
+    private final Map<Robot, Position> robotToPosition = new HashMap<>();
+
+    // Added to store robots that fall off the board
+    private final List<Robot> fallenRobots = new ArrayList<>();
+    // Designated point for fallen robots (outside 12x12 grid)
+    private static final Position VOID_POINT = new Position(-1, -1);
+
+    public enum MapType {
+        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5
+    }
 
 
     @SuppressWarnings("unchecked")
-    public Board(int width, int height) {
-        this.width = width;
-        this.height = height;
+    public Board(MapType mapType) {
+        this.width = 12;
+        this.height = 12;
+        // Initialize grid for 12x12 board
         this.grid = new ArrayList[width][height];
+        initializeBoard(mapType);
+    }
+
+    // Initialize board with tiles based on map type
+    private void initializeBoard(MapType mapType) {
+        // Populate grid with Floor tiles by default
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 grid[x][y] = new ArrayList<>();
                 grid[x][y].add(Floor.getInstance());
             }
         }
+        switch (mapType) {
+            case DEFAULT:
+                Reboot rebootDefault = Reboot.getInstance();
+                rebootDefault.setPosition(new Position(5, 3));
+                grid[5][3].add(rebootDefault);
+                Checkpoint checkpointDefault = new Checkpoint();
+                checkpointDefault.setPosition(new Position(10, 10));
+                grid[10][10].add(checkpointDefault);
+                Conveyor conveyorDefault = new Conveyor(Direction.NORTH);
+                conveyorDefault.setPosition(new Position(3, 3));
+                grid[3][3].add(conveyorDefault);
+                Gear gearDefault = new Gear(true);
+                gearDefault.setPosition(new Position(4, 4));
+                grid[4][4].add(gearDefault);
+                Wall wallDefault = new Wall();
+                wallDefault.setPosition(new Position(6, 6));
+                grid[6][6].add(wallDefault);
+                Pit pitDefault = new Pit();
+                pitDefault.setPosition(new Position(8, 8));
+                grid[8][8].add(pitDefault);
+                BoardLaser laserDefault = new BoardLaser(Direction.EAST);
+                laserDefault.setPosition(new Position(7, 7));
+                grid[7][7].add(laserDefault);
+
+                break;
+            case MAP1: // Risky Crossing board (beginner's course)
+                Reboot reboot = Reboot.getInstance();
+                reboot.setPosition(new Position(6, 6));
+                grid[6][6].add(reboot);
+                Checkpoint checkpoint1 = new Checkpoint();
+                checkpoint1.setPosition(new Position(3, 3));
+                grid[3][3].add(checkpoint1);
+                Checkpoint checkpoint2 = new Checkpoint();
+                checkpoint2.setPosition(new Position(9, 9));
+                grid[9][9].add(checkpoint2);
+                // North-South conveyor (moves down)
+                for (int y = 2; y <= 10; y++) {
+                    if (y != 6) { // Skip (6,6) as it has Reboot
+                        Conveyor conveyorNS = new Conveyor(Direction.SOUTH);
+                        conveyorNS.setPosition(new Position(6, y));
+                        grid[6][y].add(conveyorNS);
+                    }
+                }
+                // East-West conveyor (moves right)
+                for (int x = 2; x <= 10; x++) {
+                    if (x != 6) { // Skip (6,6) as it has Reboot
+                        Conveyor conveyorEW = new Conveyor(Direction.EAST);
+                        conveyorEW.setPosition(new Position(x, 6));
+                        grid[x][6].add(conveyorEW);
+                    }
+                }
+                BoardLaser laserNS = new BoardLaser(Direction.EAST);
+                laserNS.setPosition(new Position(6, 3));
+                grid[6][3].add(laserNS);
+                BoardLaser laserEW = new BoardLaser(Direction.SOUTH);
+                laserEW.setPosition(new Position(3, 6));
+                grid[3][6].add(laserEW);
+                Wall wall1 = new Wall();
+                wall1.setPosition(new Position(5, 5));
+                grid[5][5].add(wall1);
+                Wall wall2 = new Wall();
+                wall2.setPosition(new Position(7, 7));
+                grid[7][7].add(wall2);
+                Pit pitNS = new Pit();
+                pitNS.setPosition(new Position(6, 11));
+                grid[6][11].add(pitNS);
+                Pit pitEW = new Pit();
+                pitEW.setPosition(new Position(11, 6));
+                grid[11][6].add(pitEW);
+                break;
+            case MAP2:
+            case MAP3:
+            case MAP4:
+            case MAP5:
+                // Placeholder for other maps
+                break;
+        }
     }
 
+    // Sets initial robot position based on map type and player choice (0-4)
+    public void setStartPosition(Robot robot, MapType mapType, int playerChoice) {
+        // Define 5 possible starting positions per map
+        Position[] startPositions;
+        switch (mapType) {
+            case DEFAULT:
+                startPositions = new Position[] {
+                        new Position(5, 5), new Position(5, 6), new Position(6, 5),
+                        new Position(6, 6), new Position(4, 5)
+                };
+                break;
+            case MAP1: // Risky Crossing starting positions
+                startPositions = new Position[] {
+                        new Position(0, 0),  // Top-left corner
+                        new Position(0, 11), // Bottom-left corner
+                        new Position(11, 0), // Top-right corner
+                        new Position(11, 11), // Bottom-right corner
+                        new Position(0, 6)   // Left side near E-W conveyor
+                };
+                break;
+            case MAP2:
+                startPositions = new Position[] {
+                        new Position(1, 1), new Position(1, 2), new Position(2, 1),
+                        new Position(2, 2), new Position(1, 3)
+                };
+                break;
+            case MAP3:
+                startPositions = new Position[] {
+                        new Position(2, 2), new Position(2, 3), new Position(3, 2),
+                        new Position(3, 3), new Position(2, 4)
+                };
+                break;
+            case MAP4:
+                startPositions = new Position[] {
+                        new Position(3, 3), new Position(3, 4), new Position(4, 3),
+                        new Position(4, 4), new Position(3, 5)
+                };
+                break;
+            case MAP5:
+                startPositions = new Position[] {
+                        new Position(4, 4), new Position(4, 5), new Position(5, 4),
+                        new Position(5, 5), new Position(4, 6)
+                };
+                break;
+            default:
+                startPositions = new Position[] { new Position(0, 0) };
+        }
+        // Validate player choice (0-4)
+        int choice = Math.min(Math.max(playerChoice, 0), startPositions.length - 1);
+        Position startPos = startPositions[choice];
+        // If position is occupied, try next available
+        int originalChoice = choice;
+        while (getRobotAt(startPos) != null && choice < startPositions.length - 1) {
+            choice++;
+            startPos = startPositions[choice];
+        }
+        // If all positions are taken, use fallback
+        if (getRobotAt(startPos) != null) {
+            startPos = startPositions[originalChoice];
+            System.out.println("Warning: Start position for Robot " + robot.getId() + " may overlap.");
+        }
+        robot.setPosition(startPos);
+        updateRobotPosition(robot, startPos);
+    }
+
+    // Gets elements at a position (used for tile effects)
     public List<BoardElement> getElements(int x, int y) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
             return grid[x][y];
@@ -40,10 +199,16 @@ public class Board {
     public void placeRobot(Robot robot, int x, int y) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
             robot.setPosition(x, y);
+            updateRobotPosition(robot, robot.getPosition());
+        } else {
+            // Handle robots falling off the board
+            handleFall(robot);
         }
     }
 
     public void applyEffects(Robot robot, int x, int y) {
+        // Skip if robot has fallen off
+        if (fallenRobots.contains(robot)) return;
         List<BoardElement> elementsAt = getElements(x, y);
         for (BoardElement element : elementsAt) {
             element.applyEffect(robot, this);
@@ -78,19 +243,20 @@ public class Board {
      *
      * @return the Position of the reboot token, or null if no reboot token exists on the board
      */
+
+    // [PG] Changed "RestartPoint" and "RebootPoint" to "Reboot" to match our Reboot tile
+    // Changed null fallback to (0,0) to avoid NullPointerException
     public Position getRebootPosition() {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                List<BoardElement> elements = getElements(x, y);
-                for (BoardElement element : elements) {
-                    if (element.getType().equals("RestartPoint") || element.getType().equals("RebootPoint")) {
-                        return new Position(x, y);
-                    }
+                if (getElements(x, y).stream().anyMatch(e -> e.getType().equals("Reboot"))) {
+                    return new Position(x, y);
                 }
             }
         }
-        return null;
+        return new Position(0, 0); // Fallback to (0,0) instead of null
     }
+
 
     public int getWidth() {
         return width;
@@ -108,6 +274,14 @@ public class Board {
      * @param newPosition The robot's new position.
      */
     public void updateRobotPosition(Robot robot, Position newPosition) {
+        // Added to clear fallen status when robot returns to board
+        fallenRobots.remove(robot);
+        // Added falling mechanic check to handle robots going off-board
+        if (newPosition != null && !isValidPosition(newPosition)) {
+            handleFall(robot);
+            return;
+        }
+
         // Get the robot's old position
         Position oldPosition = robotToPosition.get(robot);
 
@@ -140,8 +314,12 @@ public class Board {
         for (int x = 0; x < grid.length; x++) {
             List<List<BoardElement>> col = new ArrayList<>();
             for (int y = 0; y < grid[0].length; y++) {
-                Tile tile = grid[x][y]; //FIXME will be fixed when board is fixed....
-                col.add(tile == null ? null : tile.getElements());
+                //Tile tile = grid[x][y]; //FIXME will be fixed when board is fixed....
+                //col.add(tile == null ? null : tile.getElements());
+                // Fixed: Replaced Tile with List<BoardElement> to match grid type
+                // grid[x][y] is never null (always has Floor), so no need for null check
+                List<BoardElement> elements = grid[x][y];
+                col.add(elements);
             }
             map.add(col);
         }
@@ -170,49 +348,42 @@ public class Board {
 
         return count;
     }
-}
+    // Handles robots falling off the 12x12 grid
+    private void handleFall(Robot robot) {
+        // Set position to VOID_POINT (-1, -1)
+        robot.setPosition(VOID_POINT);
+        // Remove from board mappings
+        Position oldPosition = robotToPosition.get(robot);
+        if (oldPosition != null) {
+            robotPositions.remove(oldPosition);
+        }
+        robotToPosition.remove(robot);
+        // Add to fallen robots list
+        fallenRobots.add(robot);
+        // Apply damage and cancel programming
+        robot.takeDamage(2);
+        robot.cancelProgramming();
+        System.out.println("Robot " + robot.getId() + " fell off the board and is at VOID_POINT (-1, -1)");
+    }
 
-/*
-@SuppressWarnings({"unused"})
-public class Board {
-    private final Tile[][] tiles;
-    private final int width;
-    private final int height;
+    // Checks if a robot has fallen off the board
+    public boolean hasRobotFallen(Robot robot) {
+        return fallenRobots.contains(robot);
+    }
 
-    public Board(int width, int height) {
-        this.width = width;
-        this.height = height;
-        this.tiles = new Tile[width][height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                tiles[x][y] = new Tile();
-            }
+    // Reboots a fallen robot to the reboot point
+    public void rebootRobot(Robot robot) {
+        if (fallenRobots.contains(robot)) {
+            Position rebootPos = getRebootPosition();
+            robot.setPosition(rebootPos.x(), rebootPos.y());
+            fallenRobots.remove(robot);
+            updateRobotPosition(robot, rebootPos);
+            robot.takeDamage(2); // Additional reboot penalty
+            robot.cancelProgramming();
+            System.out.println("Robot " + robot.getId() + " rebooted to " + rebootPos);
         }
     }
 
-    public Tile getTile(Position position) {
-        return tiles[position.x()][position.y()];
-    }
-
-    public void addTileElement(TileElement element, Position position) {
-        tiles[position.x()][position.y()].addElement(element);
-    }
-
-    public void removeTileElement(TileElement element, Position position) {
-        tiles[position.x()][position.y()].removeElement(element);
-    }
-
-    public boolean isInBounds(Position pos) {
-        return pos.x() >= 0 && pos.x() < width && pos.y() >= 0 && pos.y() < height;
-    }
-
-    //obsolete method, since xy position should be stored in robot, not in tiles
-//    public void placeRobot(Robot robot, int x, int y) {
-//        Tile tile = getTile(x, y);
-//        if (tile != null) {
-//            tile.setRobot(robot);
-//        }
-//    }
 }
 
-*/
+

@@ -16,6 +16,7 @@ public class Floor extends BoardElement {
     private static final Floor INSTANCE = new Floor();
 
     private Floor() {
+
     }
 
     public static Floor getInstance() {
@@ -25,6 +26,7 @@ public class Floor extends BoardElement {
 
     @Override
     public void activate(Robot robot) {
+            // No effect
     }
 
     @Override
