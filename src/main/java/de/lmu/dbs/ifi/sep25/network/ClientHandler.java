@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.network;
 import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
+import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -90,7 +91,6 @@ public class ClientHandler implements Runnable {
                     case "PlayerValues" -> handleBodyPlayerValues(json);
                     case "SetStatus" -> handleBodySetStatus(json);
                     case "MapSelected" -> handleBodyMapSelected(json);
-//                    case "GameStarted" -> handleBodyGameStarted(json);
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
@@ -238,20 +238,7 @@ public class ClientHandler implements Runnable {
         Server server = Server.getInstance();
 
         server.broadcastMessage(new Message<>(new BodyMapSelected(map)));
-
-        //TODO @lukas: implement game/board creation after game logic
-
         server.newGame(map);
-
-        /*  Skeletal structure:
-         *
-         *   server.newGame(
-         *       new Game(new Board(map)
-         *   )
-         * add lobby players
-         * can call start game
-         *
-         * */
     }
 
     /**

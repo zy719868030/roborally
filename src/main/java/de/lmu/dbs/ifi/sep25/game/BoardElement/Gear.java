@@ -1,7 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
@@ -10,7 +9,7 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * The gear rotates the robot standing on it during the activation phase.
  * There are two types of gears: clockwise rotation (green) and counterclockwise rotation (red).
  */
-public class Gears extends BoardElement {
+public class Gear extends BoardElement {
 
     public enum RotationDirection {
         CLOCKWISE,
@@ -26,13 +25,13 @@ public class Gears extends BoardElement {
     private RotationDirection rotationDirection;
     private GearColor color;
 
-    public Gears() {
+    public Gear() {
         super();
         this.rotationDirection = RotationDirection.CLOCKWISE;
         this.color = GearColor.GREEN;
     }
 
-    public Gears(Position position) {
+    public Gear(Position position) {
         super(position);
         this.rotationDirection = RotationDirection.CLOCKWISE;
         this.color = GearColor.GREEN;
@@ -45,7 +44,7 @@ public class Gears extends BoardElement {
      * @param position Gear position
      * @param rotationDirection Gear rotation direction
      */
-    public Gears(Position position, RotationDirection rotationDirection) {
+    public Gear(Position position, RotationDirection rotationDirection) {
         super(position);
         this.rotationDirection = rotationDirection;
         // Set colours based on rotation direction
@@ -58,7 +57,7 @@ public class Gears extends BoardElement {
      * @param position Gear position
      * @param color Gear colour
      */
-    public Gears(Position position, GearColor color) {
+    public Gear(Position position, GearColor color) {
         super(position);
         this.color = color;
 

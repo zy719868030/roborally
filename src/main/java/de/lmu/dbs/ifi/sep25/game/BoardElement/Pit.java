@@ -8,12 +8,12 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * Represents a pit element on the game board.
  * When the robot moves onto a pit, it immediately falls into the pit and triggers the restart process.
  */
-public class Pits extends BoardElement {
-    public Pits() {
+public class Pit extends BoardElement {
+    public Pit() {
         super();
     }
 
-    public Pits(Position position) {
+    public Pit(Position position) {
         super(position);
     }
 

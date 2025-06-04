@@ -9,6 +9,14 @@ import java.util.List;
 public class Tile {
     private final List<BoardElement> elements = new ArrayList<>();
 
+    public Tile() {
+
+    }
+
+    public Tile(List<BoardElement> elements) {
+        this.elements.addAll(elements);
+    }
+
     public void addElement(BoardElement element) {
         elements.add(element);
     }

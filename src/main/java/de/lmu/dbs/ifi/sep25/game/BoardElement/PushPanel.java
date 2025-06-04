@@ -14,29 +14,29 @@ import java.util.List;
  * Represents a push element on the game board.
  * Pushes the robot when activated during a specific register round.
  */
-public class PushPanels extends BoardElement {
+public class PushPanel extends BoardElement {
     private List<Integer> activeRegisters;
     private int currentRegister;
 
-    public PushPanels() {
+    public PushPanel() {
         super();
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
     }
 
-    public PushPanels(Position position) {
+    public PushPanel(Position position) {
         super(position);
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
     }
 
-    public PushPanels(Position position, Direction direction) {
+    public PushPanel(Position position, Direction direction) {
         super(position, direction);
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
     }
 
-    public PushPanels(Position position, Direction direction, List<Integer> activeRegisters) {
+    public PushPanel(Position position, Direction direction, List<Integer> activeRegisters) {
         super(position, direction);
         this.activeRegisters = new ArrayList<>(activeRegisters);
         this.currentRegister = 0;

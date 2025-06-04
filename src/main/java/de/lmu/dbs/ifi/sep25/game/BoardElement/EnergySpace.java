@@ -9,11 +9,11 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * When the robot finishes moving and stays on the energy space, it can collect energy cubes.
  * Once the energy cubes are collected, the energy space will remain empty until the game ends.
  */
-public class EnergySpaces extends BoardElement {
+public class EnergySpace extends BoardElement {
     private int energyCount;
     private boolean collected;
 
-    public EnergySpaces() {
+    public EnergySpace() {
         super();
         this.energyCount = 1;
         this.collected = false;
@@ -24,7 +24,7 @@ public class EnergySpaces extends BoardElement {
      *
      * @param position Position of the energy space.
      */
-    public EnergySpaces(Position position) {
+    public EnergySpace(Position position) {
         super(position);
         this.energyCount = 1;
         this.collected = false;
@@ -36,7 +36,7 @@ public class EnergySpaces extends BoardElement {
      * @param position Position in energy space.
      * @param energyCount Number of energy cubes.
      */
-    public EnergySpaces(Position position, int energyCount) {
+    public EnergySpace(Position position, int energyCount) {
         super(position);
         this.energyCount = energyCount;
         this.collected = false;

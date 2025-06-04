@@ -9,25 +9,25 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * Represents a laser element on the game board.
  * Lasers deal damage to robots that end their movement on a laser's path.
  */
-public class Lasers extends BoardElement {
+public class Laser extends BoardElement {
     private int power;
 
-    public Lasers() {
+    public Laser() {
         super();
         this.power = 1;
     }
 
-    public Lasers(Position position) {
+    public Laser(Position position) {
         super(position);
         this.power = 1;
     }
 
-    public Lasers(Position position, Direction direction) {
+    public Laser(Position position, Direction direction) {
         super(position, direction);
         this.power = 1;
     }
 
-    public Lasers(Position position, Direction direction, int power) {
+    public Laser(Position position, Direction direction, int power) {
         super(position, direction);
         this.power = power;
     }
@@ -122,8 +122,8 @@ public class Lasers extends BoardElement {
     private boolean isBlockedByWall(Position position, Board board) {
         for (BoardElement element : board.getElements(position.x(), position.y())) {
             // Check if it is a wall
-            if (element instanceof Walls) {
-                Walls wall = (Walls) element;
+            if (element instanceof Wall) {
+                Wall wall = (Wall) element;
                 // Check whether the wall is blocking the direction of the laser.
                 if (!wall.canPassThroughFromDirection(direction)) {
                     return true;

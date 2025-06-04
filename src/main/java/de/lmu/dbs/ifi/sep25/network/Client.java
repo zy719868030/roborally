@@ -1,10 +1,12 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
+import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -285,6 +287,10 @@ public class Client {
 
     /****/
     private void handleBodyGameStarted(String json) {
+        Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
+        BodyGameStarted body = message.messageBody();
+        List<List<List<BoardElement>>> board = body.gameMap();
+
         //TODO display the map to client in fx
     }
 

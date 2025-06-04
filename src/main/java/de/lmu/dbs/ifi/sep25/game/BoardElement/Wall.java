@@ -12,28 +12,28 @@ import java.util.List;
  * Walls prevent robots from passing through and can have multiple orientations
  * (i.e., walls can block movement in multiple directions).
  */
-public class Walls extends BoardElement {
+public class Wall extends BoardElement {
     private List<Direction> blockedDirections;
 
-    public Walls() {
+    public Wall() {
         super();
         this.blockedDirections = new ArrayList<>();
     }
 
-    public Walls(Position position) {
+    public Wall(Position position) {
         super(position);
         this.blockedDirections = new ArrayList<>();
     }
 
     //Constructor with position and blocking direction parameters
-    public Walls(Position position, Direction blockedDirection) {
+    public Wall(Position position, Direction blockedDirection) {
         super(position);
         this.blockedDirections = new ArrayList<>();
         this.blockedDirections.add(blockedDirection);
     }
 
     //Constructor with position and multiple blocking direction parameters
-    public Walls(Position position, List<Direction> blockedDirections) {
+    public Wall(Position position, List<Direction> blockedDirections) {
         super(position);
         this.blockedDirections = new ArrayList<>(blockedDirections);
     }

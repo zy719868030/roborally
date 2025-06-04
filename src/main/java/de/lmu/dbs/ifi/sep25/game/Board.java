@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Board {
-    private List<BoardElement>[][] elements;
+    private List<BoardElement>[][] grid;
     private final int width;
     private final int height;
     private Map<Position, Robot> robotPositions = new HashMap<>();
@@ -20,18 +20,18 @@ public class Board {
     public Board(int width, int height) {
         this.width = width;
         this.height = height;
-        this.elements = new ArrayList[width][height];
+        this.grid = new ArrayList[width][height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                elements[x][y] = new ArrayList<>();
-                elements[x][y].add(Floor.getInstance());
+                grid[x][y] = new ArrayList<>();
+                grid[x][y].add(Floor.getInstance());
             }
         }
     }
 
     public List<BoardElement> getElements(int x, int y) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
-            return elements[x][y];
+            return grid[x][y];
         }
         return new ArrayList<>();
     }
@@ -123,6 +123,30 @@ public class Board {
             robotToPosition.remove(robot);
         }
     }
+
+    /**
+     * Transforms the board's grid into a serializable map representation.
+     * The resulting map is a three-dimensional list structure where:
+     * - Each top-level list represents a column in the grid.
+     * - Each second-level list represents a row within a column.
+     * - Each third-level list contains the elements present in a specific tile of the grid.
+     * Tiles that are null in the grid are represented as null in the map.
+     *
+     * @return A three-dimensional list representing the serialized state of the board.
+     */
+    public List<List<List<BoardElement>>> toSerializableMap() {
+        List<List<List<BoardElement>>> map = new ArrayList<>();
+        for (int x = 0; x < grid.length; x++) {
+            List<List<BoardElement>> col = new ArrayList<>();
+            for (int y = 0; y < grid[0].length; y++) {
+                Tile tile = grid[x][y]; //FIXME will be fixed when board is fixed....
+                col.add(tile == null ? null : tile.getElements());
+            }
+            map.add(col);
+        }
+        return map;
+    }
+
 }
 
 /*

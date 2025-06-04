@@ -1,6 +1,6 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import com.google.gson.JsonObject;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class MessageDefinitions {
     }
 
     //FIXME implement map design
-    public record BodyGameStarted(Integer energy, JsonObject gameMap) {
+    public record BodyGameStarted(Integer energy, List<List<List<BoardElement>>> gameMap) {
     }
 
     public record BodySendChat(String message, Integer to) {

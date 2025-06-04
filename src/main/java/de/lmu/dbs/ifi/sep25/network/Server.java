@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
+import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -345,19 +346,16 @@ public class Server {
     }
 
     /**
-     * Marks the specified client handler as ready by adding it to the server's ready order.
-     * This method maintains the order of readiness and avoids duplicates.
+     * Marks the specified client handler as ready and adds it to the ready order.
+     * If all clients in the lobby are ready and the game is initialized, the game will start.
      *
-     * @param handler the {@link ClientHandler} instance representing the client to be marked as ready
+     * @param handler the client handler to mark as ready
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler); // adds in order, ignores duplicates
 
-        if (lobby.allReady() && game != null) {
-//            broadcastMessage(new Message<>(new BodyGameStarted(5, gson.toJson(game.getBoard().toString()))));
-            //FIXME @Lukas
-        }
-        //TODO check ready all and map chosen
+        if (lobby.allReady() && game != null)
+            startGame();
     }
 
     /**
@@ -399,15 +397,33 @@ public class Server {
     }
 
     /**
-     * Initializes and starts the game with the specified map.
+     * Initializes a new game session with the specified map.
+     * Creates a new game instance and adds players from the connected clients.
+     * Starts the game if all players in the lobby are ready.
      *
-     * @param mapName the name of the map to load for the game
+     * @param mapName the name of the map to initialize the game with
      */
     public void newGame(String mapName) {
         this.game = new Game(mapName);
         for (ClientHandler client : clients.keySet()) {
             game.addPlayer(client.getPlayer());
         }
+        if (lobby.allReady())
+            startGame();
+    }
+
+    /**
+     * Initializes and starts the game by broadcasting a "Game Started" message to all players.
+     * The message includes details about the game's initial board state and maximum player count.
+     * <p>
+     * This method creates a message object containing a serialized representation of the game board
+     * and the maximum number of players allowed. The generated message is then sent to all connected players.
+     * Additional logic may be implemented in the future if required.
+     */
+    private void startGame() {
+        Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
+        broadcastMessage(JsonUtil.toJson(message));
+        //TODO maybe more logic needed?
     }
 
 
