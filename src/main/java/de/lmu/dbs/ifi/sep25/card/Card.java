@@ -32,4 +32,9 @@ public abstract class Card implements Cloneable {
     @Override
     // Abstract cloning methods: subclasses need to implement deep copies
     public abstract Card clone();
+
+    @Override
+    public String toString() {
+        return description;
+    }
 }

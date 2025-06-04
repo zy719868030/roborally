@@ -2,26 +2,24 @@ package de.lmu.dbs.ifi.sep25.card.UpgradeCard;
 
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
-public class Permanents extends UpgradeCard {
-    private String permanentEffect;
+public abstract class Permanents extends UpgradeCard {
 
-    public Permanents(String description, String permanentEffect) {
-        super(description);
-        this.permanentEffect = permanentEffect;
+    // Permanent upgrades are activated immediately once equipped.
+    public Permanents(String description, int cost) {
+        super(description, cost);
+        this.isActive = true;
     }
 
-    public String getPermanentEffect() {
-        return permanentEffect;
+    // Activation of permanent upgrade cards is ongoing.
+    @Override
+    public void activate(Robot robot) {
+        // Here can apply some persistent effects.
+        applyPermanentEffect(robot);
     }
+
+    // Subclasses implement specific permanent effects.
+    public abstract void applyPermanentEffect(Robot robot);
 
     @Override
-    public void execute(Robot robot) {
-        //Implementation of persistent upgrade effects
-        System.out.println("Robot " + robot.getId() + " activates permanent upgrade: " + permanentEffect);
-    }
-
-    @Override
-    public Permanents clone() {
-        return new Permanents(this.description, this.permanentEffect);
-    }
+    public abstract Permanents clone();
 }

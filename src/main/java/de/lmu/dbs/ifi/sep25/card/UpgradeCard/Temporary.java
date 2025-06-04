@@ -2,33 +2,39 @@ package de.lmu.dbs.ifi.sep25.card.UpgradeCard;
 
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
-public class Temporary extends UpgradeCard {
-    // Remaining availability, e.g. expires after 3 times
-    private int usesRemaining;
+public abstract class Temporary extends UpgradeCard {
+    // Has the temporary upgrade card already been used?
+    private boolean isUsed;
 
-    public Temporary(String description, int usesRemaining) {
-        super(description);
-        this.usesRemaining = usesRemaining;
+    // Temporary upgrade can be used after purchase.
+    public Temporary(String description, int cost) {
+        super(description, cost);
+        this.isUsed = false;
+        this.isActive = true;
     }
 
-    public int getUsesRemaining() {
-        return usesRemaining;
-    }
-
+    // Expires after use
     @Override
-    public void execute(Robot robot) {
-        if (usesRemaining > 0) {
-            // Print a log of robot usage upgrades
-            System.out.println("Robot " + robot.getId() + " uses temporary upgrade: " + description);
-            usesRemaining--;
-        } else {
-            // Prompts that there are no more times left
-            System.out.println("No more uses for " + description);
+    public void activate(Robot robot) {
+        if (!isUsed && isActive) {
+            applyTemporaryEffect(robot);
+            isUsed = true;
+            isActive = false; // 使用后失效
         }
     }
 
+    // Subclass implements specific temporary effects
+    public abstract void applyTemporaryEffect(Robot robot);
+
     @Override
-    public Temporary clone() {
-        return new Temporary(this.description, this.usesRemaining);
+    public boolean canUse(Robot robot) {
+        return isActive && !isUsed;
     }
+
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    @Override
+    public abstract Temporary clone();
 }
