@@ -1,22 +1,46 @@
 package de.lmu.dbs.ifi.sep25.game;
 import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
+import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Game {
+    private static Game instance;
+
     private Player currentPlayer;
     private List<Player> players;
-    private List<Card> discardPile;
     private Board board;
+    private final DamageDeck<DamageCard> damageDeck = new DamageDeck<>();
+    private final Deck<UpgradeCard> upgradeCards = new Deck<>();
 
-    public Game(String mapName) {
+    private Game(String mapName) {
         players = new ArrayList<>();
-        discardPile = new ArrayList<>();
         Board.MapType mapType = parseMapName(mapName);
-        board = new Board(12, 12);
+        board = new Board(12, 12); //FIXME @prajal
         currentPlayer = null;
+        initializeUpgradeCards();
+    }
+
+    public static Game getInstance() {
+        if (instance != null) {
+            return instance;
+        }
+        throw new IllegalStateException("Game instance has not been initialized yet.");
+    }
+
+    public static Game getInstance(String mapName) {
+        if (instance == null) {
+            instance = new Game(mapName);
+        }
+        return instance;
+    }
+
+    //TODO @yu or @prajal
+    private void initializeUpgradeCards() {
+        //add upgrade cards
     }
 
     private Board.MapType parseMapName(String mapName) {
@@ -73,7 +97,7 @@ public class Game {
 
     public void playRound() {
         for (Player player : players) {
-            List<Card> register = player.getRegister();
+            List<RegisterCard> register = player.getRegister();
             for (int phase = 0; phase < 5; phase++) {
                 if (phase < register.size() && register.get(phase) != null) {
                     register.get(phase).execute(player.getRobot(), player);

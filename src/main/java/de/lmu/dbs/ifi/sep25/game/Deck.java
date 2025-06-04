@@ -1,22 +1,16 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-//TODO @yu add generic type to enable deck for: damage cards, register cards, upgrade cards....
-public class Deck {
-    private Stack<Card> stack;
-    private Stack<Card> discardPile;
-    private List<DamageCard> damageCards;
+
+//TODO add a seperate Deck for only damage cards, since damage cards dont have own class
+public class Deck <Card>{
+    private final Stack<Card> stack = new Stack<>();
+    private final Stack<Card> discardPile = new Stack<>();
 
     public Deck() {
-        this.stack = new Stack<>();
-        this.discardPile = new Stack<>();
-        this.damageCards = new ArrayList<>();
-        initializeDamageCards();
     }
 
     public Deck(Card[] cards) {
@@ -31,29 +25,37 @@ public class Deck {
         Collections.shuffle(this.stack);
     }
 
-
-    // Add different types of damage cards to the deck.
-    private void initializeDamageCards() {
-        // SPAM Card - Causes damage
-        for (int i = 0; i < 20; i++) {
-            damageCards.add(new DamageCard("SPAM", DamageCard.DamageType.SPAM));
-        }
-
-        // WORM Card - Causes restart
-        for (int i = 0; i < 6; i++) {
-            damageCards.add(new DamageCard("WORM", DamageCard.DamageType.WORM));
-        }
-
-        // VIRUS Card - Spreads to nearby robots
-        for (int i = 0; i < 6; i++) {
-            damageCards.add(new DamageCard("VIRUS", DamageCard.DamageType.VIRUS));
-        }
-
-        // TROJAN HORSE Card - Causes additional damage
-        for (int i = 0; i < 6; i++) {
-            damageCards.add(new DamageCard("TROJAN HORSE", DamageCard.DamageType.TROJAN_HORSE));
-        }
-    }
+//    // Add different types of damage cards to the deck.
+//    private void initializeDamageCards() {
+//        // SPAM Card - Causes damage
+//        for (int i = 0; i < 20; i++) {
+//            damageDeck.addCard(new DamageCard("SPAM", DamageCard.DamageType.SPAM));
+//        }
+//
+//        // WORM Card - Causes restart
+//        for (int i = 0; i < 6; i++) {
+//            damageDeck.addCard(new DamageCard("WORM", DamageCard.DamageType.WORM));
+//        }
+//
+//        // VIRUS Card - Spreads to nearby robots
+//        for (int i = 0; i < 6; i++) {
+//            damageDeck.addCard(new DamageCard("VIRUS", DamageCard.DamageType.VIRUS));
+//        }
+//
+//        // TROJAN HORSE Card - Causes additional damage
+//        for (int i = 0; i < 6; i++) {
+//            damageDeck.addCard(new DamageCard("TROJAN HORSE", DamageCard.DamageType.TROJAN_HORSE));
+//        }
+//    }
+//    Obtain a specific type of damage card
+//    public DamageCard getDamageCard(DamageCard.DamageType type) {
+//        for (DamageCard card : damageCards) {
+//            if (card.getDamageType() == type) {
+//                return card.clone();
+//            }
+//        }
+//        return null;
+//    }
 
     /**
      * Draw a card from the top of the deck.
@@ -72,15 +74,6 @@ public class Deck {
         return stack.pop();
     }
 
-    // Obtain a specific type of damage card
-    public DamageCard getDamageCard(DamageCard.DamageType type) {
-        for (DamageCard card : damageCards) {
-            if (card.getDamageType() == type) {
-                return card.clone();
-            }
-        }
-        return null;
-    }
 
     /**
      * Return cards from the discard pile to the deck and shuffle the deck.
@@ -103,6 +96,10 @@ public class Deck {
         if (card != null) {
             discardPile.push(card);
         }
+    }
+
+    public List<Card> getDiscard() {
+        return new ArrayList<>(discardPile);
     }
 
     /**
@@ -143,9 +140,9 @@ public class Deck {
         }
     }
 
-    public List<DamageCard> getDamageCards() {
-        return damageCards;
-    }
+//    public List<DamageCard> getDamageCards() {
+//        return damageCards;
+//    }
 
     public Stack<Card> getStack() {
         return stack;

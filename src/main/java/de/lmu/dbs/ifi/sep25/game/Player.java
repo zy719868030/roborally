@@ -1,6 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
@@ -11,23 +10,23 @@ import java.util.List;
 import java.util.Objects;
 
 public class Player {
+    private final ClientHandler connection;
     private final String name;
     private final Robot robot;
     private int energy = 5;
 
+    private boolean ready = false;
+    private boolean readyRegister = false;
+
     private final List<RegisterCard> register = new ArrayList<>(5);
     private final List<UpgradeCard> permanentUpgrades = new ArrayList<>();
     private final List<UpgradeCard> temporaryUpgrades = new ArrayList<>();
-    private final List<RegisterCard> discardPile = new ArrayList<>();
     private final List<RegisterCard> hand = new ArrayList<>();
-    private boolean ready = false;
-    private boolean readyRegister = false;
-    private final ClientHandler connection;
-    private final Deck programmingDeck = new Deck(); //TODO implement programming deck and card cycle with deck -> register -> discard <- damage ...
+    private final Deck<RegisterCard> programmingDeck = new Deck<>();
 
     public Player(String name, int robotID, ClientHandler connection) {
         this.name = name;
-        this.robot = new Robot(robotID); //Use nextID
+        this.robot = new Robot(robotID);
         this.connection = connection;
         for (int i = 0; i < 5; i++) {
             register.add(null);
@@ -65,7 +64,7 @@ public class Player {
     public void discardCard(RegisterCard card) {
         if (card != null) {
             if (hand.contains(card)) {
-                discardPile.add(card);
+                programmingDeck.discard(card);
                 hand.remove(card);
             }
             else {
@@ -96,15 +95,9 @@ public class Player {
 
     public void drawCard() {
         if (programmingDeck.isEmpty()) {
-            recycleDiscardPile();
+            programmingDeck.reset();
         }
         hand.add(programmingDeck.draw());
-    }
-
-    private void recycleDiscardPile() {
-        programmingDeck.addCard(discardPile);
-        discardPile.clear();
-        programmingDeck.shuffle();
     }
 
     //TODO fix as rounds are implemented in game class game main loop
@@ -127,7 +120,7 @@ public class Player {
     }
 
     public List<RegisterCard> getDiscardPile() {
-        return new ArrayList<>(discardPile);
+        return programmingDeck.getDiscardPile();
     }
 
     public String getName() {

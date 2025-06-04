@@ -404,7 +404,7 @@ public class Server {
      * @param mapName the name of the map to initialize the game with
      */
     public void newGame(String mapName) {
-        this.game = new Game(mapName);
+        this.game = Game.getInstance(mapName);
         for (ClientHandler client : clients.keySet()) {
             game.addPlayer(client.getPlayer());
         }
