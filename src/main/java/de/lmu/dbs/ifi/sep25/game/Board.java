@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Floor;
 
 import java.util.ArrayList;
@@ -147,6 +148,28 @@ public class Board {
         return map;
     }
 
+    /**
+     * Get the total number of checkpoints on the game board.
+     *
+     * @return The total number of checkpoints.
+     */
+    public int getTotalCheckpoints() {
+        int count = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Get all elements on the current grid
+                List<BoardElement> elementsAtPos = getElements(x, y);
+                // Check if there are checkpoint elements
+                for (BoardElement element : elementsAtPos) {
+                    if (element instanceof CheckPoints) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        return count;
+    }
 }
 
 /*

@@ -130,6 +130,15 @@ public class Robot {
     }
 
     /**
+     * Set the robot's direction.
+     *
+     * @param direction New direction.
+     */
+    public void setDirection(Direction direction) {
+        this.direction = direction;
+    }
+
+    /**
      * Retrieves the current damage value of the robot.
      *
      * @return the integer value representing the damage the robot has sustained.
