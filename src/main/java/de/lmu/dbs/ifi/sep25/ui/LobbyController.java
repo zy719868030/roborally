@@ -1,6 +1,8 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import javafx.fxml.FXML;
@@ -9,6 +11,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class LobbyController {
+//GUI components for chat
+    @FXML private TextArea chatArea;
+    @FXML private TextField chatInput;
+
 
     @FXML
     private ListView<PlayerEntry> playerList;
@@ -55,5 +61,24 @@ public class LobbyController {
                 break;
             }
         }
+
+
+        //sends message to Server
+        @FXML
+        private void handleSendChat () {
+            String msg = chatInput.getText();
+            if (msg == null || msg.trim().isEmpty()) return;
+
+            ClientSingleton.getInstance().sendMessage(
+                    new Message<>(new BodySendChat(msg, -1))
+            );
+
+            chatInput.clear();
+        }
     }
-}
+        public void appendChatMessage(String message) {
+            chatArea.appendText(message + "\n");
+        }
+
+    }
+
