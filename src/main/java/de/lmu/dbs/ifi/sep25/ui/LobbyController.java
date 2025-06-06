@@ -11,9 +11,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class LobbyController {
-//GUI components for chat
-    @FXML private TextArea chatArea;
-    @FXML private TextField chatInput;
+    //GUI components for chat
+    @FXML
+    private TextArea chatArea;
+    @FXML
+    private TextField chatInput;
 
 
     @FXML
@@ -49,9 +51,11 @@ public class LobbyController {
         ClientSingleton.getInstance().sendMessage(msg);
     }
 
+
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         players.add(new PlayerEntry(clientID, name, figure, ready));
     }
+
 
     public void updatePlayerStatus(int clientID, boolean ready) {
         for (PlayerEntry player : players) {
@@ -61,7 +65,7 @@ public class LobbyController {
                 break;
             }
         }
-
+    }
 
         //sends message to Server
         @FXML
@@ -74,11 +78,12 @@ public class LobbyController {
             );
 
             chatInput.clear();
-        }
+
     }
         public void appendChatMessage(String message) {
             chatArea.appendText(message + "\n");
         }
 
     }
+
 
