@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.network.Client;
+import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -17,7 +19,23 @@ public class HelloApplication extends Application {
         stage.show();
     }
 
+
     public static void main(String[] args) {
-        launch();
+        // Start the client connection in a separate thread before launching the GUI
+        startClientConnection();
+
+        // Launch the JavaFX application
+        launch(args);
+    }
+
+    // Method to initialize the client and start the connection to the server
+    private static void startClientConnection() {
+        Client client = new Client(); // Create a new Client instance
+        ClientSingleton.set(client);  // Set the client in the singleton for global access
+
+        // Start the client in a separate thread to prevent blocking the UI
+        new Thread(() -> {
+            client.start("localhost", 12345); // Connect to the server
+        }).start();
     }
 }
