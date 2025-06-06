@@ -1,16 +1,10 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Floor;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Reboot;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Belts;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Gear;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Laser;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Pit;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Wall;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.MapType;
 
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,18 +21,18 @@ public class Board {
     // Designated point for fallen robots (outside 12x12 grid)
     private static final Position VOID_POINT = new Position(-1, -1);
 
-    public enum MapType {
-        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5
-    }
-
 
     @SuppressWarnings("unchecked")
     public Board(MapType mapType) {
-        this.width = 12;
-        this.height = 12;
-        // Initialize grid for 12x12 board
+        this.width = 10;
+        this.height = 13;
+
         this.grid = new ArrayList[width][height];
         initializeBoard(mapType);
+    }
+
+    public enum MapType {
+        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5
     }
 
     // Initialize board with tiles based on map type
@@ -50,132 +44,143 @@ public class Board {
                 grid[x][y].add(Floor.getInstance());
             }
         }
-        switch (mapType) {
-            case DEFAULT:
-                Reboot rebootDefault = Reboot.getInstance();
-                rebootDefault.setPosition(new Position(5, 3));
-                grid[5][3].add(rebootDefault);
-                CheckPoints checkpointDefault = new CheckPoints();
-                checkpointDefault.setPosition(new Position(10, 10));
-                grid[10][10].add(checkpointDefault);
-                Belts conveyorDefault = new Belts(new Position(3,3), Direction.NORTH, Belts.BeltSpeed.SLOW);
-                //conveyorDefault.setPosition(new Position(3, 3));
-                grid[3][3].add(conveyorDefault);
-                Gear gearDefault = new Gear(new Position(4,4), Gear.RotationDirection.CLOCKWISE);
 
-                grid[4][4].add(gearDefault);
-                Wall wallDefault = new Wall();
-                wallDefault.setPosition(new Position(6, 6));
-                grid[6][6].add(wallDefault);
-                Pit pitDefault = new Pit();
-                pitDefault.setPosition(new Position(8, 8));
-                grid[8][8].add(pitDefault);
-                Laser laserDefault = new Laser(new Position(7,7), Direction.EAST);
+                // Dizzy Highway as the default map (starter course)
 
-                grid[7][7].add(laserDefault);
+                // Walls
+                // (7,1) top: blocks movement upward (NORTH)
+                grid[7][1].add(new Wall(new Position(7, 1), Direction.NORTH));
+                // (5,2) right: blocks movement to the right (EAST)
+                grid[5][2].add(new Wall(new Position(5, 2), Direction.EAST));
+                // (4,2) right: blocks movement to the right (EAST)
+                grid[4][2].add(new Wall(new Position(4, 2), Direction.EAST));
+                // (2,1) bottom: blocks movement downward (SOUTH)
+                grid[2][1].add(new Wall(new Position(2, 1), Direction.SOUTH));
 
-                break;
-            case MAP1: // Risky Crossing board (beginner's course)
+                // Todo: Antenna at (5,0) facing right (toward (5,1))
+
+                // Conveyor Belts (double arrows = FAST/blue, single arrow at curve = rotating)
+                // 1. (9,4) to (1,4), curves at (1,4) toward (1,5)
+                for (int x = 9; x >= 2; x--) {
+                    grid[x][4].add(new Belts(new Position(x, 4), Direction.NORTH, Belts.BeltSpeed.FAST));
+                }
+                List<Direction> outDirs1 = new ArrayList<>();
+                outDirs1.add(Direction.EAST);
+                List<Direction> inDirs1 = new ArrayList<>();
+                inDirs1.add(Direction.SOUTH);
+                grid[1][4].set(1, new Belts(new Position(1, 4), outDirs1, inDirs1, Belts.BeltSpeed.FAST));
+
+                // Belt 2: (9,5) to (8,5), then curve at (8,5) toward (8,4)
+                // Belt from (9,5) to (8,5) — straight upward
+                grid[9][5].add(new Belts(new Position(9, 5), Direction.NORTH, Belts.BeltSpeed.FAST));
+
+                // Curve at (8,5): south → west (⤶)
+                List<Direction> outDirs2a = new ArrayList<>();
+                outDirs2a.add(Direction.WEST);
+                List<Direction> inDirs2a = new ArrayList<>();
+                inDirs2a.add(Direction.SOUTH);
+                grid[8][5].set(1, new Belts(new Position(8, 5), outDirs2a, inDirs2a, Belts.BeltSpeed.FAST));
+
+                // Curve at (8,4): east → north (⬐)
+                List<Direction> outDirs2b = new ArrayList<>();
+                outDirs2b.add(Direction.NORTH);
+                List<Direction> inDirs2b = new ArrayList<>();
+                inDirs2b.add(Direction.EAST);
+                grid[8][4].set(1, new Belts(new Position(8, 4), outDirs2b, inDirs2b, Belts.BeltSpeed.FAST));
+
+                // 3. (2,3) to (2,4), curves at (2,4) toward (1,4)
+                grid[2][3].add(new Belts(new Position(2, 3), Direction.EAST, Belts.BeltSpeed.FAST));
+                List<Direction> outDirs3 = new ArrayList<>();
+                outDirs3.add(Direction.NORTH);
+                List<Direction> inDirs3 = new ArrayList<>();
+                inDirs3.add(Direction.WEST);
+                grid[2][4].set(1, new Belts(new Position(2, 4), outDirs3, inDirs3, Belts.BeltSpeed.FAST));
+
+                // 4. (1,3) to (1,11), curves at (1,11) toward (2,11)
+                for (int y = 3; y <= 10; y++) {
+                    grid[1][y].add(new Belts(new Position(1, y), Direction.EAST, Belts.BeltSpeed.FAST));
+                }
+                List<Direction> outDirs4 = new ArrayList<>();
+                outDirs4.add(Direction.SOUTH);
+                List<Direction> inDirs4 = new ArrayList<>();
+                inDirs4.add(Direction.WEST);
+                grid[1][11].set(1, new Belts(new Position(1, 11), outDirs4, inDirs4, Belts.BeltSpeed.FAST));
+
+                // 5. (0,10) to (1,10), curves at (1,10) toward (1,11)
+                grid[0][10].add(new Belts(new Position(0, 10), Direction.SOUTH, Belts.BeltSpeed.FAST));
+                List<Direction> outDirs5 = new ArrayList<>();
+                outDirs5.add(Direction.EAST);
+                List<Direction> inDirs5 = new ArrayList<>();
+                inDirs5.add(Direction.NORTH);
+                grid[1][10].set(1, new Belts(new Position(1, 10), outDirs5, inDirs5, Belts.BeltSpeed.FAST));
+
+                // 6. (0,11) to (8,11), curves at (8,11) toward (8,10)
+                for (int x = 0; x <= 7; x++) {
+                    grid[x][11].add(new Belts(new Position(x, 11), Direction.NORTH, Belts.BeltSpeed.FAST));
+                }
+                List<Direction> outDirs6 = new ArrayList<>();
+                outDirs6.add(Direction.WEST);
+                List<Direction> inDirs6 = new ArrayList<>();
+                inDirs6.add(Direction.SOUTH);
+                grid[8][11].set(1, new Belts(new Position(8, 11), outDirs6, inDirs6, Belts.BeltSpeed.FAST));
+
+                // 7. (7,12) to (7,11), curves at (7,11) toward (8,11)
+                grid[7][12].add(new Belts(new Position(7, 12), Direction.WEST, Belts.BeltSpeed.FAST));
+                List<Direction> outDirs7 = new ArrayList<>();
+                outDirs7.add(Direction.NORTH);
+                List<Direction> inDirs7 = new ArrayList<>();
+                inDirs7.add(Direction.EAST);
+                grid[7][11].set(1, new Belts(new Position(7, 11), outDirs7, inDirs7, Belts.BeltSpeed.FAST));
+
+                // Belt 8: from (8,12) ⇦ to (8,5)
+                for (int y = 12; y >= 5; y--) {
+                    grid[8][y].add(new Belts(new Position(8, y), Direction.WEST, Belts.BeltSpeed.FAST));
+                }
+
+                // Energy Spaces
+                Position[] energyPositions = {
+                        new Position(0, 3), new Position(2, 10), new Position(9, 12),
+                        new Position(7, 5), new Position(4, 7), new Position(5, 8)
+                };
+                for (Position pos : energyPositions) {
+                    grid[pos.x()][pos.y()].add(new EnergySpace(pos));
+                }
+
+                // Checkpoint at (6,12)
+                CheckPoints checkpoint = new CheckPoints(new Position(6, 12), 1);
+                grid[6][12].add(checkpoint);
+
+                // Reboot at (6,7)
                 Reboot reboot = Reboot.getInstance();
-                reboot.setPosition(new Position(6, 6));
-                grid[6][6].add(reboot);
-                CheckPoints checkpoint1 = new CheckPoints();
-                checkpoint1.setPosition(new Position(3, 3));
-                grid[3][3].add(checkpoint1);
-                CheckPoints checkpoint2 = new CheckPoints();
-                checkpoint2.setPosition(new Position(9, 9));
-                grid[9][9].add(checkpoint2);
-                // North-South conveyor (moves down)
-                for (int y = 2; y <= 10; y++) {
-                    if (y != 6) { // Skip (6,6) as it has Reboot
-                        Belts conveyorNS = new Belts(new Position(6, y), Direction.SOUTH, Belts.BeltSpeed.SLOW);
-                        conveyorNS.setPosition(new Position(6, y));
-                        grid[6][y].add(conveyorNS);
-                    }
-                }
-                // East-West conveyor (moves right)
-                for (int x = 2; x <= 10; x++) {
-                    if (x != 6) { // Skip (6,6) as it has Reboot
-                        Belts conveyorEW = new Belts(new Position(x, 6), Direction.EAST, Belts.BeltSpeed.SLOW);
+                reboot.setPosition(new Position(6, 7));
+                grid[6][7].add(reboot);
 
-                        grid[x][6].add(conveyorEW);
-                    }
-                }
-                Laser laserNS = new Laser(new Position(6,3), Direction.EAST);
-                laserNS.setPosition(new Position(6, 3));
-                grid[6][3].add(laserNS);
-                Laser laserEW = new Laser(new Position(3,6), Direction.SOUTH);
-                laserEW.setPosition(new Position(3, 6));
-                grid[3][6].add(laserEW);
-                Wall wall1 = new Wall();
-                wall1.setPosition(new Position(5, 5));
-                grid[5][5].add(wall1);
-                Wall wall2 = new Wall();
-                wall2.setPosition(new Position(7, 7));
-                grid[7][7].add(wall2);
-                Pit pitNS = new Pit();
-                pitNS.setPosition(new Position(6, 11));
-                grid[6][11].add(pitNS);
-                Pit pitEW = new Pit();
-                pitEW.setPosition(new Position(11, 6));
-                grid[11][6].add(pitEW);
-                break;
-            case MAP2:
-            case MAP3:
-            case MAP4:
-            case MAP5:
-                // Placeholder for other maps
-                break;
-        }
+                // Lasers
+                // 1. (6,6) top to (5,6) bottom, firing from (5,6) bottom to (6,6) top (NORTH)
+                grid[6][6].add(new Laser(new Position(6, 6), Direction.NORTH, 1));
+                // 2. (3,6) left to (3,7) right, firing from (3,7) right to (3,6) left (WEST)
+                grid[3][6].add(new Laser(new Position(3, 6), Direction.WEST, 1));
+                // 3. (3,9) bottom to (4,9) top, firing from (4,9) top to (3,9) bottom (SOUTH)
+                grid[3][9].add(new Laser(new Position(3, 9), Direction.SOUTH, 1));
+                // 4. (6,8) left to (6,9) right, firing from (6,8) left to (6,9) right (EAST)
+                grid[6][9].add(new Laser(new Position(6, 9), Direction.EAST, 1));
+
     }
 
+    // Todo: Loads a map from MapType
+    /*public void loadMap(MapType mapType) {
+        mapType.loadMap(this);
+    }
+    */
+
     // Sets initial robot position based on map type and player choice (0-4)
-    public void setStartPosition(Robot robot, MapType mapType, int playerChoice) {
+    public void setDHStartPosition(Robot robot, int playerChoice) {
         // Define 5 possible starting positions per map
-        Position[] startPositions;
-        switch (mapType) {
-            case DEFAULT:
-                startPositions = new Position[] {
-                        new Position(5, 5), new Position(5, 6), new Position(6, 5),
-                        new Position(6, 6), new Position(4, 5)
-                };
-                break;
-            case MAP1: // Risky Crossing starting positions
-                startPositions = new Position[] {
-                        new Position(0, 0),  // Top-left corner
-                        new Position(0, 11), // Bottom-left corner
-                        new Position(11, 0), // Top-right corner
-                        new Position(11, 11), // Bottom-right corner
-                        new Position(0, 6)   // Left side near E-W conveyor
-                };
-                break;
-            case MAP2:
-                startPositions = new Position[] {
-                        new Position(1, 1), new Position(1, 2), new Position(2, 1),
-                        new Position(2, 2), new Position(1, 3)
-                };
-                break;
-            case MAP3:
-                startPositions = new Position[] {
-                        new Position(2, 2), new Position(2, 3), new Position(3, 2),
-                        new Position(3, 3), new Position(2, 4)
-                };
-                break;
-            case MAP4:
-                startPositions = new Position[] {
-                        new Position(3, 3), new Position(3, 4), new Position(4, 3),
-                        new Position(4, 4), new Position(3, 5)
-                };
-                break;
-            case MAP5:
-                startPositions = new Position[] {
-                        new Position(4, 4), new Position(4, 5), new Position(5, 4),
-                        new Position(5, 5), new Position(4, 6)
-                };
-                break;
-            default:
-                startPositions = new Position[] { new Position(0, 0) };
-        }
+        Position[] startPositions = {
+                new Position(8, 1), new Position(6, 0), new Position(5, 1),
+                new Position(4, 1), new Position(3, 0), new Position(1, 1)
+        };
+
         // Validate player choice (0-4)
         int choice = Math.min(Math.max(playerChoice, 0), startPositions.length - 1);
         Position startPos = startPositions[choice];
@@ -263,6 +268,9 @@ public class Board {
         return new Position(0, 0); // Fallback to (0,0) instead of null
     }
 
+    public List<BoardElement>[][] getGrid() {
+        return grid;
+    }
 
     public int getWidth() {
         return width;
