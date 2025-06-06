@@ -323,8 +323,27 @@ public class Client {
                 System.out.println("[SERVER] " + body.message());
             else
                 System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + ": " + body.message());
+            //  updates the GUI (chat area) using JavaFX thread-safe method
+            javafx.application.Platform.runLater(() -> {
+                LobbyController controller = ControllerRegistry.getLobbyController();
+                if (controller != null) {
+                    String sender;
+                    if (body.from().equals(0)) {
+                        sender = "[SERVER]";
+                    } else if (body.isPrivate()) {
+                        sender = usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " (private)";
+                    } else {
+                        sender = usernames.getByKeyOrDefault(body.from(), body.from().toString());
+                    }
+
+                    String fullMessage = sender + ": " + body.message();
+                    controller.appendChatMessage(fullMessage);
+                }
+            });
         }
     }
+
+
 
     /**
      * Handles an error response message received from the server.
