@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.game;
 import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 
@@ -13,7 +14,6 @@ public class Game {
     private Player currentPlayer;
     private List<Player> players;
     private Board board;
-    private final DamageDeck<DamageCard> damageDeck = new DamageDeck<>();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
 
     private Game(String mapName) {
@@ -83,15 +83,34 @@ public class Game {
         return robotsInRange;
     }
 
-    // Virus Spread Effect (for DamageCard use)
+
+    // Use the damage card pool in the Game class.
+    public void dealSpamDamage(Robot robot) {
+        DamageCard spamCard = DamageCardPool.getInstance()
+                .getDamageCard(DamageCard.DamageType.SPAM);
+        if (spamCard != null) {
+            robot.addDamageCard(spamCard.getDamageType());
+        }
+    }
+
+    public void dealVirusDamage(Robot robot) {
+        DamageCard virusCard = DamageCardPool.getInstance()
+                .getDamageCard(DamageCard.DamageType.VIRUS);
+        if (virusCard != null) {
+            robot.addDamageCard(virusCard.getDamageType());
+        }
+    }
+
+    // Spread the virus effect
     public void spreadVirusFrom(Position virusSource) {
         List<Robot> nearbyRobots = getRobotsInRange(virusSource, 6);
 
-        // Create a SPAM damage card and add it to the robot.
         for (Robot robot : nearbyRobots) {
-            DamageCard spamCard = new DamageCard("SPAM", DamageCard.DamageType.SPAM);
-            robot.addDamageCard(spamCard);
-            System.out.println("Robot " + robot.getId() + " infected by virus!");
+            DamageCard spamCard = DamageCardPool.getInstance()
+                    .getDamageCard(DamageCard.DamageType.SPAM);  // 正确的参数类型
+            if (spamCard != null) {
+                robot.addDamageCard(spamCard.getDamageType());
+            }
         }
     }
 

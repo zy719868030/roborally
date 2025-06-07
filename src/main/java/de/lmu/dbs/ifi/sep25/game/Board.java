@@ -1,10 +1,8 @@
 package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-import de.lmu.dbs.ifi.sep25.game.MapType;
 
 import java.util.ArrayList;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -1,6 +1,8 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 
@@ -17,6 +19,7 @@ public class Robot {
     private List<RegisterCard> programming = new ArrayList<>();
     public boolean isPoweredDown;
     private Board currentBoard;  //
+    private Deck<Card> personalDeck;
 
     public Robot(int id) {
 //        this.position = startPosition;
@@ -25,12 +28,17 @@ public class Robot {
         this.damage = 0;
 //        this.energy = 5; // Starting energy for upgrades
         this.isPoweredDown = false;
+        this.personalDeck = new Deck<>();
     }
 
     public boolean isPoweredDown() {
         return this.isPoweredDown;
     }
 
+
+    public Deck<Card> getPersonalDeck() {
+        return personalDeck;
+    }
 
     // Method for obtaining robot ID
     public int getId() {
@@ -237,13 +245,21 @@ public class Robot {
         }
     }
 
-
-    // Add damage cards to the discard pile.
-    // Since a complete card system has not yet been implemented, simplify the process for now.
-    public void addDamageCard(DamageCard damageCard) {
-        System.out.println("Robot " + id + " receives damage card: " + damageCard.getDamageType());
-        // TODO Consider increasing the damage value to simulate the effect of the damage card.
-        takeDamage(1);
+    /**
+     * Add damage cards to the robot.
+     * Obtain damage cards of the specified type from the global damage card pool and add them to the robot's personal discard pile.
+     * Damage cards may be drawn in subsequent programming stages and affect the robot's behavior.
+     *
+     * @param type The type of damage card to be added (SPAM, WORM, VIRUS, TROJAN_HORSE).
+     */
+    // TODO Implement more complex effects for damage cards, such as affecting a robot's maximum energy or movement ability.
+    public void addDamageCard(DamageCard.DamageType type) {
+        DamageCard damageCard = DamageCardPool.getInstance().getDamageCard(type);
+        if (damageCard != null) {
+            // Add to personal discard pile or hand
+            this.personalDeck.discard(damageCard);
+            System.out.println("Robot " + id + " receives damage card: " + damageCard.getDamageType());
+        }
     }
 
     // Replace damage cards. Currently simplified;
