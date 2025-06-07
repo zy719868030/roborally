@@ -14,9 +14,9 @@ public class BoardElementDeserializer implements JsonDeserializer<BoardElement> 
         String type = obj.get("type").getAsString();
 
         return switch (type) { //FIXME should autofix once BoardElements are implemented
-            case "Empty" -> context.deserialize(obj, Empty.class);
+            case "Empty" -> context.deserialize(obj, Floor.class);
             case "StartPoint" -> context.deserialize(obj, StartPoint.class);
-            case "ConveyorBelt" -> context.deserialize(obj, ConveyorBelt.class);
+            case "ConveyorBelt" -> context.deserialize(obj, Belts.class);
             case "PushPanel" -> context.deserialize(obj, PushPanel.class);
             case "Gear" -> context.deserialize(obj, Gear.class);
             case "Pit" -> context.deserialize(obj, Pit.class);
@@ -24,8 +24,8 @@ public class BoardElementDeserializer implements JsonDeserializer<BoardElement> 
             case "Wall" -> context.deserialize(obj, Wall.class);
             case "Laser" -> context.deserialize(obj, Laser.class);
             case "Antenna" -> context.deserialize(obj, Antenna.class);
-            case "CheckPoint" -> context.deserialize(obj, CheckPoint.class);
-            case "RestartPoint" -> context.deserialize(obj, RestartPoint.class);
+            case "CheckPoint" -> context.deserialize(obj, CheckPoints.class);
+            case "RestartPoint" -> context.deserialize(obj, Reboot.class);
             default -> throw new JsonParseException("Unknown BoardElement type: " + type);
         };
     }
