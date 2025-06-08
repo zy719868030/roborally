@@ -56,8 +56,8 @@ public class DamageCard extends Card implements RegisterCard{
             case TROJAN_HORSE:
                 // TROJAN HORSE Card: Immediately obtain two SPAM Damage Cards.
                 System.out.println("Robot " + robot.getId() + " executes TROJAN HORSE - taking extra damage!");
-                robot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM));
-                robot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM));
+                robot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM).getDamageType());
+                robot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM).getDamageType());
                 break;
         }
         // After the damage card is executed, remove it from the deck and draw a new programming card.
@@ -72,7 +72,7 @@ public class DamageCard extends Card implements RegisterCard{
             List<Robot> nearbyRobots = board.getRobotsInRange(virusSource, 6);
             for (Robot targetRobot : nearbyRobots) {
                 if (targetRobot != robot) {
-                    targetRobot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM));
+                    targetRobot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM).getDamageType());
                     System.out.println("Robot " + targetRobot.getId() + " infected by virus!");
                 }
             }
