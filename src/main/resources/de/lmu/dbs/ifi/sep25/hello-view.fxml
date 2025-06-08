@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ListView?>
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="de.lmu.dbs.ifi.sep25.ui.ViewModel">
+    <children>
+        <Label text="Chat Nachrichten" />
+        <ListView fx:id="list" VBox.vgrow="ALWAYS"/>
+        <HBox>
+            <children>
+                <TextField fx:id="input" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="button" text="Senden" onAction="#handleButtonPress"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>
