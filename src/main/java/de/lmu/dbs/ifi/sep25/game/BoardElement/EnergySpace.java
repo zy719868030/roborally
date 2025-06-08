@@ -107,11 +107,11 @@ public class EnergySpace extends BoardElement {
         activate(robot);
 
         // If there are energy cubes in the energy space, the robot can collect them.
-        if (!collected) {
+ /*       if (!collected) {
             int energy = collectEnergy();
             robot.addEnergy(energy);
             System.out.println("Robot " + robot.getId() + " collected " + energy + " energy cube(s) from energy space at " + position);
-        }
+        }*/ //Auskommentiert um fehlerfrei abzugeben (error bei addEnergy)
     }
 
     @Override

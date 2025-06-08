@@ -19,7 +19,7 @@ public class Game {
     private Game(String mapName) {
         players = new ArrayList<>();
         Board.MapType mapType = parseMapName(mapName);
-        board = new Board(12, 12); //FIXME @prajal
+ //       board = new Board(12, 12); //FIXME @prajal
         currentPlayer = null;
         initializeUpgradeCards();
     }

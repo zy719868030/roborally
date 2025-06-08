@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum MapType {
-    MAP1, MAP2, MAP3, MAP4, MAP5
-}
+    MAP1, MAP2, MAP3, MAP4, MAP5;
+
 
     // Initializes the board with the specified map's layout
     public void loadMap(Board board) {
@@ -20,8 +20,8 @@ public enum MapType {
                 grid[x][y] = new ArrayList<>();
                 grid[x][y].add(Floor.getInstance());
             }
-        }
-
+        }}
+/*
         switch (this) {
             case MAP1:
                 // Initialize MAP1 layout (to be implemented in a separate class)
@@ -82,5 +82,5 @@ public enum MapType {
         }
         // Fallback (should never reach here)
         return new Position[] { new Position(0, 0) };
-    }
+    } */
 }
