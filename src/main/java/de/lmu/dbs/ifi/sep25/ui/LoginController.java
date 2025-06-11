@@ -1,5 +1,9 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
@@ -14,21 +18,52 @@ import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 
+/**
+ * Controller für die Login-Oberfläche.
+ *
+ * Verarbeitet Benutzereingaben für Name und Spielfigur,
+ * sendet Login-Nachrichten an den Server und wechselt bei Erfolg zur Lobby-Ansicht.
+ */
 public class LoginController {
 
+    /** Eingabefeld für den Spielernamen. */
     @FXML
     private TextField nameField;
 
+    /** Auswahlfeld für die Spielfigur (Index 0–5). */
     @FXML
     private ComboBox<Integer> figureBox;
 
+    /** Property zur Bindung des Spielernamens. */
+    private StringProperty playerName = new SimpleStringProperty();
+
+    /** Property zur Bindung der ausgewählten Spielfigur. */
+    private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
+
+    /**
+     * Initialisiert die Login-Oberfläche:
+     * - registriert den Controller
+     * - füllt die Auswahlbox für Spielfiguren
+     * - bindet UI-Komponenten an Properties
+     */
     @FXML
     public void initialize() {
+        ControllerRegistry.setLoginController(this);
+
         for (int i = 0; i <= 5; i++) {
             figureBox.getItems().add(i);
         }
+
+        nameField.textProperty().bindBidirectional(playerName);
+        figureBox.valueProperty().bindBidirectional(selectedFigure);
     }
 
+    /**
+     * Wird aufgerufen, wenn der Nutzer auf "Login" klickt.
+     * Validiert die Eingaben und sendet eine Login-Nachricht an den Server.
+     *
+     * @param event Das zugehörige ActionEvent (nicht verwendet).
+     */
     @FXML
     private void handleLogin(ActionEvent event) {
         String name = nameField.getText();
@@ -43,9 +78,16 @@ public class LoginController {
         ClientSingleton.getInstance().sendMessage(msg);
     }
 
+    /**
+     * Wird aufgerufen, wenn der Login erfolgreich war.
+     * Lädt die Lobby-Ansicht und wechselt dorthin.
+     *
+     * @param name   Der Benutzername
+     * @param figure Die ausgewählte Spielfigur
+     */
     public void loginSuccess(String name, int figure) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/ui/LobbyView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/LobbyView.fxml"));
             Parent root = loader.load();
 
             LobbyController controller = loader.getController();
@@ -62,6 +104,11 @@ public class LoginController {
         }
     }
 
+    /**
+     * Zeigt eine Fehlernachricht in einem Dialogfenster an.
+     *
+     * @param text Der anzuzeigende Text.
+     */
     private void showAlert(String text) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setHeaderText(null);
