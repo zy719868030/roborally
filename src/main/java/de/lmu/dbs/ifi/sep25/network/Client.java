@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
+import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Client {
-
     // 1. Constants / configuration
     private final Gson gson = new Gson();
     private final String protocol = "Version 0.1";
@@ -32,7 +32,6 @@ public class Client {
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
-
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -52,19 +51,7 @@ public class Client {
             // Start listening thread
             new Thread(this::listenForMessages).start();
 
-
-            //TODO for FX team: (in general replace the println methods)
-            // higher prio:
-            // - connect/replace console chat below with chat gui
-            // - send a message<BodyPlayerValues> via login screen
-            // - send a message<BodySetStatus> via ready screen
-            // lower prio:
-            // - send a message<BodyMapSelected> via map selection screen
-
-
-            // Read user input and send messages
-            // Example: Send chat message
-
+            // CLI chat input (optional, usually used for testing)
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String userInput = scanner.nextLine();
@@ -77,15 +64,16 @@ public class Client {
                     System.out.println("/exit                   - Exit the client");
                     // Add more commands as needed
                 } else if (userInput.equalsIgnoreCase("/exit")) {
-                    System.out.println("Exiting...");
                     closeAll();
-                } else if ((command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper")) && command.length == 3)
-                    if (usernames.containsValue(command[1]))
+                } else if ((command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper")) && command.length == 3) {
+                    if (usernames.containsValue(command[1])) {
                         sendMessage(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
-                    else
+                    } else {
                         System.err.println("User not found");
-                else
+                    }
+                } else {
                     sendMessage(gson.toJson(new Message<>(new BodySendChat(userInput, -1))));
+                }
             }
 
         } catch (IOException e) {
@@ -93,7 +81,6 @@ public class Client {
             closeAll();
         }
     }
-
     /**
      * Continuously listens for and processes incoming messages from the server.
      * <p>
@@ -131,7 +118,7 @@ public class Client {
                     case "GameStarted" -> handleBodyGameStarted(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
-//                    case "PlayCard" -> handleBodyPlayCard(json);
+                    //                    case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
 //                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
 //                    case "ActivePhase" -> handleBodyActivePhase(json);
@@ -165,7 +152,6 @@ public class Client {
         }
     }
 
-
     /**
      * Handles the BodyHelloClient message received from the server.
      * This method processes the JSON message, extracts connection protocol information,
@@ -173,14 +159,14 @@ public class Client {
      *
      * @param json the JSON string containing the serialized BodyHelloClient message
      */
+
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
-        System.out.println("[SERVER] Connected to server using protocol: " + protocol);
+        System.out.println("[SERVER] Connected using protocol: " + protocol);
 
         sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
     }
-
     /**
      * Handles the "BodyAlive" message received from the server.
      * This method writes the provided JSON string directly to the server output stream.
@@ -190,7 +176,6 @@ public class Client {
     private void handleBodyAlive(String json) {
         sendMessage(json);
     }
-
     /**
      * Handles the "Welcome" message received from the server.
      * This method parses the incoming JSON string to extract a message of type {@code BodyWelcome}.
@@ -218,6 +203,7 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyPlayerAdded} message
      */
+
     private void handleBodyPlayerAdded(String json) {
         Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
         BodyPlayerAdded body = message.messageBody();
@@ -233,12 +219,22 @@ public class Client {
         } else {
             username = proposedName;
         }
+
         usernames.put(body.clientID(), username);
         figure = body.figure();
 
-        //TODO implement fx code to display that player clientID = username with figure x or smth
-    }
+        if (body.clientID().equals(ID)) {
+            final String finalUsername = username;
+            final int finalFigure = figure;
 
+            javafx.application.Platform.runLater(() -> {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null) {
+                    loginCtrl.loginSuccess(finalUsername, finalFigure);
+                }
+            });
+        }
+    }
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
@@ -251,14 +247,14 @@ public class Client {
 
         int clientID = body.clientID();
         boolean ready = body.ready();
-
-        // JavaFX-Thread für GUI-Update
+// JavaFX-Thread für GUI-Update
         javafx.application.Platform.runLater(() -> {
             LobbyController controller = ControllerRegistry.getLobbyController();
-            controller.updatePlayerStatus(clientID, ready);
+            if (controller != null) {
+                controller.updatePlayerStatus(clientID, ready);
+            }
         });
     }
-
     /**
      * Handles the "BodySelectMap" message received from the server.
      * This method processes a JSON string representing a {@code BodySelectMap} message, deserializing it
@@ -270,32 +266,23 @@ public class Client {
      */
     private void handleBodySelectMap(String json) {
         Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
-
-        @SuppressWarnings("unused")
         List<String> availableMaps = message.messageBody().availableMaps();
-        String selection = "Dizzy Highway"; //FIXME example
-
-        //TODO implement fx logic to select map
+        String selection = "Dizzy Highway"; // TODO: Replace with actual map selection from GUI
 
         sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
     }
 
-    /****/
     private void handleBodyMapSelected(String json) {
-        //TODO implement fx display of selected map
+        // TODO: Display selected map in GUI
     }
 
-    /****/
     private void handleBodyGameStarted(String json) {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
         List<List<List<BoardElement>>> board = body.gameMap();
 
-        //TODO display the map to client in fx
+        // TODO: Display game board in GUI
     }
-
-
-
     /**
      * Handles a "BodyReceivedChat" message from the server.
      *
@@ -317,33 +304,25 @@ public class Client {
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (!body.from().equals(ID)) {
-            if (body.isPrivate())
-                System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " whispers: " + body.message());
-            else if (body.from().equals(0))
-                System.out.println("[SERVER] " + body.message());
-            else
-                System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + ": " + body.message());
-            //  updates the GUI (chat area) using JavaFX thread-safe method
+            String sender;
+            if (body.from().equals(0)) {
+                sender = "[SERVER]";
+            } else if (body.isPrivate()) {
+                sender = usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " (private)";
+            } else {
+                sender = usernames.getByKeyOrDefault(body.from(), body.from().toString());
+            }
+
+            String fullMessage = sender + ": " + body.message();
+
             javafx.application.Platform.runLater(() -> {
                 LobbyController controller = ControllerRegistry.getLobbyController();
                 if (controller != null) {
-                    String sender;
-                    if (body.from().equals(0)) {
-                        sender = "[SERVER]";
-                    } else if (body.isPrivate()) {
-                        sender = usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " (private)";
-                    } else {
-                        sender = usernames.getByKeyOrDefault(body.from(), body.from().toString());
-                    }
-
-                    String fullMessage = sender + ": " + body.message();
                     controller.appendChatMessage(fullMessage);
                 }
             });
         }
     }
-
-
 
     /**
      * Handles an error response message received from the server.
@@ -355,6 +334,7 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyError} message
      */
+
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         System.err.println("Error: " + msg.messageBody().error());
@@ -376,7 +356,6 @@ public class Client {
             System.err.println("Failed to send message: " + e.getMessage());
         }
     }
-
     /**
      * Serializes the provided {@link Message} object into a JSON string and sends it
      * through the established connection.
@@ -394,7 +373,6 @@ public class Client {
             System.err.println("Failed to serialize and send message: " + e.getMessage());
         }
     }
-
     /**
      * Releases resources associated with the client connection.
      * <p>
@@ -416,7 +394,6 @@ public class Client {
             System.err.println("Error closing client: " + e.getMessage());
         }
     }
-
     /**
      * The main entry point of the application.
      * This method initiates the client program by creating a new {@link Client} instance
@@ -427,7 +404,7 @@ public class Client {
      */
     public static void main(String[] args) {
         Client client = new Client();
-        ClientSingleton.set(client); //   für Zugriff aus GUI
+        ClientSingleton.set(client);
         client.start("localhost", 12345);
     }
 }
