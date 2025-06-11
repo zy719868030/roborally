@@ -67,23 +67,23 @@ public class LobbyController {
         }
     }
 
-        //sends message to Server
-        @FXML
-        private void handleSendChat () {
-            String msg = chatInput.getText();
-            if (msg == null || msg.trim().isEmpty()) return;
+    //sends message to Server
+    @FXML
+    private void handleSendChat () {
+        String msg = chatInput.getText();
+        if (msg == null || msg.trim().isEmpty()) return;
 
-            ClientSingleton.getInstance().sendMessage(
-                    new Message<>(new BodySendChat(msg, -1))
-            );
+        ClientSingleton.getInstance().sendMessage(
+                new Message<>(new BodySendChat(msg, -1))
+        );
 
-            chatInput.clear();
-
-    }
-        public void appendChatMessage(String message) {
-            chatArea.appendText(message + "\n");
-        }
+        chatInput.clear();
 
     }
+    public void appendChatMessage(String message) {
+        chatArea.appendText(message + "\n");
+    }
+
+}
 
 
