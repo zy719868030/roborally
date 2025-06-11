@@ -106,19 +106,21 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                String messageType = JsonUtil.parseUnknown(json).messageType();
-                switch (messageType) {
-                    case "HelloClient" -> handleBodyHelloClient(json);
-                    case "Alive" -> handleBodyAlive(json);
-                    case "Welcome" -> handleBodyWelcome(json);
-                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
-                    case "PlayerStatus" -> handleBodyPlayerStatus(json);
-                    case "SelectMap" -> handleBodySelectMap(json);
-                    case "MapSelected" -> handleBodyMapSelected(json);
-                    case "GameStarted" -> handleBodyGameStarted(json);
-                    case "ReceivedChat" -> handleBodyReceivedChat(json);
-                    case "Error" -> handleBodyError(json);
-                    //                    case "PlayCard" -> handleBodyPlayCard(json);
+                try {
+                    System.out.println("[DEBUG] Received: " + json); // important
+                    String messageType = JsonUtil.parseUnknown(json).messageType();
+                    switch (messageType) {
+                        case "HelloClient" -> handleBodyHelloClient(json);
+                        case "Alive" -> handleBodyAlive(json);
+                        case "Welcome" -> handleBodyWelcome(json);
+                        case "PlayerAdded" -> handleBodyPlayerAdded(json);
+                        case "PlayerStatus" -> handleBodyPlayerStatus(json);
+                        case "SelectMap" -> handleBodySelectMap(json);
+                        case "MapSelected" -> handleBodyMapSelected(json);
+                        case "GameStarted" -> handleBodyGameStarted(json);
+                        case "ReceivedChat" -> handleBodyReceivedChat(json);
+                        case "Error" -> handleBodyError(json);
+                        //                    case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
 //                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
 //                    case "ActivePhase" -> handleBodyActivePhase(json);
@@ -143,7 +145,11 @@ public class Client {
 //                    case "Energy" -> handleBodyEnergy(json);
 //                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
 //                    case "GameFinished" -> handleBodyGameFinished(json);
-                    default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                        default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[ERROR] Error handling message: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         } catch (IOException e) {
@@ -174,6 +180,8 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
+        //test
+        System.out.println("[DEBUG] Alive emphangen und beantwortet");
         sendMessage(json);
     }
     /**
@@ -337,8 +345,20 @@ public class Client {
 
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
-        System.err.println("Error: " + msg.messageBody().error());
-        closeAll();
+        String errorText = msg.messageBody().error();
+        System.err.println("Error: " + errorText);
+
+        if (errorText.contains("Figure already selected")) {
+            javafx.application.Platform.runLater(() -> {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null) {
+                    loginCtrl.displayFigureAlreadyTaken();
+                }
+            });
+            return; // nicht schließen!
+        }
+
+        closeAll(); // bei anderen Fehlern
     }
 
     /**
