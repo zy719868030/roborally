@@ -105,6 +105,22 @@ public class LoginController {
     }
 
     /**
+     * Wird vom Client aufgerufen, wenn die gewählte Figur schon belegt ist.
+     * Zeigt einen Warnhinweis an und reaktiviert die Eingabe.
+     */
+    public void displayFigureAlreadyTaken() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Figur vergeben");
+        alert.setHeaderText("Diese Spielfigur wurde bereits gewählt");
+        alert.setContentText("Bitte wähle eine andere Figur aus.");
+        alert.showAndWait();
+
+        // Auswahlfelder wieder aktivieren
+        nameField.setDisable(false);
+        figureBox.setDisable(false);
+    }
+
+    /**
      * Zeigt eine Fehlernachricht in einem Dialogfenster an.
      *
      * @param text Der anzuzeigende Text.
