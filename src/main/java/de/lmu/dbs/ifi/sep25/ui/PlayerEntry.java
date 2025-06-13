@@ -129,4 +129,8 @@ public class PlayerEntry {
     public String toString() {
         return String.format("Figur %d – %s [%s]", getFigure(), getName(), isReady() ? "bereit" : "nicht bereit");
     }
+    public String toShortString() {
+        return getName() + " #" + getClientID();
+    }
+
 }
