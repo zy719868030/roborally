@@ -424,19 +424,6 @@ public class Client {
             System.err.println("Error closing client: " + e.getMessage());
         }
     }
-    /**
-     * The main entry point of the application.
-     * This method initiates the client program by creating a new {@link Client} instance
-     * and starting a connection with the server using the specified hostname and port.
-     *
-     * @param args command-line arguments passed to the program. These are not used
-     *             in this specific implementation.
-     */
-    public static void main(String[] args) {
-        Client client = new Client();
-        ClientSingleton.set(client);
-        client.start("localhost", 12345);
-    }
 
     public int getID() {
         return ID != null ? ID : -1;
