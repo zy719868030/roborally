@@ -40,13 +40,13 @@ import javafx.stage.Stage;
          *
          * @param args Startargumente der Anwendung.
          */
-        public static void main(String[] args) {
+        //public static void main(String[] args) {
             // Starte die Client-Verbindung in einem Hintergrund-Thread
-            startClientConnection();
+           // startClientConnection();
 
             // Starte die JavaFX-Anwendung (ruft start())
-            launch(args);
-        }
+           // launch(args);
+        //}
 
         /**
          * Erstellt ein neues {@link Client}-Objekt, speichert es im {@link ClientSingleton},
