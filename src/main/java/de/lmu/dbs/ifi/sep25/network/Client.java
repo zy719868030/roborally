@@ -427,4 +427,8 @@ public class Client {
         ClientSingleton.set(client);
         client.start("localhost", 12345);
     }
+
+    public int getID() {
+        return ID != null ? ID : -1;
+    }
 }
