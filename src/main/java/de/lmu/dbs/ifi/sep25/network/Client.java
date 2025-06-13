@@ -120,32 +120,31 @@ public class Client {
                         case "GameStarted" -> handleBodyGameStarted(json);
                         case "ReceivedChat" -> handleBodyReceivedChat(json);
                         case "Error" -> handleBodyError(json);
-                        //                    case "PlayCard" -> handleBodyPlayCard(json);
-//                    case "CardPlayed" -> handleBodyCardPlayed(json);
-//                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-//                    case "ActivePhase" -> handleBodyActivePhase(json);
-//                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-//                    case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-//                    case "YourCards" -> handleBodyYourCards(json);
-//                    case "NotYourCards" -> handleBodyNotYourCards(json);
-//                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-//                    case "SelectedCard" -> handleBodySelectedCard(json);
-//                    case "CardSelected" -> handleBodyCardSelected(json);
-//                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-//                    case "TimerStarted" -> handleBodyTimerStarted(json);
-//                    case "TimerEnded" -> handleBodyTimerEnded(json);
-//                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
-//                    case "CurrentCards" -> handleBodyCurrentCards(json);
-//                    case "ReplaceCard" -> handleBodyReplaceCard(json);
-//                    case "Movement" -> handleBodyMovement(json);
-//                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
-//                    case "Animation" -> handleBodyAnimation(json);
-//                    case "Reboot" -> handleBodyReboot(json);
-//                    case "RebootDirection" -> handleBodyRebootDirection(json);
-//                    case "Energy" -> handleBodyEnergy(json);
-//                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-//                    case "GameFinished" -> handleBodyGameFinished(json);
-                        default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+    //                    case "PlayCard" -> handleBodyPlayCard(json); TODO add to game logic: sends to server card was played
+                        case "CardPlayed" -> handleBodyCardPlayed(json);
+                        case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
+    //                    case "ActivePhase" -> handleBodyActivePhase(json);
+                        case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
+    //                    case "YourCards" -> handleBodyYourCards(json);
+    //                    case "NotYourCards" -> handleBodyNotYourCards(json);
+    //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
+    //                    case "SelectedCard" -> handleBodySelectedCard(json);
+    //                    case "CardSelected" -> handleBodyCardSelected(json);
+    //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
+    //                    case "TimerStarted" -> handleBodyTimerStarted(json);
+    //                    case "TimerEnded" -> handleBodyTimerEnded(json);
+    //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
+    //                    case "CurrentCards" -> handleBodyCurrentCards(json);
+    //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
+    //                    case "Movement" -> handleBodyMovement(json);
+    //                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
+    //                    case "Animation" -> handleBodyAnimation(json);
+    //                    case "Reboot" -> handleBodyReboot(json);
+    //                    case "RebootDirection" -> handleBodyRebootDirection(json);
+    //                    case "Energy" -> handleBodyEnergy(json);
+    //                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
+    //                    case "GameFinished" -> handleBodyGameFinished(json);
+                            default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                     }
                 } catch (Exception e) {
                     System.err.println("[ERROR] Error handling message: " + e.getMessage());
@@ -158,8 +157,6 @@ public class Client {
         }
     }
 
-    private void handleBodyMapSelected(String json) {
-    }
 
     /**
      * Handles the BodyHelloClient message received from the server.
@@ -168,7 +165,6 @@ public class Client {
      *
      * @param json the JSON string containing the serialized BodyHelloClient message
      */
-
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
@@ -176,6 +172,7 @@ public class Client {
 
         sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
     }
+
     /**
      * Handles the "BodyAlive" message received from the server.
      * This method writes the provided JSON string directly to the server output stream.
@@ -184,9 +181,10 @@ public class Client {
      */
     private void handleBodyAlive(String json) {
         //test
-        System.out.println("[DEBUG] Alive emphangen und beantwortet");
+        System.out.println("[DEBUG] Alive empfangen und beantwortet");
         sendMessage(json);
     }
+
     /**
      * Handles the "Welcome" message received from the server.
      * This method parses the incoming JSON string to extract a message of type {@code BodyWelcome}.
@@ -214,7 +212,6 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyPlayerAdded} message
      */
-
     private void handleBodyPlayerAdded(String json) {
         Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
         BodyPlayerAdded body = message.messageBody();
@@ -255,7 +252,6 @@ public class Client {
         });
     }
 
-
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
@@ -276,6 +272,7 @@ public class Client {
             }
         });
     }
+
     /**
      * Handles the "BodySelectMap" message received from the server.
      * This method processes a JSON string representing a {@code BodySelectMap} message, deserializing it
@@ -293,7 +290,12 @@ public class Client {
         sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
     }
 
+    /****/
+    private void handleBodyMapSelected(String json) {
+        //TODO implement fx display of selected map
+    }
 
+    /****/
     private void handleBodyGameStarted(String json) {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
@@ -301,6 +303,7 @@ public class Client {
 
         // TODO: Display game board in GUI
     }
+
     /**
      * Handles a "BodyReceivedChat" message from the server.
      *
@@ -352,7 +355,6 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyError} message
      */
-
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         String errorText = msg.messageBody().error();
@@ -371,6 +373,27 @@ public class Client {
         closeAll(); // bei anderen Fehlern
     }
 
+    /****/
+    private void handleBodyCardPlayed(String json) {
+        Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
+        //TODO implement java fx code: display played card to client
+    }
+
+    /****/
+    private void handleBodyCurrentPlayer(String json) {
+        // TODO
+        //  - check if equals sent id
+        //  - check for game phase
+        // set player turn maybe?
+    }
+
+
+
+    private void handleBodyStartingPointTaken(String json) {
+        //TODO fx display robot
+    }
+
+
     /**
      * Sends a text message through the output stream to the connected server or client.
      * This method attempts to write the message using a PrintWriter instance.
@@ -386,6 +409,7 @@ public class Client {
             System.err.println("Failed to send message: " + e.getMessage());
         }
     }
+
     /**
      * Serializes the provided {@link Message} object into a JSON string and sends it
      * through the established connection.
@@ -403,6 +427,7 @@ public class Client {
             System.err.println("Failed to serialize and send message: " + e.getMessage());
         }
     }
+
     /**
      * Releases resources associated with the client connection.
      * <p>

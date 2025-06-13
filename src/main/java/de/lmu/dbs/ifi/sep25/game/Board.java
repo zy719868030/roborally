@@ -413,6 +413,22 @@ public class Board {
         return robotsInRange;
     }
 
+    //FIXME will be fixed when startingpoint class is added and board design is funcional @yu @prajwal
+    /****/
+    public List<Position> getStartingPoints() {
+        List<Position> positions = new ArrayList<>();
+        new StartingPoint startingPoint = new StartingPoint(0, 0);
+        for (int i = 0; i < width; i++){
+            for (int j = 0; j < height; j++) {
+                //FIXME fix with tile object instead of array list
+                if (getElements(i, j).contains(startingPoint))
+                    positions.add(new Position(i, j));
+
+            }
+        }
+        return positions;
+    }
+
 }
 
 

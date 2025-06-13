@@ -29,6 +29,10 @@ public class Tile {
         return elements;
     }
 
+    public boolean contains(BoardElement element) {
+        return !elements.stream().filter(e -> e.getClass().equals(element.getClass())).toList().isEmpty();
+    }
+
     public void applyEffects(Robot robot, Board board) {
         for (BoardElement element : elements) {
             element.activate(robot);
