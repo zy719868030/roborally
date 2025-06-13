@@ -125,10 +125,12 @@ public class PlayerEntry {
      *
      * @return z.B. "Figur 3 – Anna [bereit]"
      */
+
     @Override
     public String toString() {
-        return String.format("Figur %d – %s [%s]", getFigure(), getName(), isReady() ? "bereit" : "nicht bereit");
+        return String.format("%s (%s)", getName(), isReady() ? "bereit" : "nicht bereit");
     }
+
     public String toShortString() {
         return getName() + " #" + getClientID();
     }

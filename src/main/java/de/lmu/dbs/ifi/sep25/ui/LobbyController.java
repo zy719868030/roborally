@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
@@ -45,52 +46,83 @@ public class LobbyController {
         recipientBox.getSelectionModel().clearSelection();
 
         chatInput.setOnAction(e -> handleSendChat());
+
+        // Initiale Button-Zustände
+        readyButton.setDisable(false);
+        notReadyButton.setDisable(true);
     }
 
     @FXML
     private void handleReady() {
         sendReadyStatus(true);
-        statusLabel.setText("Du bist bereit.");
     }
 
     @FXML
     private void handleNotReady() {
         sendReadyStatus(false);
-        statusLabel.setText("Du bist nicht bereit.");
     }
+
 
     private void sendReadyStatus(boolean ready) {
-        Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
         var client = ClientSingleton.getInstance();
 
-        if (client != null) {
-            client.sendMessage(msg);
-        } else {
+        if (client == null) {
             System.err.println("[ERROR] ClientSingleton is null in sendReadyStatus");
+            return;
         }
 
+        Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
+        client.sendMessage(msg);
 
-}
+        // GUI-Buttons je nach Status anpassen
+        readyButton.setDisable(ready);        // Wenn bereit, "Bereit" ausgrauen
+        notReadyButton.setDisable(!ready);    // Wenn bereit, "Nicht bereit" aktiv
+        statusLabel.setText(ready ? "Du bist bereit." : "Du bist nicht bereit.");
+    }
+
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
+        int myID = ClientSingleton.getInstance().getID();
+
+
+        if (clientID == myID) {
+            name = name + " (Du)";
+        }
+
         PlayerEntry player = new PlayerEntry(clientID, name, figure, ready);
         players.add(player);
-        int myID = ClientSingleton.getInstance().getID();
+
         if (clientID != myID) {
-            recipientBox.getItems().add(player); // nur andere Spieler
+            recipientBox.getItems().add(player); // Nur andere Spieler als Empfänger
         }
     }
+
 
 
     public void updatePlayerStatus(int clientID, boolean ready) {
+        Client client = ClientSingleton.getInstance();
+        if (client == null) {
+            System.err.println("[ERROR] ClientSingleton is null in updatePlayerStatus");
+            return;
+        }
+
+        int myID = client.getID();
+
         for (PlayerEntry player : players) {
             if (player.getClientID() == clientID) {
                 player.setReady(ready);
+
+                // Wenn ich selbst gemeint bin, Buttons anpassen
+                if (clientID == myID) {
+                    updateOwnButtons(ready);
+                }
+
                 playerList.refresh();
                 break;
             }
         }
     }
+
 
     @FXML
     private void handleSendChat() {
@@ -109,12 +141,14 @@ public class LobbyController {
             System.err.println("[ERROR] ClientSingleton is null in handleSendChat");
         }
 
-
-
         String prefix = (recipientID == -1) ? "Du" : "Du → " + selected.getName();
         appendChatMessage(prefix + ": " + msg);
         chatInput.clear();
     }
+
+
+
+
     @FXML
     public void updatePlayerList(java.util.List<PlayerEntry> newPlayers) {
         players.clear();
@@ -128,10 +162,9 @@ public class LobbyController {
         int myID = client.getID();
 
         for (PlayerEntry player : newPlayers) {
-            players.add(player); // ListView
-
+            players.add(player);
             if (player.getClientID() != myID) {
-                recipientBox.getItems().add(player); //
+                recipientBox.getItems().add(player);
             }
         }
 
@@ -141,5 +174,9 @@ public class LobbyController {
 
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
+    }
+    public void updateOwnButtons(boolean isReady) {
+        readyButton.setDisable(isReady);
+        notReadyButton.setDisable(!isReady);
     }
 }
