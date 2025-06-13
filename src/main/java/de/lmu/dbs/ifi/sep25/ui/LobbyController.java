@@ -61,8 +61,16 @@ public class LobbyController {
 
     private void sendReadyStatus(boolean ready) {
         Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
-        ClientSingleton.getInstance().sendMessage(msg);
-    }
+        var client = ClientSingleton.getInstance();
+
+        if (client != null) {
+            client.sendMessage(msg);
+        } else {
+            System.err.println("[ERROR] ClientSingleton is null in sendReadyStatus");
+        }
+
+
+}
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         PlayerEntry player = new PlayerEntry(clientID, name, figure, ready);
@@ -94,14 +102,42 @@ public class LobbyController {
 
         System.out.println("[DEBUG] Sende Chatnachricht an " + (recipientID == -1 ? "ALLE" : recipientID) + ": " + msg);
 
-        ClientSingleton.getInstance().sendMessage(
-                new Message<>(new BodySendChat(msg, recipientID))
-        );
+        var client = ClientSingleton.getInstance();
+        if (client != null) {
+            client.sendMessage(new Message<>(new BodySendChat(msg, recipientID)));
+        } else {
+            System.err.println("[ERROR] ClientSingleton is null in handleSendChat");
+        }
+
+
 
         String prefix = (recipientID == -1) ? "Du" : "Du → " + selected.getName();
         appendChatMessage(prefix + ": " + msg);
         chatInput.clear();
     }
+    @FXML
+    public void updatePlayerList(java.util.List<PlayerEntry> newPlayers) {
+        players.clear();
+        recipientBox.getItems().clear();
+
+        var client = ClientSingleton.getInstance();
+        if (client == null) {
+            System.err.println("[ERROR] ClientSingleton is null in addPlayer");
+            return;
+        }
+        int myID = client.getID();
+
+        for (PlayerEntry player : newPlayers) {
+            players.add(player); // ListView
+
+            if (player.getClientID() != myID) {
+                recipientBox.getItems().add(player); //
+            }
+        }
+
+        playerList.refresh();
+    }
+
 
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
