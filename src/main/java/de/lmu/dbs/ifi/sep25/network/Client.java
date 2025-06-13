@@ -158,6 +158,9 @@ public class Client {
         }
     }
 
+    private void handleBodyMapSelected(String json) {
+    }
+
     /**
      * Handles the BodyHelloClient message received from the server.
      * This method processes the JSON message, extracts connection protocol information,
@@ -231,18 +234,28 @@ public class Client {
         usernames.put(body.clientID(), username);
         figure = body.figure();
 
-        if (body.clientID().equals(ID)) {
-            final String finalUsername = username;
-            final int finalFigure = figure;
+        // FINAL variables for lambda use
+        final String finalUsername = username;
+        final int finalFigure = figure;
+        final int clientID = body.clientID();
 
-            javafx.application.Platform.runLater(() -> {
+        javafx.application.Platform.runLater(() -> {
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl != null) {
+                boolean isReady = false;
+                lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
+            }
+
+            if (clientID == getID()) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null) {
                     loginCtrl.loginSuccess(finalUsername, finalFigure);
                 }
-            });
-        }
+            }
+        });
     }
+
+
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
@@ -255,7 +268,7 @@ public class Client {
 
         int clientID = body.clientID();
         boolean ready = body.ready();
-// JavaFX-Thread für GUI-Update
+     // JavaFX-Thread für GUI-Update
         javafx.application.Platform.runLater(() -> {
             LobbyController controller = ControllerRegistry.getLobbyController();
             if (controller != null) {
@@ -280,9 +293,6 @@ public class Client {
         sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
     }
 
-    private void handleBodyMapSelected(String json) {
-        // TODO: Display selected map in GUI
-    }
 
     private void handleBodyGameStarted(String json) {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
