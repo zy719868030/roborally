@@ -397,17 +397,12 @@ public class Server {
     }
 
     /**
+     * Returns the current game instance.
      *
-     * **/
+     * @return the active {@code Game} instance managed by the server
+     */
     public Game getGame() {
         return game;
     }
-
-    /**
-     * The main entry point of the application which creates and starts the server.
-     *
-     * @param args command-line arguments
-     * @throws IOException if an I/O error occurs during server startup
-     */
 
 }

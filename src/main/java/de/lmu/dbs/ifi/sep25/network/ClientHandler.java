@@ -281,7 +281,15 @@ public class ClientHandler implements Runnable {
         this.sendMessage(json);
     }
 
-    /****/
+    /**
+     * Handles the processing of a "BodyPlayCard" message. This method parses the incoming
+     * JSON string into a {@link Message} object containing a {@link BodyPlayCard} message body.
+     * It then broadcasts a message indicating that a card has been played to all connected
+     * clients.
+     *
+     * @param json the JSON string representing a "BodyPlayCard" message which contains
+     *             the details of the played card
+     */
     private void handleBodyPlayCard(String json) {
         Message<BodyPlayCard> message = JsonUtil.parseMessage(json, BodyPlayCard.class);
         Server server = Server.getInstance();
@@ -289,7 +297,14 @@ public class ClientHandler implements Runnable {
 
     }
 
-    /****/
+    /**
+     * Handles the process of setting a robot's starting position on the game board.
+     * Validates the provided starting point coordinates and updates the robot's position if valid.
+     * Sends appropriate messages based on the validation result.
+     *
+     * @param json the JSON string containing data to set the starting position,
+     *             parsed into a {@code BodySetStartingPoint} object which provides the coordinates (x, y).
+     */
     private void handleBodySetStartingPoint(String json) {
         BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
         Server server = Server.getInstance();
