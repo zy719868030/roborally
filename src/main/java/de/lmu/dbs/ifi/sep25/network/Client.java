@@ -120,31 +120,31 @@ public class Client {
                         case "GameStarted" -> handleBodyGameStarted(json);
                         case "ReceivedChat" -> handleBodyReceivedChat(json);
                         case "Error" -> handleBodyError(json);
-    //                    case "PlayCard" -> handleBodyPlayCard(json); TODO add to game logic: sends to server card was played
+                        //                    case "PlayCard" -> handleBodyPlayCard(json); TODO add to game logic: sends to server card was played
                         case "CardPlayed" -> handleBodyCardPlayed(json);
                         case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-    //                    case "ActivePhase" -> handleBodyActivePhase(json);
+                        //                    case "ActivePhase" -> handleBodyActivePhase(json);
                         case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-    //                    case "YourCards" -> handleBodyYourCards(json);
-    //                    case "NotYourCards" -> handleBodyNotYourCards(json);
-    //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-    //                    case "SelectedCard" -> handleBodySelectedCard(json);
-    //                    case "CardSelected" -> handleBodyCardSelected(json);
-    //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-    //                    case "TimerStarted" -> handleBodyTimerStarted(json);
-    //                    case "TimerEnded" -> handleBodyTimerEnded(json);
-    //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
-    //                    case "CurrentCards" -> handleBodyCurrentCards(json);
-    //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
-    //                    case "Movement" -> handleBodyMovement(json);
-    //                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
-    //                    case "Animation" -> handleBodyAnimation(json);
-    //                    case "Reboot" -> handleBodyReboot(json);
-    //                    case "RebootDirection" -> handleBodyRebootDirection(json);
-    //                    case "Energy" -> handleBodyEnergy(json);
-    //                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-    //                    case "GameFinished" -> handleBodyGameFinished(json);
-                            default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                        //                    case "YourCards" -> handleBodyYourCards(json);
+                        //                    case "NotYourCards" -> handleBodyNotYourCards(json);
+                        //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
+                        //                    case "SelectedCard" -> handleBodySelectedCard(json);
+                        //                    case "CardSelected" -> handleBodyCardSelected(json);
+                        //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
+                        //                    case "TimerStarted" -> handleBodyTimerStarted(json);
+                        //                    case "TimerEnded" -> handleBodyTimerEnded(json);
+                        //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
+                        //                    case "CurrentCards" -> handleBodyCurrentCards(json);
+                        //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
+                        //                    case "Movement" -> handleBodyMovement(json);
+                        //                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
+                        //                    case "Animation" -> handleBodyAnimation(json);
+                        //                    case "Reboot" -> handleBodyReboot(json);
+                        //                    case "RebootDirection" -> handleBodyRebootDirection(json);
+                        //                    case "Energy" -> handleBodyEnergy(json);
+                        //                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
+                        //                    case "GameFinished" -> handleBodyGameFinished(json);
+                        default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                     }
                 } catch (Exception e) {
                     System.err.println("[ERROR] Error handling message: " + e.getMessage());
@@ -264,7 +264,7 @@ public class Client {
 
         int clientID = body.clientID();
         boolean ready = body.ready();
-     // JavaFX-Thread für GUI-Update
+        // JavaFX-Thread für GUI-Update
         javafx.application.Platform.runLater(() -> {
             LobbyController controller = ControllerRegistry.getLobbyController();
             if (controller != null) {
