@@ -41,7 +41,7 @@ public class LobbyController {
             }
         });
 
-        // Optional: Alle als Standardauswahl (oder Auswahl leer lassen)
+        // Optional: Alle als Standardauswahl
         recipientBox.getSelectionModel().clearSelection();
 
         chatInput.setOnAction(e -> handleSendChat());
