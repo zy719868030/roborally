@@ -263,7 +263,7 @@ public class ClientHandler implements Runnable {
         if (body.to() == -1)
             Server.getInstance().broadcastMessage(new Message<>(new BodyReceivedChat(body.message(), from, false)));
         else
-            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message().split(" ", 3)[2], from, true)));
+            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message(), from, true)));
     }
 
     /**
