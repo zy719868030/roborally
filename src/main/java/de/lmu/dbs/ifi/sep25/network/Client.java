@@ -219,17 +219,13 @@ public class Client {
         Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
         BodyPlayerAdded body = message.messageBody();
         String proposedName = body.name();
-        String username;
 
-        if (usernames.containsValue(proposedName)) {
-            int i = 1;
-            do {
-                username = proposedName + " #" + i;
-                i++;
-            } while (usernames.containsValue(username));
-        } else {
-            username = proposedName;
-        }
+        int i = 1;
+        String username;
+        do {
+            username = proposedName + " #" + i;
+            i++;
+        } while (usernames.containsValue(username));
 
         usernames.put(body.clientID(), username);
         figure = body.figure();
