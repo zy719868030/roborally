@@ -39,6 +39,7 @@ public class Client {
      *
      * @param host the server hostname or IP address to connect to
      * @param port the port number on the server to connect to
+     * @return
      */
     public void start(String host, int port) {
         try {
@@ -80,6 +81,7 @@ public class Client {
             System.err.println("Connection error: " + e.getMessage());
             closeAll();
         }
+
     }
     /**
      * Continuously listens for and processes incoming messages from the server.

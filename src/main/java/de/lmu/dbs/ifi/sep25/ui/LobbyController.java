@@ -45,6 +45,8 @@ public class LobbyController {
         recipientBox.getSelectionModel().clearSelection();
 
         chatInput.setOnAction(e -> handleSendChat());
+        updateOwnButtons(false); // ← Spieler ist beim Start nicht bereit
+
     }
 
     @FXML
@@ -71,8 +73,18 @@ public class LobbyController {
 
 
 }
+    public void updateOwnButtons(boolean isReady) {
+        readyButton.setDisable(isReady);       // Nur aktiv, wenn nicht bereit
+        notReadyButton.setDisable(!isReady);   // Nur aktiv, wenn bereit
+    }
+
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
+
+
+        if (players.stream().anyMatch(p -> p.getClientID() == clientID)) {
+            return;
+        }
         PlayerEntry player = new PlayerEntry(clientID, name, figure, ready);
         players.add(player);
         int myID = ClientSingleton.getInstance().getID();
@@ -87,10 +99,15 @@ public class LobbyController {
             if (player.getClientID() == clientID) {
                 player.setReady(ready);
                 playerList.refresh();
+
+                if (clientID == ClientSingleton.getInstance().getID()) {
+                    updateOwnButtons(ready); // <-- NEU
+                }
                 break;
             }
         }
     }
+
 
     @FXML
     private void handleSendChat() {
