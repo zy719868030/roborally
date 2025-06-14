@@ -1,5 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
-import de.lmu.dbs.ifi.sep25.card.Card;
+
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
@@ -14,12 +14,14 @@ public class Game {
     private Player currentPlayer;
     private List<Player> players;
     private Board board;
+//    private final DamageDeck<DamageCard> damageDeck = new DamageDeck<>(); TODO implement damage deck @Yu
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
+    private final Board.MapType mapType;
 
     private Game(String mapName) {
         players = new ArrayList<>();
-        Board.MapType mapType = parseMapName(mapName);
- //       board = new Board(12, 12); //FIXME @prajal
+        mapType = parseMapName(mapName);
+//        board = new Board(12, 12); FIXME @prajal
         currentPlayer = null;
         initializeUpgradeCards();
     }
@@ -131,6 +133,10 @@ public class Game {
         players.add(player);
         Position pos = player.getRobot().getPosition();
         board.placeRobot(player.getRobot(), pos.x(), pos.y());
+    }
+
+    public String getMapType() {
+        return mapType.toString();
     }
 
     public Board getBoard() {

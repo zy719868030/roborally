@@ -1,7 +1,9 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
@@ -9,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 
 /**
  * The ClientHandler class is responsible for managing communication
@@ -94,11 +97,10 @@ public class ClientHandler implements Runnable {
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
-//                    case "PlayCard" -> handleBodyPlayCard(json);
+                    case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
-//                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
 //                    case "ActivePhase" -> handleBodyActivePhase(json);
-//                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
+                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
 //                    case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
 //                    case "YourCards" -> handleBodyYourCards(json);
 //                    case "NotYourCards" -> handleBodyNotYourCards(json);
@@ -261,7 +263,7 @@ public class ClientHandler implements Runnable {
         if (body.to() == -1)
             Server.getInstance().broadcastMessage(new Message<>(new BodyReceivedChat(body.message(), from, false)));
         else
-            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message().split(" ", 3)[2], from, true)));
+            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message(), from, true)));
     }
 
     /**
@@ -272,6 +274,41 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyReceivedChat(String json) {
         this.sendMessage(json);
+    }
+
+    /****/
+    private void handleBodyPlayCard(String json) {
+        Message<BodyPlayCard> message = JsonUtil.parseMessage(json, BodyPlayCard.class);
+        Server server = Server.getInstance();
+        server.broadcastMessage(new Message<>(new BodyCardPlayed(server.getClients().getByKey(this), message.messageBody().card())));
+
+    }
+
+    /****/
+    private void handleBodySetStartingPoint(String json) {
+        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
+        Server server = Server.getInstance();
+        Game game = server.getGame();
+        final int x = body.x();
+        final int y = body.y();
+        List<Position> startingPoints = game.getBoard().getStartingPoints();
+        List<Position> robotPositions = server.getRobotPositions();
+        List<Position> validStartingPositions = startingPoints.stream().filter(robotPositions::contains).toList();
+
+        if (validStartingPositions.contains(new Position(x, y))) {
+
+            player.getRobot().setPosition(x, y);
+            final String direction;
+
+            switch (server.getGame().getMapType()) {
+                //TODO add direcitons
+                case "REPLACE_ME" -> direction = "REPLACE_ME";
+                default -> direction = "right";
+            }
+            server.broadcastMessage(new Message<>(new BodyStartingPointTaken(x, y, direction, server.getClients().getByKey(this))));
+        } else {
+            sendMessage(new Message<>(new BodyError("Starting point invalid.")));
+        }
     }
 
     /**

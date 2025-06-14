@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Game;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
@@ -47,6 +48,7 @@ public class Server {
 
     // 5. Game logic
     private Game game;
+
 
     /**
      * Constructs a new {@code Server} instance that listens on the specified port and requires
@@ -195,7 +197,7 @@ public class Server {
             for (ClientHandler client : clients.keySet()) {
                 if (!client.isAlive()) {
                     System.err.println("Client did not respond to Alive. Disconnecting...");
-                    client.sendMessage(gson.toJson(new Message<>(new BodyError("Client did not respond to Alive."))));
+                    client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
                     client.closeAll();
                 } else {
                     client.checkLiveness();
@@ -343,6 +345,13 @@ public class Server {
     }
 
     /**
+     *
+     * **/
+    public List<Position> getRobotPositions () {
+        return clients.keySet().stream().map(handler -> handler.getPlayer().getRobot().getPosition()).toList();
+    }
+
+    /**
      * Creates a new game session with the specified map and adds all connected players to it.
      * Starts the game if all players in the lobby are ready.
      *
@@ -364,6 +373,13 @@ public class Server {
     private void startGame() {
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
         broadcastMessage(JsonUtil.toJson(message));
+    }
+
+    /**
+     *
+     * **/
+    public Game getGame() {
+        return game;
     }
 
     /**
