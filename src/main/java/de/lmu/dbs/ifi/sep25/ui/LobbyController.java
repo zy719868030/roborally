@@ -45,18 +45,22 @@ public class LobbyController {
         recipientBox.getSelectionModel().clearSelection();
 
         chatInput.setOnAction(e -> handleSendChat());
+        updateReadyButtons(false); // Spieler ist anfangs nicht bereit
+
     }
 
     @FXML
     private void handleReady() {
         sendReadyStatus(true);
         statusLabel.setText("Du bist bereit.");
+        updateReadyButtons(true);
     }
 
     @FXML
     private void handleNotReady() {
         sendReadyStatus(false);
         statusLabel.setText("Du bist nicht bereit.");
+        updateReadyButtons(false);
     }
 
     private void sendReadyStatus(boolean ready) {
@@ -79,6 +83,7 @@ public class LobbyController {
         if (clientID != myID) {
             recipientBox.getItems().add(player); // nur andere Spieler
         }
+        playerList.refresh();
     }
 
 
@@ -137,9 +142,19 @@ public class LobbyController {
 
         playerList.refresh();
     }
+    @FXML
+    private void handleClearRecipient() {
+        recipientBox.getSelectionModel().clearSelection();
+        System.out.println("[DEBUG] Chat-Empfänger zurückgesetzt auf 'Alle'");
+    }
 
 
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
     }
+    private void updateReadyButtons(boolean isReady) {
+        readyButton.setVisible(!isReady);
+        notReadyButton.setVisible(isReady);
+    }
+
 }
