@@ -83,6 +83,7 @@ public class Client {
         }
 
     }
+
     /**
      * Continuously listens for and processes incoming messages from the server.
      * <p>
@@ -109,7 +110,7 @@ public class Client {
             String json;
             while ((json = reader.readLine()) != null) {
                 try {
-                    System.out.println("[DEBUG] Received: " + json); // important
+                    System.out.println("[DEBUG] Received: " + json);
                     String messageType = JsonUtil.parseUnknown(json).messageType();
                     switch (messageType) {
                         case "HelloClient" -> handleBodyHelloClient(json);
@@ -388,7 +389,6 @@ public class Client {
         //  - check for game phase
         // set player turn maybe?
     }
-
 
 
     private void handleBodyStartingPointTaken(String json) {

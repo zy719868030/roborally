@@ -185,14 +185,19 @@ public class ClientHandler implements Runnable {
      *             the player's name and selected figure
      */
     private void handleBodyPlayerValues(String json) {
-        Message<BodyPlayerValues> message = JsonUtil.parseMessage(json, BodyPlayerValues.class);
-        BodyPlayerValues body = message.messageBody();
+        BodyPlayerValues body = JsonUtil.parseMessage(json, BodyPlayerValues.class).messageBody();
         Server server = Server.getInstance();
 
         if (server.assignFigure(body.figure(), this)) {
             player = new Player(body.name(), body.figure(), this);
             server.addToLobby(this);
-            server.broadcastMessage(new Message<>(new BodyPlayerAdded(server.getClients().getByKey(this), body.name(), body.figure())));
+
+            Message<BodyPlayerAdded> message = new Message<>(new BodyPlayerAdded(server.getClients().getByKey(this), body.name(), body.figure()));
+            for (Message<BodyPlayerAdded> m : server.getConnectedPlayerHistory()) {
+                this.sendMessage(m);
+            }
+            server.addConnectedPlayerHistory(message);
+            server.broadcastMessage(message);
         }
     }
 
@@ -206,8 +211,8 @@ public class ClientHandler implements Runnable {
      *             the readiness status of the player
      */
     private void handleBodySetStatus(String json) {
-        Server server = Server.getInstance();
         Message<BodySetStatus> message = JsonUtil.parseMessage(json, BodySetStatus.class);
+        Server server = Server.getInstance();
         boolean ready = message.messageBody().ready();
         int clientID = server.getClients().getByKey(this);
 

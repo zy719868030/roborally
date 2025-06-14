@@ -34,6 +34,7 @@ public class Server {
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();
     private final List<Integer> availableFigures = Collections.synchronizedList(new ArrayList<>());
     private final Lobby lobby = new Lobby();
+    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>();
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
     private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
 
@@ -272,6 +273,28 @@ public class Server {
      */
     public ClientHandler getHandlerForFigure(Integer figure) {
         return figures.getByValueOrDefault(figure, null);
+    }
+
+    /**
+     * Adds a message containing information about a newly connected player to the connected player history.
+     *
+     * @param message the message containing the details of the connected player, including
+     *                their client ID, name, and assigned figure
+     */
+    public void addConnectedPlayerHistory(Message<BodyPlayerAdded> message) {
+        connectedPlayerHistory.add(message);
+    }
+
+    /**
+     * Retrieves the history of connected players, which consists of a list
+     * of messages detailing player additions to the server.
+     *
+     * @return a list of messages where each message contains details about
+     *         a player added to the connected player history, including their
+     *         client ID, name, and assigned figure.
+     */
+    public List<Message<BodyPlayerAdded>> getConnectedPlayerHistory() {
+        return connectedPlayerHistory;
     }
 
     /**
