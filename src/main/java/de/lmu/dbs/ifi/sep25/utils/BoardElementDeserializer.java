@@ -13,7 +13,7 @@ public class BoardElementDeserializer implements JsonDeserializer<BoardElement> 
         JsonObject obj = json.getAsJsonObject();
         String type = obj.get("type").getAsString();
 
-        return switch (type) { //FIXME should autofix once BoardElements are implemented
+        return switch (type) {
             case "Empty" -> context.deserialize(obj, Floor.class);
             case "StartPoint" -> context.deserialize(obj, StartPoint.class);
             case "ConveyorBelt" -> context.deserialize(obj, Belts.class);

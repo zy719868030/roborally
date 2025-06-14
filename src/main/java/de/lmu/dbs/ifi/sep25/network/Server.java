@@ -1,6 +1,5 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
@@ -27,7 +26,6 @@ public class Server {
 
     // 1. Constants / configuration
     private final String protocol = "Version 0.1";
-    private final Gson gson = new Gson();
 
     // 2. Core data / state
     private final AtomicInteger clientIDCounter = new AtomicInteger(1);
@@ -111,13 +109,13 @@ public class Server {
                 ClientHandler handler = new ClientHandler(clientSocket);
                 new Thread(handler).start();
 
-                handler.sendMessage(gson.toJson(new Message<>(new BodyHelloClient(protocol))));
+                handler.sendMessage(new Message<>(new BodyHelloClient(protocol)));
 
                 int newClientID = clientIDCounter.getAndIncrement();
                 broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
 
-                handler.sendMessage(gson.toJson(new Message<>(new BodyWelcome(newClientID))));
+                handler.sendMessage(new Message<>(new BodyWelcome(newClientID)));
             }
         } catch (IOException e) {
             if (running) {
@@ -139,7 +137,7 @@ public class Server {
                 return false;
             } catch (Exception e) {
                 System.err.println("Removing client due to send failure: " + e.getMessage());
-                handler.sendMessage(gson.toJson(new Message<>(new BodyError("Failed to send message."))));
+                handler.sendMessage(new Message<>(new BodyError("Failed to send message.")));
                 handler.closeAll();
                 return true;
             }
@@ -153,7 +151,7 @@ public class Server {
      */
     public void broadcastMessage(Message<?> message) {
         try {
-            broadcastMessage(gson.toJson(message));
+            broadcastMessage(JsonUtil.toJson(message));
         } catch (Exception e) {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
@@ -372,7 +370,7 @@ public class Server {
      */
     private void startGame() {
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
-        broadcastMessage(JsonUtil.toJson(message));
+        broadcastMessage(message);
     }
 
     /**

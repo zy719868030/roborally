@@ -79,18 +79,12 @@ public class DamageCardPool {
      * Get the corresponding card list based on type.
      */
     private List<DamageCard> getCardListByType(DamageCard.DamageType type) {
-        switch (type) {
-            case SPAM:
-                return spamCards;
-            case WORM:
-                return wormCards;
-            case VIRUS:
-                return virusCards;
-            case TROJAN_HORSE:
-                return trojanCards;
-            default:
-                return null;
-        }
+        return switch (type) {
+            case SPAM -> spamCards;
+            case WORM -> wormCards;
+            case VIRUS -> virusCards;
+            case TROJAN_HORSE -> trojanCards;
+        };
     }
 
     /**
