@@ -48,23 +48,6 @@ import javafx.stage.Stage;
            // launch(args);
         //}
 
-        /**
-         * Erstellt ein neues {@link Client}-Objekt, speichert es im {@link ClientSingleton},
-         * und startet die Verbindung zum Server in einem separaten Thread.
-         * So wird verhindert, dass die GUI blockiert wird.
-         */
-        private static void startClientConnection() {
-            // Client erzeugen
-            Client client = new Client();
-
-            // Singleton setzen für globalen Zugriff im Projekt
-            ClientSingleton.set(client);
-
-            // Client-Thread starten, um Verbindung zum Server aufzubauen
-            new Thread(() -> {
-                client.start("localhost", 12345); // TODO: evtl. später konfigurierbar machen
-            }).start();
-        }
-
+//startClientConnection via MAIN
 
 }
