@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.network;
 
+import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
@@ -26,6 +27,7 @@ public class Server {
 
     // 1. Constants / configuration
     private final String protocol = "Version 0.1";
+    private final Gson gson = new Gson();
 
     // 2. Core data / state
     private final AtomicInteger clientIDCounter = new AtomicInteger(1);
@@ -64,7 +66,15 @@ public class Server {
             availableFigures.add(i);
         }
     }
+    private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
 
+    public Map<ClientHandler, String> getNames() {
+        return names;
+    }
+
+    public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
+        return figures;
+    }
     /**
      * Returns the singleton {@code Server} instance, creating it if necessary.
      *
@@ -110,13 +120,13 @@ public class Server {
                 ClientHandler handler = new ClientHandler(clientSocket);
                 new Thread(handler).start();
 
-                handler.sendMessage(new Message<>(new BodyHelloClient(protocol)));
+                handler.sendMessage(gson.toJson(new Message<>(new BodyHelloClient(protocol))));
 
                 int newClientID = clientIDCounter.getAndIncrement();
                 broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
 
-                handler.sendMessage(new Message<>(new BodyWelcome(newClientID)));
+                //  handler.sendMessage(gson.toJson(new Message<>(new BodyWelcome(newClientID))));
             }
         } catch (IOException e) {
             if (running) {
@@ -138,7 +148,7 @@ public class Server {
                 return false;
             } catch (Exception e) {
                 System.err.println("Removing client due to send failure: " + e.getMessage());
-                handler.sendMessage(new Message<>(new BodyError("Failed to send message.")));
+                handler.sendMessage(gson.toJson(new Message<>(new BodyError("Failed to send message."))));
                 handler.closeAll();
                 return true;
             }
@@ -152,7 +162,7 @@ public class Server {
      */
     public void broadcastMessage(Message<?> message) {
         try {
-            broadcastMessage(JsonUtil.toJson(message));
+            broadcastMessage(gson.toJson(message));
         } catch (Exception e) {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
@@ -265,6 +275,24 @@ public class Server {
         }
     }
 
+    public synchronized String generateUniqueName(String baseName) {
+        Collection<String> existingNames = getNames().values();
+
+        int suffix = 1;
+        String candidate;
+
+        do {
+            candidate = baseName + "#" + suffix;
+            suffix++;
+        } while (existingNames.contains(candidate));
+
+        return candidate;
+    }
+
+
+
+
+
     /**
      * Returns the client handler assigned to the given figure number.
      *
@@ -273,28 +301,6 @@ public class Server {
      */
     public ClientHandler getHandlerForFigure(Integer figure) {
         return figures.getByValueOrDefault(figure, null);
-    }
-
-    /**
-     * Adds a message containing information about a newly connected player to the connected player history.
-     *
-     * @param message the message containing the details of the connected player, including
-     *                their client ID, name, and assigned figure
-     */
-    public void addConnectedPlayerHistory(Message<BodyPlayerAdded> message) {
-        connectedPlayerHistory.add(message);
-    }
-
-    /**
-     * Retrieves the history of connected players, which consists of a list
-     * of messages detailing player additions to the server.
-     *
-     * @return a list of messages where each message contains details about
-     *         a player added to the connected player history, including their
-     *         client ID, name, and assigned figure.
-     */
-    public List<Message<BodyPlayerAdded>> getConnectedPlayerHistory() {
-        return connectedPlayerHistory;
     }
 
     /**
@@ -313,6 +319,7 @@ public class Server {
             broadcastMessage(new Message<>(new BodyMapSelected(map)));
         }
     }
+
 
     /**
      * Marks the specified client as ready.
@@ -393,7 +400,7 @@ public class Server {
      */
     private void startGame() {
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
-        broadcastMessage(message);
+        broadcastMessage(JsonUtil.toJson(message));
     }
 
     /**
@@ -404,5 +411,11 @@ public class Server {
     public Game getGame() {
         return game;
     }
+
+    public Lobby getLobby() {
+        return lobby;
+
+    }
+
 
 }
