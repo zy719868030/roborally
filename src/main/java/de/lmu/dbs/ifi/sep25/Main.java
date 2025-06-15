@@ -17,18 +17,7 @@ public class Main {
             }
         } else {
             System.out.println("[SYSTEM] Launching client...");
-            startClientInBackground();
             Application.launch(HelloApplication.class, args);
         }
-    }
-
-    private static void startClientInBackground() {
-        Thread clientThread = new Thread(() -> {
-            Client client = new Client();
-            ClientSingleton.set(client);
-            client.start("localhost", 12345);
-        });
-        clientThread.setDaemon(true);
-        clientThread.start();
     }
 }
