@@ -39,9 +39,8 @@ public class Client {
      *
      * @param host the server hostname or IP address to connect to
      * @param port the port number on the server to connect to
-     * @return
      */
-    public void start(String host, int port) {
+    public void start(String host, int port) throws IOException {
         try {
             socket = new Socket(host, port);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -52,38 +51,14 @@ public class Client {
             // Start listening thread
             new Thread(this::listenForMessages).start();
 
-            // CLI chat input (optional, usually used for testing)
-            Scanner scanner = new Scanner(System.in);
-            while (scanner.hasNextLine()) {
-                String userInput = scanner.nextLine();
-                if (userInput.trim().isEmpty()) continue;
-                String[] command = userInput.trim().split(" ", 3);
-                if (userInput.equalsIgnoreCase("/help") || userInput.equalsIgnoreCase("/h") || userInput.equalsIgnoreCase("/commands") || userInput.equalsIgnoreCase("/cmds")) {
-                    System.out.println("Available commands:");
-                    System.out.println("/help                   - Show this help message");
-                    System.out.println("/whisper username msg   - Send a private message to a client");
-                    System.out.println("/exit                   - Exit the client");
-                    // Add more commands as needed
-                } else if (userInput.equalsIgnoreCase("/exit")) {
-                    closeAll();
-                } else if ((command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper")) && command.length == 3) {
-                    if (usernames.containsValue(command[1])) {
-                        sendMessage(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
-                    } else {
-                        System.err.println("User not found");
-                    }
-                } else {
-                    sendMessage(gson.toJson(new Message<>(new BodySendChat(userInput, -1))));
-                }
-            }
+
 
         } catch (IOException e) {
             System.err.println("Connection error: " + e.getMessage());
             closeAll();
+            throw e;
         }
-
     }
-
     /**
      * Continuously listens for and processes incoming messages from the server.
      * <p>
@@ -185,7 +160,7 @@ public class Client {
     private void handleBodyAlive(String json) {
         //test
         System.out.println("[DEBUG] Alive empfangen und beantwortet");
-        sendMessage(json);
+        sendMessage(new Message<>(new BodyAlive()));
     }
 
     /**
@@ -200,7 +175,8 @@ public class Client {
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        System.out.println("[SERVER] Your client ID: " + msg.messageBody().clientID());
+        System.out.println("[SERVER] Your client ID: " + getID());
+        usernames.put(ID, "(me)");// identify the local player in user lists
     }
 
     /**
@@ -219,20 +195,29 @@ public class Client {
         Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
         BodyPlayerAdded body = message.messageBody();
         String proposedName = body.name();
-
-        int i = 1;
         String username;
-        do {
-            username = proposedName + " #" + i;
-            i++;
-        } while (usernames.containsValue(username));
+
+        if (usernames.containsValue(proposedName)) {
+            int i = 1;
+            do {
+                username = proposedName + " #" + i;
+                i++;
+            } while (usernames.containsValue(username));
+        } else {
+            username = proposedName;
+        }
 
         usernames.put(body.clientID(), username);
-        figure = body.figure();
 
-        // FINAL variables for lambda use
+        boolean isMe = body.clientID().equals(getID());
+        if (isMe) {
+            this.figure = body.figure();
+            usernames.put(ID, username);
+        }
+
+        //  FINAL variables for lambda use
         final String finalUsername = username;
-        final int finalFigure = figure;
+        final int finalFigure = body.figure();
         final int clientID = body.clientID();
 
         javafx.application.Platform.runLater(() -> {
@@ -242,7 +227,7 @@ public class Client {
                 lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
             }
 
-            if (clientID == getID()) {
+            if (isMe) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null) {
                     loginCtrl.loginSuccess(finalUsername, finalFigure);
