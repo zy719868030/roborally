@@ -15,7 +15,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
-import java.util.Scanner;
 
 public class Client {
     // 1. Constants / configuration
@@ -50,8 +49,6 @@ public class Client {
 
             // Start listening thread
             new Thread(this::listenForMessages).start();
-
-
 
         } catch (IOException e) {
             System.err.println("Connection error: " + e.getMessage());
@@ -148,7 +145,7 @@ public class Client {
         String protocol = message.messageBody().protocol();
         System.out.println("[SERVER] Connected using protocol: " + protocol);
 
-        sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
+        sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol)));
     }
 
     /**
@@ -158,9 +155,8 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
-        //test
-        System.out.println("[DEBUG] Alive empfangen und beantwortet");
-        sendMessage(new Message<>(new BodyAlive()));
+        System.out.println("[DEBUG] Alive empfangen und beantwortet"); //TEST
+        sendMessage(json);
     }
 
     /**
@@ -180,32 +176,17 @@ public class Client {
     }
 
     /**
-     * Handles a "BodyPlayerAdded" message received from the server.
-     * <p>
-     * This method processes a JSON string representing a {@code BodyPlayerAdded} message,
-     * deserializing it to extract the player's proposed username, client ID, and figure.
-     * If a conflict is detected in the proposed username (i.e., it already exists in the
-     * system), the method generates a unique username by appending a numeric suffix.
-     * Finally, the resolved username is added to the {@code usernames} map along with
-     * the client ID, and the player's figure is stored for further use.
+     * Handles the "BodyPlayerAdded" message received from the server.
+     * This method processes a JSON string representing the {@code BodyPlayerAdded} message,
+     * updates the client's internal state with the new player's details,
+     * and updates the appropriate GUI components through the {@code LobbyController} and {@code LoginController}.
      *
      * @param json the JSON string containing the serialized {@code BodyPlayerAdded} message
      */
     private void handleBodyPlayerAdded(String json) {
         Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
         BodyPlayerAdded body = message.messageBody();
-        String proposedName = body.name();
-        String username;
-
-        if (usernames.containsValue(proposedName)) {
-            int i = 1;
-            do {
-                username = proposedName + " #" + i;
-                i++;
-            } while (usernames.containsValue(username));
-        } else {
-            username = proposedName;
-        }
+        String username = body.name();
 
         usernames.put(body.clientID(), username);
 

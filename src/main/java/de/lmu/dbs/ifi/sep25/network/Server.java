@@ -39,6 +39,7 @@ public class Server {
     private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>();
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
     private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
+    private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
 
     // 3. Networking / I/O
     private final ServerSocket serverSocket;
@@ -66,7 +67,6 @@ public class Server {
             availableFigures.add(i);
         }
     }
-    private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
 
     public Map<ClientHandler, String> getNames() {
         return names;
@@ -275,6 +275,14 @@ public class Server {
         }
     }
 
+    /**
+     * Generates a unique name by appending a numeric suffix to the given base name.
+     * Ensures the generated name does not conflict with existing names managed by the server.
+     * The method is thread-safe to handle concurrent generation requests.
+     *
+     * @param baseName the base string to use for generating the unique name
+     * @return a unique name based on the provided base name
+     */
     public synchronized String generateUniqueName(String baseName) {
         Collection<String> existingNames = getNames().values();
 
@@ -288,10 +296,6 @@ public class Server {
 
         return candidate;
     }
-
-
-
-
 
     /**
      * Returns the client handler assigned to the given figure number.
