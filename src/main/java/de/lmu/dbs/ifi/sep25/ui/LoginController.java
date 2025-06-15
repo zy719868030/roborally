@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.network.Client;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -18,6 +19,8 @@ import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 
+import java.io.IOException;
+
 /**
  * Controller für die Login-Oberfläche.
  *
@@ -25,6 +28,11 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
  * sendet Login-Nachrichten an den Server und wechselt bei Erfolg zur Lobby-Ansicht.
  */
 public class LoginController {
+    @FXML
+    private TextField hostField;
+
+    @FXML
+    private TextField portField;
 
     /** Eingabefeld für den Spielernamen. */
     @FXML
@@ -68,9 +76,39 @@ public class LoginController {
     private void handleLogin(ActionEvent event) {
         String name = nameField.getText();
         Integer figure = figureBox.getValue();
+        String host =  hostField.getText();
+        String portText = portField.getText();
 
         if (name == null || name.isBlank() || figure == null) {
             showAlert("Bitte Namen und Spielfigur auswählen.");
+            return;
+        }
+        if (host == null || host.isBlank() || portText == null || portText.isBlank()) {
+            showAlert("Bitte IP-Adresse und Port eingeben.");
+            return;
+        }
+        int port;
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException e) {
+            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
+            return;
+        }
+
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException e) {
+            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
+            return;
+        }
+
+        try {
+            Client client = new Client();
+            client.start(host, port);
+            ClientSingleton.setInstance(client);
+
+        } catch (Exception e) {
+            showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
             return;
         }
 
