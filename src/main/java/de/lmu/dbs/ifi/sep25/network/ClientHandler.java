@@ -196,17 +196,15 @@ public class ClientHandler implements Runnable {
             this.playerName = server.generateUniqueName(body.name());
             this.figure = body.figure();
             this.player = new Player(playerName, figure, this);
-//            this.player.setReady(false); default state already
 
             server.getNames().put(this, playerName);
-            server.getFigures().put(this, body.figure()); //redundant, put already in assignFigure
             server.addToLobby(this);
 
             int myID = server.getClients().getByKey(this);
 
             sendMessage(new Message<>(new BodyWelcome(myID)));
 
-//            sendMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
+            server.broadcastMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
 
             // notify all
             for (ClientHandler other : server.getLobby().getClients()) {
@@ -219,16 +217,6 @@ public class ClientHandler implements Runnable {
                     sendMessage(new Message<>(new BodyPlayerAdded(otherID, otherName, otherFigure)));
                 }
             }
-
-            server.broadcastMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
-
-//            Message<BodyPlayerAdded> msg = new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure()));
-//            for (ClientHandler other : server.getLobby().getClients()) {
-//                if (other != this) {
-//                    other.sendMessage(msg);
-//                }
-//            }
-
 
         } else {
             sendMessage(new Message<>(new BodyError("Figure already selected.")));
