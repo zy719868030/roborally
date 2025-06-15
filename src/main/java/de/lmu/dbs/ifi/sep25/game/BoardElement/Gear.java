@@ -24,17 +24,23 @@ public class Gear extends BoardElement {
 
     private RotationDirection rotationDirection;
     private GearColor color;
+    private String boardId;
+    private boolean isOnBoard;
 
     public Gear() {
         super();
         this.rotationDirection = RotationDirection.CLOCKWISE;
         this.color = GearColor.GREEN;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Gear(Position position) {
         super(position);
         this.rotationDirection = RotationDirection.CLOCKWISE;
         this.color = GearColor.GREEN;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
 
@@ -49,6 +55,8 @@ public class Gear extends BoardElement {
         this.rotationDirection = rotationDirection;
         // Set colours based on rotation direction
         this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     /**
@@ -60,16 +68,41 @@ public class Gear extends BoardElement {
     public Gear(Position position, GearColor color) {
         super(position);
         this.color = color;
-
+        this.isOnBoard = false;
+        this.boardId = "";
         // Set the rotation direction based on the colour
         this.rotationDirection = (color == GearColor.GREEN) ? RotationDirection.CLOCKWISE :
                 RotationDirection.COUNTERCLOCKWISE;
+    }
+
+    public Gear(Position position, RotationDirection rotationDirection, String boardId) {
+        super(position);
+        this.rotationDirection = rotationDirection;
+        // Set colours based on rotation direction
+        this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
+        this.setBoardId(boardId);
     }
 
     public RotationDirection getRotationDirection() {
         return rotationDirection;
     }
 
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
+    }
 
     /**
      * Set the rotation direction of the gear.
@@ -135,6 +168,7 @@ public class Gear extends BoardElement {
     public String toString() {
         return (color == GearColor.GREEN ? "Green" : "Red") +
                 " gear at " + position +
+                (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", rotation: " + (rotationDirection == RotationDirection.CLOCKWISE ? "clockwise" : "counterclockwise");
     }
 }

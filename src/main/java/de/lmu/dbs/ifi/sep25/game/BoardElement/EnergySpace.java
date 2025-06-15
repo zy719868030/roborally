@@ -12,11 +12,15 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 public class EnergySpace extends BoardElement {
     private int energyCount;
     private boolean collected;
+    private String boardId;
+    private boolean isOnBoard;
 
     public EnergySpace() {
         super();
         this.energyCount = 1;
         this.collected = false;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     /**
@@ -28,6 +32,8 @@ public class EnergySpace extends BoardElement {
         super(position);
         this.energyCount = 1;
         this.collected = false;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     /**
@@ -40,6 +46,32 @@ public class EnergySpace extends BoardElement {
         super(position);
         this.energyCount = energyCount;
         this.collected = false;
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public EnergySpace(Position position, int energyCount, String boardId) {
+        super(position);
+        this.energyCount = energyCount;
+        this.collected = false;
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public int getEnergyCount() {
@@ -117,7 +149,9 @@ public class EnergySpace extends BoardElement {
 
     @Override
     public String toString() {
-        return "EnergySpace at " + position + ", energy cubes: " + (collected ? 0 : energyCount) +
+        return "EnergySpace at " + position +
+                (isOnBoard ? " on board " + boardId : " not on any board") +
+                ", energy cubes: " + (collected ? 0 : energyCount) +
                 (collected ? " (collected)" : "");
     }
 }

@@ -14,9 +14,35 @@ import java.util.Comparator;
  * The priority antenna is used to determine the order of player actions and acts as an obstacle on the game board.
  */
 public class Antenna extends BoardElement {
+    private String boardId;
+    private boolean isOnBoard;
 
     public Antenna(Position position, Direction direction) {
         super(position, direction);
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public Antenna(Position position, Direction direction, String boardId) {
+        super(position, direction);
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     /**
@@ -117,4 +143,12 @@ public class Antenna extends BoardElement {
 
         return angle;
     }
+
+    @Override
+    public String toString() {
+        return "Antenna at " + position +
+                (isOnBoard ? " on board " + boardId : " not on any board") +
+                ", direction: " + direction.getName();
+    }
+
 }

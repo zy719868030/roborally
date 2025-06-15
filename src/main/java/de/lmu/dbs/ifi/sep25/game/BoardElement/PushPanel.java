@@ -17,31 +17,47 @@ import java.util.List;
 public class PushPanel extends BoardElement {
     private List<Integer> activeRegisters;
     private int currentRegister;
+    private String boardId;
+    private boolean isOnBoard;
 
     public PushPanel() {
         super();
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public PushPanel(Position position) {
         super(position);
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public PushPanel(Position position, Direction direction) {
         super(position, direction);
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public PushPanel(Position position, Direction direction, List<Integer> activeRegisters) {
         super(position, direction);
         this.activeRegisters = new ArrayList<>(activeRegisters);
         this.currentRegister = 0;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
+    public PushPanel(Position position, Direction direction, List<Integer> activeRegisters, String boardId) {
+        super(position, direction);
+        this.activeRegisters = new ArrayList<>(activeRegisters);
+        this.currentRegister = 0;
+        this.setBoardId(boardId);
+    }
 
     public List<Integer> getActiveRegisters() {
         return new ArrayList<>(activeRegisters);
@@ -83,6 +99,23 @@ public class PushPanel extends BoardElement {
     @Override
     public String getType() {
         return "PushPanel";
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setOnBoard(boolean isOnBoard) {
+        this.isOnBoard = isOnBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     /**
@@ -222,13 +255,20 @@ public class PushPanel extends BoardElement {
         StringBuilder sb = new StringBuilder();
         sb.append("Push Panel at ").append(position);
 
+        if (isOnBoard) {
+            sb.append(" on board ").append(boardId);
+        } else {
+            sb.append(" not on any board");
+        }
+
         if (direction != null) {
             sb.append(", pushing direction: ").append(direction.getName());
         }
 
         sb.append(", active in registers: ");
         for (int register : activeRegisters) {
-            sb.append(register + 1).append(", "); // +1 转换为1-5的寄存器编号
+            // +1 Convert to register number 1-5
+            sb.append(register + 1).append(", ");
         }
 
         if (!activeRegisters.isEmpty()) {

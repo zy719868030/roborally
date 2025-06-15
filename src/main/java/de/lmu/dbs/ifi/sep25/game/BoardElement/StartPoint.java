@@ -15,6 +15,8 @@ public class StartPoint extends BoardElement {
 
     // Record the player ID occupying this starting point
     private int playerID;
+    private String boardId;
+    private boolean isOnBoard;
 
     /**
      * Create a starting point.
@@ -26,6 +28,22 @@ public class StartPoint extends BoardElement {
         super(position, direction);
         this.occupied = false;
         this.playerID = -1; //-1 indicates unoccupied
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    /**
+     * Create a starting point with board information.
+     *
+     * @param position Starting point position.
+     * @param direction Direction the robot faces when placed at this starting point.
+     * @param boardId The ID of the board this starting point is on.
+     */
+    public StartPoint(Position position, Direction direction, String boardId) {
+        super(position, direction);
+        this.occupied = false;
+        this.playerID = -1; //-1 indicates unoccupied
+        this.setBoardId(boardId);
     }
 
     /**
@@ -44,12 +62,31 @@ public class StartPoint extends BoardElement {
     }
 
     /**
+     * Check if this starting point is on a board.
+     *
+     * @return Returns true if this starting point is on a board, otherwise returns false.
+     */
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    /**
      * Release this starting point
      */
     public void release() {
         occupied = false;
         playerID = -1;
     }
+
+    /**
+     * Set whether this starting point is on a board.
+     *
+     * @param onBoard True if this starting point is on a board, otherwise false.
+     */
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
 
     /**
      * Check whether this starting point has already been occupied.
@@ -61,6 +98,15 @@ public class StartPoint extends BoardElement {
     }
 
     /**
+     * Get the ID of the board this starting point is on.
+     *
+     * @return Board ID.
+     */
+    public String getBoardId() {
+        return boardId;
+    }
+
+    /**
      * Get the player ID occupying this starting point.
      *
      * @return Player ID. If not occupied, return -1.
@@ -68,6 +114,18 @@ public class StartPoint extends BoardElement {
     public int getPlayerID() {
         return playerID;
     }
+
+    /**
+     * Set the ID of the board this starting point is on.
+     *
+     * @param boardId Board ID.
+     */
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
+    }
+
+
 
     /**
      * Get the orientation of the robot when it is placed at this starting point.
@@ -104,7 +162,6 @@ public class StartPoint extends BoardElement {
         return "StartPoint";
     }
 
-
     /**
      * Restart the robot at this starting point.
      *
@@ -114,4 +171,12 @@ public class StartPoint extends BoardElement {
         robot.setPosition(this.position);
         robot.setDirection(this.direction);
     }
+
+    @Override
+    public String toString() {
+        return "StartPoint at " + position +
+                (isOnBoard ? " on board " + boardId : " not on any board") +
+                (occupied ? ", occupied by player " + playerID : ", not occupied");
+    }
+
 }

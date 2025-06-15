@@ -43,6 +43,8 @@ public class Belts extends BoardElement {
     private List<Direction> outDirections;
     private List<Direction> inDirections;
     private boolean isRotating;
+    private String boardId;
+    private boolean isOnBoard;
 
     public Belts() {
         super();
@@ -52,6 +54,8 @@ public class Belts extends BoardElement {
         this.outDirections.add(Direction.NORTH);
         this.inDirections = new ArrayList<>();
         this.isRotating = false;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Belts(Position position) {
@@ -62,6 +66,8 @@ public class Belts extends BoardElement {
         this.outDirections.add(Direction.NORTH);
         this.inDirections = new ArrayList<>();
         this.isRotating = false;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Belts(Position position, Direction outDirection, BeltSpeed speed) {
@@ -72,6 +78,19 @@ public class Belts extends BoardElement {
         this.outDirections.add(outDirection);
         this.inDirections = new ArrayList<>();
         this.isRotating = false;
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardId) {
+        super(position);
+        this.speed = speed;
+        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
+        this.outDirections = new ArrayList<>();
+        this.outDirections.add(outDirection);
+        this.inDirections = new ArrayList<>();
+        this.isRotating = false;
+        this.setBoardId(boardId);
     }
 
     /**
@@ -92,6 +111,8 @@ public class Belts extends BoardElement {
         // If the export direction and import direction are different, it is a rotating conveyor belt.
         this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
                 !outDirections.get(0).equals(inDirections.get(0).turnAround());
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public BeltSpeed getSpeed() {
@@ -144,6 +165,23 @@ public class Belts extends BoardElement {
         this.isRotating = rotating;
     }
 
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
+    }
+
     @Override
     public void activate(Robot robot) {
         // The conveyor belt does not trigger an effect when the robot enters.
@@ -152,7 +190,6 @@ public class Belts extends BoardElement {
 
     @Override
     public boolean canPassThrough(Robot robot) {
-        // 传送带不会阻止机器人移动
         return true;
     }
 
@@ -338,6 +375,12 @@ public class Belts extends BoardElement {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append((color == BeltColor.GREEN ? "Green" : "Blue") + " conveyor belt at " + position);
+
+        if (isOnBoard) {
+            sb.append(" on board ").append(boardId);
+        } else {
+            sb.append(" not on any board");
+        }
 
         if (!outDirections.isEmpty()) {
             sb.append(", out directions: ");
