@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
 /**
@@ -14,14 +15,42 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 @SuppressWarnings("unused")
 public class Floor extends BoardElement {
     private static final Floor INSTANCE = new Floor();
+    private String boardId;
+    private boolean isOnBoard;
 
     private Floor() {
-
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public static Floor getInstance() {
-
         return INSTANCE;
+    }
+
+    public static Floor createFloor(Position position, String boardId) {
+        Floor floor = new Floor();
+        floor.setPosition(position);
+        floor.setBoardId(boardId);
+        floor.setIsOnBoard(true);
+        return floor;
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        // If boardId is not empty, set it to be on the board.
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     @Override
@@ -46,7 +75,8 @@ public class Floor extends BoardElement {
 
     @Override
     public String toString() {
-        return "Floor at " + (position != null ? position.toString() : "unspecified position");
+        return "Floor at " + (position != null ? position.toString() : "unspecified position")
+                + (isOnBoard ? " on board " + boardId : " not on any board");
     }
 }
 

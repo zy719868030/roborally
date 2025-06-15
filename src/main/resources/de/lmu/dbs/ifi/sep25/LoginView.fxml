@@ -15,4 +15,11 @@
     <ComboBox fx:id="figureBox" promptText="Spielfigur wählen"/>
 
     <Button text="Weiter zur Lobby" onAction="#handleLogin"/>
+    <HBox spacing="10">
+        <Label text="Host:" />
+        <TextField fx:id="hostField" promptText="localhost" />
+        <Label text="Port:" />
+        <TextField fx:id="portField" promptText="12345" />
+    </HBox>
+
 </VBox>

@@ -413,6 +413,27 @@ public class Board {
         return robotsInRange;
     }
 
-}
+    /**
+     * Retrieves a list of available starting positions on the game board.
+     * A starting position is considered valid if it contains a {@code StartPoint} element
+     * that is not currently occupied.
+     *
+     * @return A list of {@code Position} objects representing the valid starting points.
+     */
+    public List<Position> getStartingPoints() {
+        List<Position> positions = new ArrayList<>();
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                for (BoardElement element : getElements(i, j)) {
+                    if (element instanceof StartPoint sp && !sp.isOccupied()) {
+                        positions.add(new Position(i, j));
+                        break;
+                    }
+                }
+            }
+        }
+        return positions;
+    }
 
+}
 

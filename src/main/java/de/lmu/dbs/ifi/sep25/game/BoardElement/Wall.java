@@ -14,15 +14,21 @@ import java.util.List;
  */
 public class Wall extends BoardElement {
     private List<Direction> blockedDirections;
+    private String boardId;
+    private boolean isOnBoard;
 
     public Wall() {
         super();
         this.blockedDirections = new ArrayList<>();
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Wall(Position position) {
         super(position);
         this.blockedDirections = new ArrayList<>();
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     //Constructor with position and blocking direction parameters
@@ -30,12 +36,39 @@ public class Wall extends BoardElement {
         super(position);
         this.blockedDirections = new ArrayList<>();
         this.blockedDirections.add(blockedDirection);
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     //Constructor with position and multiple blocking direction parameters
     public Wall(Position position, List<Direction> blockedDirections) {
         super(position);
         this.blockedDirections = new ArrayList<>(blockedDirections);
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public Wall(Position position, List<Direction> blockedDirections, String boardId) {
+        super(position);
+        this.blockedDirections = new ArrayList<>(blockedDirections);
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public void addBlockedDirection(Direction direction) {
@@ -107,7 +140,15 @@ public class Wall extends BoardElement {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Wall at ").append(position).append(", blocking directions: ");
+        sb.append("Wall at ").append(position);
+
+        if (isOnBoard) {
+            sb.append(" on board ").append(boardId);
+        } else {
+            sb.append(" not on any board");
+        }
+
+        sb.append(", blocking directions: ");
 
         for (Direction dir : blockedDirections) {
             sb.append(dir.getName()).append(", ");

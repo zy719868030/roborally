@@ -9,12 +9,41 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * When the robot moves onto a pit, it immediately falls into the pit and triggers the restart process.
  */
 public class Pit extends BoardElement {
+    private String boardId;
+    private boolean isOnBoard;
+
     public Pit() {
         super();
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Pit(Position position) {
         super(position);
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public Pit(Position position, String boardId) {
+        super(position);
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     /**
@@ -83,6 +112,6 @@ public class Pit extends BoardElement {
      */
     @Override
     public String toString() {
-        return "Pit at " + position;
+        return "Pit at " + position + (isOnBoard ? " on board " + boardId : " not on any board");
     }
 }

@@ -47,14 +47,12 @@ public class MessageDefinitions {
     public record BodyPlayerStatus(Integer clientID, Boolean ready) {
     }
 
-    //FIXME maybe fix needed? depends on Map implementation
     public record BodySelectMap(List<String> availableMaps) {
     }
 
     public record BodyMapSelected(String map) {
     }
 
-    //FIXME implement map design
     public record BodyGameStarted(Integer energy, List<List<List<BoardElement>>> gameMap) {
     }
 
@@ -79,14 +77,12 @@ public class MessageDefinitions {
     public record BodyActivePhase(Integer phase) {
     }
 
-    //FIXME implement direction as a enum
     public record BodySetStartingPoint(Integer x, Integer y, String direction) {
     }
 
     public record BodyStartingPointTaken(Integer x, Integer y, String direction, Integer clientID) {
     }
 
-    //FIXME replace List<String> with List<Card>
     public record BodyYourCards(List<String> cardsInHand) {
     }
 
@@ -111,40 +107,33 @@ public class MessageDefinitions {
     public record BodyTimerEnded(List<Integer> clientIDs) {
     }
 
-    //FIXME replace String with Card
     public record BodyCardsYouGotNow(List<String> cards) {
     }
 
     public record BodyCurrentCards(List<ActiveCard> activeCards) {
     }
 
-    //FIXME replace String with Card
     public record ActiveCard(Integer clientID, String card) {
     }
 
-    //FIXME replace String with Card
     public record BodyReplaceCard(Integer register, String newCard, Integer clientID) {
     }
 
     public record BodyMovement(Integer clientID, Integer x, Integer y) {
     }
 
-    //FIXME implement rotation as enum
     public record BodyPlayerTurning(Integer clientID, String rotation) {
     }
 
-    //TODO optional
     public record BodyAnimation(String type) {
     }
 
     public record BodyReboot(Integer clientID) {
     }
 
-    //FIXME implement direction as enum
     public record BodyRebootDirection(String direction) {
     }
 
-    //FIXME implement source as enum (PowerUpCard, EnergySpace)
     public record BodyEnergy(Integer clientID, Integer count, String source) {
     }
 

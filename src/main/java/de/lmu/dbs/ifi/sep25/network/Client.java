@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
+import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Client {
-
     // 1. Constants / configuration
     private final Gson gson = new Gson();
     private final String protocol = "Version 0.1";
@@ -33,7 +33,6 @@ public class Client {
     private BufferedReader reader;
     private PrintWriter writer;
 
-
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
      * for communication. The method also starts a thread that listens for messages from the server.
@@ -41,7 +40,7 @@ public class Client {
      * @param host the server hostname or IP address to connect to
      * @param port the port number on the server to connect to
      */
-    public void start(String host, int port) {
+    public void start(String host, int port) throws IOException {
         try {
             socket = new Socket(host, port);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -53,47 +52,13 @@ public class Client {
             new Thread(this::listenForMessages).start();
 
 
-            //TODO for FX team: (in general replace the println methods)
-            // higher prio:
-            // - connect/replace console chat below with chat gui
-            // - send a message<BodyPlayerValues> via login screen
-            // - send a message<BodySetStatus> via ready screen
-            // lower prio:
-            // - send a message<BodyMapSelected> via map selection screen
-
-
-            // Read user input and send messages
-            // Example: Send chat message
-
-            Scanner scanner = new Scanner(System.in);
-            while (scanner.hasNextLine()) {
-                String userInput = scanner.nextLine();
-                if (userInput.trim().isEmpty()) continue;
-                String[] command = userInput.trim().split(" ", 3);
-                if (userInput.equalsIgnoreCase("/help") || userInput.equalsIgnoreCase("/h") || userInput.equalsIgnoreCase("/commands") || userInput.equalsIgnoreCase("/cmds")) {
-                    System.out.println("Available commands:");
-                    System.out.println("/help                   - Show this help message");
-                    System.out.println("/whisper username msg   - Send a private message to a client");
-                    System.out.println("/exit                   - Exit the client");
-                    // Add more commands as needed
-                } else if (userInput.equalsIgnoreCase("/exit")) {
-                    System.out.println("Exiting...");
-                    closeAll();
-                } else if ((command[0].equalsIgnoreCase("/w") || command[0].equalsIgnoreCase("/whisper")) && command.length == 3)
-                    if (usernames.containsValue(command[1]))
-                        sendMessage(new Message<>(new BodySendChat(userInput, Integer.valueOf(command[1]))));
-                    else
-                        System.err.println("User not found");
-                else
-                    sendMessage(gson.toJson(new Message<>(new BodySendChat(userInput, -1))));
-            }
 
         } catch (IOException e) {
             System.err.println("Connection error: " + e.getMessage());
             closeAll();
+            throw e;
         }
     }
-
     /**
      * Continuously listens for and processes incoming messages from the server.
      * <p>
@@ -119,44 +84,49 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                String messageType = JsonUtil.parseUnknown(json).messageType();
-                switch (messageType) {
-                    case "HelloClient" -> handleBodyHelloClient(json);
-                    case "Alive" -> handleBodyAlive(json);
-                    case "Welcome" -> handleBodyWelcome(json);
-                    case "PlayerAdded" -> handleBodyPlayerAdded(json);
-                    case "PlayerStatus" -> handleBodyPlayerStatus(json);
-                    case "SelectMap" -> handleBodySelectMap(json);
-                    case "MapSelected" -> handleBodyMapSelected(json);
-                    case "GameStarted" -> handleBodyGameStarted(json);
-                    case "ReceivedChat" -> handleBodyReceivedChat(json);
-                    case "Error" -> handleBodyError(json);
-//                    case "PlayCard" -> handleBodyPlayCard(json);
-//                    case "CardPlayed" -> handleBodyCardPlayed(json);
-//                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-//                    case "ActivePhase" -> handleBodyActivePhase(json);
-//                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-//                    case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-//                    case "YourCards" -> handleBodyYourCards(json);
-//                    case "NotYourCards" -> handleBodyNotYourCards(json);
-//                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-//                    case "SelectedCard" -> handleBodySelectedCard(json);
-//                    case "CardSelected" -> handleBodyCardSelected(json);
-//                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-//                    case "TimerStarted" -> handleBodyTimerStarted(json);
-//                    case "TimerEnded" -> handleBodyTimerEnded(json);
-//                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
-//                    case "CurrentCards" -> handleBodyCurrentCards(json);
-//                    case "ReplaceCard" -> handleBodyReplaceCard(json);
-//                    case "Movement" -> handleBodyMovement(json);
-//                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
-//                    case "Animation" -> handleBodyAnimation(json);
-//                    case "Reboot" -> handleBodyReboot(json);
-//                    case "RebootDirection" -> handleBodyRebootDirection(json);
-//                    case "Energy" -> handleBodyEnergy(json);
-//                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-//                    case "GameFinished" -> handleBodyGameFinished(json);
-                    default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                try {
+                    System.out.println("[DEBUG] Received: " + json);
+                    String messageType = JsonUtil.parseUnknown(json).messageType();
+                    switch (messageType) {
+                        case "HelloClient" -> handleBodyHelloClient(json);
+                        case "Alive" -> handleBodyAlive(json);
+                        case "Welcome" -> handleBodyWelcome(json);
+                        case "PlayerAdded" -> handleBodyPlayerAdded(json);
+                        case "PlayerStatus" -> handleBodyPlayerStatus(json);
+                        case "SelectMap" -> handleBodySelectMap(json);
+                        case "MapSelected" -> handleBodyMapSelected(json);
+                        case "GameStarted" -> handleBodyGameStarted(json);
+                        case "ReceivedChat" -> handleBodyReceivedChat(json);
+                        case "Error" -> handleBodyError(json);
+                        //                    case "PlayCard" -> handleBodyPlayCard(json); TODO add to game logic: sends to server card was played
+                        case "CardPlayed" -> handleBodyCardPlayed(json);
+                        case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
+                        //                    case "ActivePhase" -> handleBodyActivePhase(json);
+                        case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
+                        //                    case "YourCards" -> handleBodyYourCards(json);
+                        //                    case "NotYourCards" -> handleBodyNotYourCards(json);
+                        //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
+                        //                    case "SelectedCard" -> handleBodySelectedCard(json);
+                        //                    case "CardSelected" -> handleBodyCardSelected(json);
+                        //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
+                        //                    case "TimerStarted" -> handleBodyTimerStarted(json);
+                        //                    case "TimerEnded" -> handleBodyTimerEnded(json);
+                        //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
+                        //                    case "CurrentCards" -> handleBodyCurrentCards(json);
+                        //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
+                        //                    case "Movement" -> handleBodyMovement(json);
+                        //                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
+                        //                    case "Animation" -> handleBodyAnimation(json);
+                        //                    case "Reboot" -> handleBodyReboot(json);
+                        //                    case "RebootDirection" -> handleBodyRebootDirection(json);
+                        //                    case "Energy" -> handleBodyEnergy(json);
+                        //                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
+                        //                    case "GameFinished" -> handleBodyGameFinished(json);
+                        default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[ERROR] Error handling message: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         } catch (IOException e) {
@@ -176,7 +146,7 @@ public class Client {
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
-        System.out.println("[SERVER] Connected to server using protocol: " + protocol);
+        System.out.println("[SERVER] Connected using protocol: " + protocol);
 
         sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
     }
@@ -188,7 +158,9 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
-        sendMessage(json);
+        //test
+        System.out.println("[DEBUG] Alive empfangen und beantwortet");
+        sendMessage(new Message<>(new BodyAlive()));
     }
 
     /**
@@ -203,7 +175,8 @@ public class Client {
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        System.out.println("[SERVER] Your client ID: " + msg.messageBody().clientID());
+        System.out.println("[SERVER] Your client ID: " + getID());
+        usernames.put(ID, "(me)");// identify the local player in user lists
     }
 
     /**
@@ -233,10 +206,34 @@ public class Client {
         } else {
             username = proposedName;
         }
-        usernames.put(body.clientID(), username);
-        figure = body.figure();
 
-        //TODO implement fx code to display that player clientID = username with figure x or smth
+        usernames.put(body.clientID(), username);
+
+        boolean isMe = body.clientID().equals(getID());
+        if (isMe) {
+            this.figure = body.figure();
+            usernames.put(ID, username);
+        }
+
+        //  FINAL variables for lambda use
+        final String finalUsername = username;
+        final int finalFigure = body.figure();
+        final int clientID = body.clientID();
+
+        javafx.application.Platform.runLater(() -> {
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl != null) {
+                boolean isReady = false;
+                lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
+            }
+
+            if (isMe) {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null) {
+                    loginCtrl.loginSuccess(finalUsername, finalFigure);
+                }
+            }
+        });
     }
 
     /**
@@ -251,11 +248,12 @@ public class Client {
 
         int clientID = body.clientID();
         boolean ready = body.ready();
-
         // JavaFX-Thread für GUI-Update
         javafx.application.Platform.runLater(() -> {
             LobbyController controller = ControllerRegistry.getLobbyController();
-            controller.updatePlayerStatus(clientID, ready);
+            if (controller != null) {
+                controller.updatePlayerStatus(clientID, ready);
+            }
         });
     }
 
@@ -270,12 +268,8 @@ public class Client {
      */
     private void handleBodySelectMap(String json) {
         Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
-
-        @SuppressWarnings("unused")
         List<String> availableMaps = message.messageBody().availableMaps();
-        String selection = "Dizzy Highway"; //FIXME example
-
-        //TODO implement fx logic to select map
+        String selection = "Dizzy Highway"; // TODO: Replace with actual map selection from GUI
 
         sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
     }
@@ -291,10 +285,8 @@ public class Client {
         BodyGameStarted body = message.messageBody();
         List<List<List<BoardElement>>> board = body.gameMap();
 
-        //TODO display the map to client in fx
+        // TODO: Display game board in GUI
     }
-
-
 
     /**
      * Handles a "BodyReceivedChat" message from the server.
@@ -317,33 +309,25 @@ public class Client {
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (!body.from().equals(ID)) {
-            if (body.isPrivate())
-                System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " whispers: " + body.message());
-            else if (body.from().equals(0))
-                System.out.println("[SERVER] " + body.message());
-            else
-                System.out.println(usernames.getByKeyOrDefault(body.from(), body.from().toString()) + ": " + body.message());
-            //  updates the GUI (chat area) using JavaFX thread-safe method
+            String sender;
+            if (body.from().equals(0)) {
+                sender = "[SERVER]";
+            } else if (body.isPrivate()) {
+                sender = usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " (private)";
+            } else {
+                sender = usernames.getByKeyOrDefault(body.from(), body.from().toString());
+            }
+
+            String fullMessage = sender + ": " + body.message();
+
             javafx.application.Platform.runLater(() -> {
                 LobbyController controller = ControllerRegistry.getLobbyController();
                 if (controller != null) {
-                    String sender;
-                    if (body.from().equals(0)) {
-                        sender = "[SERVER]";
-                    } else if (body.isPrivate()) {
-                        sender = usernames.getByKeyOrDefault(body.from(), body.from().toString()) + " (private)";
-                    } else {
-                        sender = usernames.getByKeyOrDefault(body.from(), body.from().toString());
-                    }
-
-                    String fullMessage = sender + ": " + body.message();
                     controller.appendChatMessage(fullMessage);
                 }
             });
         }
     }
-
-
 
     /**
      * Handles an error response message received from the server.
@@ -357,9 +341,41 @@ public class Client {
      */
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
-        System.err.println("Error: " + msg.messageBody().error());
-        closeAll();
+        String errorText = msg.messageBody().error();
+        System.err.println("Error: " + errorText);
+
+        if (errorText.contains("Figure already selected")) {
+            javafx.application.Platform.runLater(() -> {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null) {
+                    loginCtrl.displayFigureAlreadyTaken();
+                }
+            });
+            return; // nicht schließen!
+        }
+
+        closeAll(); // bei anderen Fehlern
     }
+
+    /****/
+    private void handleBodyCardPlayed(String json) {
+        Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
+        //TODO implement java fx code: display played card to client
+    }
+
+    /****/
+    private void handleBodyCurrentPlayer(String json) {
+        // TODO
+        //  - check if equals sent id
+        //  - check for game phase
+        // set player turn maybe?
+    }
+
+
+    private void handleBodyStartingPointTaken(String json) {
+        //TODO fx display robot
+    }
+
 
     /**
      * Sends a text message through the output stream to the connected server or client.
@@ -417,17 +433,7 @@ public class Client {
         }
     }
 
-    /**
-     * The main entry point of the application.
-     * This method initiates the client program by creating a new {@link Client} instance
-     * and starting a connection with the server using the specified hostname and port.
-     *
-     * @param args command-line arguments passed to the program. These are not used
-     *             in this specific implementation.
-     */
-    public static void main(String[] args) {
-        Client client = new Client();
-        ClientSingleton.set(client); //   für Zugriff aus GUI
-        client.start("localhost", 12345);
+    public int getID() {
+        return ID != null ? ID : -1;
     }
 }

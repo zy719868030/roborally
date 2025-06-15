@@ -5,11 +5,43 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 
 public class Reboot extends BoardElement {
+    private String boardId;
+    private boolean isOnBoard;
     private static Reboot instance = null;
 
     private Reboot() {
+        this.isOnBoard = false;
+        this.boardId = "";
         // Private constructor for singleton
     }
+    public Reboot(Position position) {
+        super(position);
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public Reboot(Position position, String boardId) {
+        super(position);
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
+    }
+
 
     public static Reboot getInstance() {
         if (instance == null) {
@@ -65,7 +97,8 @@ public class Reboot extends BoardElement {
      */
     @Override
     public String toString() {
-        return "Reboot point at " + (position != null ? position.toString() : "unspecified position");
+            return "Reboot point at " + (position != null ? position.toString() : "unspecified position") +
+                    (isOnBoard ? " on board " + boardId : " not on any board");
     }
 }
 

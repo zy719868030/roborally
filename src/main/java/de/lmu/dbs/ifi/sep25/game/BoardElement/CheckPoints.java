@@ -13,25 +13,58 @@ import java.util.Map;
  * Robots must visit checkpoints in numerical order, and the first player to visit all checkpoints wins.
  */
 public class CheckPoints extends BoardElement {
+    //number indicates the checkpoint number.（count）
     private int number;
     private Map<Integer, Integer> robotCheckpoints;
+    private String boardId;
+    private boolean isOnBoard;
 
     public CheckPoints() {
         super();
         this.number = 1;
         this.robotCheckpoints = new HashMap<>();
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public CheckPoints(Position position) {
         super(position);
         this.number = 1;
         this.robotCheckpoints = new HashMap<>();
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public CheckPoints(Position position, int number) {
         super(position);
         this.number = number;
         this.robotCheckpoints = new HashMap<>();
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public CheckPoints(Position position, int number, String boardId) {
+        super(position);
+        this.number = number;
+        this.robotCheckpoints = new HashMap<>();
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public int getNumber() {
@@ -41,7 +74,6 @@ public class CheckPoints extends BoardElement {
     public void setNumber(int number) {
         this.number = number;
     }
-
 
     public int getRobotHighestCheckpoint(int robotId) {
         return robotCheckpoints.getOrDefault(robotId, 0);
@@ -140,9 +172,10 @@ public class CheckPoints extends BoardElement {
         // Here can add game end logic.
         // z.B, game controller method to end the game.
     }
-    
+
     @Override
     public String toString() {
-        return "CheckPoint " + number + " at " + position;
+        return "CheckPoint " + number + " at " + position +
+                (isOnBoard ? " on board " + boardId : " not on any board");
     }
 }

@@ -10,26 +10,60 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * Lasers deal damage to robots that end their movement on a laser's path.
  */
 public class Laser extends BoardElement {
+    //power indicates laser intensity (count)
     private int power;
+    private String boardId;
+    private boolean isOnBoard;
 
     public Laser() {
         super();
         this.power = 1;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Laser(Position position) {
         super(position);
         this.power = 1;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Laser(Position position, Direction direction) {
         super(position, direction);
         this.power = 1;
+        this.isOnBoard = false;
+        this.boardId = "";
     }
 
     public Laser(Position position, Direction direction, int power) {
         super(position, direction);
         this.power = power;
+        this.isOnBoard = false;
+        this.boardId = "";
+    }
+
+    public Laser(Position position, Direction direction, int power, String boardId) {
+        super(position, direction);
+        this.power = power;
+        this.setBoardId(boardId);
+    }
+
+    public boolean isOnBoard() {
+        return isOnBoard;
+    }
+
+    public void setIsOnBoard(boolean onBoard) {
+        isOnBoard = onBoard;
+    }
+
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public int getPower() {
@@ -140,6 +174,8 @@ public class Laser extends BoardElement {
      */
     @Override
     public String toString() {
-        return "Laser at " + position + ", direction: " + direction.getName() + ", power: " + power;
+        return "Laser at " + position +
+                (isOnBoard ? " on board " + boardId : " not on any board") +
+                ", direction: " + direction.getName() + ", power: " + power;
     }
 }

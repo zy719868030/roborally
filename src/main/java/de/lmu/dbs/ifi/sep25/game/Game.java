@@ -1,5 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
-import de.lmu.dbs.ifi.sep25.card.Card;
+
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
@@ -12,14 +12,16 @@ public class Game {
     private static Game instance;
 
     private Player currentPlayer;
-    private List<Player> players;
+    private final List<Player> players;
     private Board board;
+    private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
+    private final Board.MapType mapType;
 
     private Game(String mapName) {
         players = new ArrayList<>();
-        Board.MapType mapType = parseMapName(mapName);
- //       board = new Board(12, 12); //FIXME @prajal
+        mapType = parseMapName(mapName);
+//        board = new Board(12, 12); FIXME @prajal
         currentPlayer = null;
         initializeUpgradeCards();
     }
@@ -133,47 +135,8 @@ public class Game {
         board.placeRobot(player.getRobot(), pos.x(), pos.y());
     }
 
-    public Board getBoard() {
-        return board;
-    }
-}
-
-/*
-public class Game {
-    private Player currentPlayer;
-    private List<Player> players;
-    private List<Card> discardPile;
-    private final Board board;
-
-    public Game() {
-        players = new ArrayList<>();
-        discardPile = new ArrayList<>();
-        board = new Board(12, 12); // 12x12 board
-        currentPlayer = null;
-    }
-
-    public Player getCurrentPlayer() {
-        return currentPlayer;
-    }
-
-    public void determineTurn() {
-        // Stub: Select next player for turn
-    }
-
-    public void playRound() {
-        // Stub: Execute 5 phases of card actions
-        for (Player player : players) {
-            List<Card> register = player.getRegister();
-            for (int phase = 0; phase < 5; phase++) {
-                if (phase < register.size() && register.get(phase) != null) {
-                    register.get(phase).execute(player.getRobot());
-                }
-            }
-        }
-    }
-
-    public void addPlayer(Player player) {
-        players.add(player);
+    public String getMapType() {
+        return mapType.toString();
     }
 
     public Board getBoard() {
@@ -181,5 +144,3 @@ public class Game {
     }
 }
 
-
- */

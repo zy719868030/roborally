@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+
 /**
  * The ClientHandler class is responsible for managing communication
  * between the server and a specific connected client. Each instance
@@ -41,6 +42,10 @@ public class ClientHandler implements Runnable {
 
     // 4. Game connection
     private Player player;
+
+    private String name;
+    private int figure;
+
 
 
     /**
@@ -94,7 +99,7 @@ public class ClientHandler implements Runnable {
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
-//                    case "PlayCard" -> handleBodyPlayCard(json);
+                    //                   case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
 //                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
 //                    case "ActivePhase" -> handleBodyActivePhase(json);
@@ -188,9 +193,43 @@ public class ClientHandler implements Runnable {
         Server server = Server.getInstance();
 
         if (server.assignFigure(body.figure(), this)) {
-            player = new Player(body.name(), body.figure(), this);
-            server.addToLobby(this);
-            server.broadcastMessage(new Message<>(new BodyPlayerAdded(server.getClients().getByKey(this), body.name(), body.figure())));
+            this.playerName = Server.getInstance().generateUniqueName(body.name());
+            this.figure = body.figure();
+            this.player = new Player(playerName, figure, this);
+            this.player.setReady(false);
+
+            server.getNames().put(this, playerName);
+            server.getFigures().put(this, body.figure());
+            server.getLobby().add(this);
+
+            int myID = server.getClients().getByKey(this);
+
+            sendMessage(new Message<>(new BodyWelcome(myID)));
+
+            sendMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
+
+            // notiffy all
+            for (ClientHandler other : server.getLobby().getClients()) {
+                if (other == this) continue;
+                Integer otherID = server.getClients().getByKey(other);
+                String otherName = server.getNames().get(other);
+                Integer otherFigure = server.getFigures().getByKey(other);
+
+                if (otherID != null && otherName != null && otherFigure != null) {
+                    sendMessage(new Message<>(new BodyPlayerAdded(otherID, otherName, otherFigure)));
+                }
+            }
+
+            Message<BodyPlayerAdded> msg = new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure()));
+            for (ClientHandler other : server.getLobby().getClients()) {
+                if (other != this) {
+                    other.sendMessage(msg);
+                }
+            }
+
+
+        } else {
+            sendMessage(new Message<>(new BodyError("Figure already selected.")));
         }
     }
 
@@ -209,20 +248,25 @@ public class ClientHandler implements Runnable {
         boolean ready = message.messageBody().ready();
         int clientID = server.getClients().getByKey(this);
 
+        if (player == null) {
+            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + clientID + ")");
+            sendMessage(new Message<>(new BodyError("Cannot change ready state: Player not initialized.")));
+            return;
+        }
+
         player.setReady(ready);
         server.broadcastMessage(new Message<>(new BodyPlayerStatus(clientID, ready)));
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
-            if (ready)
-                if (server.readyIsEmpty())
-                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
-                else
-                    server.markReady(this);
-            else
-                server.unmarkReady(this);
-
+            if (ready) {
+                server.markReady(this);
+            }
+        } else {
+            server.unmarkReady(this);
         }
     }
+
+
 
     /**
      * Handles the processing of a "BodyMapSelected" message. This method parses the incoming
@@ -258,11 +302,27 @@ public class ClientHandler implements Runnable {
         Message<BodySendChat> message = JsonUtil.parseMessage(json, BodySendChat.class);
         BodySendChat body = message.messageBody();
         Integer from = Server.getInstance().getClients().getByKey(this);
-        if (body.to() == -1)
-            Server.getInstance().broadcastMessage(new Message<>(new BodyReceivedChat(body.message(), from, false)));
-        else
-            Server.getInstance().getClients().getByValue(body.to()).sendMessage(new Message<>(new BodyReceivedChat(body.message().split(" ", 3)[2], from, true)));
+        if (from == null) {
+            sendMessage(new Message<>(new BodyError("Sender ID not found.")));
+            return;
+        }
+
+        if (body.to() == -1) {
+            Server.getInstance().broadcastMessage(
+                    new Message<>(new BodyReceivedChat(body.message(), from, false))
+            );
+        } else {
+            ClientHandler recipient = Server.getInstance().getClients().getByValue(body.to());
+            if (recipient != null) {
+                recipient.sendMessage(
+                        new Message<>(new BodyReceivedChat(body.message(), from, true))
+                );
+            } else {
+                sendMessage(new Message<>(new BodyError("Recipient not found.")));
+            }
+        }
     }
+
 
     /**
      * Handles the processing of a received chat message in JSON format.
@@ -381,5 +441,15 @@ public class ClientHandler implements Runnable {
     public Player getPlayer() {
         return player;
     }
+    public String getName() {
+        return name;
+    }
+
+    public int getFigure() {
+        return figure;
+    }
+    private String playerName;
+
+
 
 }

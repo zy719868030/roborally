@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Game;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
@@ -13,7 +14,12 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
+/**
+ * Represents the game server that manages client connections, lobby management,
+ * game sessions, and communication with clients.
+ * <p>
+ * This class is implemented as a singleton.
+ */
 public class Server {
 
     // 0. Singleton instance
@@ -28,60 +34,67 @@ public class Server {
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> clients = new ConcurrentBidirectionalMap<>();
     private final ConcurrentMap<ClientHandler, Boolean> isAI = new ConcurrentHashMap<>();
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();
+    private final List<Integer> availableFigures = Collections.synchronizedList(new ArrayList<>());
     private final Lobby lobby = new Lobby();
+    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>();
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
-    private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway")); //TODO add new maps
+    private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
 
     // 3. Networking / I/O
     private final ServerSocket serverSocket;
 
     // 4. State flags
     private volatile boolean running = true;
-    private final int MinPlayer;
+    private final int minPlayer;
 
     // 5. Game logic
     private Game game;
 
 
     /**
-     * Constructs a Server instance with the specified port and minimum number of players.
-     * Initializes the server socket and sets up the figures map.
+     * Constructs a new {@code Server} instance that listens on the specified port and requires
+     * a minimum number of players before starting the game.
      *
-     * @param port      the port number on which the server socket will listen for connections
-     * @param MinPlayer the minimum number of players required for the server
-     * @throws IOException if an I/O error occurs when opening the server socket
+     * @param port      the TCP port number on which the server will listen for incoming connections
+     * @param minPlayer the minimum number of players required to start the game
+     * @throws IOException if the server socket cannot be opened on the specified port
      */
-    private Server(int port, int MinPlayer) throws IOException {
-        this.MinPlayer = MinPlayer;
+    private Server(int port, int minPlayer) throws IOException {
+        this.minPlayer = minPlayer;
         this.serverSocket = new ServerSocket(port);
-        for (int i = 0; i < 6; i++)
-            figures.put(null, i);
+        for (int i = 0; i < 6; i++) {
+            availableFigures.add(i);
+        }
+    }
+    private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
+
+    public Map<ClientHandler, String> getNames() {
+        return names;
     }
 
+    public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
+        return figures;
+    }
     /**
-     * Retrieves the singleton instance of the {@code Server} class.
-     * If the instance does not yet exist, it is created with the specified
-     * port and minimum number of players. Subsequent calls to this method
-     * will return the same instance.
+     * Returns the singleton {@code Server} instance, creating it if necessary.
      *
-     * @param port      the port number on which the server will listen for incoming connections
-     * @param MinPlayer the minimum number of players required for the game
-     * @return the singleton {@code Server} instance
-     * @throws IOException if an error occurs while initializing the {@code Server} instance
+     * @param port      the port number for the server socket to listen on
+     * @param minPlayer the minimum number of players required for the game
+     * @return the singleton instance of the {@code Server}
+     * @throws IOException if an I/O error occurs during server initialization
      */
-    public static synchronized Server getInstance(int port, int MinPlayer) throws IOException {
-        return instance == null ? instance = new Server(port, MinPlayer) : instance;
+    public static synchronized Server getInstance(int port, int minPlayer) throws IOException {
+        if (instance == null) {
+            instance = new Server(port, minPlayer);
+        }
+        return instance;
     }
 
     /**
-     * Retrieves the single instance of the {@code Server}.
-     * This method enforces the Singleton design pattern, ensuring that only
-     * one instance of the {@code Server} is created and accessible throughout
-     * the application's lifecycle. If the instance has not been initialized,
-     * an {@link IllegalStateException} will be thrown.
+     * Returns the existing singleton {@code Server} instance.
      *
-     * @return the current {@code Server} instance
-     * @throws IllegalStateException if the server instance has not been initialized
+     * @return the current server instance
+     * @throws IllegalStateException if the server has not been initialized yet
      */
     public static Server getInstance() {
         if (instance == null) {
@@ -91,27 +104,8 @@ public class Server {
     }
 
     /**
-     * Starts the server and begins listening for client connections.
-     * <p>
-     * This method performs the following actions:
-     * - Prints messages to indicate the server has started and is waiting for clients.
-     * - Initializes a heartbeat mechanism to monitor client connectivity by calling {@link #initHeartbeat()}.
-     * - Enters a loop where it:
-     * - Accepts incoming client socket connections.
-     * - Logs a message when a new client connects.
-     * - Creates a new {@link ClientHandler} for the client and starts it in its own thread.
-     * - Sends a "HelloClient" message to the newly connected client to acknowledge the connection.
-     * - Assigns a unique ID to the client using an atomic counter.
-     * - Broadcasts a message to all clients announcing the new client connection.
-     * - Maps the client handler to its assigned ID for future reference.
-     * - Sends a "Welcome" message to the new client, including its unique ID.
-     * <p>
-     * If an {@link IOException} occurs while accepting client connections, the error message is logged,
-     * provided the server is in a running state.
-     * <p>
-     * This method assumes that the server socket and associated fields
-     * have already been properly initialized. It is designed to run until the server
-     * is stopped or an error forces termination.
+     * Starts the server, listening for client connections and handling them in separate threads.
+     * Also initializes the heartbeat mechanism to monitor client connectivity.
      */
     public void start() {
         System.out.println("Server started!");
@@ -126,32 +120,26 @@ public class Server {
                 ClientHandler handler = new ClientHandler(clientSocket);
                 new Thread(handler).start();
 
-                // Send HelloClient
                 handler.sendMessage(gson.toJson(new Message<>(new BodyHelloClient(protocol))));
 
                 int newClientID = clientIDCounter.getAndIncrement();
                 broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
 
-                // Send Welcome with an assigned client ID
-                handler.sendMessage(gson.toJson(new Message<>(new BodyWelcome(newClientID))));
-
+                //  handler.sendMessage(gson.toJson(new Message<>(new BodyWelcome(newClientID))));
             }
         } catch (IOException e) {
-            if (running)
+            if (running) {
                 System.err.println("Server error: " + e.getMessage());
+            }
         }
     }
 
     /**
-     * Broadcasts a JSON message to all connected clients.
-     * <p>
-     * This method iterates over the set of client handlers and sends the provided JSON message
-     * to each client. If an exception occurs during the sending of the message to a particular
-     * client, the client handler is removed from the collection of active clients, and any
-     * associated resources are closed.
+     * Broadcasts a JSON-formatted message string to all connected clients.
+     * Clients that fail to receive the message will be removed.
      *
-     * @param json the JSON-formatted message to be broadcast to all connected clients
+     * @param json the JSON message to send
      */
     public void broadcastMessage(String json) {
         clients.keySet().removeIf(handler -> {
@@ -168,12 +156,9 @@ public class Server {
     }
 
     /**
-     * Converts the provided {@link Message} object into a JSON string and broadcasts
-     * it to all currently connected clients.
-     * If serialization fails, an error message will be printed to the error stream,
-     * and the message will not be broadcasted.
+     * Serializes a {@link Message} object to JSON and broadcasts it to all connected clients.
      *
-     * @param message the message object to be serialized and broadcasted
+     * @param message the message object to broadcast
      */
     public void broadcastMessage(Message<?> message) {
         try {
@@ -184,41 +169,22 @@ public class Server {
     }
 
     /**
-     * Stops the server by closing the server socket and halting the execution loop.
-     * <p>
-     * This method sets the server's running state to {@code false}, signaling
-     * that the server should stop accepting new client connections and perform
-     * a clean shutdown. It then attempts to close the {@code serverSocket},
-     * releasing the associated network resources. If an {@link IOException}
-     * occurs while closing the socket, the error is logged to the standard error stream.
-     * <p>
-     * Any ongoing client communication or background tasks associated with the server
-     * may still need to be handled separately to ensure a graceful shutdown.
+     * Stops the server by closing the server socket and terminating the accept loop.
      */
     public void stop() {
         running = false;
         try {
             serverSocket.close();
         } catch (IOException e) {
-            System.err.println("Error closing server: " + e.getMessage());
+            System.err.println("Error closing server socket: " + e.getMessage());
         }
     }
 
     /**
-     * Removes a client from the server's internal tracking structures and notifies other clients.
+     * Removes a client handler from the server's management structures,
+     * releases associated resources, and notifies other clients.
      *
-     * <p>This method performs the following operations for the given {@code clientHandler}:
-     * <ul>
-     *   <li>Removes the client from the main client map.</li>
-     *   <li>Removes the client from the AI tracking map.</li>
-     *   <li>Releases any figure associated with the client.</li>
-     *   <li>Removes the client from the lobby.</li>
-     *   <li>Marks the client as not ready.</li>
-     *   <li>Broadcasts a disconnection message to all connected clients.</li>
-     *   <li>Logs the disconnection event to the server console.</li>
-     * </ul>
-     *
-     * @param clientHandler the client handler to be removed
+     * @param clientHandler the client handler to remove
      */
     public void removeClientHandler(ClientHandler clientHandler) {
         clients.removeByKey(clientHandler);
@@ -226,34 +192,21 @@ public class Server {
         releaseFigure(figures.getByKey(clientHandler));
         lobby.remove(clientHandler);
         unmarkReady(clientHandler);
-        broadcastMessage(gson.toJson(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false))));
+        broadcastMessage(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false)));
         System.out.println("Client disconnected.");
     }
 
     /**
-     * Initializes and starts the server's heartbeat mechanism to monitor
-     * the connectivity of all connected client handlers.
-     * <p>
-     * This method schedules a recurring task that executes every 5 seconds.
-     * On each execution, it iterates through the currently connected clients
-     * and performs the following actions:
-     * - If a client fails the liveness check (`isAlive` returns false),
-     * an error message is logged, and the client is disconnected by
-     * invoking `closeAll`.
-     * - If a client is alive, its liveness status is updated using
-     * the `checkLiveness` method.
-     * <p>
-     * The heartbeat mechanism ensures that non-responsive clients
-     * are detected and removed in a timely manner.
+     * Initializes a periodic heartbeat task that checks the connectivity of all clients every 5 seconds.
+     * Disconnects clients that fail to respond to the heartbeat.
      */
     private void initHeartbeat() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
         scheduler.scheduleAtFixedRate(() -> {
             for (ClientHandler client : clients.keySet()) {
                 if (!client.isAlive()) {
                     System.err.println("Client did not respond to Alive. Disconnecting...");
-                    client.sendMessage(gson.toJson(new Message<>(new BodyError("Client did not respond to Alive."))));
+                    client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
                     client.closeAll();
                 } else {
                     client.checkLiveness();
@@ -263,177 +216,206 @@ public class Server {
     }
 
     /**
-     * Retrieves the map of all connected clients and their associated unique IDs.
+     * Returns the bidirectional map of clients and their assigned unique IDs.
      *
-     * @return a ConcurrentBidirectionalMap where the keys are ClientHandler instances
-     * representing connected clients and the values are their unique integer identifiers.
+     * @return a map linking {@link ClientHandler} instances to their client IDs
      */
     public ConcurrentBidirectionalMap<ClientHandler, Integer> getClients() {
         return clients;
     }
 
     /**
-     * Retrieves the map indicating whether each connected client is AI or not.
+     * Returns the map indicating which clients are AI-controlled.
      *
-     * @return a ConcurrentMap where the keys are ClientHandler instances representing connected clients,
-     * and the values are Booleans indicating whether the respective client is an AI (true) or not (false).
+     * @return a map linking {@link ClientHandler} instances to a Boolean indicating AI status
      */
     public ConcurrentMap<ClientHandler, Boolean> getIsAI() {
         return isAI;
     }
 
     /**
-     * Retrieves the protocol used by the server.
+     * Returns the protocol version string used by the server.
      *
-     * @return a string indicating the protocol used by the server
+     * @return the protocol version string
      */
     public String getProtocol() {
         return protocol;
     }
 
     /**
-     * Assigns a figure to the specified client handler if the figure is not already selected.
+     * Attempts to assign a figure to a client if it is available.
      *
-     * @param figure  the figure being assigned
-     * @param handler the client handler to whom the figure is being assigned
-     * @return true if the figure is successfully assigned, false if the figure is already selected by another user
+     * @param figure  the figure number to assign
+     * @param handler the client handler to assign the figure to
+     * @return {@code true} if the figure was assigned successfully; {@code false} if the figure is already taken
      */
     public boolean assignFigure(Integer figure, ClientHandler handler) {
-        if (figures.getByValue(figure) != null) {
+        synchronized (availableFigures) {
+            if (!availableFigures.contains(figure)) {
+                handler.sendMessage(new Message<>(new BodyError("Figure already selected. Please select another figure.")));
+                return false;
+            }
+            availableFigures.remove(figure);
             figures.put(handler, figure);
             return true;
         }
-        handler.sendMessage(new Message<>(new BodyError("Figure already selected. Please select a other figure.")));
-        return false;
     }
 
     /**
-     * Releases a figure by associating it with a null key in the figures map.
+     * Releases a figure, making it available again, and removes it from any client assignment.
      *
-     * @param figure the figure to be released and placed in the figures map
+     * @param figure the figure number to release
      */
     public void releaseFigure(Integer figure) {
-        figures.put(null, figure);
+        synchronized (availableFigures) {
+            if (!availableFigures.contains(figure)) {
+                availableFigures.add(figure);
+            }
+            figures.removeByValue(figure);
+        }
     }
 
+    public synchronized String generateUniqueName(String baseName) {
+        Collection<String> existingNames = getNames().values();
+
+        int suffix = 1;
+        String candidate;
+
+        do {
+            candidate = baseName + "#" + suffix;
+            suffix++;
+        } while (existingNames.contains(candidate));
+
+        return candidate;
+    }
+
+
+
+
+
     /**
-     * Retrieves the appropriate ClientHandler associated with the given figure identifier.
+     * Returns the client handler assigned to the given figure number.
      *
-     * @param figure the identifier of the figure for which to get the associated handler
-     * @return the ClientHandler associated with the given figure, or null if no handler is found
+     * @param figure the figure number
+     * @return the associated client handler, or {@code null} if none is assigned
      */
     public ClientHandler getHandlerForFigure(Integer figure) {
         return figures.getByValueOrDefault(figure, null);
     }
 
     /**
-     * Adds a client handler to the lobby. If the lobby contains only AI players
-     * and meets the minimum player requirement, a random map is selected and
-     * broadcasted to all players.
+     * Adds a client handler to the lobby.
+     * If the lobby meets the minimum player count and all players are AI,
+     * a random map is selected and the game is started.
      *
-     * @param handler the client handler to be added to the lobby
+     * @param handler the client handler to add
      */
     public void addToLobby(ClientHandler handler) {
         lobby.add(handler);
-
-        // Selects random available map if only ai in lobby
-        if (lobby.size() >= getInstance().MinPlayer && lobby.allAreAi(isAI)) {
+        if (lobby.size() >= minPlayer && lobby.allAreAi(isAI)) {
             Random random = new Random();
             String map = availableMaps.get(random.nextInt(availableMaps.size()));
-            getInstance().newGame(map);
+            newGame(map);
             broadcastMessage(new Message<>(new BodyMapSelected(map)));
         }
     }
 
+
     /**
-     * Marks the specified client handler as ready and adds it to the ready order.
-     * If all clients in the lobby are ready and the game is initialized, the game will start.
+     * Marks the specified client as ready.
+     * If all clients in the lobby are ready and the game is initialized, the game is started.
      *
      * @param handler the client handler to mark as ready
      */
     public synchronized void markReady(ClientHandler handler) {
-        readyOrder.add(handler); // adds in order, ignores duplicates
-
-        if (lobby.allReady() && game != null)
+        readyOrder.add(handler);
+        if (lobby.allReady() && game != null) {
             startGame();
+        }
     }
 
     /**
-     * Removes the specified client handler from the list of ready clients.
+     * Removes the specified client handler from the ready list.
      *
-     * @param handler the client handler to be removed from the ready order list
+     * @param handler the client handler to unmark as ready
      */
     public synchronized void unmarkReady(ClientHandler handler) {
         readyOrder.remove(handler);
     }
 
     /**
-     * Retrieves the first ready client from the list of ready clients.
-     * If no clients are ready, an IllegalStateException is thrown.
+     * Returns the first client handler in the ready order.
      *
-     * @return the first ready ClientHandler from the readyOrder list
-     * @throws IllegalStateException if no clients are in the ready state
+     * @return the first ready client handler
+     * @throws IllegalStateException if no players are currently ready
      */
     public synchronized ClientHandler getFirstReadyClient() {
-        return readyOrder.stream().findFirst().orElseThrow(() -> new IllegalStateException("No players are ready."));
+        return readyOrder.stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("No players are ready."));
     }
 
     /**
-     * Checks if the readyOrder collection is empty.
+     * Checks whether there are no clients marked as ready.
      *
-     * @return true if the readyOrder collection contains no elements, false otherwise.
+     * @return {@code true} if no clients are ready; {@code false} otherwise
      */
     public synchronized boolean readyIsEmpty() {
         return readyOrder.isEmpty();
     }
 
     /**
-     * Retrieves a list of available maps.
+     * Returns a list of available map names.
      *
-     * @return an unmodifiable list of available map names.
+     * @return an unmodifiable list of map names available for selection
      */
     public List<String> getAvailableMaps() {
         return List.copyOf(availableMaps);
     }
 
     /**
-     * Initializes a new game session with the specified map.
-     * Creates a new game instance and adds players from the connected clients.
+     *
+     * **/
+    public List<Position> getRobotPositions () {
+        return clients.keySet().stream().map(handler -> handler.getPlayer().getRobot().getPosition()).toList();
+    }
+
+    /**
+     * Creates a new game session with the specified map and adds all connected players to it.
      * Starts the game if all players in the lobby are ready.
      *
-     * @param mapName the name of the map to initialize the game with
+     * @param mapName the name of the map to use for the new game
      */
     public void newGame(String mapName) {
         this.game = Game.getInstance(mapName);
         for (ClientHandler client : clients.keySet()) {
             game.addPlayer(client.getPlayer());
         }
-        if (lobby.allReady())
+        if (lobby.allReady()) {
             startGame();
+        }
     }
 
     /**
-     * Initializes and starts the game by broadcasting a "Game Started" message to all players.
-     * The message includes details about the game's initial board state and maximum player count.
-     * <p>
-     * This method creates a message object containing a serialized representation of the game board
-     * and the maximum number of players allowed. The generated message is then sent to all connected players.
-     * Additional logic may be implemented in the future if required.
+     * Starts the game and broadcasts a game start message to all players.
      */
     private void startGame() {
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
         broadcastMessage(JsonUtil.toJson(message));
-        //TODO maybe more logic needed?
     }
-
 
     /**
-     * The main entry point for the application. It starts the server and then stops it.
+     * Returns the current game instance.
      *
-     * @param args command-line arguments passed to the application
-     * @throws IOException if an I/O error occurs while starting or stopping the server
+     * @return the active {@code Game} instance managed by the server
      */
-    public static void main(String[] args) throws IOException {
-        getInstance(12345, 2).start();
+    public Game getGame() {
+        return game;
     }
+
+    public Lobby getLobby() {
+        return lobby;
+
+    }
+
+
 }

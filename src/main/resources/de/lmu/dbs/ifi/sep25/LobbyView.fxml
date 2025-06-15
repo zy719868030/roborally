@@ -29,6 +29,8 @@
 
     <HBox spacing="10" alignment="CENTER">
         <TextField fx:id="chatInput" promptText="Nachricht eingeben..." HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="recipientBox" promptText="An..." prefWidth="100"/>
         <Button text="Senden" onAction="#handleSendChat"/>
+        <Button text="Alle" onAction="#handleClearRecipient" />
     </HBox>
 </VBox>
