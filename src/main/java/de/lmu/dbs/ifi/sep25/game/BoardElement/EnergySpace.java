@@ -68,7 +68,7 @@ public class EnergySpace extends BoardElement {
         if (collected) {
             return 0;
         }
-        
+
         collected = true;
         return energyCount;
     }

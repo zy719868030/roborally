@@ -10,6 +10,7 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  * Lasers deal damage to robots that end their movement on a laser's path.
  */
 public class Laser extends BoardElement {
+    //power indicates laser intensity (count)
     private int power;
 
     public Laser() {

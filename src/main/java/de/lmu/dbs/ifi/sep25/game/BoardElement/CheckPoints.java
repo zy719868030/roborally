@@ -13,6 +13,7 @@ import java.util.Map;
  * Robots must visit checkpoints in numerical order, and the first player to visit all checkpoints wins.
  */
 public class CheckPoints extends BoardElement {
+    //number indicates the checkpoint number.（count）
     private int number;
     private Map<Integer, Integer> robotCheckpoints;
 
@@ -140,7 +141,7 @@ public class CheckPoints extends BoardElement {
         // Here can add game end logic.
         // z.B, game controller method to end the game.
     }
-    
+
     @Override
     public String toString() {
         return "CheckPoint " + number + " at " + position;
