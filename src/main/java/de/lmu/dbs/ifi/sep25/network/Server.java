@@ -39,6 +39,7 @@ public class Server {
     private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>();
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
     private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
+    private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
 
     // 3. Networking / I/O
     private final ServerSocket serverSocket;
@@ -66,7 +67,6 @@ public class Server {
             availableFigures.add(i);
         }
     }
-    private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
 
     public Map<ClientHandler, String> getNames() {
         return names;

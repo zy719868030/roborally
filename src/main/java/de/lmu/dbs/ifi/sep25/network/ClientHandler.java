@@ -99,7 +99,7 @@ public class ClientHandler implements Runnable {
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
-                    //                   case "PlayCard" -> handleBodyPlayCard(json);
+//                   case "PlayCard" -> handleBodyPlayCard(json);
 //                    case "CardPlayed" -> handleBodyCardPlayed(json);
 //                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
 //                    case "ActivePhase" -> handleBodyActivePhase(json);
@@ -193,22 +193,22 @@ public class ClientHandler implements Runnable {
         Server server = Server.getInstance();
 
         if (server.assignFigure(body.figure(), this)) {
-            this.playerName = Server.getInstance().generateUniqueName(body.name());
+            this.playerName = server.generateUniqueName(body.name());
             this.figure = body.figure();
             this.player = new Player(playerName, figure, this);
-            this.player.setReady(false);
+//            this.player.setReady(false); default state already
 
             server.getNames().put(this, playerName);
-            server.getFigures().put(this, body.figure());
-            server.getLobby().add(this);
+            server.getFigures().put(this, body.figure()); //redundant, put already in assignFigure
+            server.addToLobby(this);
 
             int myID = server.getClients().getByKey(this);
 
             sendMessage(new Message<>(new BodyWelcome(myID)));
 
-            sendMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
+//            sendMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
 
-            // notiffy all
+            // notify all
             for (ClientHandler other : server.getLobby().getClients()) {
                 if (other == this) continue;
                 Integer otherID = server.getClients().getByKey(other);
@@ -220,12 +220,14 @@ public class ClientHandler implements Runnable {
                 }
             }
 
-            Message<BodyPlayerAdded> msg = new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure()));
-            for (ClientHandler other : server.getLobby().getClients()) {
-                if (other != this) {
-                    other.sendMessage(msg);
-                }
-            }
+            server.broadcastMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
+
+//            Message<BodyPlayerAdded> msg = new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure()));
+//            for (ClientHandler other : server.getLobby().getClients()) {
+//                if (other != this) {
+//                    other.sendMessage(msg);
+//                }
+//            }
 
 
         } else {

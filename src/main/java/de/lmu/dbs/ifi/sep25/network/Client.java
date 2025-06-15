@@ -15,7 +15,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
-import java.util.Scanner;
 
 public class Client {
     // 1. Constants / configuration
@@ -148,7 +147,7 @@ public class Client {
         String protocol = message.messageBody().protocol();
         System.out.println("[SERVER] Connected using protocol: " + protocol);
 
-        sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
+        sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol)));
     }
 
     /**
