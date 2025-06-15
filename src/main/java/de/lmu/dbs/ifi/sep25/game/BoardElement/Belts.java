@@ -46,8 +46,8 @@ public class Belts extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Belts() {
-        super();
+    public Belts(String boardName) {
+        super(boardName);
         this.speed = BeltSpeed.SLOW;
         this.color = BeltColor.GREEN;
         this.outDirections = new ArrayList<>();
@@ -58,8 +58,8 @@ public class Belts extends BoardElement {
         this.boardId = "";
     }
 
-    public Belts(Position position) {
-        super(position);
+    public Belts(Position position, String boardName) {
+        super(position, boardName);
         this.speed = BeltSpeed.SLOW;
         this.color = BeltColor.GREEN;
         this.outDirections = new ArrayList<>();
@@ -70,8 +70,8 @@ public class Belts extends BoardElement {
         this.boardId = "";
     }
 
-    public Belts(Position position, Direction outDirection, BeltSpeed speed) {
-        super(position);
+    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardName) {
+        super(position, outDirection, boardName);
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
         this.outDirections = new ArrayList<>();
@@ -102,8 +102,8 @@ public class Belts extends BoardElement {
      * @param inDirections The entry direction list of the conveyor belt.
      * @param speed The speed of the conveyor belt.
      */
-    public Belts(Position position, List<Direction> outDirections, List<Direction> inDirections, BeltSpeed speed) {
-        super(position);
+    public Belts(Position position, List<Direction> outDirections, List<Direction> inDirections, BeltSpeed speed, String boardName) {
+        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardName);
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
         this.outDirections = new ArrayList<>(outDirections);

@@ -33,6 +33,22 @@ public class Player {
         }
     }
 
+    // Added: Handle map selection
+    public void selectMap(String mapName) {
+        if (Game.getInstance().isMapSelectionPending()) {
+            Game.getInstance().selectMap(this, mapName);
+        } else {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Map selection phase has ended")
+            ));
+        }
+    }
+
+    // Added: Getter for connection
+    public ClientHandler getConnection() {
+        return connection;
+    }
+
     private void drawHand() {
         programmingDeck.shuffle();
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1); // Fewer cards if damaged

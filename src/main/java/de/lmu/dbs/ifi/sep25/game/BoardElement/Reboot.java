@@ -8,11 +8,14 @@ public class Reboot extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
     private static Reboot instance = null;
+    // boardName for protocol's isOnBoard attribute
+    private String boardName;
 
     private Reboot() {
         this.isOnBoard = false;
         this.boardId = "";
         // Private constructor for singleton
+        super(); // Calls BoardElement() constructor
     }
     public Reboot(Position position) {
         super(position);
@@ -48,6 +51,17 @@ public class Reboot extends BoardElement {
             instance = new Reboot();
         }
         return instance;
+    }
+
+    // Added: Setter for boardName
+    public void setBoardName(String boardName) {
+        this.boardName = boardName;
+    }
+
+    // Added: Override getBoardName
+    @Override
+    public String getBoardName() {
+        return boardName;
     }
 
     @Override
