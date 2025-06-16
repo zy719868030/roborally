@@ -69,7 +69,7 @@ public class Game {
         }
     }
 
-    // Added: Handle player readiness and map selection
+    // Handle player readiness and map selection
     public void setPlayerReady(Player player, boolean ready) {
         player.setReady(ready);
         // Added: Broadcast PlayerStatus
@@ -79,7 +79,7 @@ public class Game {
             ));
         }
 
-        // Added: Send SelectMap to first ready player
+        // Send SelectMap to first ready player
         if (ready && firstReadyPlayer == null && mapSelectionPending) {
             firstReadyPlayer = player;
             List<String> availableMaps = new ArrayList<>();
@@ -88,7 +88,7 @@ public class Game {
                     new MessageDefinitions.BodySelectMap(availableMaps)
             ));
         } else if (!ready && firstReadyPlayer == player) {
-            // Added: Handle unready player
+            // Handle unready player
             firstReadyPlayer = null;
             for (Player p : players) {
                 if (p.isReady()) {
@@ -104,7 +104,7 @@ public class Game {
         }
     }
 
-    // Added: Process map selection
+    // Process map selection
     public void selectMap(Player player, String mapName) {
         // Added: Validate player and map
         if (player != null && (player != firstReadyPlayer || !mapSelectionPending)) {
@@ -129,12 +129,12 @@ public class Game {
         board = new Board(parseMapName(mapName));
         initializeGame();
 
-        // Added: Broadcast MapSelected and GameStarted
+        // Broadcast MapSelected and GameStarted
         for (Player p : players) {
             p.getConnection().sendMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyMapSelected(mapName)
             ));
-            // Modified: Use convertToBoardElementMap for BodyGameStarted
+            //Use convertToBoardElementMap for BodyGameStarted
             List<List<List<BoardElement>>> gameMap = convertToBoardElementMap();
             p.getConnection().sendMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyGameStarted(5, gameMap)
@@ -142,7 +142,7 @@ public class Game {
         }
     }
 
-    // Added: Convert map to List<Object> for BodyGameStarted
+    // Convert map to List<Object> for BodyGameStarted
     private List<Object> convertToObjectList(List<List<List<Map<String, Object>>>> map) {
         List<Object> result = new ArrayList<>();
         for (List<List<Map<String, Object>>> col : map) {
@@ -155,7 +155,7 @@ public class Game {
         return result;
     }
 
-    // Added: Helper method to convert serialized map to List<List<List<BoardElement>>> if needed
+    // Helper method to convert serialized map to List<List<List<BoardElement>>> if needed
     private List<List<List<BoardElement>>> convertToBoardElementMap() {
         List<List<List<BoardElement>>> result = new ArrayList<>();
         List<BoardElement>[][] grid = board.getGrid(); // Assuming getGrid returns BoardElement[][][]
@@ -198,7 +198,7 @@ public class Game {
         }
     }
 
-    // Added: Getter for map selection state
+    // Getter for map selection state
     public boolean isMapSelectionPending() {
         return mapSelectionPending;
     }
@@ -291,18 +291,25 @@ public class Game {
             board.placeRobot(player.getRobot(), pos.x(), pos.y());
         }
     }
+    /**
+     * Gets the game board.
+     *
+     * @return The Board instance used in this game.
+     */
+    public Board getBoard() {
+        return board;
+    }
 
-        // Modified: Changed to void to match expected signature
-        public void getMapType() {
-            // Removed return statement; logging mapType for debugging
-            System.out.println("MapType: " + mapType.toString());
-        }
+    /**
+     * Gets the map type of the game.
+     *
+     * @return The MapType used for the game board.
+     */
+    public Board.MapType getMapType() {
+        return mapType;
+    }
 
 
-        public void getBoard() {
-            // Removed return statement; logging board for debugging
-            System.out.println("Board: " + (board != null ? "Initialized" : "Null"));
-        }
 
 }
 
