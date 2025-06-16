@@ -359,10 +359,9 @@ public class ClientHandler implements Runnable {
         if (validStartingPositions.contains(new Position(x, y))) {
             player.getRobot().setPosition(x, y);
             final String direction;
-
             switch (server.getGame().getMapType()) {
-                //TODO add directions
-                case "REPLACE_ME" -> direction = "REPLACE_ME";
+                case "Heavy Merge Area", "Death Trap" -> direction = "left";
+                case "Pilgrimage", "Gear Stripper" -> direction = "up";
                 default -> direction = "right";
             }
             server.broadcastMessage(new Message<>(new BodyStartingPointTaken(x, y, direction, server.getClients().getByKey(this))));
