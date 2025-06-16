@@ -33,7 +33,6 @@ public class Client {
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
-    Server server = Server.getInstance();
 
     // 4. Game state
     private int phase = -1;
@@ -383,7 +382,7 @@ public class Client {
         BodyYourCards body = message.messageBody();
 
         hand.addAll(body.cardsInHand());
-        broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), server.getClients().getByValue(ID));
+        broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), Server.getInstance().getClients().getByValue(ID));
 
 
         //TODO fx display hand
@@ -481,7 +480,7 @@ public class Client {
      * @param msg the message to be broadcasted to all connected clients
      */
     public void broadcastMessage(Message<?> msg) {
-        server.broadcastMessage(msg);
+        Server.getInstance().broadcastMessage(msg);
     }
 
     /**
@@ -491,7 +490,7 @@ public class Client {
      * @param exclude the client handler to be excluded from receiving the message
      */
     public void broadcastMessage(Message<?> msg, ClientHandler exclude) {
-        server.broadcastMessage(msg, exclude);
+        Server.getInstance().broadcastMessage(msg, exclude);
     }
 
 

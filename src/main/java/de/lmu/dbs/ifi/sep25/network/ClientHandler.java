@@ -43,14 +43,14 @@ public class ClientHandler implements Runnable {
     private final Socket socket;
     private final BufferedReader reader;
     private final PrintWriter writer;
-    private final Server server = Server.getInstance();
+    private Server server;
 
     // 3. State flags
     private volatile boolean alive = true;
 
     // 4. Game connection
     private Player player;
-    private final Game game = server.getGame();
+    private final Game game;
 
 
     /**
@@ -66,6 +66,8 @@ public class ClientHandler implements Runnable {
         this.socket = socket;
         this.reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
         this.writer = new PrintWriter(socket.getOutputStream(), true);
+        this.server = Server.getInstance();
+        this.game = server.getGame();
     }
 
     /**
@@ -170,7 +172,6 @@ public class ClientHandler implements Runnable {
             sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + server.getProtocol())));
             closeAll();
         }
-        myID = server.getClients().getByKey(this);
         server.getIsAI().put(this, body.isAI());
     }
 
@@ -194,6 +195,7 @@ public class ClientHandler implements Runnable {
         if (server.assignFigure(body.figure(), this)) {
             final String name = server.generateUniqueName(body.name());
             this.player = new Player(name, body.figure(), this);
+            this.myID = server.getClients().getByKey(this);
 
             server.getNames().put(this, name);
             server.addToLobby(this);

@@ -281,7 +281,12 @@ public class Server {
             if (!availableFigures.contains(figure)) {
                 availableFigures.add(figure);
             }
-            figures.removeByValue(figure);
+
+            try {
+                figures.removeByValue(figure);
+            } catch (Exception e) {
+                System.err.println("Failed to release figure: " + e.getMessage());
+            }
         }
     }
 
