@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents the game board where all gameplay elements and interactions occur.
+ * The Board class manages the layout, positions of robots, and special tiles.
+ */
 public class Board {
     private final List<BoardElement>[][] grid;
     private final int width;
@@ -30,8 +34,26 @@ public class Board {
         initializeBoard(mapType);
     }
 
+
+    /**
+     * Enum representing the different types of maps available in the game.
+     * Each map type corresponds to a specific board layout and associated game elements.
+     * <p>
+     * The enum provides a default map type labeled as "Dizzy Highway" and a series of
+     * numbered maps for customization or varying game scenarios. The map names are intended
+     * to be unique identifiers for board configuration and usage within the game logic.
+     */
     public enum MapType {
-        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5
+        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5;
+
+        //TODO @prajal add string conversion to your map types
+        public String toString() {
+            return switch (this) {
+                case DEFAULT -> "Dizzy Highway";
+                case MAP1 -> "Risky Crossing";
+                default -> "Unknown";
+            };
+        }
     }
 
     // Initialize board with tiles based on map type

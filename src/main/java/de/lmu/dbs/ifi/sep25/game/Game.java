@@ -301,13 +301,15 @@ public class Game {
     }
 
     /**
-     * Gets the map type of the game.
+     * Retrieves the type of map currently selected for the game.
      *
-     * @return The MapType used for the game board.
+     * @return A string representation of the selected map type. Possible values may include descriptive names
+     *         such as "Risky Crossing" or "Dizzy Highway".
      */
-    public Board.MapType getMapType() {
-        return mapType;
+    public String getMapType() {
+        return parseMapName(selectedMap).toString();
     }
+
 
 
 
