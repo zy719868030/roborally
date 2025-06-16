@@ -99,11 +99,7 @@ public class ClientHandler implements Runnable {
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
                     case "PlayCard" -> handleBodyPlayCard(json);
-//                    case "CardPlayed" -> handleBodyCardPlayed(json);
-//                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-//                    case "ActivePhase" -> handleBodyActivePhase(json);
                     case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-//                    case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
 //                    case "YourCards" -> handleBodyYourCards(json);
 //                    case "NotYourCards" -> handleBodyNotYourCards(json);
 //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
@@ -340,7 +336,6 @@ public class ClientHandler implements Runnable {
         Message<BodyPlayCard> message = JsonUtil.parseMessage(json, BodyPlayCard.class);
         Server server = Server.getInstance();
         server.broadcastMessage(new Message<>(new BodyCardPlayed(server.getClients().getByKey(this), message.messageBody().card())));
-
     }
 
     /**
@@ -362,12 +357,11 @@ public class ClientHandler implements Runnable {
         List<Position> validStartingPositions = startingPoints.stream().filter(robotPositions::contains).toList();
 
         if (validStartingPositions.contains(new Position(x, y))) {
-
             player.getRobot().setPosition(x, y);
             final String direction;
 
             switch (server.getGame().getMapType()) {
-                //TODO add direcitons
+                //TODO add directions
                 case "REPLACE_ME" -> direction = "REPLACE_ME";
                 default -> direction = "right";
             }

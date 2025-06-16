@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Client {
@@ -23,7 +24,7 @@ public class Client {
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data
-    private int figure;
+//    private int figure; von sebas; ???
     private Integer ID;
     private volatile boolean isAI = false;
 
@@ -31,6 +32,11 @@ public class Client {
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
+
+    // 4. Game state
+    private int phase = -1;
+    private final List<String> hand = new ArrayList<>();
+
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -56,6 +62,7 @@ public class Client {
             throw e;
         }
     }
+
     /**
      * Continuously listens for and processes incoming messages from the server.
      * <p>
@@ -95,14 +102,13 @@ public class Client {
                         case "GameStarted" -> handleBodyGameStarted(json);
                         case "ReceivedChat" -> handleBodyReceivedChat(json);
                         case "Error" -> handleBodyError(json);
-                        //                    case "PlayCard" -> handleBodyPlayCard(json); TODO add to game logic: sends to server card was played
                         case "CardPlayed" -> handleBodyCardPlayed(json);
                         case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-                        //                    case "ActivePhase" -> handleBodyActivePhase(json);
+                        case "ActivePhase" -> handleBodyActivePhase(json);
                         case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-                        //                    case "YourCards" -> handleBodyYourCards(json);
-                        //                    case "NotYourCards" -> handleBodyNotYourCards(json);
-                        //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
+                        case "YourCards" -> handleBodyYourCards(json);
+                        case "NotYourCards" -> handleBodyNotYourCards(json);
+                        case "ShuffleCoding" -> handleBodyShuffleCoding(json);
                         //                    case "SelectedCard" -> handleBodySelectedCard(json);
                         //                    case "CardSelected" -> handleBodyCardSelected(json);
                         //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
@@ -192,7 +198,7 @@ public class Client {
 
         boolean isMe = body.clientID().equals(getID());
         if (isMe) {
-            this.figure = body.figure();
+//            this.figure = body.figure();
             usernames.put(ID, username);
         }
 
@@ -250,14 +256,15 @@ public class Client {
     private void handleBodySelectMap(String json) {
         Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
         List<String> availableMaps = message.messageBody().availableMaps();
-        String selection = "Dizzy Highway"; // TODO: Replace with actual map selection from GUI
+        String selection = "Dizzy Highway";
+        // TODO fx replace with map selection
 
         sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
     }
 
     /****/
     private void handleBodyMapSelected(String json) {
-        //TODO implement fx display of selected map
+        //TODO fx display selected map
     }
 
     /****/
@@ -266,7 +273,7 @@ public class Client {
         BodyGameStarted body = message.messageBody();
         List<List<List<BoardElement>>> board = body.gameMap();
 
-        // TODO: Display game board in GUI
+        // TODO fx display game board
     }
 
     /**
@@ -341,21 +348,61 @@ public class Client {
     /****/
     private void handleBodyCardPlayed(String json) {
         Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
-        //TODO implement java fx code: display played card to client
+        //TODO fx display played card to client
     }
 
     /****/
     private void handleBodyCurrentPlayer(String json) {
-        // TODO
+        // TODO @Lukas
         //  - check if equals sent id
         //  - check for game phase
         // set player turn maybe?
     }
 
 
+    /**
+     * Handles the "BodyActivePhase" message received from the server.
+     * This method processes a JSON string representing a {@code BodyActivePhase} message,
+     * extracts the phase information from the message body, and updates the client's internal state.
+     *
+     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+     */
+    private void handleBodyActivePhase(String json) {
+        phase = JsonUtil.parseMessage(json, BodyActivePhase.class).messageBody().phase();
+        //TODO fx add phase display
+    }
+
+    /****/
     private void handleBodyStartingPointTaken(String json) {
         //TODO fx display robot
     }
+
+    /****/
+    private void handleBodyYourCards(String json) {
+        Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
+        BodyYourCards body = message.messageBody();
+        Server server = Server.getInstance();
+
+        hand.addAll(body.cardsInHand());
+        server.broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), server.getClients().getByValue(ID));
+
+
+        //TODO fx display hand
+    }
+
+    /****/
+    private void handleBodyNotYourCards(String json) {
+        //TODO fx display other hands
+    }
+
+    /****/
+    private void handleBodyShuffleCoding(String json) {
+        //TODO fx display deck size | optional: animation
+        //FRAGE: Dazu werden zuerst alle restlichen Karten vergeben, dann wird der Ablegestapel gemischt und danach die verbleibende Kartenanzahl versandt
+    }
+
+
+    //----------------------
 
 
     /**
