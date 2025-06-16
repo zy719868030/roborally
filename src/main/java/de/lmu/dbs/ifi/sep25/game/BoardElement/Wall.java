@@ -24,16 +24,16 @@ public class Wall extends BoardElement {
         this.boardId = "";
     }
 
-    public Wall(Position position) {
-        super(position);
+    public Wall(Position position, String boardId) {
+        super(position, boardId);
         this.blockedDirections = new ArrayList<>();
         this.isOnBoard = false;
         this.boardId = "";
     }
 
     //Constructor with position and blocking direction parameters
-    public Wall(Position position, Direction blockedDirection) {
-        super(position);
+    public Wall(Position position, Direction blockedDirection, String boardId) {
+        super(position, boardId);
         this.blockedDirections = new ArrayList<>();
         this.blockedDirections.add(blockedDirection);
         this.isOnBoard = false;
@@ -41,18 +41,20 @@ public class Wall extends BoardElement {
     }
 
     //Constructor with position and multiple blocking direction parameters
-    public Wall(Position position, List<Direction> blockedDirections) {
-        super(position);
+    public Wall(Position position, List<Direction> blockedDirections, String boardId) {
+        super(position, boardId);
         this.blockedDirections = new ArrayList<>(blockedDirections);
         this.isOnBoard = false;
         this.boardId = "";
     }
-
+    /*
     public Wall(Position position, List<Direction> blockedDirections, String boardId) {
         super(position);
         this.blockedDirections = new ArrayList<>(blockedDirections);
         this.setBoardId(boardId);
     }
+
+   */
 
     public boolean isOnBoard() {
         return isOnBoard;

@@ -18,15 +18,22 @@ public class Pit extends BoardElement {
         this.boardId = "";
     }
 
-    public Pit(Position position) {
+    /*public Pit(Position position) {
         super(position);
         this.isOnBoard = false;
         this.boardId = "";
     }
 
     public Pit(Position position, String boardId) {
-        super(position);
+        super(position, boardId);
         this.setBoardId(boardId);
+    }
+    */
+
+    public Pit(Position position, String boardId) {
+        super(position, boardId);
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public boolean isOnBoard() {

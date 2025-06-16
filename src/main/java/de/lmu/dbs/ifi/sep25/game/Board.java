@@ -18,14 +18,14 @@ public class Board {
     private final List<Robot> fallenRobots = new ArrayList<>();
     // Designated point for fallen robots (outside 12x12 grid)
     private static final Position VOID_POINT = new Position(-1, -1);
-    private final String boardName;
+    private final String boardId;
 
 
     @SuppressWarnings("unchecked")
     public Board(MapType mapType) {
         this.width = 10;
         this.height = 13;
-        this.boardName = "1B";
+        this.boardId = "1B";
         this.grid = new ArrayList[width][height];
         initializeBoard(mapType);
     }
@@ -49,13 +49,13 @@ public class Board {
 
             // Walls
             // (7,1) top: blocks movement upward (NORTH)
-            grid[7][1].add(new Wall(new Position(7, 1), Direction.NORTH));
+            grid[7][1].add(new Wall(new Position(7, 1), Direction.NORTH, boardId));
             // (5,2) right: blocks movement to the right (EAST)
-            grid[5][2].add(new Wall(new Position(5, 2), Direction.EAST));
+            grid[5][2].add(new Wall(new Position(5, 2), Direction.EAST, boardId));
             // (4,2) right: blocks movement to the right (EAST)
-            grid[4][2].add(new Wall(new Position(4, 2), Direction.EAST));
+            grid[4][2].add(new Wall(new Position(4, 2), Direction.EAST, boardId));
             // (2,1) bottom: blocks movement downward (SOUTH)
-            grid[2][1].add(new Wall(new Position(2, 1), Direction.SOUTH));
+            grid[2][1].add(new Wall(new Position(2, 1), Direction.SOUTH, boardId));
 
             // Antenna at (5,0)
             grid[5][0].add(new Antenna(new Position(5, 0), Direction.EAST));
@@ -73,79 +73,79 @@ public class Board {
             // Conveyor Belts (double arrows = FAST/blue, single arrow at curve = rotating)
             // 1. (9,4) to (1,4), curves at (1,4) toward (1,5)
             for (int x = 9; x >= 2; x--) {
-                grid[x][4].add(new Belts(new Position(x, 4), Direction.NORTH, Belts.BeltSpeed.FAST, boardName));
+                grid[x][4].add(new Belts(new Position(x, 4), Direction.NORTH, Belts.BeltSpeed.FAST, boardId));
             }
             List<Direction> outDirs1 = new ArrayList<>();
             outDirs1.add(Direction.EAST);
             List<Direction> inDirs1 = new ArrayList<>();
             inDirs1.add(Direction.SOUTH);
-            grid[1][4].set(1, new Belts(new Position(1, 4), outDirs1, inDirs1, Belts.BeltSpeed.FAST, boardName));
+            grid[1][4].set(1, new Belts(new Position(1, 4), outDirs1, inDirs1, Belts.BeltSpeed.FAST, boardId));
 
             // Belt 2: (9,5) to (8,5), then curve at (8,5) toward (8,4)
             // Belt from (9,5) to (8,5) — straight upward
-            grid[9][5].add(new Belts(new Position(9, 5), Direction.NORTH, Belts.BeltSpeed.FAST, boardName));
+            grid[9][5].add(new Belts(new Position(9, 5), Direction.NORTH, Belts.BeltSpeed.FAST, boardId));
 
             // Curve at (8,5): south → west (⤶)
             List<Direction> outDirs2a = new ArrayList<>();
             outDirs2a.add(Direction.WEST);
             List<Direction> inDirs2a = new ArrayList<>();
             inDirs2a.add(Direction.SOUTH);
-            grid[8][5].set(1, new Belts(new Position(8, 5), outDirs2a, inDirs2a, Belts.BeltSpeed.FAST, boardName));
+            grid[8][5].set(1, new Belts(new Position(8, 5), outDirs2a, inDirs2a, Belts.BeltSpeed.FAST, boardId));
 
             // Curve at (8,4): east → north (⬐)
             List<Direction> outDirs2b = new ArrayList<>();
             outDirs2b.add(Direction.NORTH);
             List<Direction> inDirs2b = new ArrayList<>();
             inDirs2b.add(Direction.EAST);
-            grid[8][4].set(1, new Belts(new Position(8, 4), outDirs2b, inDirs2b, Belts.BeltSpeed.FAST, boardName));
+            grid[8][4].set(1, new Belts(new Position(8, 4), outDirs2b, inDirs2b, Belts.BeltSpeed.FAST, boardId));
 
             // 3. (2,3) to (2,4), curves at (2,4) toward (1,4)
-            grid[2][3].add(new Belts(new Position(2, 3), Direction.EAST, Belts.BeltSpeed.FAST, boardName));
+            grid[2][3].add(new Belts(new Position(2, 3), Direction.EAST, Belts.BeltSpeed.FAST, boardId));
             List<Direction> outDirs3 = new ArrayList<>();
             outDirs3.add(Direction.NORTH);
             List<Direction> inDirs3 = new ArrayList<>();
             inDirs3.add(Direction.WEST);
-            grid[2][4].set(1, new Belts(new Position(2, 4), outDirs3, inDirs3, Belts.BeltSpeed.FAST, boardName));
+            grid[2][4].set(1, new Belts(new Position(2, 4), outDirs3, inDirs3, Belts.BeltSpeed.FAST, boardId));
 
             // 4. (1,3) to (1,11), curves at (1,11) toward (2,11)
             for (int y = 3; y <= 10; y++) {
-                grid[1][y].add(new Belts(new Position(1, y), Direction.EAST, Belts.BeltSpeed.FAST, boardName));
+                grid[1][y].add(new Belts(new Position(1, y), Direction.EAST, Belts.BeltSpeed.FAST, boardId));
             }
             List<Direction> outDirs4 = new ArrayList<>();
             outDirs4.add(Direction.SOUTH);
             List<Direction> inDirs4 = new ArrayList<>();
             inDirs4.add(Direction.WEST);
-            grid[1][11].set(1, new Belts(new Position(1, 11), outDirs4, inDirs4, Belts.BeltSpeed.FAST, boardName));
+            grid[1][11].set(1, new Belts(new Position(1, 11), outDirs4, inDirs4, Belts.BeltSpeed.FAST, boardId));
 
             // 5. (0,10) to (1,10), curves at (1,10) toward (1,11)
-            grid[0][10].add(new Belts(new Position(0, 10), Direction.SOUTH, Belts.BeltSpeed.FAST, boardName));
+            grid[0][10].add(new Belts(new Position(0, 10), Direction.SOUTH, Belts.BeltSpeed.FAST, boardId));
             List<Direction> outDirs5 = new ArrayList<>();
             outDirs5.add(Direction.EAST);
             List<Direction> inDirs5 = new ArrayList<>();
             inDirs5.add(Direction.NORTH);
-            grid[1][10].set(1, new Belts(new Position(1, 10), outDirs5, inDirs5, Belts.BeltSpeed.FAST, boardName));
+            grid[1][10].set(1, new Belts(new Position(1, 10), outDirs5, inDirs5, Belts.BeltSpeed.FAST, boardId));
 
             // 6. (0,11) to (8,11), curves at (8,11) toward (8,10)
             for (int x = 0; x <= 7; x++) {
-                grid[x][11].add(new Belts(new Position(x, 11), Direction.NORTH, Belts.BeltSpeed.FAST, boardName));
+                grid[x][11].add(new Belts(new Position(x, 11), Direction.NORTH, Belts.BeltSpeed.FAST, boardId));
             }
             List<Direction> outDirs6 = new ArrayList<>();
             outDirs6.add(Direction.WEST);
             List<Direction> inDirs6 = new ArrayList<>();
             inDirs6.add(Direction.SOUTH);
-            grid[8][11].set(1, new Belts(new Position(8, 11), outDirs6, inDirs6, Belts.BeltSpeed.FAST, boardName));
+            grid[8][11].set(1, new Belts(new Position(8, 11), outDirs6, inDirs6, Belts.BeltSpeed.FAST, boardId));
 
             // 7. (7,12) to (7,11), curves at (7,11) toward (8,11)
-            grid[7][12].add(new Belts(new Position(7, 12), Direction.WEST, Belts.BeltSpeed.FAST, boardName));
+            grid[7][12].add(new Belts(new Position(7, 12), Direction.WEST, Belts.BeltSpeed.FAST, boardId));
             List<Direction> outDirs7 = new ArrayList<>();
             outDirs7.add(Direction.NORTH);
             List<Direction> inDirs7 = new ArrayList<>();
             inDirs7.add(Direction.EAST);
-            grid[7][11].set(1, new Belts(new Position(7, 11), outDirs7, inDirs7, Belts.BeltSpeed.FAST, boardName));
+            grid[7][11].set(1, new Belts(new Position(7, 11), outDirs7, inDirs7, Belts.BeltSpeed.FAST, boardId));
 
             // Belt 8: from (8,12) ⇦ to (8,5)
             for (int y = 12; y >= 5; y--) {
-                grid[8][y].add(new Belts(new Position(8, y), Direction.WEST, Belts.BeltSpeed.FAST, boardName));
+                grid[8][y].add(new Belts(new Position(8, y), Direction.WEST, Belts.BeltSpeed.FAST, boardId));
             }
 
             // Energy Spaces
@@ -154,18 +154,18 @@ public class Board {
                     new Position(7, 5), new Position(4, 7), new Position(5, 8)
             };
             for (Position pos : energyPositions) {
-                grid[pos.x()][pos.y()].add(new EnergySpace(pos));
+                grid[pos.x()][pos.y()].add(new EnergySpace(pos, boardId));
             }
 
             // Checkpoint at (6,12)
-            CheckPoints checkpoint = new CheckPoints(new Position(6, 12), 1);
+            CheckPoints checkpoint = new CheckPoints(new Position(6, 12), 1, boardId);
             grid[6][12].add(checkpoint);
 
             // Reboot at (6,7)
             Reboot reboot = Reboot.getInstance();
             reboot.setPosition(new Position(6, 7));
             // Set boardName for Reboot
-            reboot.setBoardName(this.boardName);
+            reboot.setBoardId(this.boardId);
             grid[6][7].add(reboot);
 
             // Lasers
@@ -337,6 +337,7 @@ public class Board {
      * @return A three-dimensional list representing the serialized state of the board.
      */
 
+    /*
     // Modified: Changed return type to List<List<List<Map<String, Object>>>> for protocol compliance
     public List<List<List<Map<String, Object>>>> toSerializableMap() {
         List<List<List<Map<String, Object>>>> map = new ArrayList<>();
@@ -347,7 +348,7 @@ public class Board {
                 for (BoardElement e : grid[x][y]) {
                     Map<String, Object> elementData = new HashMap<>();
                     elementData.put("type", e.getType());
-                    elementData.put("isOnBoard", e.getBoardName());
+                    elementData.put("isOnBoard", e.getBoardId());
 
                     switch (e) {
                         case Belts belt -> {
@@ -380,7 +381,9 @@ public class Board {
         return map;
     }
 
-    /*
+    */
+
+
     public List<List<List<BoardElement>>> toSerializableMap() {
         List<List<List<BoardElement>>> map = new ArrayList<>();
         for (int x = 0; x < grid.length; x++) {
@@ -397,7 +400,7 @@ public class Board {
         }
         return map;
     }
-    */
+
     /**
      * Get the total number of checkpoints on the game board.
      *

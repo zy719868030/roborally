@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,8 +47,8 @@ public class Belts extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Belts(String boardName) {
-        super(boardName);
+    public Belts(String boardId) {
+        super(boardId);
         this.speed = BeltSpeed.SLOW;
         this.color = BeltColor.GREEN;
         this.outDirections = new ArrayList<>();
@@ -55,11 +56,11 @@ public class Belts extends BoardElement {
         this.inDirections = new ArrayList<>();
         this.isRotating = false;
         this.isOnBoard = false;
-        this.boardId = "";
+        this.boardId = boardId; // Set boardId to boardName
     }
 
-    public Belts(Position position, String boardName) {
-        super(position, boardName);
+    public Belts(Position position, String boardId) {
+        super(position, boardId);
         this.speed = BeltSpeed.SLOW;
         this.color = BeltColor.GREEN;
         this.outDirections = new ArrayList<>();
@@ -67,31 +68,40 @@ public class Belts extends BoardElement {
         this.inDirections = new ArrayList<>();
         this.isRotating = false;
         this.isOnBoard = false;
-        this.boardId = "";
+        this.boardId = boardId;
     }
 
+
+    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardID) {
+        super(position, outDirection, boardID);
+        this.speed = speed;
+        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
+        this.outDirections = new ArrayList<>();
+        this.outDirections.add(outDirection);
+        this.inDirections = new ArrayList<>();
+        this.isRotating = false;
+        this.isOnBoard = false;
+        this.boardId = boardID;
+        this.setBoardId(boardId); // Updates isOnBoard
+
+    }
+    /*
     public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardName) {
-        super(position, outDirection, boardName);
+        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardName);
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
         this.outDirections = new ArrayList<>();
         this.outDirections.add(outDirection);
         this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = "";
+        //this.isRotating = false;
+        //this.setBoardId(boardId);
+
+        this.boardId = boardName; // Added: Set boardId to boardName
+        this.setBoardName(boardName);
     }
 
-    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardId) {
-        super(position);
-        this.speed = speed;
-        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(outDirection);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.setBoardId(boardId);
-    }
+     */
+
 
     /**
      * Constructor with position, exit direction list, entry direction list, and speed parameters.
@@ -102,8 +112,8 @@ public class Belts extends BoardElement {
      * @param inDirections The entry direction list of the conveyor belt.
      * @param speed The speed of the conveyor belt.
      */
-    public Belts(Position position, List<Direction> outDirections, List<Direction> inDirections, BeltSpeed speed, String boardName) {
-        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardName);
+    public Belts(Position position, List<Direction> outDirections, List<Direction> inDirections, BeltSpeed speed, String boardId) {
+        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardId);
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
         this.outDirections = new ArrayList<>(outDirections);
@@ -112,7 +122,9 @@ public class Belts extends BoardElement {
         this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
                 !outDirections.get(0).equals(inDirections.get(0).turnAround());
         this.isOnBoard = false;
-        this.boardId = "";
+        this.boardId = boardId;
+        //this.boardId = "";
+        this.setBoardId(boardId);
     }
 
     public BeltSpeed getSpeed() {

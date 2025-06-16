@@ -28,8 +28,8 @@ public class PushPanel extends BoardElement {
         this.boardId = "";
     }
 
-    public PushPanel(Position position) {
-        super(position);
+    public PushPanel(Position position, String boardId) {
+        super(position, boardId);
         this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
         this.currentRegister = 0;
         this.isOnBoard = false;
