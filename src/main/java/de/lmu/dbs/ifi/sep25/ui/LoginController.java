@@ -1,29 +1,26 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.network.Client;
+import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Alert;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-
-import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
-
-import java.io.IOException;
 
 /**
  * Controller für die Login-Oberfläche.
- *
+ * <p>
  * Verarbeitet Benutzereingaben für Name und Spielfigur,
  * sendet Login-Nachrichten an den Server und wechselt bei Erfolg zur Lobby-Ansicht.
  */
@@ -34,18 +31,26 @@ public class LoginController {
     @FXML
     private TextField portField;
 
-    /** Eingabefeld für den Spielernamen. */
+    /**
+     * Eingabefeld für den Spielernamen.
+     */
     @FXML
     private TextField nameField;
 
-    /** Auswahlfeld für die Spielfigur (Index 0–5). */
+    /**
+     * Auswahlfeld für die Spielfigur (Index 0–5).
+     */
     @FXML
     private ComboBox<Integer> figureBox;
 
-    /** Property zur Bindung des Spielernamens. */
+    /**
+     * Property zur Bindung des Spielernamens.
+     */
     private StringProperty playerName = new SimpleStringProperty();
 
-    /** Property zur Bindung der ausgewählten Spielfigur. */
+    /**
+     * Property zur Bindung der ausgewählten Spielfigur.
+     */
     private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
 
     /**
@@ -76,7 +81,7 @@ public class LoginController {
     private void handleLogin(ActionEvent event) {
         String name = nameField.getText();
         Integer figure = figureBox.getValue();
-        String host =  hostField.getText();
+        String host = hostField.getText();
         String portText = portField.getText();
 
         if (name == null || name.isBlank() || figure == null) {

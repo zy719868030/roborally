@@ -1,7 +1,9 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
@@ -9,6 +11,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -31,21 +37,20 @@ public class ClientHandler implements Runnable {
 
     // 1. Constants / configuration
     private final Gson gson = new Gson();
+    private Integer myID;
 
     // 2. Networking / I/O
     private final Socket socket;
     private final BufferedReader reader;
     private final PrintWriter writer;
+    private Server server;
 
     // 3. State flags
     private volatile boolean alive = true;
 
     // 4. Game connection
     private Player player;
-
-    private String name;
-    private int figure;
-
+    private final Game game;
 
 
     /**
@@ -61,6 +66,8 @@ public class ClientHandler implements Runnable {
         this.socket = socket;
         this.reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
         this.writer = new PrintWriter(socket.getOutputStream(), true);
+        this.server = Server.getInstance();
+        this.game = server.getGame();
     }
 
     /**
@@ -99,20 +106,10 @@ public class ClientHandler implements Runnable {
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
-//                   case "PlayCard" -> handleBodyPlayCard(json);
-//                    case "CardPlayed" -> handleBodyCardPlayed(json);
-//                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-//                    case "ActivePhase" -> handleBodyActivePhase(json);
-//                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-//                    case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-//                    case "YourCards" -> handleBodyYourCards(json);
-//                    case "NotYourCards" -> handleBodyNotYourCards(json);
-//                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-//                    case "SelectedCard" -> handleBodySelectedCard(json);
-//                    case "CardSelected" -> handleBodyCardSelected(json);
-//                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-//                    case "TimerStarted" -> handleBodyTimerStarted(json);
-//                    case "TimerEnded" -> handleBodyTimerEnded(json);
+                    case "PlayCard" -> handleBodyPlayCard(json);
+                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
+                    case "SelectedCard" -> handleBodySelectedCard(json);
+                    case "TimerStarted" -> handleBodyTimerStarted();
 //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
 //                    case "CurrentCards" -> handleBodyCurrentCards(json);
 //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
@@ -171,11 +168,11 @@ public class ClientHandler implements Runnable {
     private void handleBodyHelloServer(String json) {
         Message<BodyHelloServer> message = JsonUtil.parseMessage(json, BodyHelloServer.class);
         BodyHelloServer body = message.messageBody();
-        if (!body.protocol().equalsIgnoreCase(Server.getInstance().getProtocol())) {
-            sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + Server.getInstance().getProtocol())));
+        if (!body.protocol().equalsIgnoreCase(server.getProtocol())) {
+            sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + server.getProtocol())));
             closeAll();
         }
-        Server.getInstance().getIsAI().put(this, body.isAI());
+        server.getIsAI().put(this, body.isAI());
     }
 
     /**
@@ -190,21 +187,22 @@ public class ClientHandler implements Runnable {
     private void handleBodyPlayerValues(String json) {
         Message<BodyPlayerValues> message = JsonUtil.parseMessage(json, BodyPlayerValues.class);
         BodyPlayerValues body = message.messageBody();
-        Server server = Server.getInstance();
+
+        //TODO @sebas
+        // - bitte mit pastConnections machen statt lobby iteration
+        // - names ändern in server und clients dass sie nur in clients gespeichert werden!!!
 
         if (server.assignFigure(body.figure(), this)) {
-            this.playerName = server.generateUniqueName(body.name());
-            this.figure = body.figure();
-            this.player = new Player(playerName, figure, this);
+            final String name = server.generateUniqueName(body.name());
+            this.player = new Player(name, body.figure(), this);
+            this.myID = server.getClients().getByKey(this);
 
-            server.getNames().put(this, playerName);
+            server.getNames().put(this, name);
             server.addToLobby(this);
-
-            int myID = server.getClients().getByKey(this);
 
             sendMessage(new Message<>(new BodyWelcome(myID)));
 
-            server.broadcastMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
+            broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
             // notify all
             for (ClientHandler other : server.getLobby().getClients()) {
@@ -233,30 +231,28 @@ public class ClientHandler implements Runnable {
      *             the readiness status of the player
      */
     private void handleBodySetStatus(String json) {
-        Server server = Server.getInstance();
         Message<BodySetStatus> message = JsonUtil.parseMessage(json, BodySetStatus.class);
         boolean ready = message.messageBody().ready();
-        int clientID = server.getClients().getByKey(this);
 
         if (player == null) {
-            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + clientID + ")");
+            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + myID + ")");
             sendMessage(new Message<>(new BodyError("Cannot change ready state: Player not initialized.")));
             return;
         }
 
         player.setReady(ready);
-        server.broadcastMessage(new Message<>(new BodyPlayerStatus(clientID, ready)));
+        broadcastMessage(new Message<>(new BodyPlayerStatus(myID, ready)));
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
-            if (ready) {
-                server.markReady(this);
-            }
-        } else {
-            server.unmarkReady(this);
+            if (ready)
+                if (server.readyIsEmpty())
+                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                else
+                    server.markReady(this);
+            else
+                server.unmarkReady(this);
         }
     }
-
-
 
     /**
      * Handles the processing of a "BodyMapSelected" message. This method parses the incoming
@@ -269,9 +265,8 @@ public class ClientHandler implements Runnable {
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
         String map = message.messageBody().map();
-        Server server = Server.getInstance();
 
-        server.broadcastMessage(new Message<>(new BodyMapSelected(map)));
+        broadcastMessage(new Message<>(new BodyMapSelected(map)));
         server.newGame(map);
     }
 
@@ -291,28 +286,27 @@ public class ClientHandler implements Runnable {
     private void handleBodySendChat(String json) {
         Message<BodySendChat> message = JsonUtil.parseMessage(json, BodySendChat.class);
         BodySendChat body = message.messageBody();
-        Integer from = Server.getInstance().getClients().getByKey(this);
-        if (from == null) {
+
+        if (myID == null) {
             sendMessage(new Message<>(new BodyError("Sender ID not found.")));
             return;
         }
 
         if (body.to() == -1) {
-            Server.getInstance().broadcastMessage(
-                    new Message<>(new BodyReceivedChat(body.message(), from, false))
+            server.broadcastMessage(
+                    new Message<>(new BodyReceivedChat(body.message(), myID, false))
             );
         } else {
-            ClientHandler recipient = Server.getInstance().getClients().getByValue(body.to());
+            ClientHandler recipient = server.getClients().getByValue(body.to());
             if (recipient != null) {
                 recipient.sendMessage(
-                        new Message<>(new BodyReceivedChat(body.message(), from, true))
+                        new Message<>(new BodyReceivedChat(body.message(), myID, true))
                 );
             } else {
                 sendMessage(new Message<>(new BodyError("Recipient not found.")));
             }
         }
     }
-
 
     /**
      * Handles the processing of a received chat message in JSON format.
@@ -322,6 +316,108 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyReceivedChat(String json) {
         this.sendMessage(json);
+    }
+
+    /**
+     * Handles the processing of a "BodyPlayCard" message. This method parses the incoming
+     * JSON string into a {@link Message} object containing a {@link BodyPlayCard} message body.
+     * It then broadcasts a message indicating that a card has been played to all connected
+     * clients.
+     *
+     * @param json the JSON string representing a "BodyPlayCard" message which contains
+     *             the details of the played card
+     */
+    private void handleBodyPlayCard(String json) {
+        Message<BodyPlayCard> message = JsonUtil.parseMessage(json, BodyPlayCard.class);
+        broadcastMessage(new Message<>(new BodyCardPlayed(myID, message.messageBody().card())));
+    }
+
+    /**
+     * Handles the process of setting a robot's starting position on the game board.
+     * Validates the provided starting point coordinates and updates the robot's position if valid.
+     * Sends appropriate messages based on the validation result.
+     *
+     * @param json the JSON string containing data to set the starting position,
+     *             parsed into a {@code BodySetStartingPoint} object which provides the coordinates (x, y).
+     */
+    private void handleBodySetStartingPoint(String json) {
+        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
+        final int x = body.x();
+        final int y = body.y();
+        List<Position> startingPoints = game.getBoard().getStartingPoints();
+        List<Position> robotPositions = server.getRobotPositions();
+        List<Position> validStartingPositions = startingPoints.stream().filter(robotPositions::contains).toList();
+
+        if (validStartingPositions.contains(new Position(x, y))) {
+            player.getRobot().setPosition(x, y);
+            final String direction;
+            switch (server.getGame().getMapType()) {
+                case "Heavy Merge Area", "Death Trap" -> direction = "left";
+                case "Pilgrimage", "Gear Stripper" -> direction = "up";
+                default -> direction = "right";
+            }
+            broadcastMessage(new Message<>(new BodyStartingPointTaken(x, y, direction, myID)));
+        } else {
+            sendMessage(new Message<>(new BodyError("Starting point invalid.")));
+        }
+    }
+
+    /**
+     * Handles the processing of a body-selected card event. Calls chooseCard in player.
+     *
+     * @param json the JSON string representation of the BodySelectedCard object
+     */
+    private void handleBodySelectedCard(String json) {
+        BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
+
+        if (body.card() == null) {
+            //        player.chooseCard(body.card(), body.register()); FIXME uncomment when game logic has implemented string conversion
+        } else {
+            //        player.removeCard(body.card(), body.register());
+        }
+
+        broadcastMessage(new Message<>(new BodyCardSelected(myID, body.register(), body.card() == null)), this);
+    }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    private void handleBodyTimerStarted() {
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            List<Integer> readyRegister = server.getReadyRegister();
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+            //TODO @Lukas add code to call random selection for remaining players in readyRegister
+
+        }, 30, TimeUnit.SECONDS);
+    }
+
+    // -------------
+
+    /**
+     * Marks the entity associated with this instance as ready to register
+     * in the server and broadcasts a message indicating completion of the
+     * selection process.
+     * <p>
+     * This method performs the following actions:
+     * 1. Marks the entity identified by `myID` as ready for registration
+     * using the server instance.
+     * 2. Broadcasts a message to notify other entities about the completion
+     * of the selection process for this instance.
+     * <p>
+     * Utilizes the `server` instance for registration marking and the
+     * `broadcastMessage` method to send out a notification message.
+     */
+    public void setReadyRegister() {
+        server.markReadyRegister(myID);
+        broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
     }
 
     /**
@@ -379,6 +475,25 @@ public class ClientHandler implements Runnable {
     }
 
     /**
+     * Sends the given message to all connected clients via the server.
+     *
+     * @param msg the message to be broadcasted to all connected clients
+     */
+    public void broadcastMessage(Message<?> msg) {
+        server.broadcastMessage(msg);
+    }
+
+    /**
+     * Sends the specified message to all connected clients except the excluded client.
+     *
+     * @param msg     the message to be broadcasted to connected clients
+     * @param exclude the client handler to be excluded from receiving the message
+     */
+    public void broadcastMessage(Message<?> msg, ClientHandler exclude) {
+        server.broadcastMessage(msg, exclude);
+    }
+
+    /**
      * Closes all resources associated with the client connection managed by this
      * {@code ClientHandler}. This includes removing the client handler from the
      * server's management, closing the input/output streams, and terminating
@@ -400,7 +515,7 @@ public class ClientHandler implements Runnable {
      */
     public void closeAll() {
         try {
-            Server.getInstance().removeClientHandler(this);
+            server.removeClientHandler(this);
             if (reader != null)
                 reader.close();
             if (writer != null)
@@ -431,15 +546,15 @@ public class ClientHandler implements Runnable {
     public Player getPlayer() {
         return player;
     }
-    public String getName() {
-        return name;
+
+    /**
+     * Retrieves the ID associated with the current instance.
+     *
+     * @return the ID of the current instance
+     */
+    public int getMyID() {
+        return myID;
     }
-
-    public int getFigure() {
-        return figure;
-    }
-    private String playerName;
-
-
 
 }
+

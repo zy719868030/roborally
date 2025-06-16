@@ -1,11 +1,9 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
-import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -27,7 +25,6 @@ public class Server {
 
     // 1. Constants / configuration
     private final String protocol = "Version 0.1";
-    private final Gson gson = new Gson();
 
     // 2. Core data / state
     private final AtomicInteger clientIDCounter = new AtomicInteger(1);
@@ -36,7 +33,7 @@ public class Server {
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();
     private final List<Integer> availableFigures = Collections.synchronizedList(new ArrayList<>());
     private final Lobby lobby = new Lobby();
-    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>();
+//    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
     private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
     private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
@@ -50,6 +47,7 @@ public class Server {
 
     // 5. Game logic
     private Game game;
+    private final List<Integer> readyRegister = new ArrayList<>();
 
 
     /**
@@ -68,13 +66,6 @@ public class Server {
         }
     }
 
-    public Map<ClientHandler, String> getNames() {
-        return names;
-    }
-
-    public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
-        return figures;
-    }
     /**
      * Returns the singleton {@code Server} instance, creating it if necessary.
      *
@@ -120,13 +111,11 @@ public class Server {
                 ClientHandler handler = new ClientHandler(clientSocket);
                 new Thread(handler).start();
 
-                handler.sendMessage(gson.toJson(new Message<>(new BodyHelloClient(protocol))));
+                handler.sendMessage(new Message<>(new BodyHelloClient(protocol)));
 
                 int newClientID = clientIDCounter.getAndIncrement();
                 broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
-
-                //  handler.sendMessage(gson.toJson(new Message<>(new BodyWelcome(newClientID))));
             }
         } catch (IOException e) {
             if (running) {
@@ -136,37 +125,58 @@ public class Server {
     }
 
     /**
-     * Broadcasts a JSON-formatted message string to all connected clients.
-     * Clients that fail to receive the message will be removed.
+     * Broadcasts a message to all connected clients. If a client cannot receive the message,
+     * it will be removed from the clients list, and an error response will be sent to that client
+     * before closing its connection.
      *
-     * @param json the JSON message to send
-     */
-    public void broadcastMessage(String json) {
-        clients.keySet().removeIf(handler -> {
-            try {
-                handler.sendMessage(json);
-                return false;
-            } catch (Exception e) {
-                System.err.println("Removing client due to send failure: " + e.getMessage());
-                handler.sendMessage(gson.toJson(new Message<>(new BodyError("Failed to send message."))));
-                handler.closeAll();
-                return true;
-            }
-        });
-    }
-
-    /**
-     * Serializes a {@link Message} object to JSON and broadcasts it to all connected clients.
-     *
-     * @param message the message object to broadcast
+     * @param message the message to be broadcasted to all connected clients
      */
     public void broadcastMessage(Message<?> message) {
         try {
-            broadcastMessage(gson.toJson(message));
+            clients.keySet().removeIf(handler -> {
+                try {
+                    handler.sendMessage(message);
+                    return false;
+                } catch (Exception e) {
+                    System.err.println("Removing client due to send failure: " + e.getMessage());
+                    handler.sendMessage(new Message<>(new BodyError("Failed to send message.")));
+                    handler.closeAll();
+                    return true;
+                }
+            });
         } catch (Exception e) {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
     }
+
+    /**
+     * Broadcasts a message to all connected clients except the specified client handler.
+     * If a client cannot receive the message, it will be removed from the clients list, and an
+     * error response will be sent to that client before closing its connection.
+     *
+     * @param message the message to be broadcasted to the clients
+     * @param exclude the client handler to exclude from receiving the message
+     */
+    public void broadcastMessage(Message<?> message, ClientHandler exclude) {
+        try {
+            clients.keySet().stream()
+                    .filter(handler -> handler != exclude)
+                    .forEach(handler -> {
+                        try {
+                            handler.sendMessage(message);
+                        } catch (Exception e) {
+                            System.err.println("Failed to send message to client: " + e.getMessage());
+                            handler.sendMessage(new Message<>(new BodyError("Failed to send message.")));
+                            handler.closeAll();
+                            clients.removeByKey(handler);
+                        }
+                    });
+        } catch (Exception e) {
+            System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
+        }
+    }
+    
+    
 
     /**
      * Stops the server by closing the server socket and terminating the accept loop.
@@ -271,7 +281,12 @@ public class Server {
             if (!availableFigures.contains(figure)) {
                 availableFigures.add(figure);
             }
-            figures.removeByValue(figure);
+
+            try {
+                figures.removeByValue(figure);
+            } catch (Exception e) {
+                System.err.println("Failed to release figure: " + e.getMessage());
+            }
         }
     }
 
@@ -377,8 +392,10 @@ public class Server {
     }
 
     /**
+     * Retrieves the positions of all robots associated with the connected clients.
      *
-     * **/
+     * @return a list of {@link Position} objects representing the positions of all robots
+     */
     public List<Position> getRobotPositions () {
         return clients.keySet().stream().map(handler -> handler.getPlayer().getRobot().getPosition()).toList();
     }
@@ -403,8 +420,41 @@ public class Server {
      * Starts the game and broadcasts a game start message to all players.
      */
     private void startGame() {
+        resetReadyRegister();
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
-        broadcastMessage(JsonUtil.toJson(message));
+        broadcastMessage(message);
+    }
+
+    /**
+     * Resets the ready register by clearing its current contents and repopulating it with updated client states.
+     * The method retrieves all clients from the lobby, maps them to their respective identifiers,
+     * and adds these identifiers to the ready register.
+     */
+    private void resetReadyRegister() {
+        readyRegister.clear();
+        readyRegister.addAll(getLobby().getClients().stream().map(clients::getByKey).toList());
+    }
+
+    /**
+     * Removes the specified client ID from the ready register.
+     * This method is used to update the list of clients marked as ready
+     * by removing a specific client's identifier.
+     *
+     * @param clientID the unique identifier of the client to be removed from the ready register
+     */
+    public void markReadyRegister(Integer clientID) {
+        readyRegister.remove(clientID);
+    }
+
+    /**
+     * Retrieves a copy of the list of ready client IDs and resets the ready register for the next round.
+     *
+     * @return a copy of the current ready register containing client IDs marked as ready
+     */
+    public List<Integer> getReadyRegister() {
+        List<Integer> copy = new ArrayList<>(readyRegister);
+        resetReadyRegister();
+        return copy;
     }
 
     /**
@@ -416,10 +466,32 @@ public class Server {
         return game;
     }
 
+    /**
+     * Retrieves the current lobby instance managed by the server.
+     *
+     * @return the {@code Lobby} instance that manages client handlers and their states
+     */
     public Lobby getLobby() {
         return lobby;
 
     }
 
+    /**
+     * Returns the mapping of client handlers to their corresponding names.
+     *
+     * @return a map where keys are {@link ClientHandler} instances and values are the associated names
+     */
+    public Map<ClientHandler, String> getNames() {
+        return names;
+    }
+
+    /**
+     * Retrieves the mapping of client handlers to their assigned unique figure numbers.
+     *
+     * @return a bidirectional map linking ClientHandler instances to their respective figure numbers
+     */
+    public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
+        return figures;
+    }
 
 }
