@@ -27,11 +27,13 @@ public class Client {
 //    private int figure; von sebas; ???
     private Integer ID;
     private volatile boolean isAI = false;
+    private volatile boolean firstReadyRegistry = true;
 
     // 3. Networking / I/O
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
+    Server server = Server.getInstance();
 
     // 4. Game state
     private int phase = -1;
@@ -109,12 +111,10 @@ public class Client {
                         case "YourCards" -> handleBodyYourCards(json);
                         case "NotYourCards" -> handleBodyNotYourCards(json);
                         case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-                        //                    case "SelectedCard" -> handleBodySelectedCard(json);
-                        //                    case "CardSelected" -> handleBodyCardSelected(json);
-                        //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-                        //                    case "TimerStarted" -> handleBodyTimerStarted(json);
-                        //                    case "TimerEnded" -> handleBodyTimerEnded(json);
-                        //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
+                        case "CardSelected" -> handleBodyCardSelected(json);
+                        case "SelectionFinished" -> handleBodySelectionFinished(json);
+                        case "TimerEnded" -> handleBodyTimerEnded(json);
+                        case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
                         //                    case "CurrentCards" -> handleBodyCurrentCards(json);
                         //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
                         //                    case "Movement" -> handleBodyMovement(json);
@@ -381,10 +381,9 @@ public class Client {
     private void handleBodyYourCards(String json) {
         Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
         BodyYourCards body = message.messageBody();
-        Server server = Server.getInstance();
 
         hand.addAll(body.cardsInHand());
-        server.broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), server.getClients().getByValue(ID));
+        broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), server.getClients().getByValue(ID));
 
 
         //TODO fx display hand
@@ -398,7 +397,44 @@ public class Client {
     /****/
     private void handleBodyShuffleCoding(String json) {
         //TODO fx display deck size | optional: animation
-        //FRAGE: Dazu werden zuerst alle restlichen Karten vergeben, dann wird der Ablegestapel gemischt und danach die verbleibende Kartenanzahl versandt
+    }
+
+    /****/
+    private void handleBodyCardSelected(String json) {
+        //TODO fx display card selection
+    }
+
+    /**
+     * Handles the "BodySelectionFinished" message received from the server.
+     * This method processes a JSON string representing a {@code BodyCardSelected} message.
+     * It checks if the client ID matches the received message and verifies if the selection is complete.
+     * If the selection is complete and this is the first time the ready state is being registered,
+     * a {@code BodyTimerStarted} message is sent to the server.
+     *
+     * @param json the JSON string containing the serialized {@code BodyCardSelected} message
+     */
+    private void handleBodySelectionFinished(String json) {
+        Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
+        BodyCardSelected body = message.messageBody();
+
+        if (body.clientID().equals(ID) && body.filled()) {
+            if (firstReadyRegistry) {
+                sendMessage(new MessageDefinitions.Message<> (new MessageDefinitions.BodyTimerStarted()));
+            }
+            firstReadyRegistry = false;
+        }
+
+        //TODO fx display selection finished
+    }
+
+    /****/
+    private void handleBodyTimerEnded(String json) {
+        //TODO fx display timer ended
+    }
+
+    /****/
+    private void handleBodyCardsYouGotNow(String json) {
+        //TODO fx display cards to register
     }
 
 
@@ -438,6 +474,26 @@ public class Client {
             System.err.println("Failed to serialize and send message: " + e.getMessage());
         }
     }
+
+    /**
+     * Sends the given message to all connected clients via the server.
+     *
+     * @param msg the message to be broadcasted to all connected clients
+     */
+    public void broadcastMessage(Message<?> msg) {
+        server.broadcastMessage(msg);
+    }
+
+    /**
+     * Sends the specified message to all connected clients except the excluded client.
+     *
+     * @param msg the message to be broadcasted to connected clients
+     * @param exclude the client handler to be excluded from receiving the message
+     */
+    public void broadcastMessage(Message<?> msg, ClientHandler exclude) {
+        server.broadcastMessage(msg, exclude);
+    }
+
 
     /**
      * Releases resources associated with the client connection.

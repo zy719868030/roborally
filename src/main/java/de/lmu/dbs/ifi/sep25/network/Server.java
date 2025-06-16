@@ -47,6 +47,7 @@ public class Server {
 
     // 5. Game logic
     private Game game;
+    private final List<Integer> readyRegister = new ArrayList<>();
 
 
     /**
@@ -393,8 +394,10 @@ public class Server {
     }
 
     /**
+     * Retrieves the positions of all robots associated with the connected clients.
      *
-     * **/
+     * @return a list of {@link Position} objects representing the positions of all robots
+     */
     public List<Position> getRobotPositions () {
         return clients.keySet().stream().map(handler -> handler.getPlayer().getRobot().getPosition()).toList();
     }
@@ -419,8 +422,41 @@ public class Server {
      * Starts the game and broadcasts a game start message to all players.
      */
     private void startGame() {
+        resetReadyRegister();
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
         broadcastMessage(message);
+    }
+
+    /**
+     * Resets the ready register by clearing its current contents and repopulating it with updated client states.
+     * The method retrieves all clients from the lobby, maps them to their respective identifiers,
+     * and adds these identifiers to the ready register.
+     */
+    private void resetReadyRegister() {
+        readyRegister.clear();
+        readyRegister.addAll(getLobby().getClients().stream().map(clients::getByKey).toList());
+    }
+
+    /**
+     * Removes the specified client ID from the ready register.
+     * This method is used to update the list of clients marked as ready
+     * by removing a specific client's identifier.
+     *
+     * @param clientID the unique identifier of the client to be removed from the ready register
+     */
+    public void markReadyRegister(Integer clientID) {
+        readyRegister.remove(clientID);
+    }
+
+    /**
+     * Retrieves a copy of the list of ready client IDs and resets the ready register for the next round.
+     *
+     * @return a copy of the current ready register containing client IDs marked as ready
+     */
+    public List<Integer> getReadyRegister() {
+        List<Integer> copy = new ArrayList<>(readyRegister);
+        resetReadyRegister();
+        return copy;
     }
 
     /**
@@ -432,6 +468,11 @@ public class Server {
         return game;
     }
 
+    /**
+     * Retrieves the current lobby instance managed by the server.
+     *
+     * @return the {@code Lobby} instance that manages client handlers and their states
+     */
     public Lobby getLobby() {
         return lobby;
 

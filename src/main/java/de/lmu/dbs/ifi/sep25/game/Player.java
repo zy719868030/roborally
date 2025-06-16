@@ -41,6 +41,7 @@ public class Player {
         }
     }
 
+    /****/
     public void chooseCard(RegisterCard card, int registerSlot) {
         if (!readyRegister) {
             if (registerSlot >= 0 && registerSlot < 5 ){
@@ -144,7 +145,7 @@ public class Player {
 
     public void setReadyRegister(boolean ready) {
         readyRegister = ready;
-        //TODO call timer if first
+        connection.setReadyRegister();
     }
 
     public int getEnergy() {
