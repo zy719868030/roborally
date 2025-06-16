@@ -66,13 +66,6 @@ public class Server {
         }
     }
 
-    public Map<ClientHandler, String> getNames() {
-        return names;
-    }
-
-    public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
-        return figures;
-    }
     /**
      * Returns the singleton {@code Server} instance, creating it if necessary.
      *
@@ -478,5 +471,22 @@ public class Server {
 
     }
 
+    /**
+     * Returns the mapping of client handlers to their corresponding names.
+     *
+     * @return a map where keys are {@link ClientHandler} instances and values are the associated names
+     */
+    public Map<ClientHandler, String> getNames() {
+        return names;
+    }
+
+    /**
+     * Retrieves the mapping of client handlers to their assigned unique figure numbers.
+     *
+     * @return a bidirectional map linking ClientHandler instances to their respective figure numbers
+     */
+    public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
+        return figures;
+    }
 
 }
