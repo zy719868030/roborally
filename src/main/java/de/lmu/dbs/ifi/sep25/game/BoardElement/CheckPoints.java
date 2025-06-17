@@ -27,14 +27,15 @@ public class CheckPoints extends BoardElement {
         this.boardId = "";
     }
 
-    public CheckPoints(Position position) {
-        super(position);
+    public CheckPoints(Position position, String boardId) {
+        super(position, boardId);
         this.number = 1;
         this.robotCheckpoints = new HashMap<>();
         this.isOnBoard = false;
         this.boardId = "";
     }
 
+    /*
     public CheckPoints(Position position, int number) {
         super(position);
         this.number = number;
@@ -42,9 +43,9 @@ public class CheckPoints extends BoardElement {
         this.isOnBoard = false;
         this.boardId = "";
     }
-
+    */
     public CheckPoints(Position position, int number, String boardId) {
-        super(position);
+        super(position, boardId);
         this.number = number;
         this.robotCheckpoints = new HashMap<>();
         this.setBoardId(boardId);

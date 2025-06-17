@@ -33,7 +33,7 @@ public class Server {
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();
     private final List<Integer> availableFigures = Collections.synchronizedList(new ArrayList<>());
     private final Lobby lobby = new Lobby();
-    //private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>();
+//    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
     private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
     private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
@@ -116,8 +116,6 @@ public class Server {
                 int newClientID = clientIDCounter.getAndIncrement();
                 broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
-
-                 //handler.sendMessage((new Message<>(new BodyWelcome(newClientID))));
             }
         } catch (IOException e) {
             if (running) {
@@ -150,6 +148,7 @@ public class Server {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
     }
+
     /**
      * Broadcasts a message to all connected clients except the specified client handler.
      * If a client cannot receive the message, it will be removed from the clients list, and an
@@ -176,7 +175,8 @@ public class Server {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
     }
-
+    
+    
 
     /**
      * Stops the server by closing the server socket and terminating the accept loop.
@@ -281,7 +281,12 @@ public class Server {
             if (!availableFigures.contains(figure)) {
                 availableFigures.add(figure);
             }
-            figures.removeByValue(figure);
+
+            try {
+                figures.removeByValue(figure);
+            } catch (Exception e) {
+                System.err.println("Failed to release figure: " + e.getMessage());
+            }
         }
     }
 
@@ -387,8 +392,10 @@ public class Server {
     }
 
     /**
+     * Retrieves the positions of all robots associated with the connected clients.
      *
-     * **/
+     * @return a list of {@link Position} objects representing the positions of all robots
+     */
     public List<Position> getRobotPositions () {
         return clients.keySet().stream().map(handler -> handler.getPlayer().getRobot().getPosition()).toList();
     }

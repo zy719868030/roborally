@@ -24,6 +24,7 @@ public class Client {
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data
+//    private int figure; von sebas; ???
     private Integer ID;
     private volatile boolean isAI = false;
     private volatile boolean firstReadyRegistry = true;
@@ -106,7 +107,7 @@ public class Client {
                         case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
                         case "ActivePhase" -> handleBodyActivePhase(json);
                         case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-                        //                   case "YourCards" -> handleBodyYourCards(json);
+                        case "YourCards" -> handleBodyYourCards(json);
                         case "NotYourCards" -> handleBodyNotYourCards(json);
                         case "ShuffleCoding" -> handleBodyShuffleCoding(json);
                         case "CardSelected" -> handleBodyCardSelected(json);
@@ -149,7 +150,7 @@ public class Client {
         String protocol = message.messageBody().protocol();
         System.out.println("[SERVER] Connected using protocol: " + protocol);
 
-        sendMessage(gson.toJson(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol))));
+        sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol)));
     }
 
     /**
@@ -159,9 +160,8 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
-        //test
-        System.out.println("[DEBUG] Alive empfangen und beantwortet");
-        sendMessage(new Message<>(new BodyAlive()));
+        System.out.println("[DEBUG] Alive empfangen und beantwortet"); //TEST
+        sendMessage(json);
     }
 
     /**
@@ -181,14 +181,10 @@ public class Client {
     }
 
     /**
-     * Handles a "BodyPlayerAdded" message received from the server.
-     * <p>
-     * This method processes a JSON string representing a {@code BodyPlayerAdded} message,
-     * deserializing it to extract the player's proposed username, client ID, and figure.
-     * If a conflict is detected in the proposed username (i.e., it already exists in the
-     * system), the method generates a unique username by appending a numeric suffix.
-     * Finally, the resolved username is added to the {@code usernames} map along with
-     * the client ID, and the player's figure is stored for further use.
+     * Handles the "BodyPlayerAdded" message received from the server.
+     * This method processes a JSON string representing the {@code BodyPlayerAdded} message,
+     * updates the client's internal state with the new player's details,
+     * and updates the appropriate GUI components through the {@code LobbyController} and {@code LoginController}.
      *
      * @param json the JSON string containing the serialized {@code BodyPlayerAdded} message
      */
@@ -226,7 +222,6 @@ public class Client {
         });
     }
 
-
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
@@ -260,14 +255,15 @@ public class Client {
     private void handleBodySelectMap(String json) {
         Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
         List<String> availableMaps = message.messageBody().availableMaps();
-        String selection = "Dizzy Highway"; // TODO: Replace with actual map selection from GUI
+        String selection = "Dizzy Highway";
+        // TODO fx replace with map selection
 
         sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
     }
 
     /****/
     private void handleBodyMapSelected(String json) {
-        //TODO implement fx display of selected map
+        //TODO fx display selected map
     }
 
     /****/
@@ -276,7 +272,7 @@ public class Client {
         BodyGameStarted body = message.messageBody();
         List<List<List<BoardElement>>> board = body.gameMap();
 
-        // TODO: Display game board in GUI
+        // TODO fx display game board
     }
 
     /**
@@ -351,16 +347,18 @@ public class Client {
     /****/
     private void handleBodyCardPlayed(String json) {
         Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
-        //TODO implement java fx code: display played card to client
+        //TODO fx display played card to client
     }
 
     /****/
     private void handleBodyCurrentPlayer(String json) {
-        // TODO
+        // TODO @Lukas
         //  - check if equals sent id
         //  - check for game phase
         // set player turn maybe?
     }
+
+
     /**
      * Handles the "BodyActivePhase" message received from the server.
      * This method processes a JSON string representing a {@code BodyActivePhase} message,
@@ -373,16 +371,18 @@ public class Client {
         //TODO fx add phase display
     }
 
+    /****/
     private void handleBodyStartingPointTaken(String json) {
         //TODO fx display robot
     }
+
     /****/
     private void handleBodyYourCards(String json) {
         Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
         BodyYourCards body = message.messageBody();
 
         hand.addAll(body.cardsInHand());
-        //broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), Server.getInstance().getClients().getByValue(ID));
+        broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), Server.getInstance().getClients().getByValue(ID));
 
 
         //TODO fx display hand
@@ -402,6 +402,7 @@ public class Client {
     private void handleBodyCardSelected(String json) {
         //TODO fx display card selection
     }
+
     /**
      * Handles the "BodySelectionFinished" message received from the server.
      * This method processes a JSON string representing a {@code BodyCardSelected} message.
@@ -482,6 +483,16 @@ public class Client {
         Server.getInstance().broadcastMessage(msg);
     }
 
+    /**
+     * Sends the specified message to all connected clients except the excluded client.
+     *
+     * @param msg the message to be broadcasted to connected clients
+     * @param exclude the client handler to be excluded from receiving the message
+     */
+    public void broadcastMessage(Message<?> msg, ClientHandler exclude) {
+        Server.getInstance().broadcastMessage(msg, exclude);
+    }
+
 
     /**
      * Releases resources associated with the client connection.
@@ -504,6 +515,7 @@ public class Client {
             System.err.println("Error closing client: " + e.getMessage());
         }
     }
+
     public int getID() {
         return ID != null ? ID : -1;
     }

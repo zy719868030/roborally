@@ -22,8 +22,8 @@ public class Laser extends BoardElement {
         this.boardId = "";
     }
 
-    public Laser(Position position) {
-        super(position);
+    public Laser(Position position, String boardName) {
+        super(position, boardName);
         this.power = 1;
         this.isOnBoard = false;
         this.boardId = "";

@@ -8,17 +8,35 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 public abstract class BoardElement {
     protected Position position;
     protected Direction direction;
+    // boardId for protocol's isOnBoard attribute
+    protected final String boardId;
 
+    // No-arg constructor for Reboot singleton
     public BoardElement() {
+        this.boardId = null; // Temporary: Allows Reboot to compile
+    }
+    public BoardElement(String boardId) {
+
+        this.boardId = boardId;
     }
 
-    public BoardElement(Position position) {
+    public BoardElement(Position position, String boardId) {
+
         this.position = position;
+        this.boardId = boardId;
     }
 
     public BoardElement(Position position, Direction direction) {
         this.position = position;
         this.direction = direction;
+        this.boardId = null;
+    }
+
+    // Constructor for Belts and Laser
+    public BoardElement(Position position, Direction direction, String boardId) {
+        this.position = position;
+        this.direction = direction;
+        this.boardId = boardId;
     }
 
     public Position getPosition() {
@@ -35,6 +53,10 @@ public abstract class BoardElement {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
+    }
+
+    public String getBoardId() {
+        return boardId;
     }
 
 

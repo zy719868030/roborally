@@ -4,25 +4,40 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 
+
 public class Reboot extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
     private static Reboot instance = null;
+    // boardName for protocol's isOnBoard attribute
+    private String boardName;
 
     private Reboot() {
+        super(""); // Calls BoardElement() constructor
         this.isOnBoard = false;
         this.boardId = "";
+        //this.boardName = "";
         // Private constructor for singleton
+
     }
     public Reboot(Position position) {
-        super(position);
+        super(position, "");
         this.isOnBoard = false;
         this.boardId = "";
     }
 
+    /*
     public Reboot(Position position, String boardId) {
-        super(position);
+        super(position, boardId);
         this.setBoardId(boardId);
+        this.boardName = boardId;
+    }
+    */
+
+    public Reboot(Position position, String boardId) {
+        super(position, boardId); // Calls BoardElement(Position, String)
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public boolean isOnBoard() {
@@ -49,6 +64,13 @@ public class Reboot extends BoardElement {
         }
         return instance;
     }
+
+    // Added: Setter for boardName
+    //public void setBoardName(String boardName) { this.boardName = boardName; }
+
+    // Added: Override getBoardName
+    //@Override
+    //public String getBoardName() {        return boardName;    }
 
     @Override
     public void activate(Robot robot) {

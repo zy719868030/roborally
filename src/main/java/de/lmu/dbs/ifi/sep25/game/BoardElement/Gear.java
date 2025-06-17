@@ -35,8 +35,8 @@ public class Gear extends BoardElement {
         this.boardId = "";
     }
 
-    public Gear(Position position) {
-        super(position);
+    public Gear(Position position, String boardId) {
+        super(position, boardId);
         this.rotationDirection = RotationDirection.CLOCKWISE;
         this.color = GearColor.GREEN;
         this.isOnBoard = false;
@@ -50,8 +50,8 @@ public class Gear extends BoardElement {
      * @param position Gear position
      * @param rotationDirection Gear rotation direction
      */
-    public Gear(Position position, RotationDirection rotationDirection) {
-        super(position);
+    public Gear(Position position, RotationDirection rotationDirection, String boardId) {
+        super(position, boardId);
         this.rotationDirection = rotationDirection;
         // Set colours based on rotation direction
         this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
@@ -65,8 +65,8 @@ public class Gear extends BoardElement {
      * @param position Gear position
      * @param color Gear colour
      */
-    public Gear(Position position, GearColor color) {
-        super(position);
+    public Gear(Position position, GearColor color, String boardId) {
+        super(position, boardId);
         this.color = color;
         this.isOnBoard = false;
         this.boardId = "";
@@ -75,13 +75,14 @@ public class Gear extends BoardElement {
                 RotationDirection.COUNTERCLOCKWISE;
     }
 
+    /*
     public Gear(Position position, RotationDirection rotationDirection, String boardId) {
-        super(position);
+        super(position, boardId);
         this.rotationDirection = rotationDirection;
         // Set colours based on rotation direction
         this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
         this.setBoardId(boardId);
-    }
+    }*/
 
     public RotationDirection getRotationDirection() {
         return rotationDirection;

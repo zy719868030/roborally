@@ -18,6 +18,7 @@ public class Antenna extends BoardElement {
     private boolean isOnBoard;
 
     public Antenna(Position position, Direction direction) {
+
         super(position, direction);
         this.isOnBoard = false;
         this.boardId = "";

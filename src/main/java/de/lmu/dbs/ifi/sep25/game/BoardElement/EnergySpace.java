@@ -28,12 +28,14 @@ public class EnergySpace extends BoardElement {
      *
      * @param position Position of the energy space.
      */
-    public EnergySpace(Position position) {
-        super(position);
+    public EnergySpace(Position position, String boardId) {
+        super(position, boardId);
         this.energyCount = 1;
         this.collected = false;
-        this.isOnBoard = false;
-        this.boardId = "";
+        //this.isOnBoard = false;
+        //this.boardId = "";
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     /**
@@ -42,6 +44,7 @@ public class EnergySpace extends BoardElement {
      * @param position Position in energy space.
      * @param energyCount Number of energy cubes.
      */
+    /*
     public EnergySpace(Position position, int energyCount) {
         super(position);
         this.energyCount = energyCount;
@@ -49,12 +52,15 @@ public class EnergySpace extends BoardElement {
         this.isOnBoard = false;
         this.boardId = "";
     }
+    */
 
     public EnergySpace(Position position, int energyCount, String boardId) {
-        super(position);
+        super(position, boardId);
         this.energyCount = energyCount;
         this.collected = false;
-        this.setBoardId(boardId);
+        //this.setBoardId(boardId);
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public boolean isOnBoard() {
