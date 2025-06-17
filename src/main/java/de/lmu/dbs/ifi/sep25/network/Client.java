@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Client {
     // 1. Constants / configuration
@@ -24,14 +24,19 @@ public class Client {
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data
-    private int figure;
     private Integer ID;
     private volatile boolean isAI = false;
+    private volatile boolean firstReadyRegistry = true;
 
     // 3. Networking / I/O
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
+
+    // 4. Game state
+    private int phase = -1;
+    private final List<String> hand = new ArrayList<>();
+
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -51,14 +56,13 @@ public class Client {
             // Start listening thread
             new Thread(this::listenForMessages).start();
 
-
-
         } catch (IOException e) {
             System.err.println("Connection error: " + e.getMessage());
             closeAll();
             throw e;
         }
     }
+
     /**
      * Continuously listens for and processes incoming messages from the server.
      * <p>
@@ -98,20 +102,17 @@ public class Client {
                         case "GameStarted" -> handleBodyGameStarted(json);
                         case "ReceivedChat" -> handleBodyReceivedChat(json);
                         case "Error" -> handleBodyError(json);
-                        //                    case "PlayCard" -> handleBodyPlayCard(json); TODO add to game logic: sends to server card was played
                         case "CardPlayed" -> handleBodyCardPlayed(json);
                         case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-                        //                    case "ActivePhase" -> handleBodyActivePhase(json);
+                        case "ActivePhase" -> handleBodyActivePhase(json);
                         case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-                        //                    case "YourCards" -> handleBodyYourCards(json);
-                        //                    case "NotYourCards" -> handleBodyNotYourCards(json);
-                        //                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-                        //                    case "SelectedCard" -> handleBodySelectedCard(json);
-                        //                    case "CardSelected" -> handleBodyCardSelected(json);
-                        //                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-                        //                    case "TimerStarted" -> handleBodyTimerStarted(json);
-                        //                    case "TimerEnded" -> handleBodyTimerEnded(json);
-                        //                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
+                        //                   case "YourCards" -> handleBodyYourCards(json);
+                        case "NotYourCards" -> handleBodyNotYourCards(json);
+                        case "ShuffleCoding" -> handleBodyShuffleCoding(json);
+                        case "CardSelected" -> handleBodyCardSelected(json);
+                        case "SelectionFinished" -> handleBodySelectionFinished(json);
+                        case "TimerEnded" -> handleBodyTimerEnded(json);
+                        case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
                         //                    case "CurrentCards" -> handleBodyCurrentCards(json);
                         //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
                         //                    case "Movement" -> handleBodyMovement(json);
@@ -194,24 +195,13 @@ public class Client {
     private void handleBodyPlayerAdded(String json) {
         Message<BodyPlayerAdded> message = JsonUtil.parseMessage(json, BodyPlayerAdded.class);
         BodyPlayerAdded body = message.messageBody();
-        String proposedName = body.name();
-        String username;
-
-        if (usernames.containsValue(proposedName)) {
-            int i = 1;
-            do {
-                username = proposedName + " #" + i;
-                i++;
-            } while (usernames.containsValue(username));
-        } else {
-            username = proposedName;
-        }
+        String username = body.name();
 
         usernames.put(body.clientID(), username);
 
         boolean isMe = body.clientID().equals(getID());
         if (isMe) {
-            this.figure = body.figure();
+//            this.figure = body.figure();
             usernames.put(ID, username);
         }
 
@@ -235,6 +225,7 @@ public class Client {
             }
         });
     }
+
 
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
@@ -370,11 +361,82 @@ public class Client {
         //  - check for game phase
         // set player turn maybe?
     }
-
+    /**
+     * Handles the "BodyActivePhase" message received from the server.
+     * This method processes a JSON string representing a {@code BodyActivePhase} message,
+     * extracts the phase information from the message body, and updates the client's internal state.
+     *
+     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+     */
+    private void handleBodyActivePhase(String json) {
+        phase = JsonUtil.parseMessage(json, BodyActivePhase.class).messageBody().phase();
+        //TODO fx add phase display
+    }
 
     private void handleBodyStartingPointTaken(String json) {
         //TODO fx display robot
     }
+    /****/
+    private void handleBodyYourCards(String json) {
+        Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
+        BodyYourCards body = message.messageBody();
+
+        hand.addAll(body.cardsInHand());
+        //broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), Server.getInstance().getClients().getByValue(ID));
+
+
+        //TODO fx display hand
+    }
+
+    /****/
+    private void handleBodyNotYourCards(String json) {
+        //TODO fx display other hands
+    }
+
+    /****/
+    private void handleBodyShuffleCoding(String json) {
+        //TODO fx display deck size | optional: animation
+    }
+
+    /****/
+    private void handleBodyCardSelected(String json) {
+        //TODO fx display card selection
+    }
+    /**
+     * Handles the "BodySelectionFinished" message received from the server.
+     * This method processes a JSON string representing a {@code BodyCardSelected} message.
+     * It checks if the client ID matches the received message and verifies if the selection is complete.
+     * If the selection is complete and this is the first time the ready state is being registered,
+     * a {@code BodyTimerStarted} message is sent to the server.
+     *
+     * @param json the JSON string containing the serialized {@code BodyCardSelected} message
+     */
+    private void handleBodySelectionFinished(String json) {
+        Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
+        BodyCardSelected body = message.messageBody();
+
+        if (body.clientID().equals(ID) && body.filled()) {
+            if (firstReadyRegistry) {
+                sendMessage(new MessageDefinitions.Message<> (new MessageDefinitions.BodyTimerStarted()));
+            }
+            firstReadyRegistry = false;
+        }
+
+        //TODO fx display selection finished
+    }
+
+    /****/
+    private void handleBodyTimerEnded(String json) {
+        //TODO fx display timer ended
+    }
+
+    /****/
+    private void handleBodyCardsYouGotNow(String json) {
+        //TODO fx display cards to register
+    }
+
+
+    //----------------------
 
 
     /**
@@ -412,6 +474,16 @@ public class Client {
     }
 
     /**
+     * Sends the given message to all connected clients via the server.
+     *
+     * @param msg the message to be broadcasted to all connected clients
+     */
+    public void broadcastMessage(Message<?> msg) {
+        Server.getInstance().broadcastMessage(msg);
+    }
+
+
+    /**
      * Releases resources associated with the client connection.
      * <p>
      * This method ensures the proper closure of the input stream `reader`,
@@ -432,7 +504,6 @@ public class Client {
             System.err.println("Error closing client: " + e.getMessage());
         }
     }
-
     public int getID() {
         return ID != null ? ID : -1;
     }
