@@ -13,12 +13,23 @@
 
     <ListView fx:id="playerList" prefHeight="200" prefWidth="300"/>
 
-    <HBox spacing="10" alignment="CENTER">
-        <Button fx:id="readyButton" text="Bereit" onAction="#handleReady"/>
-        <Button fx:id="notReadyButton" text="Nicht bereit" onAction="#handleNotReady"/>
-    </HBox>
+ <VBox spacing="20" alignment="CENTER">
+
+    <StackPane alignment="CENTER" prefWidth="120" prefHeight="40">
+            <Button fx:id="readyButton"
+                    text="Bereit"
+                    onAction="#handleReady"
+                    styleClass="ready-button"/>
+            <Button fx:id="notReadyButton"
+                    text="Nicht bereit"
+                    onAction="#handleNotReady"
+                    styleClass="not-ready-button"
+                    visible="false"
+                    managed="false"/>
+    </StackPane>
 
     <Label fx:id="statusLabel" text="Warten auf andere Spieler..."/>
+</VBox>
 
     <!-- NEW: Chat section -->
     <Separator prefWidth="300"/>
@@ -31,6 +42,5 @@
         <TextField fx:id="chatInput" promptText="Nachricht eingeben..." HBox.hgrow="ALWAYS"/>
         <ComboBox fx:id="recipientBox" promptText="An..." prefWidth="100"/>
         <Button text="Senden" onAction="#handleSendChat"/>
-        <Button text="Alle" onAction="#handleClearRecipient" />
     </HBox>
 </VBox>
