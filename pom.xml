@@ -92,8 +92,9 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>de.lmu.dbs.ifi.sep25.ee.ee/de.lmu.dbs.ifi.sep25.ui.HelloApplication
+                            <mainClass>de.lmu.dbs.ifi.sep25.ee.ee/de.lmu.dbs.ifi.sep25.Main
                             </mainClass>
+                            <jvmArgs>--enable-preview --enable-native-access=ALL-UNNAMED</jvmArgs>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
