@@ -132,7 +132,9 @@ public class LoginController {
             ControllerRegistry.setLobbyController(controller);
 
             Stage stage = (Stage) nameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            stage.setScene(scene);
             stage.setTitle("Lobby");
             stage.show();
 
