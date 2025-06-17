@@ -19,10 +19,24 @@ public class LobbyController {
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
 
+
     @FXML
     public void initialize() {
         ControllerRegistry.setLobbyController(this);
         playerList.setItems(players);
+
+
+        playerList.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(PlayerEntry player, boolean empty) {
+                super.updateItem(player, empty);
+                if (empty || player == null) {
+                    setText(null);
+                } else {
+                    setText(player.toString()); // usa toString() de PlayerEntry
+                }
+            }
+        });
 
         // ComboBox: Darstellung und Zellen setzen
         recipientBox.setPromptText("An...");
@@ -41,13 +55,12 @@ public class LobbyController {
             }
         });
 
-        // Optional: Alle als Standardauswahl
+
         recipientBox.getSelectionModel().clearSelection();
-
         chatInput.setOnAction(e -> handleSendChat());
-        updateReadyButtons(false); // Spieler ist anfangs nicht bereit
-
+        updateReadyButtons(false);
     }
+
 
     @FXML
     private void handleReady() {
@@ -77,13 +90,26 @@ public class LobbyController {
 }
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
-        PlayerEntry player = new PlayerEntry(clientID, name, figure, ready);
-        players.add(player);
         int myID = ClientSingleton.getInstance().getID();
-        if (clientID != myID) {
-            recipientBox.getItems().add(player); // nur andere Spieler
+        boolean isMe = (clientID == myID);
+
+        String displayName = isMe ? name + " (du)" : name;
+
+        PlayerEntry player = new PlayerEntry(clientID, displayName, figure, ready);
+
+        // Vermeide Duplikate
+        boolean alreadyExists = players.stream()
+                .anyMatch(p -> p.getClientID() == clientID);
+        if (!alreadyExists) {
+            players.add(player);
         }
-        playerList.refresh();
+
+        // ComboBox: nur andere Spieler
+        if (!isMe) {
+            recipientBox.getItems().add(player);
+        }
+
+        System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
 
 
@@ -103,7 +129,7 @@ public class LobbyController {
         if (msg == null || msg.trim().isEmpty()) return;
 
         PlayerEntry selected = recipientBox.getSelectionModel().getSelectedItem();
-        int recipientID = (selected != null) ? selected.getClientID() : -1;
+        int recipientID = (selected == null|| selected.getClientID() == -1) ? -1 : selected.getClientID();
 
         System.out.println("[DEBUG] Sende Chatnachricht an " + (recipientID == -1 ? "ALLE" : recipientID) + ": " + msg);
 
@@ -133,10 +159,11 @@ public class LobbyController {
         int myID = client.getID();
 
         for (PlayerEntry player : newPlayers) {
+            String displayName = player.getName();
             players.add(player); // ListView
 
             if (player.getClientID() != myID) {
-                recipientBox.getItems().add(player); //
+                recipientBox.getItems().add(player);
             }
         }
 
@@ -152,9 +179,12 @@ public class LobbyController {
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
     }
+
     private void updateReadyButtons(boolean isReady) {
         readyButton.setVisible(!isReady);
+        readyButton.setManaged(!isReady);
         notReadyButton.setVisible(isReady);
+        notReadyButton.setManaged(!isReady);
     }
 
 }
