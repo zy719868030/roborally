@@ -81,25 +81,17 @@ public class LoginController {
     private void handleLogin(ActionEvent event) {
         String name = nameField.getText();
         Integer figure = figureBox.getValue();
-        String host = hostField.getText();
-        String portText = portField.getText();
+        // Falls Host oder Port leer → Standardwerte nutzen
+        String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
+        String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+
 
         if (name == null || name.isBlank() || figure == null) {
             showAlert("Bitte Namen und Spielfigur auswählen.");
             return;
         }
-        if (host == null || host.isBlank() || portText == null || portText.isBlank()) {
-            showAlert("Bitte IP-Adresse und Port eingeben.");
-            return;
-        }
-        int port;
-        try {
-            port = Integer.parseInt(portText);
-        } catch (NumberFormatException e) {
-            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
-            return;
-        }
 
+        int port;
         try {
             port = Integer.parseInt(portText);
         } catch (NumberFormatException e) {
@@ -111,7 +103,6 @@ public class LoginController {
             Client client = new Client();
             client.start(host, port);
             ClientSingleton.setInstance(client);
-
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
             return;
