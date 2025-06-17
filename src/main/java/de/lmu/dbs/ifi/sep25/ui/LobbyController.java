@@ -37,7 +37,8 @@ public class LobbyController {
                 }
             }
         });
-
+        PlayerEntry alleOption = new PlayerEntry(-1,"Alle",-1,false);
+        recipientBox.getItems().add(alleOption);
         // ComboBox: Darstellung und Zellen setzen
         recipientBox.setPromptText("An...");
         recipientBox.setButtonCell(new ListCell<>() {
