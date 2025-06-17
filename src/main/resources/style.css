@@ -1,0 +1,11 @@
+.ready-button {
+    -fx-background-color: #28a745;
+    -fx-text-fill: white;
+    -fx-front-weight: bold;
+}
+.not-ready-button {
+    -fx-background-color: #dc3545;
+    -fx-text-fill: white;
+    -fx-front-weigh: bold;
+
+}
