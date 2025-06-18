@@ -231,14 +231,11 @@ public class Client {
     /**
      * If the LobbyController is not yet initialized (e.g., UI not ready),
      * the received player information is temporarily stored in the pendingPlayers list.
-     *
      * This allows the application to process and display the player data later,
      * once the lobby UI is available and ready to render the list of players.
-     *
      * The block is synchronized to ensure thread safety, as this method might be
      * accessed from different threads (e.g., the network listener thread).
      *
-     * 
      */
     public void flushPendingPlayers() {
         javafx.application.Platform.runLater(() -> {
