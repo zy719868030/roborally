@@ -1,6 +1,8 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
@@ -9,6 +11,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
+import java.util.List;
+import java.util.Optional;
+
 public class LobbyController {
     @FXML private ComboBox<PlayerEntry> recipientBox;
     @FXML private TextArea chatArea;
@@ -16,6 +21,7 @@ public class LobbyController {
     @FXML private ListView<PlayerEntry> playerList;
     @FXML private Button readyButton, notReadyButton;
     @FXML private Label statusLabel;
+    @FXML private Label mapLabel;
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
 
@@ -33,10 +39,11 @@ public class LobbyController {
                 if (empty || player == null) {
                     setText(null);
                 } else {
-                    setText(player.toString()); // usa toString() de PlayerEntry
+                    setText(player.toString());
                 }
             }
         });
+        //Combobox conf
         PlayerEntry alleOption = new PlayerEntry(-1,"Alle",-1,false);
         recipientBox.getItems().add(alleOption);
         // ComboBox: Darstellung und Zellen setzen
@@ -60,7 +67,14 @@ public class LobbyController {
         recipientBox.getSelectionModel().clearSelection();
         chatInput.setOnAction(e -> handleSendChat());
         updateReadyButtons(false);
+
+        //Add yourself to LobbyList
+        Client client = ClientSingleton.getInstance();
+        if (client != null) {
+            client.flushPendingPlayers();
+        }
     }
+
 
 
     @FXML
@@ -105,7 +119,7 @@ public class LobbyController {
             players.add(player);
         }
 
-        // ComboBox: nur andere Spieler
+        // Vermeide Duplikate in ComboBox
         if (!isMe) {
             recipientBox.getItems().add(player);
         }
@@ -170,6 +184,28 @@ public class LobbyController {
 
         playerList.refresh();
     }
+
+
+    //new
+    public void showMapSelection(List<String> availableMaps) {
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(availableMaps.get(0), availableMaps);
+        dialog.setTitle("Kartenauswahl");
+        dialog.setHeaderText("Bitte wähle eine Karte aus");
+        dialog.setContentText("Verfügbare Karten:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(selectedMap -> {
+            Message<MessageDefinitions.BodyMapSelected> msg = new Message<>(new MessageDefinitions.BodyMapSelected(selectedMap));
+        });
+    }
+
+    public void displaySelectedMap(String mapName) {
+        // Diese Methode zeigt den ausgewählten Kartennamen in der Benutzeroberfläche an.
+        // Zum Beispiel kann hier ein Label aktualisiert werden, das den Namen der Karte zeigt:
+         mapLabel.setText("Ausgewählte Karte: " + mapName);
+    }
+
+
     @FXML
     private void handleClearRecipient() {
         recipientBox.getSelectionModel().clearSelection();
