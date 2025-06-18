@@ -21,3 +21,9 @@
     -fx-background-radius: 5;
     -fx-padding: 5;
 }
+.map-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #336699;
+    -fx-font-weight: bold;
+}
+

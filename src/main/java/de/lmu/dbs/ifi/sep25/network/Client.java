@@ -4,10 +4,16 @@ import com.google.gson.Gson;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
+import de.lmu.dbs.ifi.sep25.ui.GameController;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
 import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -289,25 +295,58 @@ public class Client {
     private void handleBodySelectMap(String json) {
         Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
         List<String> availableMaps = message.messageBody().availableMaps();
-        //String selection = "Dizzy Highway";
 
-
-        if (this.ID == 1) {
-                javafx.application.Platform.runLater(() -> {
-                    LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-                    if (lobbyCtrl != null) {
-                        lobbyCtrl.showMapSelection(availableMaps); // 💡 método que haremos ahora
-                    }
-                });
-            }
+        if (availableMaps == null || availableMaps.isEmpty()) {
+            System.err.println("[ERROR] Server hat keine Karten geschickt oder Body war leer.");
+            return;
         }
+
+        Platform.runLater(() -> {
+            LobbyController controller = ControllerRegistry.getLobbyController();
+            if (controller != null) {
+                controller.showMapSelection(availableMaps);
+            } else {
+                System.err.println("[ERROR] LobbyController ist null in handleBodySelectMap");
+            }
+        });
+    }
+
+
 
 
 
     /****/
     private void handleBodyMapSelected(String json) {
-        //TODO fx display selected map
+        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
+        String selectedMap = message.messageBody().map();
+
+        Platform.runLater(() -> {
+            LobbyController controller = ControllerRegistry.getLobbyController();
+            if (controller != null) {
+                controller.setMapLabel("Gewählte Karte: " + selectedMap);
+                controller.hideMapSelection();  // Optional: danach wieder ausblenden
+            } else {
+                System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelected");
+            }
+        });
+
+    //TODO fx display selected map Raneem
     }
+    private void handleBodyMapSelectedConfirmation(String json) {
+        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
+        String selectedMap = message.messageBody().map();
+
+        Platform.runLater(() -> {
+            LobbyController controller = ControllerRegistry.getLobbyController();
+            if (controller != null) {
+                controller.setMapLabel("Gewählte Karte: " + selectedMap);
+            } else {
+                System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelectedConfirmation");
+            }
+        });
+    }
+
+
 
     /****/
     private void handleBodyGameStarted(String json) {
@@ -315,7 +354,29 @@ public class Client {
         BodyGameStarted body = message.messageBody();
         List<List<List<BoardElement>>> board = body.gameMap();
 
-        // TODO fx display game board
+        javafx.application.Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/ui/GameView.fxml"));
+                Parent root = loader.load();
+
+                GameController gameController = loader.getController();
+
+
+                ControllerRegistry.setGameController(gameController);
+
+                //  board übergeben
+                gameController.drawBoard(board);
+
+                // Szenenwechsel durchführen
+                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        // TODO fx display game board Raneem
     }
 
     /**
@@ -390,7 +451,7 @@ public class Client {
     /****/
     private void handleBodyCardPlayed(String json) {
         Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
-        //TODO fx display played card to client
+        //TODO fx display played card to client Sebas
     }
 
     /****/
@@ -410,9 +471,23 @@ public class Client {
      * @param json the JSON string containing the serialized {@code BodyActivePhase} message
      */
     private void handleBodyActivePhase(String json) {
-        phase = JsonUtil.parseMessage(json, BodyActivePhase.class).messageBody().phase();
-        //TODO fx add phase display
+        Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
+        int phaseID = message.messageBody().phase();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            String phaseName = switch (phaseID) {
+                case 0 -> "Aufbauphase";
+                case 1 -> "Upgradephase";
+                case 2 -> "Programmierphase";
+                case 3 -> "Aktivierungsphase";
+                default -> "Unbekannt";
+            };
+            controller.updatePhase(phaseName);
+        });
     }
+
+
 
     /****/
     private void handleBodyStartingPointTaken(String json) {
@@ -433,17 +508,17 @@ public class Client {
 
     /****/
     private void handleBodyNotYourCards(String json) {
-        //TODO fx display other hands
+        //TODO fx display other hands Sebas
     }
 
     /****/
     private void handleBodyShuffleCoding(String json) {
-        //TODO fx display deck size | optional: animation
+        //TODO fx display deck size | optional: animation Raneem
     }
 
     /****/
     private void handleBodyCardSelected(String json) {
-        //TODO fx display card selection
+        //TODO fx display card selection Sebas
     }
 
     /**

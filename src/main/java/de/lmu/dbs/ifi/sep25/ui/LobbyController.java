@@ -9,7 +9,9 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,12 @@ public class LobbyController {
     @FXML private Button readyButton, notReadyButton;
     @FXML private Label statusLabel;
     @FXML private Label mapLabel;
+    @FXML private HBox mapSelectionBox;
+    @FXML private ComboBox<String> mapChoiceBox;
+    @FXML private Button selectMapButton;
+
+    private Parent root;
+
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
 
@@ -126,6 +134,46 @@ public class LobbyController {
 
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
+    public void showMapSelection(List<String> maps) {
+        if (mapChoiceBox == null || mapSelectionBox == null) {
+            System.err.println("[ERROR] mapChoiceBox oder mapSelectionBox ist null in showMapSelection!");
+            return;
+        }
+
+        if (maps == null || maps.isEmpty()) {
+            System.err.println("[WARN] showMapSelection mit leerer Map-Liste aufgerufen.");
+            return;
+        }
+
+        mapChoiceBox.getItems().setAll(maps);
+        mapChoiceBox.getSelectionModel().selectFirst();
+        mapSelectionBox.setVisible(true);
+        mapSelectionBox.setManaged(true);
+    }
+
+    @FXML
+    private void handleMapSelection() {
+        String selectedMap = mapChoiceBox.getValue();
+        if (selectedMap != null && !selectedMap.isBlank()) {
+            ClientSingleton.getInstance().sendMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyMapSelected(selectedMap)
+                    )
+            );
+            // Optional: UI wieder verstecken
+            mapSelectionBox.setVisible(false);
+            mapSelectionBox.setManaged(false);
+        }
+    }
+    //Methode zum Verstecken, wenn Spieler z. B. unready wird
+    public void hideMapSelection() {
+        mapSelectionBox.setVisible(false);
+        mapSelectionBox.setManaged(false);
+    }
+    public void setMapLabel(String text) {
+        mapLabel.setText(text);
+    }
+
 
 
     public void updatePlayerStatus(int clientID, boolean ready) {
@@ -187,17 +235,7 @@ public class LobbyController {
 
 
     //new
-    public void showMapSelection(List<String> availableMaps) {
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(availableMaps.get(0), availableMaps);
-        dialog.setTitle("Kartenauswahl");
-        dialog.setHeaderText("Bitte wähle eine Karte aus");
-        dialog.setContentText("Verfügbare Karten:");
 
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(selectedMap -> {
-            Message<MessageDefinitions.BodyMapSelected> msg = new Message<>(new MessageDefinitions.BodyMapSelected(selectedMap));
-        });
-    }
 
     public void displaySelectedMap(String mapName) {
         // Diese Methode zeigt den ausgewählten Kartennamen in der Benutzeroberfläche an.
@@ -223,5 +261,14 @@ public class LobbyController {
         notReadyButton.setVisible(isReady);
         notReadyButton.setManaged(!isReady);
     }
+    public void setRoot(Parent root) {
+        this.root = root;
+    }
+    public Parent getRoot() {
+        return root;
+    }
 
+    public void setSelectedMap(String mapName) {
+        mapLabel.setText("Gewählte Karte: " + mapName);
+    }
 }
