@@ -24,7 +24,6 @@ public class Client {
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data
-//    private int figure; von sebas; ???
     private Integer ID;
     private volatile boolean isAI = false;
     private volatile boolean firstReadyRegistry = true;
@@ -37,6 +36,8 @@ public class Client {
     // 4. Game state
     private int phase = -1;
     private final List<String> hand = new ArrayList<>();
+    private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
+
 
 
     /**
@@ -197,7 +198,6 @@ public class Client {
 
         boolean isMe = body.clientID().equals(getID());
         if (isMe) {
-//            this.figure = body.figure();
             usernames.put(ID, username);
         }
 
@@ -211,6 +211,12 @@ public class Client {
             if (lobbyCtrl != null) {
                 boolean isReady = false;
                 lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
+
+        }else{
+                synchronized (pendingPlayers) {
+                    pendingPlayers.add(body);
+                }
+
             }
 
             if (isMe) {
@@ -222,6 +228,37 @@ public class Client {
         });
     }
 
+    /**
+     * If the LobbyController is not yet initialized (e.g., UI not ready),
+     * the received player information is temporarily stored in the pendingPlayers list.
+     *
+     * This allows the application to process and display the player data later,
+     * once the lobby UI is available and ready to render the list of players.
+     *
+     * The block is synchronized to ensure thread safety, as this method might be
+     * accessed from different threads (e.g., the network listener thread).
+     *
+     * @param body the BodyPlayerAdded object representing the newly joined player
+     */
+    public void flushPendingPlayers() {
+        javafx.application.Platform.runLater(() -> {
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl == null) return;
+
+            synchronized (pendingPlayers) {
+                for (BodyPlayerAdded body : pendingPlayers) {
+                    int clientID = body.clientID();
+                    String name = body.name();
+                    int figure = body.figure();
+                    boolean isMe = (clientID == this.ID);
+                    String finalName =name;
+
+                    lobbyCtrl.addPlayer(clientID, finalName, figure, false);
+                }
+                pendingPlayers.clear();
+            }
+        });
+    }
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
@@ -255,11 +292,20 @@ public class Client {
     private void handleBodySelectMap(String json) {
         Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
         List<String> availableMaps = message.messageBody().availableMaps();
-        String selection = "Dizzy Highway";
-        // TODO fx replace with map selection
+        //String selection = "Dizzy Highway";
 
-        sendMessage(gson.toJson(new Message<>(new BodyMapSelected(selection))));
-    }
+
+        if (this.ID == 1) {
+                javafx.application.Platform.runLater(() -> {
+                    LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+                    if (lobbyCtrl != null) {
+                        lobbyCtrl.showMapSelection(availableMaps); // 💡 método que haremos ahora
+                    }
+                });
+            }
+        }
+
+
 
     /****/
     private void handleBodyMapSelected(String json) {
@@ -519,4 +565,17 @@ public class Client {
     public int getID() {
         return ID != null ? ID : -1;
     }
+
+    /**
+     * Returns a list of players that were received from the server
+     * before the LobbyController was fully initialized.
+     * This is used by the LobbyController to populate the player list
+     * once it becomes available.
+     *
+     * @return list of pending player entries
+     */
+    public List<BodyPlayerAdded> getPendingPlayers() {
+        return pendingPlayers;
+    }
+
 }
