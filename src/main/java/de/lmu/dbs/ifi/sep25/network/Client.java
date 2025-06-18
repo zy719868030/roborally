@@ -238,7 +238,7 @@ public class Client {
      * The block is synchronized to ensure thread safety, as this method might be
      * accessed from different threads (e.g., the network listener thread).
      *
-     * @param body the BodyPlayerAdded object representing the newly joined player
+     * 
      */
     public void flushPendingPlayers() {
         javafx.application.Platform.runLater(() -> {
