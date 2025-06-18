@@ -9,3 +9,15 @@
     -fx-front-weigh: bold;
 
 }
+/* Style for players who are ready: light green background */
+.player-ready {
+    -fx-background-color: #b6fcb6;
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+}
+/* Style for players who are not ready: transparent background */
+.player-unready {
+    -fx-background-color: transparent;
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+}
