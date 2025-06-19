@@ -367,16 +367,35 @@ public class ClientHandler implements Runnable {
      *
      * @param json the JSON string representation of the BodySelectedCard object
      */
+    //private void handleBodySelectedCard(String json) {
+        //BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
+
+        //if (body.card() == null) {
+           //player.chooseCard(body.card(), body.register()); //FIXME uncomment when game logic has implemented string
+            // conversion
+        //} else {
+            //player.removeCard(body.card(), body.register());
+        //}
+
+        //broadcastMessage(new Message<>(new BodyCardSelected(myID, body.register(), body.card() == null)), this);
+    //}
+
     private void handleBodySelectedCard(String json) {
         BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
 
-        if (body.card() == null) {
-            //        player.chooseCard(body.card(), body.register()); FIXME uncomment when game logic has implemented string conversion
+        if (body.card() != null) {
+            player.chooseCard(body.card(), body.register());
         } else {
-            //        player.removeCard(body.card(), body.register());
+            // If the card is null, consider adding a method to clear the register.
+            // player.clearRegister(body.register());
         }
-
         broadcastMessage(new Message<>(new BodyCardSelected(myID, body.register(), body.card() == null)), this);
+    }
+
+    public void sendSelectedCard(String card, int register) {
+        sendMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodySelectedCard(card, register)
+        ));
     }
 
     /**
