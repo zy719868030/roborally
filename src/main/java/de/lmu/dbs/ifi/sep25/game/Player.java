@@ -95,7 +95,7 @@ public class Player {
                     hand.remove(cardToPlay);
 
                     // Notify server that card has been selected
-                    connection.sendSelectedCard(cardName, registerSlot);
+                    connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID() , registerSlot, Boolean.TRUE)));
 
                     // Check whether all registers are filled
                     if (register.stream().noneMatch(Objects::isNull)) {
@@ -146,7 +146,7 @@ public class Player {
                     hand.add(removedCard);
 
                     // Notify server that register slot has been cleared
-                    connection.sendSelectedCard(null, registerSlot);
+                    connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID() , registerSlot, Boolean.TRUE)));
 
                     return true;
                 } else {
