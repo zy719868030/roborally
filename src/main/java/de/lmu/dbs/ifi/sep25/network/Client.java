@@ -352,32 +352,18 @@ public class Client {
     private void handleBodyGameStarted(String json) {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
-        List<List<List<BoardElement>>> board = body.gameMap();
+        List<List<List<BoardElement>>> boardMap = body.gameMap();
 
         javafx.application.Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/ui/GameView.fxml"));
-                Parent root = loader.load();
-
-                GameController gameController = loader.getController();
-
-
-                ControllerRegistry.setGameController(gameController);
-
-                //  board übergeben
-                gameController.drawBoard(board);
-
-                // Szenenwechsel durchführen
-                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
-
-            } catch (IOException e) {
-                e.printStackTrace();
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl != null) {
+                lobbyCtrl.handleGameStarted(boardMap);
+            } else {
+                System.err.println("[ERROR] LobbyController ist null – Spielfeld kann nicht angezeigt werden.");
             }
         });
-        // TODO fx display game board Raneem
     }
+
 
     /**
      * Handles a "BodyReceivedChat" message from the server.

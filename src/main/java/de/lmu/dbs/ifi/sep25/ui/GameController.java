@@ -48,30 +48,7 @@ public class GameController {
     }
 
     //  Anzeige des Spielfelds
-    public void drawBoard(List<List<List<BoardElement>>> boardMap) {
-        clearBoard();
-        for (int x = 0; x < boardMap.size(); x++) {
-            List<List<BoardElement>> col = boardMap.get(x);
-            for (int y = 0; y < col.size(); y++) {
-                List<BoardElement> elements = col.get(y);
-                StackPane tile = createTile(elements);
-                gameBoardPane.add(tile, x, y);
-            }
-        }
-    }
 
-    //  Erzeugt eine Zelle mit visuellen Infos
-    private StackPane createTile(List<BoardElement> elements) {
-        StackPane pane = new StackPane();
-        Rectangle background = new Rectangle(60, 60);
-        background.setStroke(Color.BLACK);
-        background.setFill(Color.LIGHTGRAY);
-
-        // Hier evtl. Icons/Symbole je nach Elementtyp hinzufügen
-        Label content = new Label(elements.isEmpty() ? "" : elements.get(0).getClass().getSimpleName());
-        pane.getChildren().addAll(background, content);
-        return pane;
-    }
 
     //  später verwendbar
     public void setCardSelectionVisible(boolean visible) {

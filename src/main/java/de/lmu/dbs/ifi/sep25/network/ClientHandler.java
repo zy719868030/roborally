@@ -268,6 +268,10 @@ public class ClientHandler implements Runnable {
 
         broadcastMessage(new Message<>(new BodyMapSelected(map)));
         server.newGame(map);
+        // Starte Spiel automatisch, wenn alle bereit sind
+        if (server.getLobby().allReady()) {
+            server.startGame();
+        }
     }
 
     /**

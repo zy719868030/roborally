@@ -52,7 +52,7 @@ public class LoginController {
      * Property zur Bindung der ausgewählten Spielfigur.
      */
     private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
-
+    private Stage stage;
     /**
      * Initialisiert die Login-Oberfläche:
      * - registriert den Controller
@@ -166,5 +166,8 @@ public class LoginController {
         alert.setHeaderText(null);
         alert.setContentText(text);
         alert.showAndWait();
+    }
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 }
