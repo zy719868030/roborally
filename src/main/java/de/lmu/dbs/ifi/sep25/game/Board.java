@@ -1,6 +1,8 @@
 package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.game.Robot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -244,7 +246,17 @@ public class Board {
             System.out.println("Warning: Start position for Robot " + robot.getId() + " may overlap.");
         }
         robot.setPosition(startPos);
+        robot.setDirection(Direction.EAST);
         updateRobotPosition(robot, startPos);
+        Player player = Game.getInstance().getPlayers().stream()
+                .filter(p -> p.getRobot() == robot)
+                .findFirst()
+                .orElse(null);
+        if (player != null) {
+            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyStartingPointTaken(startPos.x(), startPos.y(), Direction.EAST.toString(), robot.getId())
+            ));
+        }
     }
 
     // Gets elements at a position (used for tile effects)
@@ -268,10 +280,63 @@ public class Board {
     public void applyEffects(Robot robot, int x, int y) {
         // Skip if robot has fallen off
         if (fallenRobots.contains(robot)) return;
-        List<BoardElement> elementsAt = getElements(x, y);
-        for (BoardElement element : elementsAt) {
-            element.applyEffect(robot, this);
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            grid[x][y].applyEffects(robot, this);
+        //List<BoardElement> elementsAt = getElements(x, y);
+        for (BoardElement element : grid[x][y].getElements()) {
+            String animationType = mapElementToAnimationType(element.getType()); // Check mapping below
+            if (animationType != null) {
+                Player player = Game.getInstance().getPlayers().stream()
+                        .filter(p -> p.getRobot() == robot)
+                        .findFirst()
+                        .orElse(null);
+                if (player != null) {
+                    player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyAnimation(animationType)
+                    ));
+                }
+            }
+            if (element instanceof EnergySpace) {
+                Player player = Game.getInstance().getPlayers().stream()
+                        .filter(p -> p.getRobot() == robot)
+                        .findFirst()
+                        .orElse(null);
+                if (player != null) {
+                    player.addEnergy(1, "EnergySpace");
+                }
+            }
+            if (element instanceof CheckPoints checkPoint) {
+                int checkpoints = checkPoint.getRobotHighestCheckpoint(robot.getId()); // Check CheckPoints class for correct implementation
+                if (checkpoints > 0) {
+                    Player player = Game.getInstance().getPlayers().stream()
+                            .filter(p -> p.getRobot() == robot)
+                            .findFirst()
+                            .orElse(null);
+                    if (player != null) {
+                        player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodyCheckPointReached(robot.getId(), checkpoints)
+                        ));
+                        if (checkpoints == getTotalCheckpoints()) {
+                            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                                    new MessageDefinitions.BodyGameFinished(robot.getId())
+                            ));
+                        }
+                    }
+                }
+            }
         }
+        }
+    }
+
+    private String mapElementToAnimationType(String elementType) {
+        return switch (elementType) {
+            case "Belts" -> "BlueConveyorBelt"; // Adjust based on BeltSpeed if needed
+            case "Gear" -> "Gear";
+            case "Laser" -> "PlayerShooting";
+            case "PushPanel" -> "PushPanel";
+            case "EnergySpace" -> "EnergySpace";
+            default -> null;
+        };
     }
 
     /**
@@ -429,7 +494,6 @@ public class Board {
         System.out.println("Robot " + robot.getId() + " fell off the board and is at VOID_POINT (-1, -1)");
     }
 
-    // Checks if a robot has fallen off the board
     public boolean hasRobotFallen(Robot robot) {
         return fallenRobots.contains(robot);
     }
@@ -437,12 +501,35 @@ public class Board {
     // Reboots a fallen robot to the reboot point
     public void rebootRobot(Robot robot) {
         Position rebootPos = getRebootPosition();
-        robot.setPosition(rebootPos.x(), rebootPos.y());
+        Robot otherRobot = getRobotAt(rebootPos);
+        if (otherRobot != null) {
+            Reboot reboot = (Reboot) getElements(rebootPos.x(), rebootPos.y()).stream()
+                    .filter(e -> e.getType().equals("Reboot"))
+                    .findFirst()
+                    .orElse(null);
+            if (reboot != null) {
+                Direction pushDir = reboot.getDirection(); // Check Reboot class for correct implementation
+                Position pushPos = rebootPos.move(pushDir);
+                if (isValidPosition(pushPos) && getRobotAt(pushPos) == null) {
+                    otherRobot.setPosition(pushPos);
+                    updateRobotPosition(otherRobot, pushPos);
+                    otherRobot.notifyMovement();
+                } else {
+                    List<Position> startPoints = getStartingPoints();
+                    Position altPos = startPoints.stream()
+                            .filter(pos -> getRobotAt(pos) == null)
+                            .findFirst()
+                            .orElse(rebootPos);
+                    rebootPos = altPos;
+                }
+            }
+        }
+        robot.setPosition(rebootPos);
         updateRobotPosition(robot, rebootPos);
         robot.takeDamage(2);
         robot.cancelProgramming();
         System.out.println("Robot " + robot.getId() + " rebooted to " + rebootPos);
-        fallenRobots.remove(robot);
+
     }
 
     /**

@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,7 @@ public class Robot {
     public void takeDamage(int damageAmount) {
         this.damage += damageAmount;
         System.out.println("Robot " + id + " takes " + damageAmount + " damage. Total damage: " + this.damage);
+
     }
 
     /**
@@ -58,6 +60,7 @@ public class Robot {
     public void turnLeft() {
         if (isPoweredDown) return;
         direction = direction.turnLeft();
+        notifyTurning("counterclockwise");
     }
 
     /**
@@ -67,6 +70,7 @@ public class Robot {
     public void turnRight() {
         if (isPoweredDown) return;
         direction = direction.turnRight();
+        notifyTurning("clockwise");
     }
 
     // Moves the robot forward one space, checking Board for validity
@@ -81,6 +85,7 @@ public class Robot {
                 position = newPos;
                 board.updateRobotPosition(this, position);
                 pushRobot(board, direction);
+                notifyMovement();
             }
         } else {
             board.handleFall(this);
@@ -152,6 +157,7 @@ public class Robot {
                     otherRobot.setPosition(otherNewPos);
                     board.updateRobotPosition(otherRobot, otherNewPos);
                     otherRobot.pushRobot(board, pushDirection);
+                    otherRobot.notifyMovement();
                 }
             } else {
                 board.handleFall(otherRobot);
@@ -187,19 +193,55 @@ public class Robot {
 
     public void setPosition(Position position) {
         this.position = position;
+        notifyMovement();
     }
 
     public void setPosition(int x, int y) {
         this.position = new Position(x, y);
+        notifyMovement();
     }
 
+    public void notifyMovement(){
+        if (currentBoard != null && position != null) {
+            Player player = Game.getInstance().getPlayers().stream()
+                    .filter(p -> p.getRobot() == this)
+                    .findFirst()
+                    .orElse(null);
+            if (player != null) {
+                player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyMovement(id, position.x(), position.y())
+                ));
+            }
+        }
+    }
+
+    public void notifyTurning(String rotation) {
+        if (currentBoard != null) {
+            Player player = Game.getInstance().getPlayers().stream()
+                    .filter(p -> p.getRobot() == this)
+                    .findFirst()
+                    .orElse(null);
+            if (player != null) {
+                player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyPlayerTurning(id, rotation)
+                ));
+            }
+        }
+    }
     /**
      * Cancels the remaining programming for this round.
      * This is used when the robot is rebooted or certain damage cards are activated.
      */
     public void cancelProgramming() {
         this.programmingCancelled = true;
-        programming.clear();
+        //programming.clear();
+        Player player = Game.getInstance().getPlayers().stream()
+                .filter(p -> p.getRobot() == this)
+                .findFirst()
+                .orElse(null);
+        if (player != null) {
+            player.clearRegister();
+        }
         System.out.println("Robot " + id + " programming has been cancelled for this round.");
     }
 
@@ -242,6 +284,16 @@ public class Robot {
     public void reboot() {
         if (currentBoard != null) {
             currentBoard.rebootRobot(this);
+            Player player = Game.getInstance().getPlayers().stream()
+                    .filter(p -> p.getRobot() == this)
+                    .findFirst()
+                    .orElse(null);
+            if (player != null) {
+                player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyReboot(id)
+                ));
+            }
+            setDirection(Direction.NORTH);
         }
     }
 
@@ -259,6 +311,15 @@ public class Robot {
             // Add to personal discard pile or hand
             this.personalDeck.discard(damageCard);
             System.out.println("Robot " + id + " receives damage card: " + damageCard.getDamageType());
+            if (type == DamageCard.DamageType.SPAM && Game.getInstance().getCurrentPhase() == 3) {
+                Player player = Game.getInstance().getPlayers().stream()
+                        .filter(p -> p.getRobot() == this)
+                        .findFirst()
+                        .orElse(null);
+                if (player != null) {
+                    player.replaceDamageCard(0); // Replace first register slot for SPAM
+                }
+            }
         }
     }
 

@@ -41,7 +41,7 @@ public class RegularPro extends ProgrammingCard {
                 robot.turnLeft();
                 break;
             case "powerup":
-                player.addEnergy(1);
+                player.addEnergy(1, "Power Up");
                 break;
         }
     }

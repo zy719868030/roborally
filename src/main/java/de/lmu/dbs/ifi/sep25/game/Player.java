@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.StartPoint;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
@@ -15,7 +16,6 @@ public class Player {
     private final String name;
     private final Robot robot;
     private int energy = 5;
-
     private boolean ready = false;
     private boolean readyRegister = false;
 
@@ -43,6 +43,55 @@ public class Player {
                     new MessageDefinitions.BodyError("Map selection phase has ended")
             ));
         }
+    }
+
+    public void setStartingPoint(int x, int y, String direction) {
+        if (Game.getInstance().getCurrentPhase() != 0) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Not in setup phase")
+            ));
+            return;
+        }
+        Board board = Game.getInstance().getBoard();
+        Position pos = new Position(x, y);
+        if (board.isValidPosition(pos) && board.getElements(x, y).stream().anyMatch(e -> e instanceof StartPoint)) {
+            Direction dir = Direction.fromString(direction);
+            if (dir == null) {
+                connection.sendMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyError("Invalid direction: " + direction)
+                ));
+                return;
+            }
+            robot.setPosition(pos);
+            robot.setDirection(dir);
+            board.placeRobot(robot, x, y);
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyStartingPointTaken(x, y, dir.toString(), robot.getId())
+            ));
+        } else {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Invalid starting position: (" + x + ", " + y + ")")
+            ));
+        }
+    }
+    public void setRebootDirection(String direction) {
+        if (Game.getInstance().getCurrentPhase() != 3) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Not in activation phase")
+            ));
+            return;
+        }
+        Direction dir = Direction.fromString(direction);
+        if (dir == null) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Invalid reboot direction: " + direction)
+            ));
+            return;
+        }
+        robot.setDirection(dir);
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyRebootDirection(dir.toString())
+        ));
     }
 
     // Getter for connection
@@ -97,19 +146,15 @@ public class Player {
 
                 // Use the factory to find the corresponding card in your hand.
                 RegisterCard cardToPlay = CardFactory.findCardInHand(cardName, hand);
-
                 if (cardToPlay != null) {
                     register.set(registerSlot, cardToPlay);
                     hand.remove(cardToPlay);
-
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID() , registerSlot, Boolean.TRUE)));
-
                     // Check whether all registers are filled
                     if (register.stream().noneMatch(Objects::isNull)) {
                         setReadyRegister(true);
                     }
-
                 } else {
                     connection.sendMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyError("Card " + cardName + " is not in your hand!")
@@ -218,6 +263,7 @@ public class Player {
     //public void endRound(){}
 
     public void replaceDamageCard(int registerSlot) {
+
         register.set(registerSlot, programmingDeck.draw());
     }
 
@@ -265,13 +311,20 @@ public class Player {
         return energy;
     }
 
-    public void addEnergy(int amount) {
+    public void addEnergy(int amount, String source) {
+
         this.energy += amount;
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyEnergy(robot.getId(), energy, source)
+        ));
     }
 
     public boolean consumeEnergy(int cost) {
         if (energy >= cost) {
             energy -= cost;
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyEnergy(robot.getId(), energy, "Consumption")
+            ));
             return true;
         }
         return false;
