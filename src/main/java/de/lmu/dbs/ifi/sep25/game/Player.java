@@ -34,7 +34,7 @@ public class Player {
         }
     }
 
-    // Added: Handle map selection
+    // Handle map selection
     public void selectMap(String mapName) {
         if (Game.getInstance().isMapSelectionPending()) {
             Game.getInstance().selectMap(this, mapName);
@@ -45,17 +45,25 @@ public class Player {
         }
     }
 
-    // Added: Getter for connection
+    // Getter for connection
     public ClientHandler getConnection() {
         return connection;
     }
 
-    private void drawHand() {
+    public void drawHand() {
         programmingDeck.shuffle();
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1); // Fewer cards if damaged
         for (int i = 0; i < cardsToDraw; i++) {
             drawCard();
         }
+    }
+
+    // Added: Method to clear the register
+    public void clearRegister() {
+        for (int i = 0; i < register.size(); i++) {
+            register.set(i, null);
+        }
+        readyRegister = false;
     }
 
     /**
