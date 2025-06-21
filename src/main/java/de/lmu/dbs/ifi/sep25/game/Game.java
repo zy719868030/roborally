@@ -63,6 +63,12 @@ public class Game {
         switch (mapName.toLowerCase()) {
             case "risky crossing":
                 return Board.MapType.MAP1;
+  /*          case "extra crispy":
+                return Board.MapType.EXTRA_CRISPY;
+            case "lost bearings":
+                return Board.MapType.LOST_BEARINGS;
+            case "death trap":
+                return Board.MapType.DEATH_TRAP; */
             case "dizzy highway":
             default:
                 return Board.MapType.DEFAULT;
@@ -135,39 +141,11 @@ public class Game {
                     new MessageDefinitions.BodyMapSelected(mapName)
             ));
             //Use convertToBoardElementMap for BodyGameStarted
-            List<List<List<BoardElement>>> gameMap = convertToBoardElementMap();
+            List<List<List<BoardElement>>> gameMap = board.toSerializableMap();
             p.getConnection().sendMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyGameStarted(5, gameMap)
             ));
         }
-    }
-
-    // Convert map to List<Object> for BodyGameStarted
-    private List<Object> convertToObjectList(List<List<List<Map<String, Object>>>> map) {
-        List<Object> result = new ArrayList<>();
-        for (List<List<Map<String, Object>>> col : map) {
-            List<Object> colList = new ArrayList<>();
-            for (List<Map<String, Object>> row : col) {
-                colList.add(row == null ? null : new ArrayList<>(row));
-            }
-            result.add(colList);
-        }
-        return result;
-    }
-
-    // Helper method to convert serialized map to List<List<List<BoardElement>>> if needed
-    private List<List<List<BoardElement>>> convertToBoardElementMap() {
-        List<List<List<BoardElement>>> result = new ArrayList<>();
-        List<BoardElement>[][] grid = board.getGrid(); // Assuming getGrid returns BoardElement[][][]
-        for (int x = 0; x < board.getWidth(); x++) {
-            List<List<BoardElement>> col = new ArrayList<>();
-            for (int y = 0; y < board.getHeight(); y++) {
-                List<BoardElement> elements = new ArrayList<>(grid[x][y]);
-                col.add(elements);
-            }
-            result.add(col);
-        }
-        return result;
     }
 
     // Added: Stub for AI-only map selection
@@ -278,7 +256,7 @@ public class Game {
                     new MessageDefinitions.BodyMapSelected(selectedMap)
             ));
             if (board != null) {
-                List<List<List<BoardElement>>> gameMap = convertToBoardElementMap();
+                List<List<List<BoardElement>>> gameMap = board.toSerializableMap();
                 player.getConnection().sendMessage(new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyGameStarted(5, gameMap)
                 ));
