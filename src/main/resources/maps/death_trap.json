@@ -1,0 +1,23 @@
+{
+  "mapName": "Death Trap",
+  "gameMap": [
+    [
+      [ { "type": "Floor" } ],
+      [ { "type": "Pit" } ],
+      null,
+      [ { "type": "Laser", "orientations": ["north"], "count": 1 } ]
+    ],
+    [
+      [ { "type": "StartPoint", "orientations": ["west"] } ],
+      [ { "type": "Wall", "orientations": ["south"] } ],
+      [ { "type": "Energy-Space", "count": 1 } ],
+      [ { "type": "Floor" } ]
+    ],
+    [
+      null,
+      [ { "type": "Belts", "orientations": ["east"], "speed": 2 } ],
+      [ { "type": "CheckPoint", "count": 3 } ],
+      null
+    ]
+  ]
+}

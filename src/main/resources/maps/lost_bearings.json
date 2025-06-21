@@ -1,0 +1,23 @@
+{
+  "mapName": "Lost Bearings",
+  "gameMap": [
+    [
+      [ { "type": "Floor" } ],
+      null,
+      [ { "type": "Pit" } ],
+      [ { "type": "StartPoint", "orientations": ["south"] } ]
+    ],
+    [
+      [ { "type": "Belts", "orientations": ["north"], "speed": 1 } ],
+      [ { "type": "Wall", "orientations": ["east"] } ],
+      [ { "type": "Energy-Space", "count": 1 } ],
+      [ { "type": "Floor" } ]
+    ],
+    [
+      [ { "type": "Laser", "orientations": ["west"], "count": 2 } ],
+      null,
+      [ { "type": "CheckPoint", "count": 2 } ],
+      [ { "type": "Floor" } ]
+    ]
+  ]
+}
