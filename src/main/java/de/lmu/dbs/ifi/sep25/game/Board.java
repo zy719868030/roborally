@@ -573,5 +573,26 @@ public class Board {
         return positions;
     }
 
+    /**
+     * Gets the position of the priority antenna on the board.
+     * This is used to determine player priority during the game.
+     *
+     * @return the Position of the antenna, or a default position if no antenna is found
+     */
+    public Position getAntennaPosition() {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                for (BoardElement element : getElements(x, y)) {
+                    if (element instanceof Antenna) {
+                        return element.getPosition();
+                    }
+                }
+            }
+        }
+        // If no antenna is found, return a default position (0,0)
+        System.err.println("Warning: No antenna found on the board! Using default position.");
+        return new Position(0, 0);
+    }
+
 }
 

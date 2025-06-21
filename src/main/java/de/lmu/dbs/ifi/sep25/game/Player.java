@@ -4,6 +4,8 @@ import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.StartPoint;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
@@ -329,5 +331,75 @@ public class Player {
         }
         return false;
     }
+
+    /**
+     * Gets the number of checkpoints this player has successfully reached.
+     * This method delegates to the game's checkpoints to find the highest checkpoint
+     * reached by this player's robot.
+     *
+     * @return the number of checkpoints reached by the player
+     */
+    public int getReachedCheckpoints() {
+        // Assuming we can access the game instance from the player
+        Game game = Game.getInstance();
+        Board board = game.getBoard();
+
+        // Find the highest checkpoint number reached by this robot
+        for (int y = 0; y < board.getHeight(); y++) {
+            for (int x = 0; x < board.getWidth(); x++) {
+                for (BoardElement element : board.getElements(x, y)) {
+                    if (element instanceof CheckPoints) {
+                        CheckPoints checkpoint = (CheckPoints) element;
+                        // Get the highest checkpoint reached by this robot
+                        return checkpoint.getRobotHighestCheckpoint(this.robot.getId());
+                    }
+                }
+            }
+        }
+
+        // If no checkpoints found or none reached
+        return 0;
+    }
+
+    /**
+     * Deal cards to player at the start of a programming phase
+     */
+    public void dealProgrammingCards() {
+        // Clear hand
+        hand.clear();
+
+        // Draw 9 cards (or fewer if damaged)
+        int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
+        for (int i = 0; i < cardsToDraw; i++) {
+            drawCard();
+        }
+
+        // Reset register state
+        readyRegister = false;
+    }
+
+    /**
+     * Process end of round for this player
+     */
+    public void endRound() {
+        // Move cards from registers to discard pile
+        for (RegisterCard card : register) {
+            if (card != null) {
+                programmingDeck.discard(card);
+            }
+        }
+
+        // Clear registers
+        for (int i = 0; i < register.size(); i++) {
+            register.set(i, null);
+        }
+
+        // Clear hand
+        hand.clear();
+
+        // Reset ready state
+        readyRegister = false;
+    }
+
 
 }

@@ -4,6 +4,11 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Represents the gear element on the game board.
  * The gear rotates the robot standing on it during the activation phase.
@@ -172,4 +177,53 @@ public class Gear extends BoardElement {
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", rotation: " + (rotationDirection == RotationDirection.CLOCKWISE ? "clockwise" : "counterclockwise");
     }
+
+//    /**
+//     * Convert the RotationDirection enumeration to the direction string required by the protocol.
+//     * @param direction RotationDirection enumeration value.
+//     * @return The direction string used by the protocol: “clockwise” or “counterclockwise”.
+//     */
+//    private String rotationDirectionToString(RotationDirection direction) {
+//        return direction == RotationDirection.CLOCKWISE ? "clockwise" : "counterclockwise";
+//    }
+//
+//    /**
+//     * Convert the direction string in the protocol to a RotationDirection enumeration.
+//     * @param dirString Direction string in the protocol: “clockwise” or “counterclockwise”.
+//     * @return Corresponding RotationDirection enumeration value.
+//     */
+//    private RotationDirection stringToRotationDirection(String dirString) {
+//        return "clockwise".equals(dirString) ? RotationDirection.CLOCKWISE : RotationDirection.COUNTERCLOCKWISE;
+//    }
+
+//    /**
+//     * Serialize to protocol format
+//     * @return Map that complies with the protocol
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "Gear");
+//        result.put("isOnBoard", boardId);
+//
+//        List<String> orientations = new ArrayList<>();
+//        orientations.add(rotationDirectionToString(rotationDirection));
+//        result.put("orientations", orientations);
+//
+//        return result;
+//    }
+
+//    /**
+//     * Create a gear instance from the protocol representation.
+//     * @param position Position
+//     * @param orientation Rotation direction string: “clockwise” or “counterclockwise”
+//     * @param boardId Board ID
+//     */
+//    public Gear(Position position, String orientation, String boardId) {
+//        super(position, boardId);
+//        this.rotationDirection = stringToRotationDirection(orientation);
+//        this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
+//        this.isOnBoard = true;
+//        this.boardId = boardId;
+//    }
+
 }
