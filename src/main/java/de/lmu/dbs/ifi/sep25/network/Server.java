@@ -301,7 +301,11 @@ public class Server {
     public synchronized String generateUniqueName(String baseName) {
         Collection<String> existingNames = getNames().values();
 
-        int suffix = 1;
+        if (!existingNames.contains(baseName)) {
+            return baseName;
+        }
+
+        int suffix = 2;
         String candidate;
 
         do {
