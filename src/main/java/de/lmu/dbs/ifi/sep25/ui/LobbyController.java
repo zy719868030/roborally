@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
@@ -11,10 +13,20 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+
+
+
 
 public class LobbyController {
     @FXML private ComboBox<PlayerEntry> recipientBox;
@@ -27,17 +39,22 @@ public class LobbyController {
     @FXML private HBox mapSelectionBox;
     @FXML private ComboBox<String> mapChoiceBox;
     @FXML private Button selectMapButton;
+    @FXML private GridPane gameBoardPane;
+
 
     private Parent root;
 
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
 
+    private static final int TILE_SIZE = 60;
 
     @FXML
     public void initialize() {
         ControllerRegistry.setLobbyController(this);
         playerList.setItems(players);
+        loadTileImages();
+
 
 
         playerList.setCellFactory(list -> new ListCell<>() {
@@ -271,4 +288,95 @@ public class LobbyController {
     public void setSelectedMap(String mapName) {
         mapLabel.setText("Gewählte Karte: " + mapName);
     }
+
+    // Zeichnet das Spielfeld anhand der BoardMap
+    public void drawBoard(List<List<List<BoardElement>>> boardMap) {
+        gameBoardPane.getChildren().clear();
+
+        for (int x = 0; x < boardMap.size(); x++) {
+            List<List<BoardElement>> col = boardMap.get(x);
+            for (int y = 0; y < col.size(); y++) {
+                List<BoardElement> elements = col.get(y);
+
+                StackPane tile = createTile(elements); // ← nutze deine gute Methode
+                gameBoardPane.add(tile, x, y);
+            }
+        }
+
+        gameBoardPane.setVisible(true);
+        gameBoardPane.setManaged(true);
+    }
+
+
+
+
+    // Erstellt ein einzelnes Feld basierend auf BoardElementen
+    private StackPane createTile(List<BoardElement> elements) {
+        StackPane pane = new StackPane();
+
+        ImageView background = new ImageView(tileImages.get("Floor"));
+        background.setFitWidth(60);
+        background.setFitHeight(60);
+        pane.getChildren().add(background);
+
+        for (BoardElement element : elements) {
+            String key = getTileKeyForElement(element);
+            if (tileImages.containsKey(key)) {
+                ImageView overlay = new ImageView(tileImages.get(key));
+                overlay.setFitWidth(60);
+                overlay.setFitHeight(60);
+                pane.getChildren().add(overlay);
+            }
+        }
+
+        return pane;
+    }
+    private Map<String, Image> tileImages = new HashMap<>();
+
+    private void loadTileImages() {
+        tileImages.put("Floor", new Image(getClass().getResourceAsStream("/assets/floor.png")));
+        tileImages.put("Wall_N", new Image(getClass().getResourceAsStream("/assets/wall_n.png")));
+        tileImages.put("Wall_O", new Image(getClass().getResourceAsStream("/assets/wall_o.png")));
+        tileImages.put("Wall_S", new Image(getClass().getResourceAsStream("/assets/wall_s.png")));
+        tileImages.put("Gear_Green", new Image(getClass().getResourceAsStream("/assets/Gear_green.png")));
+        tileImages.put("Gear_Red", new Image(getClass().getResourceAsStream("/assets/Gear_red.png")));
+        tileImages.put("Conveyor_green_NORTH", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt.png")));
+       // tileImages.put("Conveyor_blue_EAST_rot", new Image(getClass().getResourceAsStream("/assets/conveyor_b_e_rot.png")));
+
+
+    }
+    private String getTileKeyForElement(BoardElement element) {
+        String type = element.getType(); // z. B. "Wall", "Laser", "Gear", "Floor", etc.
+        return switch (type) {
+            case "Floor" -> "floor.png";
+            case "Wall" -> wallDirectionToFile((Wall) element);
+            case "Laser" -> "laser_" + ((Laser) element).getDirection().toString().toLowerCase() + ".png";
+            case "CheckPoint" -> "checkpoint" + ((CheckPoints) element).getNumber() + ".png";
+            case "Antenna" -> "antenne.png";
+            case "Belts" -> beltToFile((Belts) element);
+            case "Gear" -> ((Gear) element).getRotationDirection() == Gear.RotationDirection.CLOCKWISE
+                    ? "Gear_green.png" : "Gear_red.png";
+            case "StartPoint" -> "startpoint.png";
+            case "Reboot" -> "reboot.png";
+            case "EnergySpace" -> "energyspace.png";
+            default -> "unknown.png";
+        };
+
+    }
+
+    private String wallDirectionToFile(Wall wall) {
+        return "wall_" + wall.getDirection().toString().toLowerCase() + ".png";
+    }
+
+    private String beltToFile(Belts belt) {
+        return (belt.getSpeed() == Belts.BeltSpeed.FAST ? "belt_fast_" : "belt_slow_")
+                + belt.getMainOutDirection().toString().toLowerCase() + ".png";
+    }
+
+    public void handleGameStarted(List<List<List<BoardElement>>> boardMap) {
+        System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
+        drawBoard(boardMap);
+    }
+
+
 }

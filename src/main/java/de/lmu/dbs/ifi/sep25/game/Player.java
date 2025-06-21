@@ -2,7 +2,10 @@ package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.StartPoint;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
@@ -15,7 +18,6 @@ public class Player {
     private final String name;
     private final Robot robot;
     private int energy = 5;
-
     private boolean ready = false;
     private boolean readyRegister = false;
 
@@ -34,7 +36,7 @@ public class Player {
         }
     }
 
-    // Added: Handle map selection
+    // Handle map selection
     public void selectMap(String mapName) {
         if (Game.getInstance().isMapSelectionPending()) {
             Game.getInstance().selectMap(this, mapName);
@@ -45,17 +47,74 @@ public class Player {
         }
     }
 
-    // Added: Getter for connection
+    public void setStartingPoint(int x, int y, String direction) {
+        if (Game.getInstance().getCurrentPhase() != 0) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Not in setup phase")
+            ));
+            return;
+        }
+        Board board = Game.getInstance().getBoard();
+        Position pos = new Position(x, y);
+        if (board.isValidPosition(pos) && board.getElements(x, y).stream().anyMatch(e -> e instanceof StartPoint)) {
+            Direction dir = Direction.fromString(direction);
+            if (dir == null) {
+                connection.sendMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyError("Invalid direction: " + direction)
+                ));
+                return;
+            }
+            robot.setPosition(pos);
+            robot.setDirection(dir);
+            board.placeRobot(robot, x, y);
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyStartingPointTaken(x, y, dir.toString(), robot.getId())
+            ));
+        } else {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Invalid starting position: (" + x + ", " + y + ")")
+            ));
+        }
+    }
+    public void setRebootDirection(String direction) {
+        if (Game.getInstance().getCurrentPhase() != 3) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Not in activation phase")
+            ));
+            return;
+        }
+        Direction dir = Direction.fromString(direction);
+        if (dir == null) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Invalid reboot direction: " + direction)
+            ));
+            return;
+        }
+        robot.setDirection(dir);
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyRebootDirection(dir.toString())
+        ));
+    }
+
+    // Getter for connection
     public ClientHandler getConnection() {
         return connection;
     }
 
-    private void drawHand() {
+    public void drawHand() {
         programmingDeck.shuffle();
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1); // Fewer cards if damaged
         for (int i = 0; i < cardsToDraw; i++) {
             drawCard();
         }
+    }
+
+    // Added: Method to clear the register
+    public void clearRegister() {
+        for (int i = 0; i < register.size(); i++) {
+            register.set(i, null);
+        }
+        readyRegister = false;
     }
 
     /**
@@ -89,19 +148,15 @@ public class Player {
 
                 // Use the factory to find the corresponding card in your hand.
                 RegisterCard cardToPlay = CardFactory.findCardInHand(cardName, hand);
-
                 if (cardToPlay != null) {
                     register.set(registerSlot, cardToPlay);
                     hand.remove(cardToPlay);
-
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID() , registerSlot, Boolean.TRUE)));
-
                     // Check whether all registers are filled
                     if (register.stream().noneMatch(Objects::isNull)) {
                         setReadyRegister(true);
                     }
-
                 } else {
                     connection.sendMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyError("Card " + cardName + " is not in your hand!")
@@ -210,6 +265,7 @@ public class Player {
     //public void endRound(){}
 
     public void replaceDamageCard(int registerSlot) {
+
         register.set(registerSlot, programmingDeck.draw());
     }
 
@@ -257,16 +313,93 @@ public class Player {
         return energy;
     }
 
-    public void addEnergy(int amount) {
+    public void addEnergy(int amount, String source) {
+
         this.energy += amount;
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyEnergy(robot.getId(), energy, source)
+        ));
     }
 
     public boolean consumeEnergy(int cost) {
         if (energy >= cost) {
             energy -= cost;
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyEnergy(robot.getId(), energy, "Consumption")
+            ));
             return true;
         }
         return false;
     }
+
+    /**
+     * Gets the number of checkpoints this player has successfully reached.
+     * This method delegates to the game's checkpoints to find the highest checkpoint
+     * reached by this player's robot.
+     *
+     * @return the number of checkpoints reached by the player
+     */
+    public int getReachedCheckpoints() {
+        // Assuming we can access the game instance from the player
+        Game game = Game.getInstance();
+        Board board = game.getBoard();
+
+        // Find the highest checkpoint number reached by this robot
+        for (int y = 0; y < board.getHeight(); y++) {
+            for (int x = 0; x < board.getWidth(); x++) {
+                for (BoardElement element : board.getElements(x, y)) {
+                    if (element instanceof CheckPoints) {
+                        CheckPoints checkpoint = (CheckPoints) element;
+                        // Get the highest checkpoint reached by this robot
+                        return checkpoint.getRobotHighestCheckpoint(this.robot.getId());
+                    }
+                }
+            }
+        }
+
+        // If no checkpoints found or none reached
+        return 0;
+    }
+
+    /**
+     * Deal cards to player at the start of a programming phase
+     */
+    public void dealProgrammingCards() {
+        // Clear hand
+        hand.clear();
+
+        // Draw 9 cards (or fewer if damaged)
+        int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
+        for (int i = 0; i < cardsToDraw; i++) {
+            drawCard();
+        }
+
+        // Reset register state
+        readyRegister = false;
+    }
+
+    /**
+     * Process end of round for this player
+     */
+    public void endRound() {
+        // Move cards from registers to discard pile
+        for (RegisterCard card : register) {
+            if (card != null) {
+                programmingDeck.discard(card);
+            }
+        }
+
+        // Clear registers
+        for (int i = 0; i < register.size(); i++) {
+            register.set(i, null);
+        }
+
+        // Clear hand
+        hand.clear();
+
+        // Reset ready state
+        readyRegister = false;
+    }
+
 
 }

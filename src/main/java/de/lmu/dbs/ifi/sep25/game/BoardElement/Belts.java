@@ -7,7 +7,9 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a conveyor belt element on the game board.
@@ -145,6 +147,106 @@ public class Belts extends BoardElement {
             outDirections.add(direction);
         }
     }
+
+//    /**
+//     * Convert the Direction enumeration to the direction string required by the protocol.
+//     * @param direction Direction enumeration value.
+//     * @return Direction string used by the protocol: “top”, “bottom”, ‘right’, “left”.
+//     */
+//    private String directionToString(Direction direction) {
+//        return switch (direction) {
+//            case NORTH -> "top";
+//            case SOUTH -> "bottom";
+//            case EAST -> "right";
+//            case WEST -> "left";
+//        };
+//    }
+
+//    /**
+//     * Convert the direction string in the protocol to a Direction enumeration.
+//     * @param dirString Direction string in the protocol: “top”, “bottom”, ‘right’, “left”
+//     * @return Corresponding Direction enumeration value.
+//     */
+//    private Direction stringToDirection(String dirString) {
+//        return switch (dirString) {
+//            case "top" -> Direction.NORTH;
+//            case "bottom" -> Direction.SOUTH;
+//            case "right" -> Direction.EAST;
+//            case "left" -> Direction.WEST;
+//            default -> throw new IllegalArgumentException("Invalid direction string: " + dirString);
+//        };
+//    }
+
+//    /**
+//     * Get the list of directions for serialization, in a format that complies with the protocol requirements.
+//     * The first direction is the outbound direction, followed by the inbound direction.
+//     * @return List of direction strings.
+//     */
+//    public List<String> getOrientationsForProtocol() {
+//        List<String> orientations = new ArrayList<>();
+//        if (!outDirections.isEmpty()) {
+//            orientations.add(directionToString(outDirections.get(0)));
+//        }
+//
+//        for (Direction inDir : inDirections) {
+//            orientations.add(directionToString(inDir));
+//        }
+//
+//        return orientations;
+//    }
+
+//    /**
+//     * Create a conveyor belt instance from the protocol representation.
+//     * @param position Position.
+//     * @param orientations List of orientations, with the first being the outflow direction and the rest being the inflow directions.
+//     * @param speed Speed (1 = green belt, 2 = blue belt).
+//     * @param boardId Board ID.
+//     */
+//    public Belts(Position position, List<String> orientations, int speed, String boardId) {
+//        super(position, boardId);
+//
+//        this.speed = speed == 1 ? BeltSpeed.SLOW : BeltSpeed.FAST;
+//        this.color = speed == 1 ? BeltColor.GREEN : BeltColor.BLUE;
+//
+//        this.outDirections = new ArrayList<>();
+//        this.inDirections = new ArrayList<>();
+//
+//        if (!orientations.isEmpty()) {
+//            this.outDirections.add(stringToDirection(orientations.get(0)));
+//
+//            for (int i = 1; i < orientations.size(); i++) {
+//                this.inDirections.add(stringToDirection(orientations.get(i)));
+//            }
+//        }
+//
+//        // Determine whether it is a rotating conveyor belt
+//        this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
+//                !outDirections.get(0).equals(inDirections.get(0).turnAround());
+//
+//        this.isOnBoard = true;
+//        this.boardId = boardId;
+//    }
+
+//    /**
+//     * Get the serialized representation of the conveyor belt.
+//     * @return Serialized Map representation.
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "ConveyorBelt");
+//        result.put("isOnBoard", boardId);
+//        result.put("speed", getSpeedForProtocol());
+//        result.put("orientations", getOrientationsForProtocol());
+//        return result;
+//    }
+//
+//    /**
+//     * Get the speed value used for the protocol.
+//     * @return 1 for green belt, 2 for blue belt.
+//     */
+//    public int getSpeedForProtocol() {
+//        return speed.getValue();
+//    }
 
     public List<Direction> getOutDirections() {
         return new ArrayList<>(outDirections);

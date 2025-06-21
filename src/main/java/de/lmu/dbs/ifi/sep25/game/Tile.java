@@ -7,14 +7,17 @@ import java.util.List;
 
 @SuppressWarnings("unused")
 public class Tile {
-    private final List<BoardElement> elements = new ArrayList<>();
+    //private final List<BoardElement> elements = new ArrayList<>();
+    private final List<BoardElement> elements;
 
     public Tile() {
-
+        this.elements = new ArrayList<>();
     }
 
     public Tile(List<BoardElement> elements) {
-        this.elements.addAll(elements);
+
+        //this.elements.addAll(elements);
+        this.elements = new ArrayList<>(elements);
     }
 
     public void addElement(BoardElement element) {
@@ -26,6 +29,7 @@ public class Tile {
     }
 
     public List<BoardElement> getElements() {
+
         return elements;
     }
 
@@ -40,6 +44,12 @@ public class Tile {
     }
 
     public boolean isEmpty() {
+
         return elements.isEmpty();
+    }
+
+    // Serialize to List<BoardElement> for protocol compliance
+    public List<BoardElement> toSerializableList() {
+        return new ArrayList<>(elements);
     }
 }

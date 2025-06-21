@@ -35,7 +35,12 @@ public class Server {
     private final Lobby lobby = new Lobby();
 //    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
-    private final List<String> availableMaps = new ArrayList<>(List.of("Dizzy Highway"));
+    private final List<String> availableMaps = List.of(
+            "Dizzy Highway",
+            "Extra Crispy",
+            "Lost Bearings",
+            "Death Trap"
+    );
     private final Map<ClientHandler, String> names = new ConcurrentHashMap<>();
 
     // 3. Networking / I/O
@@ -423,7 +428,7 @@ public class Server {
     /**
      * Starts the game and broadcasts a game start message to all players.
      */
-    private void startGame() {
+    public void startGame() {
         resetReadyRegister();
         Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
         broadcastMessage(message);

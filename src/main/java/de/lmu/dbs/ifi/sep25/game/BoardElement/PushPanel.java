@@ -5,9 +5,7 @@ import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -277,4 +275,41 @@ public class PushPanel extends BoardElement {
 
         return sb.toString();
     }
+
+//    /**
+//     * Convert the Direction enumeration to the direction string required by the protocol.
+//     */
+//    private String directionToString(Direction direction) {
+//        if (direction == null) return null;
+//        return switch (direction) {
+//            case NORTH -> "top";
+//            case SOUTH -> "bottom";
+//            case EAST -> "right";
+//            case WEST -> "left";
+//        };
+//    }
+
+
+//    /**
+//     * Serialize to protocol format
+//     * @return Map that complies with the protocol
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "PushPanel");
+//        result.put("isOnBoard", boardId);
+//
+//        // Add direction
+//        if (direction != null) {
+//            List<String> orientations = new ArrayList<>();
+//            orientations.add(directionToString(direction));
+//            result.put("orientations", orientations);
+//        }
+//
+//        // Add activated registers
+//        result.put("registers", activeRegisters);
+//
+//        return result;
+//    }
+
 }

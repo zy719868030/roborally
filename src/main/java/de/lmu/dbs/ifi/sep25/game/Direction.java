@@ -59,4 +59,27 @@ public enum Direction {
     public int getDeltaY() {
         return dy;
     }
+
+
+    // Added for protocol compliance (e.g., "top", "right")
+    public static Direction fromString(String direction) {
+        if (direction == null) return null;
+        return switch (direction.toLowerCase()) {
+            case "top" -> NORTH;
+            case "right" -> EAST;
+            case "bottom" -> SOUTH;
+            case "left" -> WEST;
+            default -> null;
+        };
+    }
+    // Added for protocol serialization
+    @Override
+    public String toString() {
+        return switch (this) {
+            case NORTH -> "top";
+            case EAST -> "right";
+            case SOUTH -> "bottom";
+            case WEST -> "left";
+        };
+    }
 }

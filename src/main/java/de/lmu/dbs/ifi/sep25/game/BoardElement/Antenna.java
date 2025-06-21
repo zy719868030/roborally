@@ -152,4 +152,68 @@ public class Antenna extends BoardElement {
                 ", direction: " + direction.getName();
     }
 
+//    /**
+//     * Convert the Direction enumeration to the direction string required by the protocol.
+//     * @param direction Direction enumeration value.
+//     * @return Direction string used by the protocol: “top”, “bottom”, ‘right’, “left”.
+//     */
+//    private String directionToString(Direction direction) {
+//        if (direction == null) return null;
+//        return switch (direction) {
+//            case NORTH -> "top";
+//            case SOUTH -> "bottom";
+//            case EAST -> "right";
+//            case WEST -> "left";
+//        };
+//    }
+//
+//    /**
+//     * Convert the direction string in the protocol to a Direction enumeration.
+//     * @param dirString Direction string in the protocol: “top”, “bottom”, ‘right’, “left”
+//     * @return Corresponding Direction enumeration value.
+//     */
+//    private Direction stringToDirection(String dirString) {
+//        if (dirString == null) return null;
+//        return switch (dirString) {
+//            case "top" -> Direction.NORTH;
+//            case "bottom" -> Direction.SOUTH;
+//            case "right" -> Direction.EAST;
+//            case "left" -> Direction.WEST;
+//            default -> throw new IllegalArgumentException("Invalid direction string: " + dirString);
+//        };
+//    }
+
+//    /**
+//     * Serialize to protocol format
+//     * @return Map that complies with the protocol
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "Antenna");
+//        result.put("isOnBoard", boardId);
+//
+//        if (direction != null) {
+//            List<String> orientations = new ArrayList<>();
+//            orientations.add(directionToString(direction));
+//            result.put("orientations", orientations);
+//        }
+//
+//        return result;
+//    }
+//
+//    /**
+//     * Create an antenna instance from the protocol representation.
+//     * @param position Position
+//     * @param orientation Direction string: “top”, “bottom”, ‘right’, “left”
+//     * @param boardId Board ID
+//     */
+//    public Antenna(Position position, String orientation, String boardId) {
+//        super(position, boardId);
+//        if (orientation != null) {
+//            this.direction = stringToDirection(orientation);
+//        }
+//        this.isOnBoard = true;
+//        this.boardId = boardId;
+//    }
+
 }

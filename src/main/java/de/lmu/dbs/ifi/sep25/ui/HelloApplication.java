@@ -28,7 +28,9 @@ import javafx.stage.Stage;
             // Lade die Login-Oberfläche aus dem FXML-File
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/LoginView.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 400, 300);
-
+            // Controller holen und Stage setzen
+            LoginController controller = fxmlLoader.getController();
+            controller.setStage(stage);
             // Setze Fenstertitel und Szene
             stage.setTitle("RoboRally – Login");
             stage.setScene(scene);
