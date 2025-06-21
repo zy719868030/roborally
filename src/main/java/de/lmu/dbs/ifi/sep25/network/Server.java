@@ -49,6 +49,7 @@ public class Server {
     // 4. State flags
     private volatile boolean running = true;
     private final int minPlayer;
+    private volatile boolean mapSelectionOngoing = false;
 
     // 5. Game logic
     private Game game;
@@ -207,6 +208,10 @@ public class Server {
         releaseFigure(figures.getByKey(clientHandler));
         lobby.remove(clientHandler);
         unmarkReady(clientHandler);
+        if (clientHandler.isMapSelecting()) {
+            setMapSelectionOngoing(false);
+            getFirstReadyClient().sendMessage(new Message<>(new BodySelectMap(availableMaps)));
+        }
         broadcastMessage(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false)));
         System.out.println("Client disconnected.");
     }
@@ -372,14 +377,20 @@ public class Server {
     }
 
     /**
-     * Returns the first client handler in the ready order.
+     * Retrieves the first client that is marked as ready from the ready order
+     * set and removes it from the set.
      *
-     * @return the first ready client handler
-     * @throws IllegalStateException if no players are currently ready
+     * @return the first {@link ClientHandler} in the ready order set
+     * @throws IllegalStateException if no clients are marked as ready
      */
     public synchronized ClientHandler getFirstReadyClient() {
-        return readyOrder.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No players are ready."));
+        Iterator<ClientHandler> iterator = readyOrder.iterator();
+        if (!iterator.hasNext()) {
+            throw new IllegalStateException("No players are ready.");
+        }
+        ClientHandler first = iterator.next();
+        iterator.remove();
+        return first;
     }
 
     /**
@@ -503,4 +514,11 @@ public class Server {
         return figures;
     }
 
+    public synchronized boolean isMapSelectionOngoing() {
+        return mapSelectionOngoing;
+    }
+
+    public synchronized void setMapSelectionOngoing(boolean mapSelectionOngoing) {
+        this.mapSelectionOngoing = mapSelectionOngoing;
+    }
 }

@@ -505,6 +505,9 @@ public class Client {
 
     /****/
     private void handleBodyCardSelected(String json) {
+
+
+
         //TODO fx display card selection Sebas
     }
 
