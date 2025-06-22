@@ -868,7 +868,6 @@ public class Game {
             }
         }
 
-        // TODO：Continue with other board elements in order...
         // 4. Gears
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {

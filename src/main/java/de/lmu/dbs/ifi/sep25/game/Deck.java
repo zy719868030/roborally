@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
-//TODO add a seperate Deck for only damage cards, since damage cards dont have own class
+//add a seperate Deck for only damage cards, since damage cards dont have own class;schon fertig
 public class Deck <Card>{
     private final Stack<Card> stack = new Stack<>();
     private final Stack<Card> discardPile = new Stack<>();
