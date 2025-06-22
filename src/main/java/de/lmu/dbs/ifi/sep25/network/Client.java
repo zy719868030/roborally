@@ -1,7 +1,6 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.GameController;
@@ -10,10 +9,6 @@ import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,7 +38,6 @@ public class Client {
     private int phase = -1;
     private final List<String> hand = new ArrayList<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
-
 
 
     /**
@@ -218,7 +212,7 @@ public class Client {
                 boolean isReady = false;
                 lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
 
-        }else{
+            } else {
                 synchronized (pendingPlayers) {
                     pendingPlayers.add(body);
                 }
@@ -241,7 +235,6 @@ public class Client {
      * once the lobby UI is available and ready to render the list of players.
      * The block is synchronized to ensure thread safety, as this method might be
      * accessed from different threads (e.g., the network listener thread).
-     *
      */
     public void flushPendingPlayers() {
         javafx.application.Platform.runLater(() -> {
@@ -254,7 +247,7 @@ public class Client {
                     String name = body.name();
                     int figure = body.figure();
                     boolean isMe = (clientID == this.ID);
-                    String finalName =name;
+                    String finalName = name;
 
                     lobbyCtrl.addPlayer(clientID, finalName, figure, false);
                 }
@@ -262,6 +255,7 @@ public class Client {
             }
         });
     }
+
     /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
@@ -312,9 +306,6 @@ public class Client {
     }
 
 
-
-
-
     /****/
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
@@ -331,8 +322,9 @@ public class Client {
             }
         });
 
-    //TODO fx display selected map Raneem
+        //TODO fx display selected map Raneem
     }
+
     private void handleBodyMapSelectedConfirmation(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
@@ -346,7 +338,6 @@ public class Client {
             }
         });
     }
-
 
 
     /****/
@@ -475,7 +466,6 @@ public class Client {
     }
 
 
-
     /****/
     private void handleBodyStartingPointTaken(String json) {
         //TODO fx display robot
@@ -507,7 +497,6 @@ public class Client {
     private void handleBodyCardSelected(String json) {
 
 
-
         //TODO fx display card selection Sebas
     }
 
@@ -526,7 +515,7 @@ public class Client {
 
         if (body.clientID().equals(ID) && body.filled()) {
             if (firstReadyRegistry) {
-                sendMessage(new MessageDefinitions.Message<> (new MessageDefinitions.BodyTimerStarted()));
+                sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyTimerStarted()));
             }
             firstReadyRegistry = false;
         }
@@ -594,7 +583,7 @@ public class Client {
     /**
      * Sends the specified message to all connected clients except the excluded client.
      *
-     * @param msg the message to be broadcasted to connected clients
+     * @param msg     the message to be broadcasted to connected clients
      * @param exclude the client handler to be excluded from receiving the message
      */
     public void broadcastMessage(Message<?> msg, ClientHandler exclude) {

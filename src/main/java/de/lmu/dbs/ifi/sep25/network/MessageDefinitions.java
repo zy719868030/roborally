@@ -109,11 +109,11 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private Integer speed() {
+        public Integer speed() {
             return speed;
         }
 
-        private List<String> directions() {
+        public List<String> directions() {
             return directions;
         }
 
@@ -138,11 +138,11 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private List<String> orientations() {
+        public List<String> orientations() {
             return orientations;
         }
 
-        private List<Integer> registers() {
+        public List<Integer> registers() {
             return registers;
         }
 
@@ -165,7 +165,7 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private List<String> orientations() {
+        public List<String> orientations() {
             return orientations;
         }
 
@@ -197,7 +197,7 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private Integer count() {
+        public Integer count() {
             return count;
         }
 
@@ -220,7 +220,7 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private List<String> orientations() {
+        public List<String> orientations() {
             return orientations;
         }
 
@@ -248,11 +248,11 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private List<String> orientations() {
+        public List<String> orientations() {
             return orientations;
         }
 
-        private Integer count() {
+        public Integer count() {
             return count;
         }
 
@@ -275,7 +275,7 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private List<String> orientations() {
+        public List<String> orientations() {
             return orientations;
         }
 
@@ -298,7 +298,7 @@ public class MessageDefinitions {
             super(isOnBoard);
         }
 
-        private Integer count() {
+        public Integer count() {
             return count;
         }
 

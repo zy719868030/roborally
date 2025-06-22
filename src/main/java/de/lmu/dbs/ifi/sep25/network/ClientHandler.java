@@ -271,9 +271,9 @@ public class ClientHandler implements Runnable {
         String map = message.messageBody().map();
 
         broadcastMessage(new Message<>(new BodyMapSelected(map)));
-        server.newGame(map);
         server.setMapSelectionOngoing(false);
         setMapSelecting(false);
+        server.newGame(map);
     }
 
     /**

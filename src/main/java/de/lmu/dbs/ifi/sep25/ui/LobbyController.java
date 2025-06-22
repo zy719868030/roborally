@@ -1,40 +1,34 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
-import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-import de.lmu.dbs.ifi.sep25.game.Direction;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-// JSON-Verarbeitung mit Gson
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-// Für den Reader
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
-
-// Für Typinformationen
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 
@@ -320,13 +314,13 @@ public class LobbyController {
 
 
     // Zeichnet das Spielfeld anhand der BoardMap
-    public void drawBoard(List<List<List<BoardElement>>> boardMap) {
+    public void drawBoard(List<List<List<MessageDefinitions.Field>>> boardMap) {
         gameBoardPane.getChildren().clear();
 
         for (int x = 0; x < boardMap.size(); x++) {
-            List<List<BoardElement>> col = boardMap.get(x);
+            List<List<MessageDefinitions.Field>> col = boardMap.get(x);
             for (int y = 0; y < col.size(); y++) {
-                List<BoardElement> elements = col.get(y);
+                List<MessageDefinitions.Field> elements = col.get(y);
 
                 StackPane tile = createTile(elements); // ← nutze deine gute Methode
                 gameBoardPane.add(tile, x, y);
@@ -341,7 +335,7 @@ public class LobbyController {
 
 
     // Erstellt ein einzelnes Feld basierend auf BoardElementen
-    private StackPane createTile(List<BoardElement> elements) {
+    private StackPane createTile(List<MessageDefinitions.Field> elements) {
         StackPane pane = new StackPane();
 
         ImageView background = new ImageView(tileImages.get("Floor"));
@@ -349,7 +343,7 @@ public class LobbyController {
         background.setFitHeight(60);
         pane.getChildren().add(background);
 
-        for (BoardElement element : elements) {
+        for (MessageDefinitions.Field element : elements) {
             String key = getTileKeyForElement(element);
             if (tileImages.containsKey(key)) {
                 ImageView overlay = new ImageView(tileImages.get(key));
@@ -370,40 +364,42 @@ public class LobbyController {
         tileImages.put("Wall_S", new Image(getClass().getResourceAsStream("/assets/wall_s.png")));
         tileImages.put("Gear_Green", new Image(getClass().getResourceAsStream("/assets/Gear_green.png")));
         tileImages.put("Gear_Red", new Image(getClass().getResourceAsStream("/assets/Gear_red.png")));
-        tileImages.put("Conveyor_green_NORTH", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt.png")));
+//        tileImages.put("Conveyor_green_NORTH", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt.png")));
        // tileImages.put("Conveyor_blue_EAST_rot", new Image(getClass().getResourceAsStream("/assets/conveyor_b_e_rot.png")));
 
 
     }
-    private String getTileKeyForElement(BoardElement element) {
+    private String getTileKeyForElement(MessageDefinitions.Field element) {
         String type = element.getType(); // z. B. "Wall", "Laser", "Gear", "Floor", etc.
         return switch (type) {
-            case "Floor" -> "floor.png";
-            case "Wall" -> wallDirectionToFile((Wall) element);
-            case "Laser" -> "laser_" + ((Laser) element).getDirection().toString().toLowerCase() + ".png";
-            case "CheckPoint" -> "checkpoint" + ((CheckPoints) element).getNumber() + ".png";
-            case "Antenna" -> "antenne.png";
-            case "Belts" -> beltToFile((Belts) element);
-            case "Gear" -> ((Gear) element).getRotationDirection() == Gear.RotationDirection.CLOCKWISE
-                    ? "Gear_green.png" : "Gear_red.png";
+            case "Empty" -> "floor.png";
             case "StartPoint" -> "startpoint.png";
-            case "Reboot" -> "reboot.png";
-            case "EnergySpace" -> "energyspace.png";
+            case "ConveyorBelt" -> beltToFile((MessageDefinitions.FieldConveyorBelt) element);
+            //TODO add "PushPanel" ->
+            case "Gear" -> ((MessageDefinitions.FieldGear) element).orientations().getFirst().equalsIgnoreCase("clockwise") ? "Gear_green.png" : "Gear_red.png";
+            //TODO add "Pit"
+            case "Energy-Space" -> "energyspace.png";
+            case "Wall" -> wallDirectionToFile((MessageDefinitions.FieldWall) element);
+            case "Laser" -> "laser_" + ((MessageDefinitions.FieldLaser) element).orientations().getFirst().toLowerCase() + ".png";
+            case "Antenna" -> "antenne.png";
+            case "CheckPoint" -> "checkpoint" + ((MessageDefinitions.FieldCheckpoint) element).count() + ".png";
+            case "RestartPoint" -> "reboot.png";
             default -> "unknown.png";
         };
 
     }
 
-    private String wallDirectionToFile(Wall wall) {
-        return "wall_" + wall.getDirection().toString().toLowerCase() + ".png";
+    private String wallDirectionToFile(MessageDefinitions.FieldWall wall) {
+        return "wall_" + wall.orientations().getFirst().toLowerCase() + ".png";
+        //TODO bitte ändern: mehrere wall orientations möglich!
     }
 
-    private String beltToFile(Belts belt) {
-        return (belt.getSpeed() == Belts.BeltSpeed.FAST ? "belt_fast_" : "belt_slow_")
-                + belt.getMainOutDirection().toString().toLowerCase() + ".png";
+    private String beltToFile(MessageDefinitions.FieldConveyorBelt belt) {
+        return (belt.speed() == 2 ? "belt_fast_" : "belt_slow_")
+                + belt.directions().getFirst().toLowerCase() + ".png";
     }
 
-    public void handleGameStarted(List<List<List<BoardElement>>> boardMap) {
+    public void handleGameStarted(List<List<List<MessageDefinitions.Field>>> boardMap) {
         System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
         drawBoard(boardMap);
     }
@@ -416,9 +412,12 @@ public class LobbyController {
             }
 
             // GSON oder Jackson für Typ: List<List<List<BoardElement>>>
-            Gson gson = new Gson();
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+                    .setPrettyPrinting()
+                    .create();
             Type mapType = new TypeToken<List<List<List<BoardElement>>>>() {}.getType();
-            List<List<List<BoardElement>>> mapData = gson.fromJson(new InputStreamReader(is), mapType);
+            List<List<List<MessageDefinitions.Field>>> mapData = gson.fromJson(new InputStreamReader(is), mapType);
 
             drawBoard(mapData); // nutzt deine bestehende Methode
         } catch (IOException e) {
