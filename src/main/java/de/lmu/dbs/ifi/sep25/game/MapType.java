@@ -12,7 +12,7 @@ public enum MapType {
     // Initializes the board with the specified map's layout
     public void loadMap(Board board) {
         // Clear current board
-        List<BoardElement>[][] grid = board.getGrid();
+        List<BoardElement>[][] grid = (List<BoardElement>[][]) board.getGrid();
         int width = board.getWidth();
         int height = board.getHeight();
         for (int x = 0; x < width; x++) {

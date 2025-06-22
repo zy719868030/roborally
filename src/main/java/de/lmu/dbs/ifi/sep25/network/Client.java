@@ -325,6 +325,7 @@ public class Client {
             if (controller != null) {
                 controller.setMapLabel("Gewählte Karte: " + selectedMap);
                 controller.hideMapSelection();  // Optional: danach wieder ausblenden
+                controller.loadAndDisplayPreviewMap(selectedMap);
             } else {
                 System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelected");
             }
