@@ -56,7 +56,7 @@ public class MessageDefinitions {
     public record BodyGameStarted(Integer energy, List<List<List<Field>>> gameMap) {
     }
 
-    public abstract class Field {
+    public static abstract class Field {
         private final String isOnBoard;
 
         public Field(String isOnBoard) {
@@ -71,7 +71,7 @@ public class MessageDefinitions {
         public abstract String getType(); // virtual field for JSON
     }
 
-    public class FieldEmpty extends Field {
+    public static class FieldEmpty extends Field {
         public FieldEmpty(String isOnBoard) {
             super(isOnBoard);
         }
@@ -82,7 +82,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldStartPoint extends Field {
+    public static class FieldStartPoint extends Field {
         public FieldStartPoint(String isOnBoard) {
             super(isOnBoard);
         }
@@ -93,7 +93,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldConveyorBelt extends Field {
+    public static class FieldConveyorBelt extends Field {
         private final Integer speed;
         private final List<String> directions;
 
@@ -123,7 +123,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldPushPanel extends Field {
+    public static class FieldPushPanel extends Field {
         private final List<String> orientations;
         private final List<Integer> registers;
 
@@ -152,7 +152,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldGear extends Field {
+    public static class FieldGear extends Field {
         private final List<String> orientations;
 
         /**
@@ -175,7 +175,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldPit extends Field {
+    public static class FieldPit extends Field {
         public FieldPit(String isOnBoard) {
             super(isOnBoard);
         }
@@ -186,7 +186,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldEnergySpace extends Field {
+    public static class FieldEnergySpace extends Field {
         private final Integer count;
 
         /**
@@ -207,7 +207,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldWall extends Field {
+    public static class FieldWall extends Field {
         private final List<String> orientations;
 
         /**
@@ -230,7 +230,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldLaser extends Field {
+    public static class FieldLaser extends Field {
         private final Integer count;
         private final List<String> orientations;
 
@@ -262,7 +262,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldAntenna extends Field {
+    public static class FieldAntenna extends Field {
         private final List<String> orientations;
 
         /**
@@ -285,7 +285,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldCheckpoint extends Field {
+    public static class FieldCheckpoint extends Field {
         private final Integer count;
 
         /**
@@ -308,7 +308,7 @@ public class MessageDefinitions {
         }
     }
 
-    public class FieldRestartPoint extends Field {
+    public static class FieldRestartPoint extends Field {
         public FieldRestartPoint(String isOnBoard) {
             super(isOnBoard);
         }

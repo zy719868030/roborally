@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 /**
  * Represents the starting points in the game.
@@ -178,5 +179,17 @@ public class StartPoint extends BoardElement {
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 (occupied ? ", occupied by player " + playerID : ", not occupied");
     }
+
+
+    /**
+     * Converts this starting point into a {@link MessageDefinitions.FieldStartPoint} representation.
+     *
+     * @return A FieldStartPoint object corresponding to this starting point, initialized with the associated board ID.
+     */
+    @Override
+    public MessageDefinitions.FieldStartPoint toField() {
+        return new MessageDefinitions.FieldStartPoint(boardId);
+    }
+
 
 }

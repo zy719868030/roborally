@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 /**
  * Represents the energy space elements on the game board.
@@ -159,5 +160,17 @@ public class EnergySpace extends BoardElement {
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", energy cubes: " + (collected ? 0 : energyCount) +
                 (collected ? " (collected)" : "");
+    }
+
+    /**
+     * Converts the current EnergySpace object into its corresponding
+     * FieldEnergySpace representation for use in message definitions.
+     *
+     * @return A new instance of {@code MessageDefinitions.FieldEnergySpace}
+     *         containing the board ID and energy count of this EnergySpace.
+     */
+    @Override
+    public MessageDefinitions.FieldEnergySpace toField() {
+        return new MessageDefinitions.FieldEnergySpace(boardId, energyCount);
     }
 }
