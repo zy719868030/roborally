@@ -80,16 +80,15 @@ public class Board {
      * to be unique identifiers for board configuration and usage within the game logic.
      */
     public enum MapType {
-        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5;
+        DIZZY_HIGHWAY, EXTRA_CRISPY, LOST_BEARINGS, DEATH_TRAP;
 
         //TODO @prajal add string conversion to your map types
         public String toString() {
             return switch (this) {
-                case DEFAULT -> "Dizzy Highway";
-                case MAP1 -> "Risky Crossing";
-  /*              case EXTRA_CRISPY -> "Extra Crispy";
+                case DIZZY_HIGHWAY -> "Dizzy Highway";
+                case EXTRA_CRISPY -> "Extra Crispy";
                 case LOST_BEARINGS -> "Lost Bearings";
-                case DEATH_TRAP -> "Death Trap"; */
+                case DEATH_TRAP -> "Death Trap";
                 default -> "Unknown";
             };
         }
@@ -98,7 +97,7 @@ public class Board {
     // Initialize board with tiles based on map type
     private void initializeBoard(MapType mapType) {
         // Initialize sub-boards for Dizzy Highway
-        if (mapType == MapType.DEFAULT) {
+        if (mapType == MapType.DIZZY_HIGHWAY) {
             subBoards.put("StartA", new SubBoard("StartA", 0, 2)); // Columns 0–2
             subBoards.put("5B", new SubBoard("5B", 3, 12)); // Columns 3–12
         } else {
@@ -106,7 +105,7 @@ public class Board {
             subBoards.put("1B", new SubBoard("1B", 0, height - 1));
         }
 
-        if (mapType == MapType.DEFAULT) {
+        if (mapType == MapType.DIZZY_HIGHWAY) {
             // Dizzy Highway with Start A and 5B
             // Start A (y: 0–2)
             addElement(new Wall(new Position(7, 1), Direction.NORTH, "StartA"));

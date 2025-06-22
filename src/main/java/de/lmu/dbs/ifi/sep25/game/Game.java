@@ -104,19 +104,13 @@ public class Game {
     }
 
     private Board.MapType parseMapName(String mapName) {
-        switch (mapName.toLowerCase()) {
-            case "risky crossing":
-                return Board.MapType.MAP1;
-  /*          case "extra crispy":
-                return Board.MapType.EXTRA_CRISPY;
-            case "lost bearings":
-                return Board.MapType.LOST_BEARINGS;
-            case "death trap":
-                return Board.MapType.DEATH_TRAP; */
-            case "dizzy highway":
-            default:
-                return Board.MapType.DEFAULT;
-        }
+        return switch (mapName.toLowerCase()) {
+            case "dizzy highway" ->  Board.MapType.DIZZY_HIGHWAY;
+            case "extra crispy" -> Board.MapType.EXTRA_CRISPY;
+            case "lost bearings" -> Board.MapType.LOST_BEARINGS;
+            case "death trap" -> Board.MapType.DEATH_TRAP;
+            default -> null;
+        };
     }
 
     // Handle player readiness and map selection
@@ -224,8 +218,11 @@ public class Game {
 
     // Added: Stub for AI-only map selection
     public void selectMapForAI() {
-        if (mapSelectionPending) {
-            selectMap(null, "Dizzy Highway");
+        if (mapSelectionPending && players.stream().allMatch(p -> p.getConnection() == null)) {
+            String[] availableMaps = {"Dizzy Highway", "Extra Crispy", "Lost Bearings", "Death Trap"};
+            String selectedMap = availableMaps[new Random().nextInt(availableMaps.length)];
+
+            selectMap(null, selectedMap);
         }
     }
 
