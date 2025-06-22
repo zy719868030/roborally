@@ -198,10 +198,31 @@ public class LobbyController {
             if (player.getClientID() == clientID) {
                 player.setReady(ready);
                 playerList.refresh();
+
+
+                if (ClientSingleton.getInstance().getID() == clientID) {
+                    boolean ichBinErsterReady = ready && binIchErsterReady(clientID);
+
+                    // Nur der erste "Bereit"-Client darf die Karte auswählen
+                    selectMapButton.setDisable(!ichBinErsterReady);
+                    mapChoiceBox.setDisable(!ichBinErsterReady);
+                }
+
                 break;
             }
         }
     }
+
+    private boolean binIchErsterReady(int clientID) {
+        for (PlayerEntry player : players) {
+            if (player.isReady() && player.getClientID() != clientID) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 
     @FXML
     private void handleSendChat() {
@@ -251,7 +272,7 @@ public class LobbyController {
     }
 
 
-    //new
+
 
 
     public void displaySelectedMap(String mapName) {
