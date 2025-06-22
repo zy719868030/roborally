@@ -2,7 +2,6 @@ package de.lmu.dbs.ifi.sep25.game;
 
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
-import de.lmu.dbs.ifi.sep25.game.Robot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -438,15 +437,18 @@ public class Board {
      */
 
 
-    public List<List<List<BoardElement>>> toSerializableMap() {
-        List<List<List<BoardElement>>> map = new ArrayList<>();
+    public List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
+        List<List<List<MessageDefinitions.Field>>> map = new ArrayList<>();
         for (int x = 0; x < grid.length; x++) {
             List<List<BoardElement>> col = new ArrayList<>();
             for (int y = 0; y < grid[0].length; y++) {
-                //Tile tile = grid[x][y]; //FIXME will be fixed when board is fixed.... Also attributes isOnBoard, orientations
-                //col.add(tile == null ? null : tile.getElements());
+                Tile tile = grid[x][y];
 
-                col.add(grid[x][y].toSerializableList());
+                if (tile == null) {
+                    col.add(null);
+                } else {
+                    col.add(grid[x][y].toSerializableList());
+                }
             }
             map.add(col);
         }
