@@ -24,6 +24,18 @@ import javafx.scene.image.ImageView;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+// JSON-Verarbeitung mit Gson
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+// Für den Reader
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
+// Für Typinformationen
+import java.lang.reflect.Type;
+
 
 
 
@@ -306,9 +318,6 @@ public class LobbyController {
         return root;
     }
 
-    public void setSelectedMap(String mapName) {
-        mapLabel.setText("Gewählte Karte: " + mapName);
-    }
 
     // Zeichnet das Spielfeld anhand der BoardMap
     public void drawBoard(List<List<List<BoardElement>>> boardMap) {
@@ -398,6 +407,25 @@ public class LobbyController {
         System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
         drawBoard(boardMap);
     }
+    public void loadAndDisplayPreviewMap(String mapName) {
+        String fileName = mapName.toLowerCase().replace(" ", "_") + ".json";
+        try (InputStream is = getClass().getResourceAsStream("/maps/" + fileName)) {
+            if (is == null) {
+                System.err.println("[ERROR] Map-Datei nicht gefunden: " + mapName);
+                return;
+            }
+
+            // GSON oder Jackson für Typ: List<List<List<BoardElement>>>
+            Gson gson = new Gson();
+            Type mapType = new TypeToken<List<List<List<BoardElement>>>>() {}.getType();
+            List<List<List<BoardElement>>> mapData = gson.fromJson(new InputStreamReader(is), mapType);
+
+            drawBoard(mapData); // nutzt deine bestehende Methode
+        } catch (IOException e) {
+            System.err.println("[ERROR] Fehler beim Laden der Map: " + e.getMessage());
+        }
+    }
+
 
 
 }
