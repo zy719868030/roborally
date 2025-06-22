@@ -9,6 +9,7 @@ import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
@@ -548,6 +549,25 @@ public class Game {
         }
     }
 
+
+    /**
+     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
+     */
+    public void initPlacement() {
+        Server server = Server.getInstance();
+        List<ClientHandler> placementOrder = server.getLobby().getClients();
+
+        for (ClientHandler handler : placementOrder) {
+            int clientID = handler.getMyID();
+            // Send a message to let players choose their starting position.
+            handler.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyCurrentPlayer(clientID)
+            ));
+            // Wait for the player's response TODO (this requires asynchronous processing)
+        }
+    }
+
+
     /**
      * Start the game main loop
      */
@@ -654,6 +674,24 @@ public class Game {
             // Sort players by priority
             List<Player> sortedPlayers = determinePlayerOrder();
 
+            // Collect all cards from players in the current register
+            List<MessageDefinitions.ActiveCard> activeCards = new ArrayList<>();
+            for (Player player : sortedPlayers) {
+                List<RegisterCard> playerRegister = player.getRegister();
+                if (currentRegister < playerRegister.size() && playerRegister.get(currentRegister) != null) {
+                    RegisterCard card = playerRegister.get(currentRegister);
+                    String cardName = CardFactory.getCardName(card);
+                    activeCards.add(new MessageDefinitions.ActiveCard(player.getRobot().getId(), cardName));
+                }
+            }
+
+            // Broadcast CurrentCards message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyCurrentCards(activeCards)
+                    )
+            );
+
             // Activate player cards in order
             for (Player player : sortedPlayers) {
                 activatePlayerCard(player, currentRegister);
@@ -730,13 +768,14 @@ public class Game {
         if (register < playerRegister.size() && playerRegister.get(register) != null) {
             RegisterCard card = playerRegister.get(register);
 
-            // Broadcast card before execution
-            String cardName = CardFactory.getCardName(card);
-            Server.getInstance().broadcastMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyCardPlayed(player.getRobot().getId(), cardName)
-                    )
-            );
+//            // Broadcast card before execution
+//            String cardName = CardFactory.getCardName(card);
+//            Server.getInstance().broadcastMessage(
+//                    new MessageDefinitions.Message<>(
+//                            new MessageDefinitions.BodyCardPlayed(player.getRobot().getId(), cardName)
+//                    )
+//            );
+
             // Handle DamageCard effects explicitly
             if (card instanceof DamageCard damageCard) {
                 handleDamageCardEffect(damageCard, player);

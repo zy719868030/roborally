@@ -257,6 +257,10 @@ public class Player {
     public void drawCard() {
         if (programmingDeck.isEmpty()) {
             programmingDeck.reset();
+            // Send ShuffleCoding message
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
+            ));
         }
         hand.add(programmingDeck.draw());
     }
@@ -265,8 +269,14 @@ public class Player {
     //public void endRound(){}
 
     public void replaceDamageCard(int registerSlot) {
+        RegisterCard newCard = programmingDeck.draw();
+        register.set(registerSlot, newCard);
+        String cardName = CardFactory.getCardName(newCard);
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyReplaceCard(registerSlot, cardName, robot.getId())
+        ));
 
-        register.set(registerSlot, programmingDeck.draw());
+        //register.set(registerSlot, programmingDeck.draw());
     }
 
     public Robot getRobot() {
