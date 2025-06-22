@@ -6,6 +6,8 @@ import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
+import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
+
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
@@ -13,29 +15,25 @@ import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Antenna;
 import de.lmu.dbs.ifi.sep25.network.Server;
 
-import java.util.Comparator;
-import java.util.Map;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Game {
     private static Game instance;
-
     private Player currentPlayer;
     private final List<Player> players;
     private Board board;
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
+    private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
     private final Board.MapType mapType;
-    // Added: Map selection fields
+    // Map selection fields
     private Player firstReadyPlayer;
     private String selectedMap;
     private boolean mapSelectionPending;
     private GamePhase currentPhase = null;
     private int currentRegister = 0;
     private int roundNumber = 0;
-
     private int currentPlayerIndex; // Index in players list
     private Timer programmingTimer; // For 30-second timer
     private List<Integer> slowPlayers; // Track slow players
@@ -47,12 +45,39 @@ public class Game {
         currentPlayer = null;
         currentPlayerIndex = 0;
         //currentPhase = -1; // Pre-game (map selection)
-        // Added: Initialize map selection state
+        // Initialize map selection state
         firstReadyPlayer = null;
         selectedMap = null;
         mapSelectionPending = true;
         slowPlayers = new ArrayList<>();
-        initializeUpgradeCards();
+        initializeProgrammingDeck();
+    }
+    private void initializeProgrammingDeck() {
+        // List of card names with desired counts for Dizzy Highway
+        String[] cardNames = {
+                "MoveI", "MoveI", // 2 Move 1 Space
+                "MoveII", "MoveII", // 2 Move 2 Spaces
+                "MoveIII", // 1 Move 3 Spaces
+                "BackUp", "BackUp", // 2 Back Up
+                "TurnLeft", "TurnLeft", // 2 Turn Left
+                "TurnRight", "TurnRight", // 2 Turn Right
+                "UTurn", "UTurn", // 2 U-Turn
+                "Again", "Again", // 2 Again
+                "PowerUp", // 1 Power Up
+                "RepeatRoutine", // 1 Repeat Routine
+                "SpeedRoutine", // 1 Speed Routine
+                "EnergyRoutine", // 1 Energy Routine
+                "SpamFolder", // 1 SPAM Folder
+                "SandboxRoutine", // 1 Sandbox Routine
+                "WeaselRoutine" // 1 Weasel Routine
+        };
+        for (String cardName : cardNames) {
+            RegisterCard card = CardFactory.createCard(cardName);
+            if (card instanceof ProgrammingCard programmingCard) {
+                programmingDeck.addCard(programmingCard);
+            }
+        }
+        programmingDeck.shuffle();
     }
 
     public static Game getInstance() {
@@ -79,19 +104,13 @@ public class Game {
     }
 
     private Board.MapType parseMapName(String mapName) {
-        switch (mapName.toLowerCase()) {
-            case "risky crossing":
-                return Board.MapType.MAP1;
-  /*          case "extra crispy":
-                return Board.MapType.EXTRA_CRISPY;
-            case "lost bearings":
-                return Board.MapType.LOST_BEARINGS;
-            case "death trap":
-                return Board.MapType.DEATH_TRAP; */
-            case "dizzy highway":
-            default:
-                return Board.MapType.DEFAULT;
-        }
+        return switch (mapName.toLowerCase()) {
+            case "dizzy highway" ->  Board.MapType.DIZZY_HIGHWAY;
+            case "extra crispy" -> Board.MapType.EXTRA_CRISPY;
+            case "lost bearings" -> Board.MapType.LOST_BEARINGS;
+            case "death trap" -> Board.MapType.DEATH_TRAP;
+            default -> null;
+        };
     }
 
     // Handle player readiness and map selection
@@ -199,16 +218,13 @@ public class Game {
 
     // Added: Stub for AI-only map selection
     public void selectMapForAI() {
-        if (mapSelectionPending) {
-            selectMap(null, "Dizzy Highway");
+        if (mapSelectionPending && players.stream().allMatch(p -> p.getConnection() == null)) {
+            String[] availableMaps = {"Dizzy Highway", "Extra Crispy", "Lost Bearings", "Death Trap"};
+            String selectedMap = availableMaps[new Random().nextInt(availableMaps.length)];
+
+            selectMap(null, selectedMap);
         }
     }
-
-//    private void startGame() {
-//        if (!mapSelectionPending && players.size() >= 2) {
-//            setActivePhase(0); // Setup Phase
-//        }
-//    }
 
     /**
      * Starts the game by setting up the initial game phase
@@ -367,6 +383,8 @@ public class Game {
         int index = 0;
         for (int i = 0; i < 5; i++) {
             if (player.getRegister().get(i) == null && index < hand.size()) {
+                RegisterCard card = hand.get(index);
+                String cardName = CardFactory.getCardName(card);
                 player.chooseCard(((Card) hand.get(index)).getDescription(), i);
                 index++;
             }
@@ -381,130 +399,7 @@ public class Game {
         ));
     }
 
-//    private void playActivationPhase() {
-//        for (int register = 0; register < 5; register++) {
-//            // Collect active cards
-//            List<MessageDefinitions.ActiveCard> activeCards = new ArrayList<>();
-//            for (Player p : players) {
-//                RegisterCard card = p.getRegister().get(register);
-//                if (card != null) {
-//                    // Check: getName method in RegisterCard
-//                    activeCards.add(nesetActivePhase()w MessageDefinitions.ActiveCard(p.getRobot().getId(), ((Card) card).getDescription()));
-//                }
-//            }
-//            for (Player p : players) {
-//                p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                        new MessageDefinitions.BodyCurrentCards(activeCards)
-//                ));
-//            }
-//            // Sort players by distance to priority antenna
-//            List<Player> sortedPlayers = new ArrayList<>();
-//            Antenna antenna = findAntenna();
-//            if (antenna == null) {
-//                throw new IllegalStateException("Antenna must be present on the board.");
-//            }
-//
-//            // Group robots by distance
-//            Map<Integer, List<Robot>> distanceGroups = new HashMap<>();
-//            List<Player> activePlayers = new ArrayList<>();
-//            for (Player p : players) {
-//                if (p.getRegister().get(register) != null) {
-//                    activePlayers.add(p);
-//                    Robot robot = p.getRobot();
-//                    Position robotPos = robot.getPosition();
-//                    if (robotPos != null && !board.hasRobotFallen(robot)) {
-//                        int distance = antenna.distanceToRobot(robotPos);
-//                        distanceGroups.computeIfAbsent(distance, k -> new ArrayList<>()).add(robot);
-//                    }
-//                }
-//                // Sort distances and resolve ties
-//
-//                List<Integer> sortedDistances = new ArrayList<>(distanceGroups.keySet());
-//                Collections.sort(sortedDistances);
-//                for (int distance : sortedDistances) {
-//                    List<Robot> robots = antenna.sortTiedRobotsByPriority(distanceGroups.get(distance));
-//                    for (Robot robot : robots) {
-//                        for (Player player : players) {
-//                            if (player.getRobot().equals(robot)) {
-//                                sortedPlayers.add(player);
-//                                activePlayers.remove(player);
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            // Include remaining active players (e.g., fallen robots)
-//            sortedPlayers.addAll(activePlayers);
-//
-//            // Execute Cards
-//            for (Player p : sortedPlayers) {
-//                RegisterCard card = p.getRegister().get(register);
-//                card.execute(p.getRobot(), p);
-//                Position pos = p.getRobot().getPosition();
-//                if (pos != null) {
-//                    p.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-//                            new MessageDefinitions.BodyMovement(p.getRobot().getId(), pos.x(), pos.y())
-//                    ));
-//                }
-//
-//                // Check for checkpoints
-//                Position robotPos = p.getRobot().getPosition();
-//                if (robotPos != null) {
-//                    // Check: getElements method in Board
-//                    List<BoardElement> elements = board.getElements(robotPos.x(), robotPos.y());
-//                    for (BoardElement element : elements) {
-//                        if (element instanceof CheckPoints checkPoint) {
-//                            int robotId = p.getRobot().getId();
-//                            int checkpoints = checkPoint.getRobotHighestCheckpoint(robotId);
-//                            if (checkpoints > 0) {
-//                                p.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-//                                    new MessageDefinitions.BodyCheckPointReached(robotId, checkpoints)
-//                                ));
-//                                if (checkpoints == board.getTotalCheckpoints()) {
-//                                    p.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-//                                        new MessageDefinitions.BodyGameFinished(robotId)
-//                                    ));
-//                                    return;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            // Apply board effects
-//            for (Player p : players) {
-//                Position pos = p.getRobot().getPosition();
-//                if (pos != null) {
-//
-//                    board.applyEffects(p.getRobot(), pos.x(), pos.y());
-//                    // Example: Send Animation for ConveyorBelt
-//                    p.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-//                            new MessageDefinitions.BodyAnimation("BlueConveyorBelt")
-//                    ));
-//                }
-//            }
-//        }
-//        // Reset registers and start next Programming Phase
-//        for (Player p : players) {
-//            p.clearRegister();
-//        }
-//        setActivePhase(2);
-//    }
 
-//    // Helper method to find the Antenna
-//    private Antenna findAntenna() {
-//        for (int x = 0; x < board.getWidth(); x++) {
-//            for (int y = 0; y < board.getHeight(); y++) {
-//                for (BoardElement element : board.getElements(x, y)) {
-//                    if (element instanceof Antenna antenna) {
-//                        return antenna;
-//                    }
-//                }
-//            }
-//        }
-//        return null;
-//    }
 
     public void determineTurn() {
         // Stub
@@ -815,6 +710,7 @@ public class Game {
         // If players have the same distance, handle according to rules
         // TODO:Simplified here, actual implementation should be more complex
 
+
         // Broadcast current player order
         for (Player player : sortedPlayers) {
             MessageDefinitions.Message<MessageDefinitions.BodyCurrentPlayer> message = new MessageDefinitions.Message<>(
@@ -841,10 +737,13 @@ public class Game {
                             new MessageDefinitions.BodyCardPlayed(player.getRobot().getId(), cardName)
                     )
             );
-
-            // Execute card effect
-            card.execute(player.getRobot(), player);
-
+            // Handle DamageCard effects explicitly
+            if (card instanceof DamageCard damageCard) {
+                handleDamageCardEffect(damageCard, player);
+            } else {
+                // Execute card effect
+                card.execute(player.getRobot(), player);
+            }
             // Broadcast robot movement if position changed
             Position robotPosition = player.getRobot().getPosition();
             Server.getInstance().broadcastMessage(
@@ -856,6 +755,28 @@ public class Game {
                             )
                     )
             );
+            // Apply board effects after card execution
+            board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
+        }
+    }
+
+    // Method to handle DamageCard effects
+    private void handleDamageCardEffect(DamageCard card, Player player) {
+        Robot robot = player.getRobot();
+        switch (card.getDamageType()) {
+            case SPAM:
+                // SPAM does nothing when executed (already disrupts register)
+                break;
+            case VIRUS:
+                dealVirusDamage(robot);
+                break;
+            case WORM:
+                handleRobotReboot(robot);
+                break;
+            case TROJAN_HORSE:
+                dealSpamDamage(robot);
+                dealSpamDamage(robot);
+                break;
         }
     }
 
