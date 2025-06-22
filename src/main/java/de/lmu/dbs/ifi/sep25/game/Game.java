@@ -176,10 +176,7 @@ public class Game {
                     new MessageDefinitions.BodyMapSelected(mapName)
             ));
             //Use convertToBoardElementMap for BodyGameStarted
-            List<List<List<MessageDefinitions.Field>>> gameMap = board.toSerializableMap();
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyGameStarted(5, gameMap)
-            ));
+            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
         }
         startGameLoop();
     }
@@ -496,10 +493,7 @@ public class Game {
                     new MessageDefinitions.BodyMapSelected(selectedMap)
             ));
             if (board != null) {
-                List<List<List<MessageDefinitions.Field>>> gameMap = board.toSerializableMap();
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyGameStarted(5, gameMap)
-                ));
+                player.getConnection().sendMessage(board.getSerializedBoardAsMessage());
 
             }
         }

@@ -156,6 +156,31 @@ public class Server {
     }
 
     /**
+     * Broadcasts a message to all connected clients. If a client cannot receive the message,
+     * it will be removed from the clients list, and an error response will be sent to that client
+     * before closing its connection.
+     *
+     * @param message the message to be broadcasted to all connected clients
+     */
+    public void broadcastMessage(String message) {
+        try {
+            clients.keySet().removeIf(handler -> {
+                try {
+                    handler.sendMessage(message);
+                    return false;
+                } catch (Exception e) {
+                    System.err.println("Removing client due to send failure: " + e.getMessage());
+                    handler.sendMessage(new Message<>(new BodyError("Failed to send message.")));
+                    handler.closeAll();
+                    return true;
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
+        }
+    }
+
+    /**
      * Broadcasts a message to all connected clients except the specified client handler.
      * If a client cannot receive the message, it will be removed from the clients list, and an
      * error response will be sent to that client before closing its connection.
@@ -441,8 +466,7 @@ public class Server {
      */
     public void startGame() {
         resetReadyRegister();
-        Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
-        broadcastMessage(message);
+        broadcastMessage(game.getBoard().getSerializedBoardAsMessage());
     }
 
     /**

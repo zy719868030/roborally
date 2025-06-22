@@ -1,7 +1,10 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +16,12 @@ import java.util.Map;
  * The Board class manages the layout, positions of robots, and special tiles.
  */
 public class Board {
+    // Serialization
+    private final Gson mapGson =  new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .setPrettyPrinting()
+            .create();
+
     //private final List<BoardElement>[][] grid;
     private final Tile[][] grid;
     private final int width;
@@ -435,9 +444,7 @@ public class Board {
      *
      * @return A three-dimensional list representing the serialized state of the board.
      */
-
-
-    public List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
+    private List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
         List<List<List<MessageDefinitions.Field>>> map = new ArrayList<>();
         for (int x = 0; x < grid.length; x++) {
             List<List<MessageDefinitions.Field>> col = new ArrayList<>();
@@ -453,6 +460,16 @@ public class Board {
             map.add(col);
         }
         return map;
+    }
+
+    /**
+     * Serializes the current state of the board into a JSON-formatted message.
+     * The resulting message includes metadata and the serialized map representation of the board.
+     *
+     * @return A JSON string representing the serialized board as a message.
+     */
+    public String getSerializedBoardAsMessage() {
+        return mapGson.toJson(new MessageDefinitions.Message<>(new MessageDefinitions.BodyGameStarted(5, toSerializableMap())));
     }
 
     /**

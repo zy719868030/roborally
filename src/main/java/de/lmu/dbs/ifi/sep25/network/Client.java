@@ -353,7 +353,7 @@ public class Client {
     private void handleBodyGameStarted(String json) {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
-        List<List<List<BoardElement>>> boardMap = body.gameMap();
+        List<List<List<Field>>> boardMap = body.gameMap();
 
         javafx.application.Platform.runLater(() -> {
             LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
