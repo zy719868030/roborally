@@ -440,14 +440,14 @@ public class Board {
     public List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
         List<List<List<MessageDefinitions.Field>>> map = new ArrayList<>();
         for (int x = 0; x < grid.length; x++) {
-            List<List<BoardElement>> col = new ArrayList<>();
+            List<List<MessageDefinitions.Field>> col = new ArrayList<>();
             for (int y = 0; y < grid[0].length; y++) {
                 Tile tile = grid[x][y];
 
                 if (tile == null) {
                     col.add(null);
                 } else {
-                    col.add(grid[x][y].toSerializableList());
+                    col.add(grid[x][y].toSerializableList().stream().map(BoardElement::toField).toList());
                 }
             }
             map.add(col);
