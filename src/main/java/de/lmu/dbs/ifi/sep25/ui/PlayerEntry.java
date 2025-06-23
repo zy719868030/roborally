@@ -133,4 +133,8 @@ public class PlayerEntry {
         return getName() + " #" + getClientID();
     }
 
+
+public void setName(String name) { //@SEBAS
+    this.name.set(name);
+}
 }

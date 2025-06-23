@@ -334,22 +334,34 @@ public class Server {
      * @return a unique name based on the provided base name
      */
     public synchronized String generateUniqueName(String baseName) {
-        Collection<String> existingNames = getNames().values();
+        Collection<String> existingNames = names.values();
 
         if (!existingNames.contains(baseName)) {
             return baseName;
         }
 
+        for (Map.Entry<ClientHandler, String> entry : names.entrySet()) {
+            if (entry.getValue().equals(baseName)) {
+                names.put(entry.getKey(), baseName + "#1");
+
+                Message<BodyPlayerRenamed> renameMsg = new Message<>(new BodyPlayerRenamed(
+                        clients.getByKey(entry.getKey()),
+                        baseName + "#1"
+                ));
+                broadcastMessage(renameMsg);
+                break;
+            }
+        }
+
         int suffix = 2;
-        String candidate;
-
+        String newName;
         do {
-            candidate = baseName + "#" + suffix;
-            suffix++;
-        } while (existingNames.contains(candidate));
+            newName = baseName + "#" + suffix++;
+        } while (existingNames.contains(newName));
 
-        return candidate;
+        return newName;
     }
+
 
     /**
      * Returns the client handler assigned to the given figure number.

@@ -35,17 +35,28 @@ import java.util.Map;
 
 
 public class LobbyController {
-    @FXML private ComboBox<PlayerEntry> recipientBox;
-    @FXML private TextArea chatArea;
-    @FXML private TextField chatInput;
-    @FXML private ListView<PlayerEntry> playerList;
-    @FXML private Button readyButton, notReadyButton;
-    @FXML private Label statusLabel;
-    @FXML private Label mapLabel;
-    @FXML private HBox mapSelectionBox;
-    @FXML private ComboBox<String> mapChoiceBox;
-    @FXML private Button selectMapButton;
-    @FXML private GridPane gameBoardPane;
+    @FXML
+    private ComboBox<PlayerEntry> recipientBox;
+    @FXML
+    private TextArea chatArea;
+    @FXML
+    private TextField chatInput;
+    @FXML
+    private ListView<PlayerEntry> playerList;
+    @FXML
+    private Button readyButton, notReadyButton;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Label mapLabel;
+    @FXML
+    private HBox mapSelectionBox;
+    @FXML
+    private ComboBox<String> mapChoiceBox;
+    @FXML
+    private Button selectMapButton;
+    @FXML
+    private GridPane gameBoardPane;
 
 
     private Parent root;
@@ -62,7 +73,6 @@ public class LobbyController {
         loadTileImages();
 
 
-
         playerList.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(PlayerEntry player, boolean empty) {
@@ -75,7 +85,7 @@ public class LobbyController {
             }
         });
         //Combobox conf
-        PlayerEntry alleOption = new PlayerEntry(-1,"Alle",-1,false);
+        PlayerEntry alleOption = new PlayerEntry(-1, "Alle", -1, false);
         recipientBox.getItems().add(alleOption);
         // ComboBox: Darstellung und Zellen setzen
         recipientBox.setPromptText("An...");
@@ -107,7 +117,6 @@ public class LobbyController {
     }
 
 
-
     @FXML
     private void handleReady() {
         sendReadyStatus(true);
@@ -133,7 +142,7 @@ public class LobbyController {
         }
 
 
-}
+    }
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         int myID = ClientSingleton.getInstance().getID();
@@ -157,6 +166,7 @@ public class LobbyController {
 
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
+
     public void showMapSelection(List<String> maps) {
         if (mapChoiceBox == null || mapSelectionBox == null) {
             System.err.println("[ERROR] mapChoiceBox oder mapSelectionBox ist null in showMapSelection!");
@@ -188,15 +198,16 @@ public class LobbyController {
             mapSelectionBox.setManaged(false);
         }
     }
+
     //Methode zum Verstecken, wenn Spieler z. B. unready wird
     public void hideMapSelection() {
         mapSelectionBox.setVisible(false);
         mapSelectionBox.setManaged(false);
     }
+
     public void setMapLabel(String text) {
         mapLabel.setText(text);
     }
-
 
 
     public void updatePlayerStatus(int clientID, boolean ready) {
@@ -229,14 +240,13 @@ public class LobbyController {
     }
 
 
-
     @FXML
     private void handleSendChat() {
         String msg = chatInput.getText();
         if (msg == null || msg.trim().isEmpty()) return;
 
         PlayerEntry selected = recipientBox.getSelectionModel().getSelectedItem();
-        int recipientID = (selected == null|| selected.getClientID() == -1) ? -1 : selected.getClientID();
+        int recipientID = (selected == null || selected.getClientID() == -1) ? -1 : selected.getClientID();
 
         System.out.println("[DEBUG] Sende Chatnachricht an " + (recipientID == -1 ? "ALLE" : recipientID) + ": " + msg);
 
@@ -248,11 +258,11 @@ public class LobbyController {
         }
 
 
-
         String prefix = (recipientID == -1) ? "Du" : "Du → " + selected.getName();
         appendChatMessage(prefix + ": " + msg);
         chatInput.clear();
     }
+
     @FXML
     public void updatePlayerList(java.util.List<PlayerEntry> newPlayers) {
         players.clear();
@@ -278,13 +288,10 @@ public class LobbyController {
     }
 
 
-
-
-
     public void displaySelectedMap(String mapName) {
         // Diese Methode zeigt den ausgewählten Kartennamen in der Benutzeroberfläche an.
         // Zum Beispiel kann hier ein Label aktualisiert werden, das den Namen der Karte zeigt:
-         mapLabel.setText("Ausgewählte Karte: " + mapName);
+        mapLabel.setText("Ausgewählte Karte: " + mapName);
     }
 
 
@@ -305,9 +312,11 @@ public class LobbyController {
         notReadyButton.setVisible(isReady);
         notReadyButton.setManaged(!isReady);
     }
+
     public void setRoot(Parent root) {
         this.root = root;
     }
+
     public Parent getRoot() {
         return root;
     }
@@ -332,8 +341,6 @@ public class LobbyController {
     }
 
 
-
-
     // Erstellt ein einzelnes Feld basierend auf BoardElementen
     private StackPane createTile(List<MessageDefinitions.Field> elements) {
         StackPane pane = new StackPane();
@@ -355,6 +362,7 @@ public class LobbyController {
 
         return pane;
     }
+
     private Map<String, Image> tileImages = new HashMap<>();
 
     private void loadTileImages() {
@@ -365,10 +373,11 @@ public class LobbyController {
         tileImages.put("Gear_Green", new Image(getClass().getResourceAsStream("/assets/Gear_green.png")));
         tileImages.put("Gear_Red", new Image(getClass().getResourceAsStream("/assets/Gear_red.png")));
 //        tileImages.put("Conveyor_green_NORTH", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt.png")));
-       // tileImages.put("Conveyor_blue_EAST_rot", new Image(getClass().getResourceAsStream("/assets/conveyor_b_e_rot.png")));
+        // tileImages.put("Conveyor_blue_EAST_rot", new Image(getClass().getResourceAsStream("/assets/conveyor_b_e_rot.png")));
 
 
     }
+
     private String getTileKeyForElement(MessageDefinitions.Field element) {
         String type = element.getType(); // z. B. "Wall", "Laser", "Gear", "Floor", etc.
         return switch (type) {
@@ -376,11 +385,13 @@ public class LobbyController {
             case "StartPoint" -> "startpoint.png";
             case "ConveyorBelt" -> beltToFile((MessageDefinitions.FieldConveyorBelt) element);
             //TODO add "PushPanel" ->
-            case "Gear" -> ((MessageDefinitions.FieldGear) element).orientations().getFirst().equalsIgnoreCase("clockwise") ? "Gear_green.png" : "Gear_red.png";
+            case "Gear" ->
+                    ((MessageDefinitions.FieldGear) element).orientations().getFirst().equalsIgnoreCase("clockwise") ? "Gear_green.png" : "Gear_red.png";
             //TODO add "Pit"
             case "Energy-Space" -> "energyspace.png";
             case "Wall" -> wallDirectionToFile((MessageDefinitions.FieldWall) element);
-            case "Laser" -> "laser_" + ((MessageDefinitions.FieldLaser) element).orientations().getFirst().toLowerCase() + ".png";
+            case "Laser" ->
+                    "laser_" + ((MessageDefinitions.FieldLaser) element).orientations().getFirst().toLowerCase() + ".png";
             case "Antenna" -> "antenne.png";
             case "CheckPoint" -> "checkpoint" + ((MessageDefinitions.FieldCheckpoint) element).count() + ".png";
             case "RestartPoint" -> "reboot.png";
@@ -403,6 +414,7 @@ public class LobbyController {
         System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
         drawBoard(boardMap);
     }
+
     public void loadAndDisplayPreviewMap(String mapName) {
         String fileName = mapName.toLowerCase().replace(" ", "_") + ".json";
         try (InputStream is = getClass().getResourceAsStream("/maps/" + fileName)) {
@@ -416,7 +428,8 @@ public class LobbyController {
                     .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
                     .setPrettyPrinting()
                     .create();
-            Type mapType = new TypeToken<List<List<List<BoardElement>>>>() {}.getType();
+            Type mapType = new TypeToken<List<List<List<BoardElement>>>>() {
+            }.getType();
             List<List<List<MessageDefinitions.Field>>> mapData = gson.fromJson(new InputStreamReader(is), mapType);
 
             drawBoard(mapData); // nutzt deine bestehende Methode
@@ -426,5 +439,16 @@ public class LobbyController {
     }
 
 
+    public void renamePlayer(int clientID, String newName) { //@SEBAS
+        for (PlayerEntry p : players) {
+            if (p.getClientID() == clientID) {
+                p.setName(newName + (clientID == ClientSingleton.getInstance().getID() ? " (du)" : ""));
+                playerList.refresh();
+                break;
+            }
 
+        }
+
+
+    }
 }

@@ -405,5 +405,6 @@ public class MessageDefinitions {
 
     public record BodyGameFinished(Integer clientID) {
     }
+    public record BodyPlayerRenamed(int clientID, String newName) {}//@SEBAS
 
 }

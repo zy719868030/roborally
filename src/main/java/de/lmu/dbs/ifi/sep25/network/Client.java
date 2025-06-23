@@ -115,6 +115,7 @@ public class Client {
                         case "SelectionFinished" -> handleBodySelectionFinished(json);
                         case "TimerEnded" -> handleBodyTimerEnded(json);
                         case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
+                        case "PlayerRenamed" -> handleBodyPlayerRenamed(json);//@SEBAS
                         //                    case "CurrentCards" -> handleBodyCurrentCards(json);
                         //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
                         //                    case "Movement" -> handleBodyMovement(json);
@@ -138,6 +139,19 @@ public class Client {
         }
     }
 
+
+    private void handleBodyPlayerRenamed(String json) {//@SEBAS
+        Message<BodyPlayerRenamed> msg = JsonUtil.parseMessage(json, BodyPlayerRenamed.class);
+        int clientID = msg.messageBody().clientID();
+        String newName = msg.messageBody().newName();
+
+        javafx.application.Platform.runLater(() -> {
+            LobbyController ctrl = ControllerRegistry.getLobbyController();
+            if (ctrl != null) {
+                ctrl.renamePlayer(clientID, newName);
+            }
+        });
+    }
 
     /**
      * Handles the BodyHelloClient message received from the server.
