@@ -15,13 +15,12 @@ import java.util.Map;
  * Represents the game board where all gameplay elements and interactions occur.
  * The Board class manages the layout, positions of robots, and special tiles.
  */
-public class Board {
+public class Board implements GameMap{
     // Serialization
     private final Gson mapGson =  new GsonBuilder()
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
             .setPrettyPrinting()
             .create();
-
     //private final List<BoardElement>[][] grid;
     private final Tile[][] grid;
     private final int width;
@@ -33,10 +32,11 @@ public class Board {
     private final List<Robot> fallenRobots = new ArrayList<>();
     // Designated point for fallen robots (outside 12x12 grid)
     private static final Position VOID_POINT = new Position(-1, -1);
-    private final Map<String, SubBoard> subBoards;
+    public final Map<String, SubBoard> subBoards;
+    private Position antennaPosition;
 
     // SubBoard class to manage boardId and coordinate ranges
-    private static class SubBoard {
+    public static class SubBoard {
         private final String boardId;
         private final int minY;
         private final int maxY;
@@ -69,15 +69,11 @@ public class Board {
     private void initializeGrid() {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                //grid[x][y] = new ArrayList<>();
                 grid[x][y] = new Tile();
                 grid[x][y].addElement(Floor.getInstance());
             }
         }
     }
-
-
-
 
     /**
      * Enum representing the different types of maps available in the game.
@@ -102,18 +98,31 @@ public class Board {
         }
     }
 
-    // Initialize board with tiles based on map type
     private void initializeBoard(MapType mapType) {
-        // Initialize sub-boards for Dizzy Highway
-        if (mapType == MapType.DIZZY_HIGHWAY) {
+        GameMap mapImplementation;
+        switch (mapType) {
+            case DIZZY_HIGHWAY -> {
+                mapImplementation = this; // Board itself handles Dizzy Highway
+                initializeDizzyHighway();
+            }
+            case LOST_BEARINGS -> mapImplementation = new LostBearings();
+            case EXTRA_CRISPY -> mapImplementation = new ExtraCrispy();
+            case DEATH_TRAP -> mapImplementation = new DeathTrap();
+            default -> throw new IllegalArgumentException("Unknown map type: " + mapType);
+        }
+        // Copy elements, subboards, and antenna from the map implementation
+        this.subBoards.putAll(mapImplementation.getSubBoards());
+        this.antennaPosition = mapImplementation.getAntennaPosition();
+        for (BoardElement element : mapImplementation.getElements()) {
+            addElement(element);
+        }
+    }
+
+    // Initialize board with tiles based on map type
+    private void initializeDizzyHighway() {
             subBoards.put("StartA", new SubBoard("StartA", 0, 2)); // Columns 0–2
             subBoards.put("5B", new SubBoard("5B", 3, 12)); // Columns 3–12
-        } else {
-            // Default to single board for other map types
-            subBoards.put("1B", new SubBoard("1B", 0, height - 1));
-        }
 
-        if (mapType == MapType.DIZZY_HIGHWAY) {
             // Dizzy Highway with Start A and 5B
             // Start A (y: 0–2)
             addElement(new Wall(new Position(7, 1), Direction.NORTH, "StartA"));
@@ -220,7 +229,7 @@ public class Board {
             addElement(new Gear(new Position(5, 5), Gear.RotationDirection.CLOCKWISE, "5B"));
         }
         // Add other map types (e.g., MAP1 for Risky Crossing) as needed
-    }
+
 
     // Added: Helper method to add elements to the grid
     private void addElement(BoardElement element) {
@@ -266,12 +275,25 @@ public class Board {
         }
     }
 
-    // Gets elements at a position (used for tile effects)
     public List<BoardElement> getElements(int x, int y) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
             return grid[x][y].getElements();
         }
         return new ArrayList<>();
+    }
+    @Override
+    public List<BoardElement> getElements() {
+        List<BoardElement> elements = new ArrayList<>();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                elements.addAll(grid[x][y].getElements());
+            }
+        }
+        return elements;
+    }
+    @Override
+    public Map<String, SubBoard> getSubBoards() {
+        return new HashMap<>(subBoards);
     }
 
     public void placeRobot(Robot robot, int x, int y) {
