@@ -334,6 +334,9 @@ public class MessageDefinitions {
 
     public record BodyError(String error) {
     }
+    //1.0
+    public record BodyConnectionUpdate(Integer clientID, Boolean isConnected, String action) {
+    }
 
     public record BodyPlayCard(String card) {
     }
@@ -394,6 +397,14 @@ public class MessageDefinitions {
 
     public record BodyPlayerTurning(Integer clientID, String rotation) {
     }
+    //1.0
+    public record BodyDrawDamage(Integer clientID, List<String> cards) {
+
+    }
+    //1.0
+    public record BodyPickDamage(Integer count, List<String> availablePiles) {}
+    // 1.0
+    public record BodySelectedDamage(List<String> cards) {}
 
     public record BodyAnimation(String type) {
     }

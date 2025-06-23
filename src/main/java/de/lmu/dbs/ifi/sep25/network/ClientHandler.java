@@ -113,9 +113,6 @@ public class ClientHandler implements Runnable {
                     case "SelectedCard" -> handleBodySelectedCard(json);
                     case "TimerStarted" -> handleBodyTimerStarted();
                     case "RebootDirection" -> handleBodyRebootDirection(json);
-//                    case "Energy" -> handleBodyEnergy(json);
-//                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-//                    case "GameFinished" -> handleBodyGameFinished(json);
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
             }
