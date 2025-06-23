@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController"
-      spacing="20" alignment="CENTER" style="-fx-padding: 30">
+<VBox alignment="CENTER" spacing="20"
+        style="-fx-padding: 30; -fx-background-image: url('/assets/cover_image.png'); -fx-background-size: cover;"
+        xmlns="http://javafx.com/javafx/23.0.1"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
+    <Label style="-fx-font-size: 20px;" text="Login" />
 
-    <Label text="RoboRally – Login" style="-fx-font-size: 20px;"/>
+    <TextField fx:id="nameField" promptText="Dein Name" />
 
-    <TextField fx:id="nameField" promptText="Dein Name"/>
+    <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" />
 
-    <ComboBox fx:id="figureBox" promptText="Spielfigur wählen"/>
-
-    <Button text="Weiter zur Lobby" onAction="#handleLogin"/>
+    <Button onAction="#handleLogin" text="Weiter zur Lobby" />
     <HBox spacing="10">
         <Label text="Host:" />
         <TextField fx:id="hostField" promptText="localhost" />

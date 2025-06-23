@@ -33,7 +33,7 @@ public class Server {
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();
     private final List<Integer> availableFigures = Collections.synchronizedList(new ArrayList<>());
     private final Lobby lobby = new Lobby();
-//    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
+    //    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
     private final List<String> availableMaps = List.of(
             "Dizzy Highway",
@@ -206,8 +206,7 @@ public class Server {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
     }
-    
-    
+
 
     /**
      * Stops the server by closing the server socket and terminating the accept loop.
@@ -469,7 +468,7 @@ public class Server {
      *
      * @return a list of {@link Position} objects representing the positions of all robots
      */
-    public List<Position> getRobotPositions () {
+    public List<Position> getRobotPositions() {
         return clients.keySet().stream().map(handler -> handler.getPlayer().getRobot().getPosition()).toList();
     }
 
