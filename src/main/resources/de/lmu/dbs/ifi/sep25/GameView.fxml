@@ -3,7 +3,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-
 <BorderPane fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
             xmlns:fx="http://javafx.com/fxml" prefWidth="1200" prefHeight="800">
 
@@ -16,7 +15,7 @@
 
     <!-- RECHTE SEITE: Status + Chat -->
     <right>
-        <VBox spacing="10" padding="10">
+        <VBox spacing="10" padding="10 10 10 10">
             <Label fx:id="statusLabel" text="Spiel läuft..." />
             <Separator/>
 
@@ -31,3 +30,4 @@
     </right>
 
 </BorderPane>
+
