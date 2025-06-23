@@ -9,6 +9,10 @@ import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -343,33 +347,31 @@ public class Client {
         String selectedMap = message.messageBody().map();
 
         Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            if (controller != null) {
-                controller.setMapLabel("Gewählte Karte: " + selectedMap);
-                controller.hideMapSelection();  // Optional: danach wieder ausblenden
-                controller.loadAndDisplayPreviewMap(selectedMap);
-            } else {
-                System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelected");
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                Parent root = loader.load();
+                GameController gameController = loader.getController();
+
+                // Map-Datei laden
+               // List<List<List<MessageDefinitions.Field>>> mapData = MapLoader.loadMap(selectedMap);
+
+                // Board zeichnen
+                //gameController.drawBoard(mapData);
+
+                // Szene setzen
+                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
+                stage.setScene(new Scene(root));
+
+            } catch (IOException e) {
+                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
+                e.printStackTrace();
             }
+
         });
 
         //TODO fx display selected map Raneem
     }
 
-    /****/
-    private void handleBodyMapSelectedConfirmation(String json) {
-        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
-        String selectedMap = message.messageBody().map();
-
-        Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            if (controller != null) {
-                controller.setMapLabel("Gewählte Karte: " + selectedMap);
-            } else {
-                System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelectedConfirmation");
-            }
-        });
-    }
 
     /**
      * Handles the event when the body of a game started message is received.
@@ -386,18 +388,35 @@ public class Client {
             energy.put(id, body.energy());
             checkpointsReached.put(id, 0);
         }
-
+        // Speichere Energie & Checkpoints lokal
+        for (Integer id : Server.getInstance().getClients().valueSet()) {
+            energy.put(id, body.energy());
+            checkpointsReached.put(id, 0);
+        }
         //TODO start displaying energy and checkpointsreached
 
 
         List<List<List<Field>>> boardMap = body.gameMap();
 
-        javafx.application.Platform.runLater(() -> {
-            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-            if (lobbyCtrl != null) {
-                lobbyCtrl.handleGameStarted(boardMap);
-            } else {
-                System.err.println("[ERROR] LobbyController ist null – Spielfeld kann nicht angezeigt werden.");
+        Platform.runLater(() -> {
+            try {
+                // Lade GameView
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                Parent root = loader.load();
+                GameController controller = loader.getController();
+
+                // Übergib Spielfeld
+                controller.drawBoard(boardMap);
+
+                // Übergib Energie/Checkpoint-Infos wenn nötig
+                controller.setInitialPlayerStats(energy, checkpointsReached);
+
+                // Wechsle Szene
+                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
+                stage.setScene(new Scene(root));
+            } catch (IOException e) {
+                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
+                e.printStackTrace();
             }
         });
     }
