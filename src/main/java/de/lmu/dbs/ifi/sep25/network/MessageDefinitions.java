@@ -102,11 +102,12 @@ public class MessageDefinitions {
          * @param speed      1 == green | 2 == blue
          **/
         public FieldConveyorBelt(String isOnBoard, Integer speed, List<String> directions) {
+            super(isOnBoard);
             if (directions.size() < 2)
                 throw new IllegalArgumentException("Conveyor requires at least 2 orientations");
             this.speed = speed;
             this.directions = directions;
-            super(isOnBoard);
+
         }
 
         public Integer speed() {
@@ -131,11 +132,12 @@ public class MessageDefinitions {
          * @param registers active on x register
          * **/
         public FieldPushPanel(String isOnBoard, List<String> orientations, List<Integer> registers) {
+            super(isOnBoard);
             if (orientations.isEmpty())
                 throw new IllegalArgumentException("PushPanel requires at least 1 orientation");
             this.orientations = orientations;
             this.registers = registers;
-            super(isOnBoard);
+
         }
 
         public List<String> orientations() {
@@ -159,10 +161,11 @@ public class MessageDefinitions {
          * @param orientations "clockwise" | "counterclockwise"
          * **/
         public FieldGear(String isOnBoard, List<String> orientations) {
+            super(isOnBoard);
             if (orientations.size() != 1)
                 throw new IllegalArgumentException("Gear requires 1 orientation");
             this.orientations = orientations;
-            super(isOnBoard);
+
         }
 
         public List<String> orientations() {
@@ -193,8 +196,9 @@ public class MessageDefinitions {
          * @param count stored energy
          * **/
         public FieldEnergySpace(String isOnBoard, Integer count) {
-            this.count = count;
             super(isOnBoard);
+            this.count = count;
+
         }
 
         public Integer count() {
@@ -214,10 +218,10 @@ public class MessageDefinitions {
          * @param orientations directions which are walled off
          */
         public FieldWall(String isOnBoard, List<String> orientations) {
+            super(isOnBoard);
             if (orientations.isEmpty())
                 throw new IllegalArgumentException("Wall requires at least 1 orientation");
             this.orientations = orientations;
-            super(isOnBoard);
         }
 
         public List<String> orientations() {
@@ -239,13 +243,14 @@ public class MessageDefinitions {
          * @param count laser number count (1-3)
          */
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
+            super(isOnBoard);
             if (orientations.size() == 1)
                 throw new IllegalArgumentException("Laser requires exactly 1 orientation");
             this.orientations = orientations;
             if (count < 1 || count > 3)
                 throw new IllegalArgumentException("Laser requires count between 1 and 3");
             this.count = count;
-            super(isOnBoard);
+
         }
 
         public List<String> orientations() {
@@ -269,10 +274,11 @@ public class MessageDefinitions {
          * @param orientations direction of signal (max size 1)
          * **/
         public FieldAntenna(String isOnBoard, List<String> orientations) {
+            super(isOnBoard);
             if (orientations.size() != 1)
                 throw new IllegalArgumentException("Antenna requires exactly 1 orientation");
             this.orientations = orientations;
-            super(isOnBoard);
+
         }
 
         public List<String> orientations() {
@@ -292,10 +298,11 @@ public class MessageDefinitions {
          * @param count checkpoint number (>0)
          */
         public FieldCheckpoint(String isOnBoard, Integer count) {
+            super(isOnBoard);
             if (count >= 1)
                 throw new IllegalArgumentException("Checkpoint number requires to be positive");
             this.count = count;
-            super(isOnBoard);
+
         }
 
         public Integer count() {
