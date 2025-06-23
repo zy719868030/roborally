@@ -47,6 +47,7 @@ public class ClientHandler implements Runnable {
 
     // 3. State flags
     private volatile boolean alive = true;
+    private volatile boolean mapSelecting = false;
 
     // 4. Game connection
     private Player player;
@@ -244,11 +245,14 @@ public class ClientHandler implements Runnable {
         broadcastMessage(new Message<>(new BodyPlayerStatus(myID, ready)));
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
-            if (ready)
-                if (server.readyIsEmpty())
+            if (ready){
+                if (server.readyIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()){
+                    server.setMapSelectionOngoing(true);
+                    setMapSelecting(true);
                     sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
-                else
-                    server.markReady(this);
+                }
+                server.markReady(this);
+            }
             else
                 server.unmarkReady(this);
         }
@@ -267,11 +271,9 @@ public class ClientHandler implements Runnable {
         String map = message.messageBody().map();
 
         broadcastMessage(new Message<>(new BodyMapSelected(map)));
+        server.setMapSelectionOngoing(false);
+        setMapSelecting(false);
         server.newGame(map);
-        // Starte Spiel automatisch, wenn alle bereit sind
-        if (server.getLobby().allReady()) {
-            server.startGame();
-        }
     }
 
     /**
@@ -554,5 +556,12 @@ public class ClientHandler implements Runnable {
         return myID;
     }
 
+    public boolean isMapSelecting() {
+        return mapSelecting;
+    }
+
+    public void setMapSelecting(boolean mapSelecting) {
+        this.mapSelecting = mapSelecting;
+    }
 }
 

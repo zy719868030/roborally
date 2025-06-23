@@ -4,6 +4,7 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.*;
 
@@ -274,6 +275,17 @@ public class PushPanel extends BoardElement {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Converts the PushPanel into its corresponding field representation.
+     *
+     * @return A MessageDefinitions.FieldPushPanel object that represents the push panel,
+     *         including its board identifier, direction, and active register configurations.
+     */
+    @Override
+    public MessageDefinitions.FieldPushPanel toField() {
+        return new MessageDefinitions.FieldPushPanel(boardId, List.of(direction.toString()), activeRegisters);
     }
 
 //    /**

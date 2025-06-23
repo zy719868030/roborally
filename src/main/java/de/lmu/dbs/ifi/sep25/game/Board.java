@@ -1,8 +1,10 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
-import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,12 @@ import java.util.Map;
  * The Board class manages the layout, positions of robots, and special tiles.
  */
 public class Board {
+    // Serialization
+    private final Gson mapGson =  new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .setPrettyPrinting()
+            .create();
+
     //private final List<BoardElement>[][] grid;
     private final Tile[][] grid;
     private final int width;
@@ -436,21 +444,32 @@ public class Board {
      *
      * @return A three-dimensional list representing the serialized state of the board.
      */
-
-
-    public List<List<List<BoardElement>>> toSerializableMap() {
-        List<List<List<BoardElement>>> map = new ArrayList<>();
+    private List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
+        List<List<List<MessageDefinitions.Field>>> map = new ArrayList<>();
         for (int x = 0; x < grid.length; x++) {
-            List<List<BoardElement>> col = new ArrayList<>();
+            List<List<MessageDefinitions.Field>> col = new ArrayList<>();
             for (int y = 0; y < grid[0].length; y++) {
-                //Tile tile = grid[x][y]; //FIXME will be fixed when board is fixed.... Also attributes isOnBoard, orientations
-                //col.add(tile == null ? null : tile.getElements());
+                Tile tile = grid[x][y];
 
-                col.add(grid[x][y].toSerializableList());
+                if (tile == null) {
+                    col.add(null);
+                } else {
+                    col.add(grid[x][y].toSerializableList().stream().map(BoardElement::toField).toList());
+                }
             }
             map.add(col);
         }
         return map;
+    }
+
+    /**
+     * Serializes the current state of the board into a JSON-formatted message.
+     * The resulting message includes metadata and the serialized map representation of the board.
+     *
+     * @return A JSON string representing the serialized board as a message.
+     */
+    public String getSerializedBoardAsMessage() {
+        return mapGson.toJson(new MessageDefinitions.Message<>(new MessageDefinitions.BodyGameStarted(5, toSerializableMap())));
     }
 
     /**

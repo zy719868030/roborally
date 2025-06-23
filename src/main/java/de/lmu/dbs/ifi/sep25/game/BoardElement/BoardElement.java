@@ -1,9 +1,10 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
+import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
-import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 public abstract class BoardElement {
     protected Position position;
@@ -15,6 +16,7 @@ public abstract class BoardElement {
     public BoardElement() {
         this.boardId = null; // Temporary: Allows Reboot to compile
     }
+
     public BoardElement(String boardId) {
 
         this.boardId = boardId;
@@ -59,7 +61,6 @@ public abstract class BoardElement {
         return boardId;
     }
 
-
     /**
      * Effect activated when the robot enters the square where the element is located.
      * Specific behaviour is implemented by the subclass.
@@ -80,11 +81,19 @@ public abstract class BoardElement {
      */
     public abstract boolean canPassThrough(Robot robot);
 
-
     /**
      * Get the type of the element.
      *
      * @return String representation of the element type.
      */
     public abstract String getType();
+
+    // for protocol compliance
+    /**
+     * Converts the board element to a representation suitable for message definitions.
+     *
+     * @return A field representation of the board element, as defined in MessageDefinitions.
+     */
+    public abstract MessageDefinitions.Field toField();
+
 }

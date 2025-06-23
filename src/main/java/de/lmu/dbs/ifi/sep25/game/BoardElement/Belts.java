@@ -4,12 +4,12 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
-
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a conveyor belt element on the game board.
@@ -518,4 +518,19 @@ public class Belts extends BoardElement {
 
         return sb.toString();
     }
+
+    /**
+     * Converts the conveyor belt instance into a FieldConveyorBelt representation.
+     *
+     * @return A {@code MessageDefinitions.FieldConveyorBelt} object containing the conveyor belt's board ID, speed,
+     *         and the concatenated list of exit and entry direction strings.
+     */
+    @Override
+    public MessageDefinitions.FieldConveyorBelt toField() {
+        return new MessageDefinitions.FieldConveyorBelt(boardId, speed.getValue(), Stream.concat(
+                Stream.of(outDirections.getFirst().toString()),
+                inDirections.stream().map(Direction::toString)
+        ).collect(Collectors.toList()));
+    }
+
 }

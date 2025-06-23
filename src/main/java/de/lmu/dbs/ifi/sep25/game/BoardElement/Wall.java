@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -162,4 +163,17 @@ public class Wall extends BoardElement {
 
         return sb.toString();
     }
+
+    /**
+     * Converts the current Wall object to a FieldWall object representation.
+     * This includes the board ID and a list of blocked directions as strings.
+     *
+     * @return a FieldWall object containing the board ID and the blocked directions of the wall.
+     */
+    @Override
+    public MessageDefinitions.FieldWall toField() {
+        return new MessageDefinitions.FieldWall(boardId, blockedDirections.stream().map(Direction::toString).toList());
+    }
+
+
 }

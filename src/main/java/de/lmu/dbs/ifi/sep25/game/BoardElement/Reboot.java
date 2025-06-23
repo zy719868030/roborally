@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 
 public class Reboot extends BoardElement {
@@ -121,6 +122,18 @@ public class Reboot extends BoardElement {
     public String toString() {
             return "Reboot point at " + (position != null ? position.toString() : "unspecified position") +
                     (isOnBoard ? " on board " + boardId : " not on any board");
+    }
+
+    /**
+     * Converts the current Reboot instance to its corresponding
+     * FieldRestartPoint representation.
+     *
+     * @return A new instance of MessageDefinitions.FieldRestartPoint that
+     *         represents the restart point associated with the Reboot instance.
+     */
+    @Override
+    public MessageDefinitions.FieldRestartPoint toField() {
+        return new MessageDefinitions.FieldRestartPoint(boardId);
     }
 }
 

@@ -15,7 +15,7 @@ public class JsonUtil {
 
     static {
         gson2 = new GsonBuilder()
-                .registerTypeAdapter(BoardElement.class, new BoardElementDeserializer())
+                .registerTypeAdapter(BoardElement.class, new FieldDeserializer())
                 .setPrettyPrinting()
                 .create();
     }
@@ -37,12 +37,4 @@ public class JsonUtil {
         }.getType());
     }
 
-
-    public static String toJson(Object obj) {
-        return gson2.toJson(obj);
-    }
-
-    public static <T> T fromJson(String json, Class<T> clazz) {
-        return gson2.fromJson(json, clazz);
-    }
 }

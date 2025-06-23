@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -179,4 +180,15 @@ public class CheckPoints extends BoardElement {
         return "CheckPoint " + number + " at " + position +
                 (isOnBoard ? " on board " + boardId : " not on any board");
     }
+
+    /**
+     * Converts the current `CheckPoints` instance to a `MessageDefinitions.FieldCheckpoint` object.
+     *
+     * @return A new `MessageDefinitions.FieldCheckpoint` instance populated with the `boardId` and `number` fields of the current `CheckPoints` object.
+     */
+    @Override
+    public MessageDefinitions.FieldCheckpoint toField() {
+        return new MessageDefinitions.FieldCheckpoint(boardId, number);
+    }
+
 }

@@ -300,10 +300,10 @@ public class Player {
     }
 
     public void setReady(boolean ready) {
-       // this.ready = ready;
-       // if (connection != null) {
-          //  connection.sendMessage("Player " + name + " ready: " + ready);
-      //  }
+        this.ready = ready;
+        if (connection != null) {
+            connection.sendMessage("Player " + name + " ready: " + ready);
+        }
     }
 
     public boolean isReady() {

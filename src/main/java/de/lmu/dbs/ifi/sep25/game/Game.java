@@ -4,16 +4,12 @@ import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
+import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
-import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
-
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Antenna;
 import de.lmu.dbs.ifi.sep25.network.Server;
 
 import java.util.*;
@@ -180,10 +176,7 @@ public class Game {
                     new MessageDefinitions.BodyMapSelected(mapName)
             ));
             //Use convertToBoardElementMap for BodyGameStarted
-            List<List<List<BoardElement>>> gameMap = board.toSerializableMap();
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyGameStarted(5, gameMap)
-            ));
+            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
         }
         startGameLoop();
     }
@@ -500,10 +493,7 @@ public class Game {
                     new MessageDefinitions.BodyMapSelected(selectedMap)
             ));
             if (board != null) {
-                List<List<List<BoardElement>>> gameMap = board.toSerializableMap();
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyGameStarted(5, gameMap)
-                ));
+                player.getConnection().sendMessage(board.getSerializedBoardAsMessage());
 
             }
         }

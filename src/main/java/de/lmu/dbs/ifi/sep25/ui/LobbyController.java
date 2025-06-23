@@ -13,6 +13,8 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -35,6 +37,9 @@ import java.io.IOException;
 
 // Für Typinformationen
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 
@@ -427,5 +432,16 @@ public class LobbyController {
     }
 
 
+    public void renamePlayer(int clientID, String newName) { //@SEBAS
+        for (PlayerEntry p : players) {
+            if (p.getClientID() == clientID) {
+                p.setName(newName + (clientID == ClientSingleton.getInstance().getID() ? " (du)" : ""));
+                playerList.refresh();
+                break;
+            }
 
+}
+
+
+    }
 }

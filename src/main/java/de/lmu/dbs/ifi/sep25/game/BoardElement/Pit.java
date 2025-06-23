@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 /**
  * Represents a pit element on the game board.
@@ -120,5 +121,15 @@ public class Pit extends BoardElement {
     @Override
     public String toString() {
         return "Pit at " + position + (isOnBoard ? " on board " + boardId : " not on any board");
+    }
+
+    /**
+     * Converts the pit information into a FieldPit message definition.
+     *
+     * @return A FieldPit message definition representing the pit on the board.
+     */
+    @Override
+    public MessageDefinitions.FieldPit toField() {
+        return new MessageDefinitions.FieldPit(boardId);
     }
 }

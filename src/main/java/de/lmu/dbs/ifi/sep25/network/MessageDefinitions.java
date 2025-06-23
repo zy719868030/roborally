@@ -1,6 +1,6 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
@@ -53,11 +53,274 @@ public class MessageDefinitions {
     public record BodyMapSelected(String map) {
     }
 
-    public record BodyGameStarted(Integer energy, List<List<List<BoardElement>>> gameMap) {
+    public record BodyGameStarted(Integer energy, List<List<List<Field>>> gameMap) {
+    }
+
+    public static abstract class Field {
+        private final String isOnBoard;
+
+        public Field(String isOnBoard) {
+            this.isOnBoard = isOnBoard;
+        }
+
+        public String isOnBoard() {
+            return isOnBoard;
+        }
+
+        @SerializedName("type")
+        public abstract String getType(); // virtual field for JSON
+    }
+
+    public static class FieldEmpty extends Field {
+        public FieldEmpty(String isOnBoard) {
+            super(isOnBoard);
+        }
+
+        @Override
+        public String getType() {
+            return "Empty";
+        }
+    }
+
+    public static class FieldStartPoint extends Field {
+        public FieldStartPoint(String isOnBoard) {
+            super(isOnBoard);
+        }
+
+        @Override
+        public String getType() {
+            return "StartPoint";
+        }
+    }
+
+    public static class FieldConveyorBelt extends Field {
+        private final Integer speed;
+        private final List<String> directions;
+
+        /**
+         * @param directions minimum of 2 directions: first directions is the push direction, rest are pull directions
+         * @param speed      1 == green | 2 == blue
+         **/
+        public FieldConveyorBelt(String isOnBoard, Integer speed, List<String> directions) {
+            if (directions.size() < 2)
+                throw new IllegalArgumentException("Conveyor requires at least 2 orientations");
+            this.speed = speed;
+            this.directions = directions;
+            super(isOnBoard);
+        }
+
+        public Integer speed() {
+            return speed;
+        }
+
+        public List<String> directions() {
+            return directions;
+        }
+
+        @Override
+        public String getType() {
+            return "ConveyorBelt";
+        }
+    }
+
+    public static class FieldPushPanel extends Field {
+        private final List<String> orientations;
+        private final List<Integer> registers;
+
+        /**
+         * @param registers active on x register
+         * **/
+        public FieldPushPanel(String isOnBoard, List<String> orientations, List<Integer> registers) {
+            if (orientations.isEmpty())
+                throw new IllegalArgumentException("PushPanel requires at least 1 orientation");
+            this.orientations = orientations;
+            this.registers = registers;
+            super(isOnBoard);
+        }
+
+        public List<String> orientations() {
+            return orientations;
+        }
+
+        public List<Integer> registers() {
+            return registers;
+        }
+
+        @Override
+        public String getType() {
+            return "PushPanel";
+        }
+    }
+
+    public static class FieldGear extends Field {
+        private final List<String> orientations;
+
+        /**
+         * @param orientations "clockwise" | "counterclockwise"
+         * **/
+        public FieldGear(String isOnBoard, List<String> orientations) {
+            if (orientations.size() != 1)
+                throw new IllegalArgumentException("Gear requires 1 orientation");
+            this.orientations = orientations;
+            super(isOnBoard);
+        }
+
+        public List<String> orientations() {
+            return orientations;
+        }
+
+        @Override
+        public String getType() {
+            return "Gear";
+        }
+    }
+
+    public static class FieldPit extends Field {
+        public FieldPit(String isOnBoard) {
+            super(isOnBoard);
+        }
+
+        @Override
+        public String getType() {
+            return "Pit";
+        }
+    }
+
+    public static class FieldEnergySpace extends Field {
+        private final Integer count;
+
+        /**
+         * @param count stored energy
+         * **/
+        public FieldEnergySpace(String isOnBoard, Integer count) {
+            this.count = count;
+            super(isOnBoard);
+        }
+
+        public Integer count() {
+            return count;
+        }
+
+        @Override
+        public String getType() {
+            return "Energy-Space";
+        }
+    }
+
+    public static class FieldWall extends Field {
+        private final List<String> orientations;
+
+        /**
+         * @param orientations directions which are walled off
+         */
+        public FieldWall(String isOnBoard, List<String> orientations) {
+            if (orientations.isEmpty())
+                throw new IllegalArgumentException("Wall requires at least 1 orientation");
+            this.orientations = orientations;
+            super(isOnBoard);
+        }
+
+        public List<String> orientations() {
+            return orientations;
+        }
+
+        @Override
+        public String getType() {
+            return "Wall";
+        }
+    }
+
+    public static class FieldLaser extends Field {
+        private final Integer count;
+        private final List<String> orientations;
+
+        /**
+         * @param orientations direction in which laser faces
+         * @param count laser number count (1-3)
+         */
+        public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
+            if (orientations.size() == 1)
+                throw new IllegalArgumentException("Laser requires exactly 1 orientation");
+            this.orientations = orientations;
+            if (count < 1 || count > 3)
+                throw new IllegalArgumentException("Laser requires count between 1 and 3");
+            this.count = count;
+            super(isOnBoard);
+        }
+
+        public List<String> orientations() {
+            return orientations;
+        }
+
+        public Integer count() {
+            return count;
+        }
+
+        @Override
+        public String getType() {
+            return "Laser";
+        }
+    }
+
+    public static class FieldAntenna extends Field {
+        private final List<String> orientations;
+
+        /**
+         * @param orientations direction of signal (max size 1)
+         * **/
+        public FieldAntenna(String isOnBoard, List<String> orientations) {
+            if (orientations.size() != 1)
+                throw new IllegalArgumentException("Antenna requires exactly 1 orientation");
+            this.orientations = orientations;
+            super(isOnBoard);
+        }
+
+        public List<String> orientations() {
+            return orientations;
+        }
+
+        @Override
+        public String getType() {
+            return "Antenna";
+        }
+    }
+
+    public static class FieldCheckpoint extends Field {
+        private final Integer count;
+
+        /**
+         * @param count checkpoint number (>0)
+         */
+        public FieldCheckpoint(String isOnBoard, Integer count) {
+            if (count >= 1)
+                throw new IllegalArgumentException("Checkpoint number requires to be positive");
+            this.count = count;
+            super(isOnBoard);
+        }
+
+        public Integer count() {
+            return count;
+        }
+
+        @Override
+        public String getType() {
+            return "Checkpoint";
+        }
+    }
+
+    public static class FieldRestartPoint extends Field {
+        public FieldRestartPoint(String isOnBoard) {
+            super(isOnBoard);
+        }
+
+        @Override
+        public String getType() {
+            return "RestartPoint";
+        }
     }
 
     public record BodySendChat(String message, Integer to) {
-    } //public with to = -1
+    }
 
     public record BodyReceivedChat(String message, Integer from, Boolean isPrivate) {
     }
@@ -142,5 +405,6 @@ public class MessageDefinitions {
 
     public record BodyGameFinished(Integer clientID) {
     }
+    public record BodyPlayerRenamed(int clientID, String newName) {}//@SEBAS
 
 }

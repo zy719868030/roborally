@@ -3,11 +3,9 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents the gear element on the game board.
@@ -18,7 +16,15 @@ public class Gear extends BoardElement {
 
     public enum RotationDirection {
         CLOCKWISE,
-        COUNTERCLOCKWISE
+        COUNTERCLOCKWISE;
+
+        @Override
+        public String toString() {
+            return switch (this) {
+                case CLOCKWISE -> "clockwise";
+                case COUNTERCLOCKWISE -> "counterclockwise";
+            };
+        }
     }
 
     public enum GearColor {
@@ -176,6 +182,17 @@ public class Gear extends BoardElement {
                 " gear at " + position +
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", rotation: " + (rotationDirection == RotationDirection.CLOCKWISE ? "clockwise" : "counterclockwise");
+    }
+
+    /**
+     * Converts the current Gear object into a FieldGear representation.
+     * The FieldGear object encapsulates the board ID and the rotation direction of the gear.
+     *
+     * @return a MessageDefinitions.FieldGear object containing the board ID and rotation direction of the gear.
+     */
+    @Override
+    public MessageDefinitions.FieldGear toField() {
+        return new MessageDefinitions.FieldGear(boardId, List.of(rotationDirection.toString()));
     }
 
 //    /**

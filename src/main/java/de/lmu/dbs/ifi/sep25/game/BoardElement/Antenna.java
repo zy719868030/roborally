@@ -3,10 +3,11 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 
 /**
@@ -150,6 +151,18 @@ public class Antenna extends BoardElement {
         return "Antenna at " + position +
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", direction: " + direction.getName();
+    }
+
+    /**
+     * Converts the current Antenna object to a FieldAntenna representation.
+     * This method is used for serializing the antenna information for message definitions.
+     *
+     * @return A new instance of MessageDefinitions.FieldAntenna containing the board ID
+     *         and a list representation of the antenna's direction.
+     */
+    @Override
+    public MessageDefinitions.FieldAntenna toField() {
+        return new MessageDefinitions.FieldAntenna(boardId, List.of(direction.toString()));
     }
 
 //    /**

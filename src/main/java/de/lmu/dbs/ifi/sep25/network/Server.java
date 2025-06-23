@@ -49,6 +49,7 @@ public class Server {
     // 4. State flags
     private volatile boolean running = true;
     private final int minPlayer;
+    private volatile boolean mapSelectionOngoing = false;
 
     // 5. Game logic
     private Game game;
@@ -155,6 +156,31 @@ public class Server {
     }
 
     /**
+     * Broadcasts a message to all connected clients. If a client cannot receive the message,
+     * it will be removed from the clients list, and an error response will be sent to that client
+     * before closing its connection.
+     *
+     * @param message the message to be broadcasted to all connected clients
+     */
+    public void broadcastMessage(String message) {
+        try {
+            clients.keySet().removeIf(handler -> {
+                try {
+                    handler.sendMessage(message);
+                    return false;
+                } catch (Exception e) {
+                    System.err.println("Removing client due to send failure: " + e.getMessage());
+                    handler.sendMessage(new Message<>(new BodyError("Failed to send message.")));
+                    handler.closeAll();
+                    return true;
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
+        }
+    }
+
+    /**
      * Broadcasts a message to all connected clients except the specified client handler.
      * If a client cannot receive the message, it will be removed from the clients list, and an
      * error response will be sent to that client before closing its connection.
@@ -207,6 +233,10 @@ public class Server {
         releaseFigure(figures.getByKey(clientHandler));
         lobby.remove(clientHandler);
         unmarkReady(clientHandler);
+        if (clientHandler.isMapSelecting()) {
+            setMapSelectionOngoing(false);
+            getFirstReadyClient().sendMessage(new Message<>(new BodySelectMap(availableMaps)));
+        }
         broadcastMessage(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false)));
         System.out.println("Client disconnected.");
     }
@@ -304,22 +334,34 @@ public class Server {
      * @return a unique name based on the provided base name
      */
     public synchronized String generateUniqueName(String baseName) {
-        Collection<String> existingNames = getNames().values();
+        Collection<String> existingNames = names.values();
 
         if (!existingNames.contains(baseName)) {
             return baseName;
         }
 
+        for (Map.Entry<ClientHandler, String> entry : names.entrySet()) {
+            if (entry.getValue().equals(baseName)) {
+                names.put(entry.getKey(), baseName + "#1");
+
+                Message<BodyPlayerRenamed> renameMsg = new Message<>(new BodyPlayerRenamed(
+                        clients.getByKey(entry.getKey()),
+                        baseName + "#1"
+                ));
+                broadcastMessage(renameMsg);
+                break;
+            }
+        }
+
         int suffix = 2;
-        String candidate;
-
+        String newName;
         do {
-            candidate = baseName + "#" + suffix;
-            suffix++;
-        } while (existingNames.contains(candidate));
+            newName = baseName + "#" + suffix++;
+        } while (existingNames.contains(newName));
 
-        return candidate;
+        return newName;
     }
+
 
     /**
      * Returns the client handler assigned to the given figure number.
@@ -356,7 +398,23 @@ public class Server {
      * @param handler the client handler to mark as ready
      */
     public synchronized void markReady(ClientHandler handler) {
+        // DEBUG
+//        System.out.println("Client " + names.get(handler)+ " marked as ready.");
+//        if (game == null) {
+//            System.out.println("Game not initialized yet.");
+//        }
+//        if (lobby.size() < minPlayer) {
+//            System.out.println("Not enough players to start game.");
+//        }
+//        if (!lobby.allReady()){
+//            System.out.println("Not all players are ready yet.");
+//        }
+//        for (ClientHandler client : lobby.getClients()) {
+//            System.out.println("Client " + names.get(client) + " is ready: " + client.getPlayer().isReady());
+//        }
+
         readyOrder.add(handler);
+
         if (lobby.allReady() && game != null) {
             startGame();
         }
@@ -372,14 +430,20 @@ public class Server {
     }
 
     /**
-     * Returns the first client handler in the ready order.
+     * Retrieves the first client that is marked as ready from the ready order
+     * set and removes it from the set.
      *
-     * @return the first ready client handler
-     * @throws IllegalStateException if no players are currently ready
+     * @return the first {@link ClientHandler} in the ready order set
+     * @throws IllegalStateException if no clients are marked as ready
      */
     public synchronized ClientHandler getFirstReadyClient() {
-        return readyOrder.stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No players are ready."));
+        Iterator<ClientHandler> iterator = readyOrder.iterator();
+        if (!iterator.hasNext()) {
+            throw new IllegalStateException("No players are ready.");
+        }
+        ClientHandler first = iterator.next();
+        iterator.remove();
+        return first;
     }
 
     /**
@@ -416,6 +480,7 @@ public class Server {
      * @param mapName the name of the map to use for the new game
      */
     public void newGame(String mapName) {
+        System.out.println("Creating new game with map " + mapName + "...");
         this.game = Game.getInstance(mapName);
         for (ClientHandler client : clients.keySet()) {
             game.addPlayer(client.getPlayer());
@@ -429,9 +494,9 @@ public class Server {
      * Starts the game and broadcasts a game start message to all players.
      */
     public void startGame() {
+        System.out.println("Starting game...");
         resetReadyRegister();
-        Message<BodyGameStarted> message = new Message<>(new BodyGameStarted(5, game.getBoard().toSerializableMap()));
-        broadcastMessage(message);
+        broadcastMessage(game.getBoard().getSerializedBoardAsMessage());
     }
 
     /**
@@ -503,4 +568,11 @@ public class Server {
         return figures;
     }
 
+    public synchronized boolean isMapSelectionOngoing() {
+        return mapSelectionOngoing;
+    }
+
+    public synchronized void setMapSelectionOngoing(boolean mapSelectionOngoing) {
+        this.mapSelectionOngoing = mapSelectionOngoing;
+    }
 }
