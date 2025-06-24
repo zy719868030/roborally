@@ -47,6 +47,17 @@ public class Client {
     private final Map<Integer, Integer> energy = new HashMap<>();
     private final Map<Integer, Integer> checkpointsReached = new HashMap<>();
 
+    private List<List<List<MessageDefinitions.Field>>> currentGameMap;
+
+    public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
+        this.currentGameMap = map;
+    }
+
+    public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
+        return currentGameMap;
+    }
+
+
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -138,6 +149,7 @@ public class Client {
                     }
                 } catch (Exception e) {
                     System.err.println("[ERROR] Error handling message: " + e.getMessage());
+                    System.err.println("[ERROR] Message: " + json);
                     e.printStackTrace();
                 }
             }
@@ -347,39 +359,31 @@ public class Client {
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
 
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-                Parent root = loader.load();
-                GameController gameController = loader.getController();
+        System.out.println("[SERVER] Map selected: " + selectedMap); //DEBUG
 
-                // Hol die ECHTE Map aus dem Game-Objekt
-                List<List<List<MessageDefinitions.Field>>> boardMap =
-                        ClientSingleton.getInstance().getCurrentGameMap(); // ← Du brauchst so eine Methode!
-
-                //  Falls  Zugriff erfolgreich, echte Map zeichnen
-                gameController.drawBoard(boardMap);
-
-                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
-
-            } catch (IOException e) {
-                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
+//        Platform.runLater(() -> {
+//            try {
+//                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+//                Parent root = loader.load();
+//                GameController gameController = loader.getController();
+//
+//                // Hol die ECHTE Map aus dem Game-Objekt
+//                List<List<List<MessageDefinitions.Field>>> boardMap =
+//                        ClientSingleton.getInstance().getCurrentGameMap(); // ← Du brauchst so eine Methode!
+//
+//                //  Falls  Zugriff erfolgreich, echte Map zeichnen
+//                gameController.drawBoard(boardMap);
+//
+//                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
+//                stage.setScene(new Scene(root));
+//                stage.show();
+//
+//            } catch (IOException e) {
+//                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//        });
     }
-    private List<List<List<MessageDefinitions.Field>>> currentGameMap;
-
-    public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
-        this.currentGameMap = map;
-    }
-
-    public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
-        return currentGameMap;
-    }
-
 
     /**
      * Handles the event when the body of a game started message is received.
@@ -398,7 +402,7 @@ public class Client {
             energy.put(id, body.energy());
             checkpointsReached.put(id, 0);
         }
-        // Speichere Energie & Checkpoints lokal start displaying energy and checkpointsreached
+        // Speichere Energie & Checkpoints lokal start displaying energy and checkpoints reached
         for (Integer id : Server.getInstance().getClients().valueSet()) {
             energy.put(id, body.energy());
             checkpointsReached.put(id, 0);

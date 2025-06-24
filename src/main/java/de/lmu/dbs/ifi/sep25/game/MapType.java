@@ -1,26 +1,55 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Enum representing the different types of maps available in the game.
+ * Each map type corresponds to a specific board layout and associated game elements.
+ * <p>
+ * The enum provides a default map type labeled as "Dizzy Highway" and a series of
+ * numbered maps for customization or varying game scenarios. The map names are intended
+ * to be unique identifiers for board configuration and usage within the game logic.
+ */
 public enum MapType {
-    MAP1, MAP2, MAP3, MAP4, MAP5;
+    DIZZY_HIGHWAY, EXTRA_CRISPY, LOST_BEARINGS, DEATH_TRAP;
+
+    //TODO @prajal add string conversion to your map types
+    public String toString() {
+        return switch (this) {
+            case DIZZY_HIGHWAY -> "Dizzy Highway";
+            case EXTRA_CRISPY -> "Extra Crispy";
+            case LOST_BEARINGS -> "Lost Bearings";
+            case DEATH_TRAP -> "Death Trap";
+        };
+    }
+
+    public static MapType fromString(String mapName) {
+        return switch (mapName.toLowerCase()) {
+            case "dizzy highway" ->  DIZZY_HIGHWAY;
+            case "extra crispy" -> EXTRA_CRISPY;
+            case "lost bearings" -> LOST_BEARINGS;
+            case "death trap" -> DEATH_TRAP;
+            default -> throw new IllegalArgumentException("Unknown map name: " + mapName);
+        };
+    }
+}
 
 
-    // Initializes the board with the specified map's layout
-    public void loadMap(Board board) {
-        // Clear current board
-        List<BoardElement>[][] grid = (List<BoardElement>[][]) board.getGrid();
-        int width = board.getWidth();
-        int height = board.getHeight();
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                grid[x][y] = new ArrayList<>();
-                grid[x][y].add(Floor.getInstance());
-            }
-        }}
+
+//public enum MapType {
+//    MAP1, MAP2, MAP3, MAP4, MAP5;
+//
+//
+//    // Initializes the board with the specified map's layout
+//    public void loadMap(Board board) {
+//        // Clear current board
+//        List<BoardElement>[][] grid = (List<BoardElement>[][]) board.getGrid();
+//        int width = board.getWidth();
+//        int height = board.getHeight();
+//        for (int x = 0; x < width; x++) {
+//            for (int y = 0; y < height; y++) {
+//                grid[x][y] = new ArrayList<>();
+//                grid[x][y].add(Floor.getInstance());
+//            }
+//        }}
 /*
         switch (this) {
             case MAP1:
@@ -83,4 +112,3 @@ public enum MapType {
         // Fallback (should never reach here)
         return new Position[] { new Position(0, 0) };
     } */
-}

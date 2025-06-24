@@ -1,8 +1,11 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.Board.*;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DeathTrap implements GameMap {
     private final List<BoardElement> elements = new ArrayList<>();
@@ -39,7 +42,7 @@ public class DeathTrap implements GameMap {
         outDirs.add(Direction.SOUTH);
         List<Direction> inDirs = new ArrayList<>();
         inDirs.add(Direction.EAST);
-        elements.add(new Belts(new Position(5, 7), outDirs, inDirs, Belts.BeltSpeed.SLOW, "DT1"));
+//        elements.add(new Belts(new Position(5, 7), outDirs, inDirs, Belts.BeltSpeed.SLOW, "DT1"));
         elements.add(new CheckPoints(new Position(6, 8), 1, "DT1"));
         elements.add(new Laser(new Position(7, 6), Direction.NORTH, 1, "DT1"));
         elements.add(new Pit(new Position(5, 9), "DT1"));

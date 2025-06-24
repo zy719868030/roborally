@@ -1,8 +1,11 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.game.Board.*;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ExtraCrispy implements GameMap {
     private final List<BoardElement> elements = new ArrayList<>();
@@ -39,7 +42,7 @@ public class ExtraCrispy implements GameMap {
         outDirs.add(Direction.NORTH);
         List<Direction> inDirs = new ArrayList<>();
         inDirs.add(Direction.WEST);
-        elements.add(new Belts(new Position(4, 5), outDirs, inDirs, Belts.BeltSpeed.FAST, "EC1"));
+//        elements.add(new Belts(new Position(4, 5), outDirs, inDirs, Belts.BeltSpeed.FAST, "EC1"));
         elements.add(new CheckPoints(new Position(3, 6), 1, "EC1"));
         elements.add(new Laser(new Position(2, 5), Direction.SOUTH, 1, "EC1"));
         elements.add(new Pit(new Position(1, 7), "EC1"));

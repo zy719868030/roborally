@@ -244,7 +244,7 @@ public class MessageDefinitions {
          */
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
             super(isOnBoard);
-            if (orientations.size() == 1)
+            if (orientations.size() != 1)
                 throw new IllegalArgumentException("Laser requires exactly 1 orientation");
             this.orientations = orientations;
             if (count < 1 || count > 3)
@@ -299,7 +299,7 @@ public class MessageDefinitions {
          */
         public FieldCheckpoint(String isOnBoard, Integer count) {
             super(isOnBoard);
-            if (count >= 1)
+            if (count < 1)
                 throw new IllegalArgumentException("Checkpoint number requires to be positive");
             this.count = count;
 
