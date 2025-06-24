@@ -359,30 +359,8 @@ public class Client {
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
 
-        System.out.println("[SERVER] Map selected: " + selectedMap); //DEBUG
+        System.out.println("[SERVER] Map selected: " + selectedMap);
 
-//        Platform.runLater(() -> {
-//            try {
-//                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-//                Parent root = loader.load();
-//                GameController gameController = loader.getController();
-//
-//                // Hol die ECHTE Map aus dem Game-Objekt
-//                List<List<List<MessageDefinitions.Field>>> boardMap =
-//                        ClientSingleton.getInstance().getCurrentGameMap(); // ← Du brauchst so eine Methode!
-//
-//                //  Falls  Zugriff erfolgreich, echte Map zeichnen
-//                gameController.drawBoard(boardMap);
-//
-//                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
-//                stage.setScene(new Scene(root));
-//                stage.show();
-//
-//            } catch (IOException e) {
-//                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
-//                e.printStackTrace();
-//            }
-//        });
     }
 
     /**
@@ -393,44 +371,46 @@ public class Client {
      * @param json The JSON string representing the game started message.
      */
     private void handleBodyGameStarted(String json) {
-
-
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
 
-        for (Integer id : Server.getInstance().getClients().valueSet()) {
-            energy.put(id, body.energy());
-            checkpointsReached.put(id, 0);
-        }
-        // Speichere Energie & Checkpoints lokal start displaying energy and checkpoints reached
-        for (Integer id : Server.getInstance().getClients().valueSet()) {
-            energy.put(id, body.energy());
-            checkpointsReached.put(id, 0);
-        }
-
-
-
+        // BoardMap vom Server holen
         List<List<List<Field>>> boardMap = body.gameMap();
+        if (boardMap == null || boardMap.isEmpty()) {
+            System.err.println("[ERROR] Empfangenes boardMap ist null oder leer!");
+            return;
+        }
+
+        // Energie und Checkpoints initialisieren
+        for (Integer id : Server.getInstance().getClients().valueSet()) {
+            energy.put(id, body.energy());
+            checkpointsReached.put(id, 0);
+        }
+
+        // Lokale Map speichern (z.B. in ClientSingleton oder deiner eigenen Struktur)
         this.setCurrentGameMap(boardMap);
+
         System.out.println("[DEBUG] handleBodyGameStarted aufgerufen");
-        System.out.println("Map size X: " + boardMap.size());
-        System.out.println("Map size Y: " + boardMap.get(0).size());
+        System.out.println("Map-Größe: " + boardMap.size() + " × " + boardMap.get(0).size());
+
+        // Szenewechsel zur GameView
         Platform.runLater(() -> {
             try {
-                // Lade GameView
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
                 Parent root = loader.load();
                 GameController controller = loader.getController();
 
-                // Übergib Spielfeld
-                controller.drawBoard(boardMap);
+                // Optional: Im Controller-Registry speichern
+                ControllerRegistry.setGameController(controller);
 
-                // Übergib Energie/Checkpoint-Infos wenn nötig
+                controller.drawBoard(boardMap);
                 controller.setInitialPlayerStats(energy, checkpointsReached);
 
-                // Wechsle Szene
+                // Szene wechseln
                 Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
                 stage.setScene(new Scene(root));
+                stage.show();
+
             } catch (IOException e) {
                 System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
                 e.printStackTrace();
@@ -438,24 +418,25 @@ public class Client {
         });
     }
 
+
     /**
-     * Handles a "BodyReceivedChat" message from the server.
-     *
-     * <p>This method processes an incoming JSON string representing a chat message
-     * by deserializing it into a {@code BodyReceivedChat} object. Based on the
-     * message details, it displays the appropriate chat content in the console:
-     * <ul>
-     *   <li>Private messages are displayed as whispers.</li>
-     *   <li>Messages from the server (identified by a {@code from} value of 0)
-     *       are prefixed with “[SERVER]”.</li>
-     *   <li>Public messages from other users display their usernames, resolved
-     *       with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.</li>
-     * </ul>
-     *
-     * <p>Messages sent by the current user (identified by {@code ID}) are ignored.
-     *
-     * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
-     */
+                 * Handles a "BodyReceivedChat" message from the server.
+                 *
+                 * <p>This method processes an incoming JSON string representing a chat message
+                 * by deserializing it into a {@code BodyReceivedChat} object. Based on the
+                 * message details, it displays the appropriate chat content in the console:
+                 * <ul>
+                 *   <li>Private messages are displayed as whispers.</li>
+                 *   <li>Messages from the server (identified by a {@code from} value of 0)
+                 *       are prefixed with “[SERVER]”.</li>
+                 *   <li>Public messages from other users display their usernames, resolved
+                 *       with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.</li>
+                 * </ul>
+                 *
+                 * <p>Messages sent by the current user (identified by {@code ID}) are ignored.
+                 *
+                 * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
+                 */
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (!body.from().equals(ID)) {
