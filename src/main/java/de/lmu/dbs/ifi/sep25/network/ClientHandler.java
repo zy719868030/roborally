@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
@@ -111,17 +112,7 @@ public class ClientHandler implements Runnable {
                     case "SetStartingPoint" -> handleBodySetStartingPoint(json);
                     case "SelectedCard" -> handleBodySelectedCard(json);
                     case "TimerStarted" -> handleBodyTimerStarted();
-//                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
-//                    case "CurrentCards" -> handleBodyCurrentCards(json);
-//                    case "ReplaceCard" -> handleBodyReplaceCard(json);
-//                    case "Movement" -> handleBodyMovement(json);
-//                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
-//                    case "Animation" -> handleBodyAnimation(json);
-//                    case "Reboot" -> handleBodyReboot(json);
-//                    case "RebootDirection" -> handleBodyRebootDirection(json);
-//                    case "Energy" -> handleBodyEnergy(json);
-//                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-//                    case "GameFinished" -> handleBodyGameFinished(json);
+                    case "RebootDirection" -> handleBodyRebootDirection(json);
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
             }
@@ -189,10 +180,6 @@ public class ClientHandler implements Runnable {
         Message<BodyPlayerValues> message = JsonUtil.parseMessage(json, BodyPlayerValues.class);
         BodyPlayerValues body = message.messageBody();
 
-        //TODO @sebas
-        // - bitte mit pastConnections machen statt lobby iteration
-        // - names ändern in server und clients dass sie nur in clients gespeichert werden!!!
-
         if (server.assignFigure(body.figure(), this)) {
             final String name = server.generateUniqueName(body.name());
             this.player = new Player(name, body.figure(), this);
@@ -245,15 +232,14 @@ public class ClientHandler implements Runnable {
         broadcastMessage(new Message<>(new BodyPlayerStatus(myID, ready)));
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
-            if (ready){
-                if (server.readyIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()){
+            if (ready) {
+                if (server.readyIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
                     server.setMapSelectionOngoing(true);
                     setMapSelecting(true);
                     sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
                 }
                 server.markReady(this);
-            }
-            else
+            } else
                 server.unmarkReady(this);
         }
     }
@@ -398,6 +384,21 @@ public class ClientHandler implements Runnable {
 
         }, 30, TimeUnit.SECONDS);
     }
+
+    /**
+     * Handles the body reboot direction specified in the given JSON message.
+     * Parses the direction from the message, updates the robot's direction,
+     * and broadcasts the new direction information.
+     *
+     * @param json the JSON message containing the body reboot direction
+     */
+    private void handleBodyRebootDirection(String json) {
+        String direction = JsonUtil.parseMessage(json, BodyRebootDirection.class).messageBody().direction();
+        player.getRobot().setDirection(Direction.fromString(direction));
+        broadcastMessage(new Message<>(new BodyRebootDirection(direction)), this);
+    }
+
+
 
     // -------------
 

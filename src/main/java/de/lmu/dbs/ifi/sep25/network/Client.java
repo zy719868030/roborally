@@ -9,14 +9,17 @@ import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Client {
     // 1. Constants / configuration
@@ -38,6 +41,11 @@ public class Client {
     private int phase = -1;
     private final List<String> hand = new ArrayList<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
+    private int currentRegister = 0;
+    private BodyMovement rebootPosition;
+    private int rebootingInProgress = -1;
+    private final Map<Integer, Integer> energy = new HashMap<>();
+    private final Map<Integer, Integer> checkpointsReached = new HashMap<>();
 
 
     /**
@@ -98,6 +106,7 @@ public class Client {
                         case "Alive" -> handleBodyAlive(json);
                         case "Welcome" -> handleBodyWelcome(json);
                         case "PlayerAdded" -> handleBodyPlayerAdded(json);
+                        case "PlayerRenamed" -> handleBodyPlayerRenamed(json);//@SEBAS
                         case "PlayerStatus" -> handleBodyPlayerStatus(json);
                         case "SelectMap" -> handleBodySelectMap(json);
                         case "MapSelected" -> handleBodyMapSelected(json);
@@ -115,17 +124,16 @@ public class Client {
                         case "SelectionFinished" -> handleBodySelectionFinished(json);
                         case "TimerEnded" -> handleBodyTimerEnded(json);
                         case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
-                        case "PlayerRenamed" -> handleBodyPlayerRenamed(json);//@SEBAS
-                        //                    case "CurrentCards" -> handleBodyCurrentCards(json);
-                        //                    case "ReplaceCard" -> handleBodyReplaceCard(json);
-                        //                    case "Movement" -> handleBodyMovement(json);
-                        //                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
-                        //                    case "Animation" -> handleBodyAnimation(json);
-                        //                    case "Reboot" -> handleBodyReboot(json);
-                        //                    case "RebootDirection" -> handleBodyRebootDirection(json);
-                        //                    case "Energy" -> handleBodyEnergy(json);
-                        //                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-                        //                    case "GameFinished" -> handleBodyGameFinished(json);
+                        case "CurrentCards" -> handleBodyCurrentCards(json);
+                        case "ReplaceCard" -> handleBodyReplaceCard(json);
+                        case "Movement" -> handleBodyMovement(json);
+                        case "PlayerTurning" -> handleBodyPlayerTurning(json);
+                        case "Animation" -> handleBodyAnimation(json);
+                        case "Reboot" -> handleBodyReboot(json);
+                        case "RebootDirection" -> handleBodyRebootDirection(json);
+                        case "Energy" -> handleBodyEnergy(json);
+                        case "CheckPointReached" -> handleBodyCheckPointReached(json);
+                        case "GameFinished" -> handleBodyGameFinished(json);
                         default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                     }
                 } catch (Exception e) {
@@ -139,19 +147,6 @@ public class Client {
         }
     }
 
-
-    private void handleBodyPlayerRenamed(String json) {//@SEBAS
-        Message<BodyPlayerRenamed> msg = JsonUtil.parseMessage(json, BodyPlayerRenamed.class);
-        int clientID = msg.messageBody().clientID();
-        String newName = msg.messageBody().newName();
-
-        javafx.application.Platform.runLater(() -> {
-            LobbyController ctrl = ControllerRegistry.getLobbyController();
-            if (ctrl != null) {
-                ctrl.renamePlayer(clientID, newName);
-            }
-        });
-    }
 
     /**
      * Handles the BodyHelloClient message received from the server.
@@ -271,6 +266,26 @@ public class Client {
     }
 
     /**
+     * Handles the event of a player being renamed by parsing the provided JSON message
+     * and updating the player name in the lobby controller.
+     *
+     * @param json A JSON string representing the message containing player renaming information,
+     *             including the client's ID and the new name.
+     */
+    private void handleBodyPlayerRenamed(String json) {//@SEBAS
+        Message<BodyPlayerRenamed> msg = JsonUtil.parseMessage(json, BodyPlayerRenamed.class);
+        int clientID = msg.messageBody().clientID();
+        String newName = msg.messageBody().newName();
+
+        javafx.application.Platform.runLater(() -> {
+            LobbyController ctrl = ControllerRegistry.getLobbyController();
+            if (ctrl != null) {
+                ctrl.renamePlayer(clientID, newName);
+            }
+        });
+    }
+
+    /**
      * Processes a JSON string representing a "BodyPlayerStatus" message and updates the
      * corresponding player's ready status in the lobby GUI.
      *
@@ -319,57 +334,92 @@ public class Client {
         });
     }
 
-
-    /****/
+    /**
+     * Handles the selected body map event provided in JSON format.
+     * Parses the JSON message, retrieves the selected map,
+     * and updates the LobbyController with the corresponding map information.
+     *
+     * @param json a JSON string representing the selected body map event,
+     *             expected to contain the necessary data to identify the selected map.
+     */
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
 
         Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            if (controller != null) {
-                controller.setMapLabel("Gewählte Karte: " + selectedMap);
-                controller.hideMapSelection();  // Optional: danach wieder ausblenden
-                controller.loadAndDisplayPreviewMap(selectedMap);
-            } else {
-                System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelected");
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                Parent root = loader.load();
+                GameController gameController = loader.getController();
+
+                // Map-Datei laden
+               // List<List<List<MessageDefinitions.Field>>> mapData = MapLoader.loadMap(selectedMap);
+
+                // Board zeichnen
+                //gameController.drawBoard(mapData);
+
+                // Szene setzen
+                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
+                stage.setScene(new Scene(root));
+
+            } catch (IOException e) {
+                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
+                e.printStackTrace();
             }
+
         });
 
         //TODO fx display selected map Raneem
     }
 
-    private void handleBodyMapSelectedConfirmation(String json) {
-        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
-        String selectedMap = message.messageBody().map();
 
-        Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            if (controller != null) {
-                controller.setMapLabel("Gewählte Karte: " + selectedMap);
-            } else {
-                System.err.println("[ERROR] LobbyController ist null in handleBodyMapSelectedConfirmation");
-            }
-        });
-    }
-
-
-    /****/
+    /**
+     * Handles the event when the body of a game started message is received.
+     * This method processes the incoming JSON message, updates the server-side energy map,
+     * and triggers the display of the game field on the user interface.
+     *
+     * @param json The JSON string representing the game started message.
+     */
     private void handleBodyGameStarted(String json) {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
+
+        for (Integer id : Server.getInstance().getClients().valueSet()) {
+            energy.put(id, body.energy());
+            checkpointsReached.put(id, 0);
+        }
+        // Speichere Energie & Checkpoints lokal
+        for (Integer id : Server.getInstance().getClients().valueSet()) {
+            energy.put(id, body.energy());
+            checkpointsReached.put(id, 0);
+        }
+        //TODO start displaying energy and checkpointsreached
+
+
         List<List<List<Field>>> boardMap = body.gameMap();
 
-        javafx.application.Platform.runLater(() -> {
-            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-            if (lobbyCtrl != null) {
-                lobbyCtrl.handleGameStarted(boardMap);
-            } else {
-                System.err.println("[ERROR] LobbyController ist null – Spielfeld kann nicht angezeigt werden.");
+        Platform.runLater(() -> {
+            try {
+                // Lade GameView
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                Parent root = loader.load();
+                GameController controller = loader.getController();
+
+                // Übergib Spielfeld
+                controller.drawBoard(boardMap);
+
+                // Übergib Energie/Checkpoint-Infos wenn nötig
+                controller.setInitialPlayerStats(energy, checkpointsReached);
+
+                // Wechsle Szene
+                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
+                stage.setScene(new Scene(root));
+            } catch (IOException e) {
+                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
+                e.printStackTrace();
             }
         });
     }
-
 
     /**
      * Handles a "BodyReceivedChat" message from the server.
@@ -454,7 +504,6 @@ public class Client {
         // set player turn maybe?
     }
 
-
     /**
      * Handles the "BodyActivePhase" message received from the server.
      * This method processes a JSON string representing a {@code BodyActivePhase} message,
@@ -478,7 +527,6 @@ public class Client {
             controller.updatePhase(phaseName);
         });
     }
-
 
     /****/
     private void handleBodyStartingPointTaken(String json) {
@@ -509,7 +557,6 @@ public class Client {
 
     /****/
     private void handleBodyCardSelected(String json) {
-
 
         //TODO fx display card selection Sebas
     }
@@ -547,6 +594,216 @@ public class Client {
         //TODO fx display cards to register
     }
 
+    /****/
+    private void handleBodyCurrentCards(String json) {
+        Message<BodyCurrentCards> message = JsonUtil.parseMessage(json, BodyCurrentCards.class);
+        BodyCurrentCards body = message.messageBody();
+
+        //TODO display robot animations
+
+        currentRegister++;
+    }
+
+    /****/
+    private void handleBodyReplaceCard(String json) {
+        Message<BodyReplaceCard> message = JsonUtil.parseMessage(json, BodyReplaceCard.class);
+        BodyReplaceCard body = message.messageBody();
+
+        //TODO display replaced card in register
+    }
+
+    /**
+     * Handles the processing of body movement data received in a JSON string.
+     * Parses the JSON input to extract body movement details, updates the server's
+     * state accordingly, and manages robot positioning or movement animations.
+     *
+     * @param json The JSON string containing body movement information, including
+     *             client ID, coordinates, and other relevant data.
+     */
+    public void handleBodyMovement(String json) {
+        Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
+        BodyMovement body = message.messageBody();
+        Server server = Server.getInstance();
+
+        if (rebootingInProgress == body.clientID()) {
+            rebootPosition = body;
+            rebootingInProgress = -1;
+        } else {
+            final int newX = body.x();
+            final int newY = body.y();
+            final int robotID = server.getFigures().getByKey(server.getClients().getByValue(body.clientID()));
+
+            //TODO display:
+            // maybe clear board of robot, set robot at new position?
+            // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Movement"))
+
+        }
+    }
+
+    /****/
+    public void handleBodyPlayerTurning(String json) {
+        Message<BodyPlayerTurning> message = JsonUtil.parseMessage(json, BodyPlayerTurning.class);
+        BodyPlayerTurning body = message.messageBody();
+        Server server = Server.getInstance();
+        final int robotID = server.getFigures().getByKey(server.getClients().getByValue(body.clientID()));
+
+        //TODO display robot turning
+        // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Turning"))
+
+        switch (body.rotation()) {
+//            case "clockwise" ->
+//            case "counterclockwise" ->
+            default -> System.err.println("Unknown rotation: " + body.rotation());
+        }
+    }
+
+    /**
+     * Represents the various types of animations available within the system.
+     * Each animation type corresponds to a specific visual or interactive behavior.
+     * This can include player actions, environmental interactions, and system states.
+     * <p>
+     * The enum provides methods to get a string representation of an animation type
+     * and to create an AnimationType instance based on a string input.
+     */
+    public enum AnimationType {
+        MOVEMENT("Movement"),
+        CLOCKWISE("Clockwise"),
+        COUNTERCLOCKWISE("Counterclockwise"),
+        BLUECONVEYORBELT("BlueConveyorBelt"),
+        GREENCONVEYORBELT("GreenConveyorBelt"),
+        PUSHPANEL("PushPanel"),
+        GEAR("Gear"),
+        CHECKPOINT("Checkpoint"),
+        PLAYERSHOOTING("PlayerShooting"),
+        WALLSHOOTING("WallShooting"),
+        PLAYERHURT("PlayerHurt"),
+        ENERGYSPACE("EnergySpace"),
+        ENERGYCONSUMPTION("EnergyConsumption"),
+        ANIMATION_NOT_SUPPORTED("AnimationNotSupported");
+
+        //TODO add animation types depending whats need for UI
+
+        private final String asString;
+
+        AnimationType(String asString) {
+            this.asString = asString;
+        }
+
+        public String asString() {
+            return asString;
+        }
+
+        public static AnimationType fromString(String str) {
+            return switch (str.toLowerCase()) {
+                case "movement" -> MOVEMENT;
+                case "clockwise" -> CLOCKWISE;
+                case "counterclockwise" -> COUNTERCLOCKWISE;
+                default -> ANIMATION_NOT_SUPPORTED;
+            };
+        }
+    }
+
+    /**
+     * Handles the body animation logic based on the provided JSON input.
+     * This method processes the input to determine the type of animation
+     * and performs appropriate actions or sends an error message in case of issues.
+     *
+     * @param json the input JSON string containing information about the body animation
+     */
+    public void handleBodyAnimation(String json) {
+        AnimationType animation = AnimationType.fromString(JsonUtil.parseMessage(json, BodyAnimation.class).messageBody().type());
+
+        switch (animation) {
+//            case MOVEMENT ->
+            default -> sendMessageSelf(new Message<>(new BodyError("Animation error: " + animation.asString())));
+        }
+
+        //TODO display animations
+
+    }
+
+    /**
+     * Handles the body reboot process by processing the provided JSON message.
+     * Parses the JSON message to extract the body reboot information and determines
+     * the reboot direction, sending a response message if the client ID matches.
+     *
+     * @param json the JSON string containing the body reboot information. The JSON
+     *             is expected to represent a message with a body reboot payload.
+     */
+    public void handleBodyReboot(String json) {
+        Message<BodyReboot> message = JsonUtil.parseMessage(json, BodyReboot.class);
+        BodyReboot body = message.messageBody();
+        rebootingInProgress = body.clientID();
+
+        if (body.clientID().equals(ID)) {
+            String rebootDirection = "top"; //default
+
+            //TODO reboot direction selection
+            // display rotation, best directly in/during selection
+            // Sollte die Nachricht zur Ausrichtung nicht bis zum Ende der aktuellen Runde
+            // angekommen sein, wird die Standardausrichtung verwendet.
+
+            sendMessage(new Message<>(new BodyRebootDirection(rebootDirection)));
+        }
+    }
+
+    /****/
+    public void handleBodyRebootDirection(String json) {
+        final String direction = JsonUtil.parseMessage(json, BodyRebootDirection.class).messageBody().direction();
+
+        //TODO turn robot in correct direction ui logic
+        // can also add cases to handleBodyTurnRobot
+
+        sendMessageSelf(new Message<>(rebootPosition));
+        rebootPosition = null;
+
+        //TODO display reboot animation with already correct rotation
+
+        sendMessageSelf(new Message<>(new BodyAnimation("Reboot")));
+
+    }
+
+    /****/
+    public void handleBodyEnergy(String json) {
+        Message<BodyEnergy> message = JsonUtil.parseMessage(json, BodyEnergy.class);
+        BodyEnergy body = message.messageBody();
+
+        energy.put(body.clientID(), body.count());
+
+        //TODO optional: play energy animation depending on: id -> source
+
+        //TODO update energy counter
+
+    }
+
+    /****/
+    public void handleBodyCheckPointReached(String json) {
+        BodyCheckPointReached body = JsonUtil.parseMessage(json, BodyCheckPointReached.class).messageBody();
+        checkpointsReached.put(body.clientID(), body.number());
+
+        //TODO display a option to see which checkpoints are reached by whom
+
+    }
+
+    /**
+     * Handles the game finished event by processing the body of the message and determining
+     * whether the client has won or lost.
+     *
+     * @param json the JSON string containing the game finished message, which includes details
+     *             about the client ID and the game outcome
+     */
+    public void handleBodyGameFinished(String json) {
+        BodyGameFinished body = JsonUtil.parseMessage(json, BodyGameFinished.class).messageBody();
+
+        //TODO display win/lose
+
+        if (Objects.equals(body.clientID(), ID)) {
+            //play win screen
+        } else {
+            //play lose screen
+        }
+    }
+
 
     //----------------------
 
@@ -556,11 +813,11 @@ public class Client {
      * This method attempts to write the message using a PrintWriter instance.
      * If an error occurs during the process, it logs the failure message to the error stream.
      *
-     * @param message the text message to be sent
+     * @param msg the text message to be sent
      */
-    public void sendMessage(String message) {
+    public void sendMessage(String msg) {
         try {
-            writer.println(message);
+            writer.println(msg);
             writer.flush();
         } catch (Exception e) {
             System.err.println("Failed to send message: " + e.getMessage());
@@ -586,6 +843,24 @@ public class Client {
     }
 
     /**
+     * Sends a message to the client itself using the specified message content.
+     *
+     * @param msg the message to be sent to the client
+     */
+    public void sendMessageSelf(String msg) {
+        Server.getInstance().getClients().getByValue(ID).sendMessage(msg);
+    }
+
+    /**
+     * Sends a message to the current instance of the client identified by its unique ID.
+     *
+     * @param msg the message object to be sent to the client
+     */
+    public void sendMessageSelf(Message<?> msg) {
+        Server.getInstance().getClients().getByValue(ID).sendMessage(msg);
+    }
+
+    /**
      * Sends the given message to all connected clients via the server.
      *
      * @param msg the message to be broadcasted to all connected clients
@@ -603,7 +878,6 @@ public class Client {
     public void broadcastMessage(Message<?> msg, ClientHandler exclude) {
         Server.getInstance().broadcastMessage(msg, exclude);
     }
-
 
     /**
      * Releases resources associated with the client connection.

@@ -1,41 +1,35 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
-import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-import de.lmu.dbs.ifi.sep25.game.Direction;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-// JSON-Verarbeitung mit Gson
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-// Für den Reader
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
-
-// Für Typinformationen
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -46,31 +40,38 @@ import java.util.Map;
 
 
 public class LobbyController {
-    @FXML private ComboBox<PlayerEntry> recipientBox;
-    @FXML private TextArea chatArea;
-    @FXML private TextField chatInput;
-    @FXML private ListView<PlayerEntry> playerList;
-    @FXML private Button readyButton, notReadyButton;
-    @FXML private Label statusLabel;
-    @FXML private Label mapLabel;
-    @FXML private HBox mapSelectionBox;
-    @FXML private ComboBox<String> mapChoiceBox;
-    @FXML private Button selectMapButton;
-    @FXML private GridPane gameBoardPane;
-
-
-    private Parent root;
+    @FXML
+    private ComboBox<PlayerEntry> recipientBox;
+    @FXML
+    private TextArea chatArea;
+    @FXML
+    private TextField chatInput;
+    @FXML
+    private ListView<PlayerEntry> playerList;
+    @FXML
+    private Button readyButton, notReadyButton;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Label mapLabel;
+    @FXML
+    private VBox mapSelectionBox;
+    @FXML
+    private ComboBox<String> mapChoiceBox;
+    @FXML
+    private Button selectMapButton;
+    @FXML private ImageView mapPreviewImage;
+    @FXML private StackPane mapPreviewContainer;
 
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
+    private Parent root;
 
-    private static final int TILE_SIZE = 60;
 
     @FXML
     public void initialize() {
         ControllerRegistry.setLobbyController(this);
         playerList.setItems(players);
-        loadTileImages();
 
 
 
@@ -86,7 +87,7 @@ public class LobbyController {
             }
         });
         //Combobox conf
-        PlayerEntry alleOption = new PlayerEntry(-1,"Alle",-1,false);
+        PlayerEntry alleOption = new PlayerEntry(-1, "Alle", -1, false);
         recipientBox.getItems().add(alleOption);
         // ComboBox: Darstellung und Zellen setzen
         recipientBox.setPromptText("An...");
@@ -109,15 +110,36 @@ public class LobbyController {
         recipientBox.getSelectionModel().clearSelection();
         chatInput.setOnAction(e -> handleSendChat());
         updateReadyButtons(false);
+// Listener für Kartenwechsel in der ComboBox
+        mapChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldMap, newMap) -> {
+            if (newMap != null) {
+                mapLabel.setText("Ausgewählte Karte: " + newMap);
+                loadMapPreview(newMap); // << NUR Bild laden
+            }
+        });
 
         //Add yourself to LobbyList
         Client client = ClientSingleton.getInstance();
         if (client != null) {
             client.flushPendingPlayers();
         }
+        mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty());
+        mapPreviewImage.fitHeightProperty().bind(mapPreviewContainer.heightProperty());
     }
 
-
+    private void loadMapPreview(String mapName) {
+        String imageFile = "/assets/" + mapName.toLowerCase().replace(" ", "_") + ".png";
+        InputStream imageStream = getClass().getResourceAsStream(imageFile);
+        if (imageStream != null) {
+            mapPreviewImage.setImage(new Image(imageStream));
+            mapPreviewImage.setVisible(true);
+            mapPreviewImage.setManaged(true);
+        } else {
+            System.err.println("[WARN] Kein Vorschaubild gefunden für: " + mapName);
+            mapPreviewImage.setVisible(false);
+            mapPreviewImage.setManaged(false);
+        }
+    }
 
     @FXML
     private void handleReady() {
@@ -144,7 +166,7 @@ public class LobbyController {
         }
 
 
-}
+    }
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         int myID = ClientSingleton.getInstance().getID();
@@ -168,6 +190,7 @@ public class LobbyController {
 
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
+
     public void showMapSelection(List<String> maps) {
         if (mapChoiceBox == null || mapSelectionBox == null) {
             System.err.println("[ERROR] mapChoiceBox oder mapSelectionBox ist null in showMapSelection!");
@@ -190,22 +213,50 @@ public class LobbyController {
         String selectedMap = mapChoiceBox.getValue();
         if (selectedMap != null && !selectedMap.isBlank()) {
             ClientSingleton.getInstance().sendMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyMapSelected(selectedMap)
-                    )
+                    new Message<>(new MessageDefinitions.BodyMapSelected(selectedMap))
             );
-            // Optional: UI wieder verstecken
-            mapSelectionBox.setVisible(false);
-            mapSelectionBox.setManaged(false);
+
+            //  Szene wechseln nach Auswahl
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("src/main/resources/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                Parent root = loader.load();
+                GameController controller = loader.getController();
+
+                // Falls Map bereits bekannt:
+                //controller.drawBoard(/* boardMap von Server oder lokal */);
+
+                Stage stage = (Stage) selectMapButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
+
+
     //Methode zum Verstecken, wenn Spieler z. B. unready wird
     public void hideMapSelection() {
         mapSelectionBox.setVisible(false);
         mapSelectionBox.setManaged(false);
     }
+
     public void setMapLabel(String text) {
         mapLabel.setText(text);
+
+        // Lade zugehöriges Bild
+        String mapName = text.replace("Ausgewählte Karte: ", "").trim();
+        String imageFile = "/assets/maps/" + mapName.toLowerCase().replace(" ", "_") + ".png";
+
+        InputStream imageStream = getClass().getResourceAsStream(imageFile);
+        if (imageStream != null) {
+            mapPreviewImage.setImage(new Image(imageStream));
+            mapPreviewImage.setVisible(true);
+            mapPreviewImage.setManaged(true);
+        } else {
+            System.err.println("[WARN] Kein Vorschaubild gefunden für: " + mapName);
+            mapPreviewImage.setVisible(false);
+            mapPreviewImage.setManaged(false);
+        }
     }
 
 
@@ -240,14 +291,13 @@ public class LobbyController {
     }
 
 
-
     @FXML
     private void handleSendChat() {
         String msg = chatInput.getText();
         if (msg == null || msg.trim().isEmpty()) return;
 
         PlayerEntry selected = recipientBox.getSelectionModel().getSelectedItem();
-        int recipientID = (selected == null|| selected.getClientID() == -1) ? -1 : selected.getClientID();
+        int recipientID = (selected == null || selected.getClientID() == -1) ? -1 : selected.getClientID();
 
         System.out.println("[DEBUG] Sende Chatnachricht an " + (recipientID == -1 ? "ALLE" : recipientID) + ": " + msg);
 
@@ -259,11 +309,11 @@ public class LobbyController {
         }
 
 
-
         String prefix = (recipientID == -1) ? "Du" : "Du → " + selected.getName();
         appendChatMessage(prefix + ": " + msg);
         chatInput.clear();
     }
+
     @FXML
     public void updatePlayerList(java.util.List<PlayerEntry> newPlayers) {
         players.clear();
@@ -289,14 +339,11 @@ public class LobbyController {
     }
 
 
-
-
-
-    public void displaySelectedMap(String mapName) {
+  /*  public void displaySelectedMap(String mapName) {
         // Diese Methode zeigt den ausgewählten Kartennamen in der Benutzeroberfläche an.
         // Zum Beispiel kann hier ein Label aktualisiert werden, das den Namen der Karte zeigt:
-         mapLabel.setText("Ausgewählte Karte: " + mapName);
-    }
+        mapLabel.setText("Ausgewählte Karte: " + mapName);
+    } */
 
 
     @FXML
@@ -316,120 +363,6 @@ public class LobbyController {
         notReadyButton.setVisible(isReady);
         notReadyButton.setManaged(!isReady);
     }
-    public void setRoot(Parent root) {
-        this.root = root;
-    }
-    public Parent getRoot() {
-        return root;
-    }
-
-
-    // Zeichnet das Spielfeld anhand der BoardMap
-    public void drawBoard(List<List<List<BoardElement>>> boardMap) {
-        gameBoardPane.getChildren().clear();
-
-        for (int x = 0; x < boardMap.size(); x++) {
-            List<List<BoardElement>> col = boardMap.get(x);
-            for (int y = 0; y < col.size(); y++) {
-                List<BoardElement> elements = col.get(y);
-
-                StackPane tile = createTile(elements); // ← nutze deine gute Methode
-                gameBoardPane.add(tile, x, y);
-            }
-        }
-
-        gameBoardPane.setVisible(true);
-        gameBoardPane.setManaged(true);
-    }
-
-
-
-
-    // Erstellt ein einzelnes Feld basierend auf BoardElementen
-    private StackPane createTile(List<BoardElement> elements) {
-        StackPane pane = new StackPane();
-
-        ImageView background = new ImageView(tileImages.get("Floor"));
-        background.setFitWidth(60);
-        background.setFitHeight(60);
-        pane.getChildren().add(background);
-
-        for (BoardElement element : elements) {
-            String key = getTileKeyForElement(element);
-            if (tileImages.containsKey(key)) {
-                ImageView overlay = new ImageView(tileImages.get(key));
-                overlay.setFitWidth(60);
-                overlay.setFitHeight(60);
-                pane.getChildren().add(overlay);
-            }
-        }
-
-        return pane;
-    }
-    private Map<String, Image> tileImages = new HashMap<>();
-
-    private void loadTileImages() {
-        tileImages.put("Floor", new Image(getClass().getResourceAsStream("/assets/floor.png")));
-        tileImages.put("Wall_N", new Image(getClass().getResourceAsStream("/assets/wall_n.png")));
-        tileImages.put("Wall_O", new Image(getClass().getResourceAsStream("/assets/wall_o.png")));
-        tileImages.put("Wall_S", new Image(getClass().getResourceAsStream("/assets/wall_s.png")));
-        tileImages.put("Gear_Green", new Image(getClass().getResourceAsStream("/assets/Gear_green.png")));
-        tileImages.put("Gear_Red", new Image(getClass().getResourceAsStream("/assets/Gear_red.png")));
-        tileImages.put("Conveyor_green_NORTH", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt.png")));
-       // tileImages.put("Conveyor_blue_EAST_rot", new Image(getClass().getResourceAsStream("/assets/conveyor_b_e_rot.png")));
-
-
-    }
-    private String getTileKeyForElement(BoardElement element) {
-        String type = element.getType(); // z. B. "Wall", "Laser", "Gear", "Floor", etc.
-        return switch (type) {
-            case "Floor" -> "floor.png";
-            case "Wall" -> wallDirectionToFile((Wall) element);
-            case "Laser" -> "laser_" + ((Laser) element).getDirection().toString().toLowerCase() + ".png";
-            case "CheckPoint" -> "checkpoint" + ((CheckPoints) element).getNumber() + ".png";
-            case "Antenna" -> "antenne.png";
-            case "Belts" -> beltToFile((Belts) element);
-            case "Gear" -> ((Gear) element).getRotationDirection() == Gear.RotationDirection.CLOCKWISE
-                    ? "Gear_green.png" : "Gear_red.png";
-            case "StartPoint" -> "startpoint.png";
-            case "Reboot" -> "reboot.png";
-            case "EnergySpace" -> "energyspace.png";
-            default -> "unknown.png";
-        };
-
-    }
-
-    private String wallDirectionToFile(Wall wall) {
-        return "wall_" + wall.getDirection().toString().toLowerCase() + ".png";
-    }
-
-    private String beltToFile(Belts belt) {
-        return (belt.getSpeed() == Belts.BeltSpeed.FAST ? "belt_fast_" : "belt_slow_")
-                + belt.getMainOutDirection().toString().toLowerCase() + ".png";
-    }
-
-    public void handleGameStarted(List<List<List<BoardElement>>> boardMap) {
-        System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
-        drawBoard(boardMap);
-    }
-    public void loadAndDisplayPreviewMap(String mapName) {
-        String fileName = mapName.toLowerCase().replace(" ", "_") + ".json";
-        try (InputStream is = getClass().getResourceAsStream("/maps/" + fileName)) {
-            if (is == null) {
-                System.err.println("[ERROR] Map-Datei nicht gefunden: " + mapName);
-                return;
-            }
-
-            // GSON oder Jackson für Typ: List<List<List<BoardElement>>>
-            Gson gson = new Gson();
-            Type mapType = new TypeToken<List<List<List<BoardElement>>>>() {}.getType();
-            List<List<List<BoardElement>>> mapData = gson.fromJson(new InputStreamReader(is), mapType);
-
-            drawBoard(mapData); // nutzt deine bestehende Methode
-        } catch (IOException e) {
-            System.err.println("[ERROR] Fehler beim Laden der Map: " + e.getMessage());
-        }
-    }
 
 
     public void renamePlayer(int clientID, String newName) { //@SEBAS
@@ -440,8 +373,15 @@ public class LobbyController {
                 break;
             }
 
-}
+        }
 
 
+    }
+    public void setRoot(Parent root) {
+        this.root = root;
+    }
+
+    public Parent getRoot() {
+        return root;
     }
 }

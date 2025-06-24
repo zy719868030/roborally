@@ -23,7 +23,6 @@ public class Game {
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
     private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
-    private final Board.MapType mapType;
     // Map selection fields
     private Player firstReadyPlayer;
     private String selectedMap;
@@ -37,7 +36,10 @@ public class Game {
 
     private Game(String mapName) {
         players = new ArrayList<>();
-        mapType = parseMapName(mapName);
+        Board.MapType mapType = parseMapName(mapName);
+        if (mapType != null) {
+            board = new Board(mapType); // Fix for FIXME
+        }
 //      board = new Board(12, 12); FIXME @prajal
         currentPlayer = null;
         currentPlayerIndex = 0;
@@ -167,6 +169,7 @@ public class Game {
         // Set map and initialize board
         selectedMap = mapName;
         mapSelectionPending = false;
+
         board = new Board(parseMapName(mapName));
         initializeGame();
 
@@ -182,11 +185,11 @@ public class Game {
     }
 
     // Convert map to List<Object> for BodyGameStarted
-    private List<Object> convertToObjectList(List<List<List<Map<String, Object>>>> map) {
+    private List<Object> convertToObjectList(List<List<List<BoardElement>>> map) {
         List<Object> result = new ArrayList<>();
-        for (List<List<Map<String, Object>>> col : map) {
+        for (List<List<BoardElement>> col : map) {
             List<Object> colList = new ArrayList<>();
-            for (List<Map<String, Object>> row : col) {
+            for (List<BoardElement> row : col) {
                 colList.add(row == null ? null : new ArrayList<>(row));
             }
             result.add(colList);
@@ -299,46 +302,6 @@ public class Game {
         }
     }
 
-//    public void setActivePhase(int phase) {
-//        currentPhase = phase;
-//        for (Player p : players) {
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyActivePhase(phase)
-//            ));
-//        }
-//        if (phase == 0) {
-//            setCurrentPlayer();
-//        } else if (phase == 2) {
-//            startProgrammingPhase();
-//        } else if (phase == 3) {
-//            playActivationPhase();
-//        }
-//    }
-
-//    private void startProgrammingPhase() {
-//        slowPlayers.clear();
-//        for (Player p : players) {
-//            p.drawHand();
-//            // Check: getName method in RegisterCard (assumed: String getName())
-//            List<String> cardNames = p.getHand().stream()
-//                    .map(card -> ((Card) card).getDescription())
-//                    .collect(Collectors.toList());
-//
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyYourCards(cardNames)
-//            ));
-//
-//            for (Player other : players) {
-//                if (other != p) {
-//                    other.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                            new MessageDefinitions.BodyNotYourCards(p.getRobot().getId(), cardNames.size())
-//                    ));
-//                }
-//            }
-//        }
-//        startTimer();
-//    }
-
     private void startTimer() {
         programmingTimer = new Timer();
         // Timer and TimerTask classes in java.util
@@ -404,7 +367,7 @@ public class Game {
     //Set Board references for all robots when initializing the game
     public void initializeGame() {
         if (board == null) {
-            board = new Board(mapType);
+            board = new Board(parseMapName(selectedMap));
         }
 
         for (Player player : players) {
