@@ -157,7 +157,8 @@ public class Game {
             return;
         }
 
-        if (!"Dizzy Highway".equals(mapName)) {
+        Board.MapType mapType = parseMapName(mapName);
+        if (mapType == null) {
             if (player != null) {
                 player.getConnection().sendMessage(new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyError("Invalid map: " + mapName)
@@ -165,6 +166,7 @@ public class Game {
             }
             return;
         }
+
 
         // Set map and initialize board
         selectedMap = mapName;

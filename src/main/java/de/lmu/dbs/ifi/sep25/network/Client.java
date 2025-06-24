@@ -343,7 +343,8 @@ public class Client {
      *             expected to contain the necessary data to identify the selected map.
      */
     private void handleBodyMapSelected(String json) {
-        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
+        Message<MessageDefinitions.BodyMapSelected> message =
+                JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
 
         Platform.runLater(() -> {
@@ -352,24 +353,31 @@ public class Client {
                 Parent root = loader.load();
                 GameController gameController = loader.getController();
 
-                // Map-Datei laden
-               // List<List<List<MessageDefinitions.Field>>> mapData = MapLoader.loadMap(selectedMap);
+                // Hol die ECHTE Map aus dem Game-Objekt
+                List<List<List<MessageDefinitions.Field>>> boardMap =
+                        ClientSingleton.getInstance().getCurrentGameMap(); // ← Du brauchst so eine Methode!
 
-                // Board zeichnen
-                //gameController.drawBoard(mapData);
+                //  Falls  Zugriff erfolgreich, echte Map zeichnen
+                gameController.drawBoard(boardMap);
 
-                // Szene setzen
                 Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
                 stage.setScene(new Scene(root));
+                stage.show();
 
             } catch (IOException e) {
                 System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
                 e.printStackTrace();
             }
-
         });
+    }
+    private List<List<List<MessageDefinitions.Field>>> currentGameMap;
 
-        //TODO fx display selected map Raneem
+    public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
+        this.currentGameMap = map;
+    }
+
+    public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
+        return currentGameMap;
     }
 
 
@@ -381,6 +389,8 @@ public class Client {
      * @param json The JSON string representing the game started message.
      */
     private void handleBodyGameStarted(String json) {
+
+
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
 
@@ -388,16 +398,19 @@ public class Client {
             energy.put(id, body.energy());
             checkpointsReached.put(id, 0);
         }
-        // Speichere Energie & Checkpoints lokal
+        // Speichere Energie & Checkpoints lokal start displaying energy and checkpointsreached
         for (Integer id : Server.getInstance().getClients().valueSet()) {
             energy.put(id, body.energy());
             checkpointsReached.put(id, 0);
         }
-        //TODO start displaying energy and checkpointsreached
+
 
 
         List<List<List<Field>>> boardMap = body.gameMap();
-
+        this.setCurrentGameMap(boardMap);
+        System.out.println("[DEBUG] handleBodyGameStarted aufgerufen");
+        System.out.println("Map size X: " + boardMap.size());
+        System.out.println("Map size Y: " + boardMap.get(0).size());
         Platform.runLater(() -> {
             try {
                 // Lade GameView
