@@ -1,11 +1,14 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 
 import java.io.BufferedReader;
@@ -37,14 +40,18 @@ import java.util.concurrent.TimeUnit;
 public class ClientHandler implements Runnable {
 
     // 1. Constants / configuration
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
     private Integer myID;
 
     // 2. Networking / I/O
     private final Socket socket;
     private final BufferedReader reader;
     private final PrintWriter writer;
-    private Server server;
+    private final Server server;
 
     // 3. State flags
     private volatile boolean alive = true;
@@ -397,7 +404,6 @@ public class ClientHandler implements Runnable {
         player.getRobot().setDirection(Direction.fromString(direction));
         broadcastMessage(new Message<>(new BodyRebootDirection(direction)), this);
     }
-
 
 
     // -------------

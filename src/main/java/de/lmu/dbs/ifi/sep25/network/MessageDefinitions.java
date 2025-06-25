@@ -1,7 +1,5 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -57,39 +55,33 @@ public class MessageDefinitions {
     }
 
     public static abstract class Field {
+        private final String type;
         private final String isOnBoard;
 
         public Field(String isOnBoard) {
+            String type = this.getClass().getSimpleName().replace("Field", "");
+            this.type = type.equals("EnergySpace") ? "Energy-Space" : type;
             this.isOnBoard = isOnBoard;
+        }
+
+        public String type() {
+            return type;
         }
 
         public String isOnBoard() {
             return isOnBoard;
         }
-
-        @SerializedName("type")
-        public abstract String getType(); // virtual field for JSON
     }
 
     public static class FieldEmpty extends Field {
         public FieldEmpty(String isOnBoard) {
             super(isOnBoard);
         }
-
-        @Override
-        public String getType() {
-            return "Empty";
-        }
     }
 
     public static class FieldStartPoint extends Field {
         public FieldStartPoint(String isOnBoard) {
             super(isOnBoard);
-        }
-
-        @Override
-        public String getType() {
-            return "StartPoint";
         }
     }
 
@@ -117,11 +109,6 @@ public class MessageDefinitions {
         public List<String> directions() {
             return directions;
         }
-
-        @Override
-        public String getType() {
-            return "ConveyorBelt";
-        }
     }
 
     public static class FieldPushPanel extends Field {
@@ -147,11 +134,6 @@ public class MessageDefinitions {
         public List<Integer> registers() {
             return registers;
         }
-
-        @Override
-        public String getType() {
-            return "PushPanel";
-        }
     }
 
     public static class FieldGear extends Field {
@@ -171,21 +153,11 @@ public class MessageDefinitions {
         public List<String> orientations() {
             return orientations;
         }
-
-        @Override
-        public String getType() {
-            return "Gear";
-        }
     }
 
     public static class FieldPit extends Field {
         public FieldPit(String isOnBoard) {
             super(isOnBoard);
-        }
-
-        @Override
-        public String getType() {
-            return "Pit";
         }
     }
 
@@ -203,11 +175,6 @@ public class MessageDefinitions {
 
         public Integer count() {
             return count;
-        }
-
-        @Override
-        public String getType() {
-            return "Energy-Space";
         }
     }
 
@@ -227,11 +194,6 @@ public class MessageDefinitions {
         public List<String> orientations() {
             return orientations;
         }
-
-        @Override
-        public String getType() {
-            return "Wall";
-        }
     }
 
     public static class FieldLaser extends Field {
@@ -244,7 +206,7 @@ public class MessageDefinitions {
          */
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
             super(isOnBoard);
-            if (orientations.size() == 1)
+            if (orientations.size() != 1)
                 throw new IllegalArgumentException("Laser requires exactly 1 orientation");
             this.orientations = orientations;
             if (count < 1 || count > 3)
@@ -259,11 +221,6 @@ public class MessageDefinitions {
 
         public Integer count() {
             return count;
-        }
-
-        @Override
-        public String getType() {
-            return "Laser";
         }
     }
 
@@ -284,22 +241,17 @@ public class MessageDefinitions {
         public List<String> orientations() {
             return orientations;
         }
-
-        @Override
-        public String getType() {
-            return "Antenna";
-        }
     }
 
-    public static class FieldCheckpoint extends Field {
+    public static class FieldCheckPoint extends Field {
         private final Integer count;
 
         /**
          * @param count checkpoint number (>0)
          */
-        public FieldCheckpoint(String isOnBoard, Integer count) {
+        public FieldCheckPoint(String isOnBoard, Integer count) {
             super(isOnBoard);
-            if (count >= 1)
+            if (count < 1)
                 throw new IllegalArgumentException("Checkpoint number requires to be positive");
             this.count = count;
 
@@ -308,21 +260,11 @@ public class MessageDefinitions {
         public Integer count() {
             return count;
         }
-
-        @Override
-        public String getType() {
-            return "Checkpoint";
-        }
     }
 
     public static class FieldRestartPoint extends Field {
         public FieldRestartPoint(String isOnBoard) {
             super(isOnBoard);
-        }
-
-        @Override
-        public String getType() {
-            return "RestartPoint";
         }
     }
 

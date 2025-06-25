@@ -8,6 +8,7 @@ import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Maps.MapType;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.Server;
@@ -23,6 +24,7 @@ public class Game {
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
     private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
+
     // Map selection fields
     private Player firstReadyPlayer;
     private String selectedMap;
@@ -36,17 +38,13 @@ public class Game {
 
     private Game(String mapName) {
         players = new ArrayList<>();
-        Board.MapType mapType = parseMapName(mapName);
-        if (mapType != null) {
-            board = new Board(mapType); // Fix for FIXME
-        }
-//      board = new Board(12, 12); FIXME @prajal
+        board = new Board(MapType.fromString(mapName));
         currentPlayer = null;
         currentPlayerIndex = 0;
         //currentPhase = -1; // Pre-game (map selection)
         // Initialize map selection state
         firstReadyPlayer = null;
-        selectedMap = null;
+        selectedMap = mapName;
         mapSelectionPending = true;
         slowPlayers = new ArrayList<>();
         initializeProgrammingDeck();
@@ -102,15 +100,6 @@ public class Game {
 
     }
 
-    private Board.MapType parseMapName(String mapName) {
-        return switch (mapName.toLowerCase()) {
-            case "dizzy highway" ->  Board.MapType.DIZZY_HIGHWAY;
-            case "extra crispy" -> Board.MapType.EXTRA_CRISPY;
-            case "lost bearings" -> Board.MapType.LOST_BEARINGS;
-            case "death trap" -> Board.MapType.DEATH_TRAP;
-            default -> null;
-        };
-    }
 
     // Handle player readiness and map selection
     public void setPlayerReady(Player player, boolean ready) {
@@ -157,7 +146,8 @@ public class Game {
             return;
         }
 
-        if (!"Dizzy Highway".equals(mapName)) {
+        MapType mapType = MapType.fromString(mapName);
+        if (mapType == null) {
             if (player != null) {
                 player.getConnection().sendMessage(new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyError("Invalid map: " + mapName)
@@ -166,21 +156,22 @@ public class Game {
             return;
         }
 
+
         // Set map and initialize board
         selectedMap = mapName;
         mapSelectionPending = false;
 
-        board = new Board(parseMapName(mapName));
+        board = new Board(MapType.fromString(mapName));
         initializeGame();
 
-        // Broadcast MapSelected and GameStarted
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyMapSelected(mapName)
-            ));
-            //Use convertToBoardElementMap for BodyGameStarted
-            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
-        }
+//        // Broadcast MapSelected and GameStarted
+//        for (Player p : players) {
+//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyMapSelected(mapName)
+//            ));
+//            //Use convertToBoardElementMap for BodyGameStarted
+//            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
+//        }
         startGameLoop();
     }
 
@@ -367,7 +358,7 @@ public class Game {
     //Set Board references for all robots when initializing the game
     public void initializeGame() {
         if (board == null) {
-            board = new Board(parseMapName(selectedMap));
+            board = new Board(MapType.fromString(selectedMap));
         }
 
         for (Player player : players) {
@@ -438,34 +429,15 @@ public class Game {
         }
     }
 
+    /**
+     * Adds a player to the current game.
+     *
+     * @param player The Player instance to be added to the game.
+     */
     public void addPlayer(Player player) {
         players.add(player);
-        // Send existing player info and map state
-        for (Player p : players) {
-            if (p != player) {
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyPlayerAdded(p.getRobot().getId(), p.getName(), p.getRobot().getId())
-                ));
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyPlayerStatus(p.getRobot().getId(), p.isReady())
-                ));
-            }
-        }
-        if (selectedMap != null) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyMapSelected(selectedMap)
-            ));
-            if (board != null) {
-                player.getConnection().sendMessage(board.getSerializedBoardAsMessage());
-
-            }
-        }
-        // Place robot if board exists
-        if (board != null) {
-            Position pos = player.getRobot().getPosition();
-            board.placeRobot(player.getRobot(), pos.x(), pos.y());
-        }
     }
+
     /**
      * Gets the game board.
      *
@@ -482,7 +454,7 @@ public class Game {
      *         such as "Risky Crossing" or "Dizzy Highway".
      */
     public String getMapType() {
-        return parseMapName(selectedMap).toString();
+        return selectedMap;
     }
 
     public enum GamePhase {

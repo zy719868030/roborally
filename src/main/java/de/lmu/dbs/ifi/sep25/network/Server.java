@@ -397,21 +397,6 @@ public class Server {
      * @param handler the client handler to mark as ready
      */
     public synchronized void markReady(ClientHandler handler) {
-        // DEBUG
-//        System.out.println("Client " + names.get(handler)+ " marked as ready.");
-//        if (game == null) {
-//            System.out.println("Game not initialized yet.");
-//        }
-//        if (lobby.size() < minPlayer) {
-//            System.out.println("Not enough players to start game.");
-//        }
-//        if (!lobby.allReady()){
-//            System.out.println("Not all players are ready yet.");
-//        }
-//        for (ClientHandler client : lobby.getClients()) {
-//            System.out.println("Client " + names.get(client) + " is ready: " + client.getPlayer().isReady());
-//        }
-
         readyOrder.add(handler);
 
         if (lobby.allReady() && game != null) {

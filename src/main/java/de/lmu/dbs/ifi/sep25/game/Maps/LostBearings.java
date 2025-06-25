@@ -1,13 +1,14 @@
-package de.lmu.dbs.ifi.sep25.game;
+package de.lmu.dbs.ifi.sep25.game.Maps;
 
-import de.lmu.dbs.ifi.sep25.game.Board.*;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Antenna;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Belts;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Wall;
-import java.util.*;
+import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Position;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class LostBearings implements GameMap {
     private final List<BoardElement> elements = new ArrayList<>();
@@ -20,7 +21,7 @@ public class LostBearings implements GameMap {
         subBoards.put("1A", new Board.SubBoard("1A", 3, 12));   // New 1A sub-board (y=3–12)
 
         // Initialize antenna (example position, adjust as needed)
-        antennaPosition = new Position(4, 3, "StartA");
+        antennaPosition = new Position(4, 3);
 
         // Add StartA elements (copied from Dizzy Highway’s StartA setup)
         // Example: reuse antenna, belts, etc. from Dizzy Highway’s StartA

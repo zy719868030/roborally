@@ -187,8 +187,8 @@ public class CheckPoints extends BoardElement {
      * @return A new `MessageDefinitions.FieldCheckpoint` instance populated with the `boardId` and `number` fields of the current `CheckPoints` object.
      */
     @Override
-    public MessageDefinitions.FieldCheckpoint toField() {
-        return new MessageDefinitions.FieldCheckpoint(boardId, number);
+    public MessageDefinitions.FieldCheckPoint toField() {
+        return new MessageDefinitions.FieldCheckPoint(boardId, number);
     }
 
 }
