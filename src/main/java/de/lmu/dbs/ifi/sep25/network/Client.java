@@ -419,7 +419,7 @@ public class Client {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
                 Parent root = loader.load();
                 GameController controller = loader.getController();
-
+                controller.setRoot(root);
                 // Optional: Im Controller-Registry speichern
                 ControllerRegistry.setGameController(controller);
 
@@ -427,9 +427,15 @@ public class Client {
                 controller.setInitialPlayerStats(energy, checkpointsReached);
 
                 // Szene wechseln
-                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
+                Stage stage = ControllerRegistry.getPrimaryStage();
+                if (stage != null) {
+                    stage.setScene(new Scene(root));
+                    stage.show();
+                } else {
+                    System.err.println("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
+                }
+
+
 
             } catch (IOException e) {
                 System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());

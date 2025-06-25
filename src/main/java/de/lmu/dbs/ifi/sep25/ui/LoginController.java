@@ -125,9 +125,11 @@ public class LoginController {
             Parent root = loader.load();
 
             LobbyController controller = loader.getController();
+            controller.setRoot(root);
             ControllerRegistry.setLobbyController(controller);
 
             Stage stage = (Stage) nameField.getScene().getWindow();
+            ControllerRegistry.setPrimaryStage(stage);
             Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
             stage.setScene(scene);

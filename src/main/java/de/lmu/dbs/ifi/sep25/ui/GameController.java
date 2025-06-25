@@ -195,10 +195,6 @@ public class GameController {
     }
 
 
-
-
-
-
     private void loadTileImages() {
         tileImages.put("Floor", new Image(getClass().getResourceAsStream("/assets/floor.png")));
         tileImages.put("Wall_N", new Image(getClass().getResourceAsStream("/assets/wall_n.png")));
