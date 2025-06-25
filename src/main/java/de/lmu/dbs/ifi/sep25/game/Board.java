@@ -3,8 +3,10 @@ package de.lmu.dbs.ifi.sep25.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Maps.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,44 +19,40 @@ import java.util.Map;
  */
 public class Board implements GameMap {
 
-    // Logging
+    // 0. Logging
     private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger(Board.class);
 
-    // Serialization
+    // 1. Resource
     private final Gson mapGson = new GsonBuilder()
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
-            .setPrettyPrinting()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
             .create();
-    //private final List<BoardElement>[][] grid;
+
+    // 2. Board state
     private final Tile[][] grid;
     private final int width;
     private final int height;
     private final Map<Position, Robot> robotPositions = new HashMap<>();
     private final Map<Robot, Position> robotToPosition = new HashMap<>();
-
-    // Added to store robots that fall off the board
     private final List<Robot> fallenRobots = new ArrayList<>();
-
-    // Designated point for fallen robots (outside 12x12 grid)
     private static final Position VOID_POINT = new Position(-1, -1);
-
-    public final Map<String, SubBoard> subBoards;
     private Position antennaPosition;
+    public final Map<String, SubBoard> subBoards = new HashMap<>();
 
     // SubBoard class to manage boardId and coordinate ranges
     public static class SubBoard {
         private final String boardId;
-        private final int minY;
-        private final int maxY;
+        private final int minX;
+        private final int maxX;
 
-        SubBoard(String boardId, int minY, int maxY) {
+        public SubBoard(String boardId, int minX, int maxX) {
             this.boardId = boardId;
-            this.minY = minY;
-            this.maxY = maxY;
+            this.minX = minX;
+            this.maxX = maxX;
         }
 
         boolean contains(Position pos) {
-            return pos.y() >= minY && pos.y() <= maxY;
+            return pos.y() >= minX && pos.y() <= maxX;
         }
 
         String getBoardId() {
@@ -62,15 +60,67 @@ public class Board implements GameMap {
         }
     }
 
+
+    /**
+     * Constructs a Board object and initializes it based on the given map type.
+     * This process involves determining the board dimensions, creating sub-boards,
+     * initializing tiles, and setting up specific board configurations depending
+     * on the provided map type.
+     *
+     * @param mapType The type of map to initialize. It defines the board's structure,
+     *                sub-board arrangement, and tile settings based on the map style
+     *                (e.g., "normal" or "reverse").
+     * @throws IllegalArgumentException if the map type corresponds to an unknown
+     *                                  or unsupported board style.
+     */
     public Board(MapType mapType) {
-        this.width = 10;
-        this.height = 13;
-        this.grid = new Tile[width][height];
-        this.subBoards = new HashMap<>();
+        switch (MapType.boardStyleFromMapType(mapType)) {
+            case "normal" -> {
+                this.width = 13;
+                this.height = 10;
+                this.grid = new Tile[width][height];
 
-        logger.info("Initializing board with map type: " + mapType);
+                Floor.createFloor("StartA");
+                Floor.createFloor("5B");
 
-        initializeGrid();
+                subBoards.put("StartA", new SubBoard("StartA", 0, 2)); // Columns 0–2
+                subBoards.put("5B", new SubBoard("5B", 3, 12)); // Columns 3–12
+
+                logger.info("Initializing \"normal\" board with map type: " + mapType);
+
+                for (int x = 0; x < width; x++) {
+                    Floor floor = (x < 3) ? Floor.getInstance("StartA") : Floor.getInstance("5B");
+                    for (int y = 0; y < height; y++) {
+                        grid[x][y] = new Tile();
+                        grid[x][y].addElement(floor);
+                    }
+                }
+            }
+            case "reverse" -> {
+                this.width = 13;
+                this.height = 10;
+                this.grid = new Tile[width][height];
+
+                Floor.createFloor("StartA");
+                Floor.createFloor("5B");
+
+                subBoards.put("StartA", new SubBoard("StartA", 10, 12)); // Columns 0–2
+                subBoards.put("5B", new SubBoard("5B", 0, 9)); // Columns 3–12
+
+                logger.info("Initializing \"normal\" board with map type: " + mapType);
+
+                for (int x = 0; x < width; x++) {
+                    Floor floor = (x > 9) ? Floor.getInstance("StartA") : Floor.getInstance("5B");
+                    for (int y = 0; y < height; y++) {
+                        grid[x][y] = new Tile();
+                        grid[x][y].addElement(floor);
+                    }
+                }
+
+            }
+            default ->
+                    throw new IllegalArgumentException("Unknown/Not implemented board style: " + MapType.boardStyleFromMapType(mapType));
+        }
 
         logger.info("Board initialized.");
         logger.info("Initializing board implementation...");
@@ -78,31 +128,24 @@ public class Board implements GameMap {
         initializeBoard(mapType);
     }
 
-    private void initializeGrid() {
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                grid[x][y] = new Tile();
-                grid[x][y].addElement(Floor.getInstance());
-            }
-        }
-    }
-
-
+    /**
+     * Initializes the game board based on the specified map type. This method sets up the grid,
+     * board elements, and antenna position for the game. Depending on the map type, different
+     * implementations and configurations of the board are applied.
+     *
+     * @param mapType The type of map to initialize. It determines the specific board configuration
+     *                and elements for the game environment.
+     */
     private void initializeBoard(MapType mapType) {
-        GameMap mapImplementation;
-        switch (mapType) {
-            case DIZZY_HIGHWAY -> {
-                mapImplementation = this; // Board itself handles Dizzy Highway
-                initializeDizzyHighway();
-            }
-            case LOST_BEARINGS -> mapImplementation = new LostBearings();
-            case EXTRA_CRISPY -> mapImplementation = new ExtraCrispy();
-            case DEATH_TRAP -> mapImplementation = new DeathTrap();
+        GameMap mapImplementation = switch (mapType) {
+            case DIZZY_HIGHWAY -> new DizzyHighway();
+            case LOST_BEARINGS -> new LostBearings();
+            case EXTRA_CRISPY -> new ExtraCrispy();
+            case DEATH_TRAP -> new DeathTrap();
             default -> throw new IllegalArgumentException("Unknown map type: " + mapType);
-        }
+        };
 
-        // Copy elements, subboards, and antenna from the map implementation
-        this.subBoards.putAll(mapImplementation.getSubBoards());
+        // Copy elements and antenna from the map implementation
         this.antennaPosition = mapImplementation.getAntennaPosition();
 
         logger.info("Board implementation initialized.");
@@ -110,194 +153,131 @@ public class Board implements GameMap {
 
         for (BoardElement element : mapImplementation.getElements()) {
             if (!(element instanceof Floor)) {
-                if (element instanceof Belts) {
-                    logger.info("Adding belt: " + element.getPosition() + "with directions: out: " + ((Belts) element).getMainOutDirection() + ", in: " + ((Belts) element).getOutDirections());
-                }
                 addElement(element);
             }
         }
+
+        logger.info("Added elements to board.");
+
+        logger.info("Board elements:");
+        logger.info(getElements(1, 1).toString());
+        logger.info(getElements(antennaPosition.x(), antennaPosition.y()).toString());
     }
 
     // Initialize board with tiles based on map type
     private void initializeDizzyHighway() {
         // Dizzy Highway with Start A and 5B
-        // SubBoards
-        subBoards.put("StartA", new SubBoard("StartA", 0, 2)); // Columns 0–2
-        subBoards.put("5B", new SubBoard("5B", 3, 12)); // Columns 3–12
 
         // Start A (y: 0–2)
-        addElement(new Wall(new Position(7, 1), Direction.NORTH, "StartA"));
-        addElement(new Wall(new Position(5, 2), Direction.EAST, "StartA"));
-        addElement(new Wall(new Position(4, 2), Direction.EAST, "StartA"));
-        addElement(new Wall(new Position(2, 1), Direction.SOUTH, "StartA"));
+        addElement(new Wall(new Position(1, 7), Direction.NORTH, "StartA"));
+        addElement(new Wall(new Position(2, 5), Direction.EAST, "StartA"));
+        addElement(new Wall(new Position(2, 4), Direction.EAST, "StartA"));
+        addElement(new Wall(new Position(1, 2), Direction.SOUTH, "StartA"));
 
-        addElement(new Antenna(new Position(5, 0), Direction.EAST, "StartA"));
+        addElement(new Antenna(new Position(0, 5), Direction.EAST, "StartA"));
 
-        List.of(new Position(8, 1), new Position(6, 0), new Position(5, 1),
-                new Position(4, 1), new Position(3, 0), new Position(1, 1)
+        List.of(new Position(1, 8), new Position(0, 6), new Position(1, 5),
+                new Position(1, 4), new Position(0, 3), new Position(1, 1)
         ).forEach(pos -> addElement(new StartPoint(pos, Direction.EAST, "StartA")));
 
-        addElement(new Belts(new Position(0, 2), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
-        addElement(new Belts(new Position(9, 2), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
+        addElement(new Belts(new Position(2, 0), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
+        addElement(new Belts(new Position(2, 9), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
 
         // 5B (y: 3–12)
 
         //Belts
-        addElement(new Belts(new Position(2, 3), Direction.EAST, Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
-        addElement(new Belts(new Position(0, 10), Direction.NORTH, Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
-        addElement(new Belts(new Position(7, 12), Direction.WEST, Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
-        addElement(new Belts(new Position(9, 5), Direction.SOUTH, Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
+        addElement(new Belts(new Position(3, 2), Direction.EAST, Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
+        addElement(new Belts(new Position(10, 0), Direction.NORTH, Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
+        addElement(new Belts(new Position(12, 7), Direction.WEST, Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
+        addElement(new Belts(new Position(5, 9), Direction.SOUTH, Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
 
-        for (int x = 9; x >= 1; x--)
-            switch (x) {
+        for (int y = 9; y >= 1; y--)
+            switch (y) {
                 case 8 ->
-                        addElement(new Belts(new Position(x, 4), Direction.SOUTH, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(4, y), Direction.SOUTH, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
                 case 2 ->
-                        addElement(new Belts(new Position(x, 4), Direction.SOUTH, List.of(Direction.NORTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(4, y), Direction.SOUTH, List.of(Direction.NORTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
                 case 1 ->
-                        addElement(new Belts(new Position(x, 4), Direction.EAST, List.of(Direction.NORTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(4, y), Direction.EAST, List.of(Direction.NORTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
                 default ->
-                        addElement(new Belts(new Position(x, 4), Direction.SOUTH, Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(4, y), Direction.SOUTH, Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
             }
 
-        for (int y = 3; y <= 12; y++)
-            switch (y) {
+        for (int x = 3; x <= 12; x++)
+            switch (x) {
                 case 4 -> {
                 }
                 case 10 ->
-                        addElement(new Belts(new Position(1, y), Direction.EAST, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(x, 1), Direction.EAST, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
                 case 11 ->
-                        addElement(new Belts(new Position(1, y), Direction.NORTH, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(x, 1), Direction.NORTH, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
                 default ->
-                        addElement(new Belts(new Position(1, y), Direction.EAST, Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(x, 1), Direction.EAST, Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
             }
 
-        for (int x = 0; x <= 8; x++)
-            switch (x) {
-                case 1 ->
-                        addElement(new Belts(new Position(x, 11), Direction.NORTH, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
-                case 7 ->
-                        addElement(new Belts(new Position(x, 11), Direction.NORTH, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 8 ->
-                        addElement(new Belts(new Position(x, 11), Direction.WEST, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                default ->
-                        addElement(new Belts(new Position(x, 11), Direction.NORTH, Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
-            }
-
-        for (int y = 5; y <= 12; y++)
+        for (int y = 0; y <= 8; y++)
             switch (y) {
-                case 5 ->
-                        addElement(new Belts(new Position(8, y), Direction.SOUTH, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 6 ->
-                        addElement(new Belts(new Position(8, y), Direction.WEST, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 11 ->
-                        addElement(new Belts(new Position(8, y), Direction.WEST, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
+                case 1 ->
+                        addElement(new Belts(new Position(11, y), Direction.NORTH, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
+                case 7 ->
+                        addElement(new Belts(new Position(11, y), Direction.NORTH, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
+                case 8 ->
+                        addElement(new Belts(new Position(11, y), Direction.WEST, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
                 default ->
-                        addElement(new Belts(new Position(8, y), Direction.WEST, Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
+                        addElement(new Belts(new Position(11, y), Direction.NORTH, Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
+            }
+
+        for (int x = 5; x <= 12; x++)
+            switch (x) {
+                case 5 ->
+                        addElement(new Belts(new Position(x, 8), Direction.SOUTH, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
+                case 6 ->
+                        addElement(new Belts(new Position(x, 8), Direction.WEST, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
+                case 11 ->
+                        addElement(new Belts(new Position(x, 8), Direction.WEST, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
+                default ->
+                        addElement(new Belts(new Position(x, 8), Direction.WEST, Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
             }
 
         //EnergySpaces
-        List.of(new Position(0, 3), new Position(2, 10), new Position(9, 12), new Position(7, 5), new Position(4, 7), new Position(5, 8)).forEach(pos -> addElement(new EnergySpace(pos, "5B")));
+        List.of(new Position(3, 0), new Position(10, 2), new Position(12, 9), new Position(5, 7), new Position(7, 4), new Position(8, 5)).forEach(pos -> addElement(new EnergySpace(pos, "5B")));
 
         //Checkpoints
-        addElement(new CheckPoints(new Position(6, 12), 1, "5B"));
+        addElement(new CheckPoints(new Position(12, 6), 1, "5B"));
 
         //Reboot
         Reboot reboot = Reboot.getInstance();
-        reboot.setPosition(new Position(6, 7));
+        reboot.setPosition(new Position(7, 6));
         reboot.setBoardId("5B");
         addElement(reboot);
 
         //Walls
         addElement(new Wall(new Position(6, 6), Direction.NORTH, "5B"));
-        addElement(new Wall(new Position(5, 6), Direction.SOUTH, "5B"));
-        addElement(new Wall(new Position(6, 8), Direction.WEST, "5B"));
-        addElement(new Wall(new Position(6, 9), Direction.EAST, "5B"));
-        addElement(new Wall(new Position(4, 9), Direction.NORTH, "5B"));
-        addElement(new Wall(new Position(3, 9), Direction.SOUTH, "5B"));
-        addElement(new Wall(new Position(4, 7), Direction.EAST, "5B"));
-        addElement(new Wall(new Position(4, 6), Direction.WEST, "5B"));
+        addElement(new Wall(new Position(6, 5), Direction.SOUTH, "5B"));
+        addElement(new Wall(new Position(8, 6), Direction.WEST, "5B"));
+        addElement(new Wall(new Position(9, 6), Direction.EAST, "5B"));
+        addElement(new Wall(new Position(9, 4), Direction.NORTH, "5B"));
+        addElement(new Wall(new Position(9, 3), Direction.SOUTH, "5B"));
+        addElement(new Wall(new Position(7, 4), Direction.EAST, "5B"));
+        addElement(new Wall(new Position(6, 4), Direction.WEST, "5B"));
 
         //Lasers
         addElement(new Laser(new Position(6, 6), Direction.NORTH, 1, "5B"));
-        addElement(new Laser(new Position(3, 6), Direction.WEST, 1, "5B"));
-        addElement(new Laser(new Position(3, 9), Direction.SOUTH, 1, "5B"));
-        addElement(new Laser(new Position(6, 9), Direction.EAST, 1, "5B"));
-
-
-//            // Optional: Add Pit and Gear (adjust positions as needed)
-//            addElement(new Pit(new Position(3, 3), "5B"));
-//            addElement(new Gear(new Position(5, 5), Gear.RotationDirection.CLOCKWISE, "5B"));
-//            List<Direction> outDirs1 = new ArrayList<>();
-//            outDirs1.add(Direction.EAST);
-//            List<Direction> inDirs1 = new ArrayList<>();
-//            inDirs1.add(Direction.SOUTH);
-//
-//            addElement(new Belts(new Position(1, 4), outDirs1, inDirs1, Belts.BeltSpeed.FAST, "5B"));
-//
-//            addElement(new Belts(new Position(9, 5), Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
-//            List<Direction> outDirs2a = new ArrayList<>();
-//            outDirs2a.add(Direction.WEST);
-//            List<Direction> inDirs2a = new ArrayList<>();
-//            inDirs2a.add(Direction.SOUTH);
-//            addElement(new Belts(new Position(8, 5), outDirs2a, inDirs2a, Belts.BeltSpeed.FAST, "5B"));
-//
-//            List<Direction> outDirs2b = new ArrayList<>();
-//            outDirs2b.add(Direction.NORTH);
-//            List<Direction> inDirs2b = new ArrayList<>();
-//            inDirs2b.add(Direction.EAST);
-//            addElement(new Belts(new Position(8, 4), outDirs2b, inDirs2b, Belts.BeltSpeed.FAST, "5B"));
-//
-//            addElement(new Belts(new Position(2, 3), Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
-//            List<Direction> outDirs3 = new ArrayList<>();
-//            outDirs3.add(Direction.NORTH);
-//            List<Direction> inDirs3 = new ArrayList<>();
-//            inDirs3.add(Direction.WEST);
-//            addElement(new Belts(new Position(2, 4), outDirs3, inDirs3, Belts.BeltSpeed.FAST, "5B"));
-//
-//            for (int y = 3; y <= 10; y++) {
-//                addElement(new Belts(new Position(1, y), Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
-//            }
-//            List<Direction> outDirs4 = new ArrayList<>();
-//            outDirs4.add(Direction.SOUTH);
-//            List<Direction> inDirs4 = new ArrayList<>();
-//            inDirs4.add(Direction.WEST);
-//            addElement(new Belts(new Position(1, 11), outDirs4, inDirs4, Belts.BeltSpeed.FAST, "5B"));
-//
-//            addElement(new Belts(new Position(0, 10), Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
-//            List<Direction> outDirs5 = new ArrayList<>();
-//            outDirs5.add(Direction.EAST);
-//            List<Direction> inDirs5 = new ArrayList<>();
-//            inDirs5.add(Direction.NORTH);
-//            addElement(new Belts(new Position(1, 10), outDirs5, inDirs5, Belts.BeltSpeed.FAST, "5B"));
-//
-//            for (int x = 0; x <= 7; x++) {
-//                addElement(new Belts(new Position(x, 11), Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
-//            }
-//            List<Direction> outDirs6 = new ArrayList<>();
-//            outDirs6.add(Direction.WEST);
-//            List<Direction> inDirs6 = new ArrayList<>();
-//            inDirs6.add(Direction.SOUTH);
-//            addElement(new Belts(new Position(8, 11), outDirs6, inDirs6, Belts.BeltSpeed.FAST, "5B"));
-//
-//            addElement(new Belts(new Position(7, 12), Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
-//            List<Direction> outDirs7 = new ArrayList<>();
-//            outDirs7.add(Direction.NORTH);
-//            List<Direction> inDirs7 = new ArrayList<>();
-//            inDirs7.add(Direction.EAST);
-//            addElement(new Belts(new Position(7, 11), outDirs7, inDirs7, Belts.BeltSpeed.FAST, "5B"));
-//
-//            for (int y = 12; y >= 5; y--) {
-//                addElement(new Belts(new Position(8, y), Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
-//            }
+        addElement(new Laser(new Position(6, 3), Direction.WEST, 1, "5B"));
+        addElement(new Laser(new Position(9, 3), Direction.SOUTH, 1, "5B"));
+        addElement(new Laser(new Position(9, 6), Direction.EAST, 1, "5B"));
     }
-    // Add other map types (e.g., MAP1 for Risky Crossing) as needed
 
-
-    // Added: Helper method to add elements to the grid
+    /**
+     * Adds a {@link BoardElement} to the board at its specified position,
+     * if the position is within the bounds of the grid.
+     *
+     * @param element The board element to add. Its position is determined
+     *                using the {@code getPosition()} method.
+     */
     private void addElement(BoardElement element) {
         Position pos = element.getPosition();
-        if (pos.x() >= 0 && pos.x() < width && pos.y() >= 0 && pos.y() < height) {
+        if (isValidPosition(pos)) {
             grid[pos.x()][pos.y()].addElement(element);
         }
     }
@@ -338,13 +318,6 @@ public class Board implements GameMap {
         }
     }
 
-    public List<BoardElement> getElements(int x, int y) {
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-            return grid[x][y].getElements();
-        }
-        return new ArrayList<>();
-    }
-
     @Override
     public List<BoardElement> getElements() {
         List<BoardElement> elements = new ArrayList<>();
@@ -355,6 +328,18 @@ public class Board implements GameMap {
         }
         return elements;
     }
+
+    public List<BoardElement> getElements(Position position) {
+        return getElements(position.x(), position.y());
+    }
+
+    public List<BoardElement> getElements(int x, int y) {
+        if (isValidPosition(new Position(x, y)) && grid[x][y] != null) {
+            return grid[x][y].getElements();
+        }
+        return new ArrayList<>();
+    }
+
 
     @Override
     public Map<String, SubBoard> getSubBoards() {
@@ -452,7 +437,6 @@ public class Board implements GameMap {
      * @return If there is a robot at that position, return the robot object; otherwise, return null.
      */
     public Robot getRobotAt(Position position) {
-
         return robotPositions.get(position);
     }
 
@@ -533,15 +517,15 @@ public class Board implements GameMap {
      */
     private List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
         List<List<List<MessageDefinitions.Field>>> map = new ArrayList<>();
-        for (int x = 0; x < grid.length; x++) {
+        for (Tile[] tiles : grid) {
             List<List<MessageDefinitions.Field>> col = new ArrayList<>();
             for (int y = 0; y < grid[0].length; y++) {
-                Tile tile = grid[x][y];
+                Tile tile = tiles[y];
 
                 if (tile == null) {
                     col.add(null);
                 } else {
-                    col.add(grid[x][y].toSerializableList().stream().map(BoardElement::toField).toList());
+                    col.add(tiles[y].toSerializableList().stream().map(BoardElement::toField).toList());
                 }
             }
             map.add(col);

@@ -1,6 +1,9 @@
-package de.lmu.dbs.ifi.sep25.game;
+package de.lmu.dbs.ifi.sep25.game.Maps;
 
+import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Position;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +21,7 @@ public class DeathTrap implements GameMap {
         subBoards.put("DT1", new Board.SubBoard("DT1", 3, 12)); // y=3–12
 
         // Initialize antenna position (matches Antenna element in StartA)
-        antennaPosition = new Position(5, 0, "StartA");
+        antennaPosition = new Position(5, 0);
 
         // Add StartA elements (identical to DizzyHighway and LostBearings)
         elements.add(new Antenna(new Position(5, 0), Direction.EAST, "StartA"));

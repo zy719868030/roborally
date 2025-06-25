@@ -219,7 +219,7 @@ public class GameController {
     }
 
     private String getTileKeyForElement(MessageDefinitions.Field element) {
-        String type = element.getType();
+        String type = element.type();
 
         return switch (type) {
             case "Empty" -> "Floor"; // Hintergrund
@@ -227,7 +227,7 @@ public class GameController {
             case "Pit" -> "pit";
             case "RestartPoint" -> "reboot";
             case "Energy-Space" -> "energyspace";
-            case "CheckPoint" -> "checkpoint" + ((MessageDefinitions.FieldCheckpoint) element).count();
+            case "CheckPoint" -> "checkpoint" + ((MessageDefinitions.FieldCheckPoint) element).count();
             case "Antenna" -> "antenna";
 
             case "Gear" -> {

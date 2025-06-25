@@ -1,39 +1,27 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
-import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 
@@ -218,7 +206,7 @@ public class LobbyController {
 
             //  Szene wechseln nach Auswahl
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("src/main/resources/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
                 Parent root = loader.load();
                 GameController controller = loader.getController();
 

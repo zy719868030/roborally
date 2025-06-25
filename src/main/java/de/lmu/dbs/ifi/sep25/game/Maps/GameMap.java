@@ -1,6 +1,9 @@
-package de.lmu.dbs.ifi.sep25.game;
+package de.lmu.dbs.ifi.sep25.game.Maps;
 
+import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Position;
+
 import java.util.List;
 import java.util.Map;
 

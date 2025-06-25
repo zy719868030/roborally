@@ -1,18 +1,24 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.GameController;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
 import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,8 +28,20 @@ import java.net.Socket;
 import java.util.*;
 
 public class Client {
+    // 0. Logging
+//    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
+    private static final Logger clientLogger = LogManager.getLogger("PerClientLogger");
+
     // 1. Constants / configuration
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    private final Gson gsonPretty = new GsonBuilder()
+            .setPrettyPrinting()
+            .create();
+
     private final String protocol = "Version 0.1";
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
@@ -56,8 +74,6 @@ public class Client {
     public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
         return currentGameMap;
     }
-
-
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -110,8 +126,12 @@ public class Client {
             String json;
             while ((json = reader.readLine()) != null) {
                 try {
-                    System.out.println("[DEBUG] Received: " + json);
                     String messageType = JsonUtil.parseUnknown(json).messageType();
+                    if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
+                        ThreadContext.put("clientId", ID.toString());
+                        clientLogger.info("Received " + messageType + ": " + gsonPretty.toJson(JsonUtil.parseUnknown(json)));
+                        ThreadContext.clearAll();
+                    }
                     switch (messageType) {
                         case "HelloClient" -> handleBodyHelloClient(json);
                         case "Alive" -> handleBodyAlive(json);
@@ -382,16 +402,16 @@ public class Client {
         }
 
         // Energie und Checkpoints initialisieren
-        for (Integer id : Server.getInstance().getClients().valueSet()) {
-            energy.put(id, body.energy());
-            checkpointsReached.put(id, 0);
+        for (Integer playerId : usernames.keySet()) {
+            energy.put(playerId, body.energy());
+            checkpointsReached.put(playerId, 0);
         }
 
         // Lokale Map speichern (z.B. in ClientSingleton oder deiner eigenen Struktur)
         this.setCurrentGameMap(boardMap);
 
-        System.out.println("[DEBUG] handleBodyGameStarted aufgerufen");
-        System.out.println("Map-Größe: " + boardMap.size() + " × " + boardMap.get(0).size());
+//        System.out.println("[DEBUG] handleBodyGameStarted aufgerufen");
+//        System.out.println("Map-Größe: " + boardMap.size() + " × " + boardMap.getFirst().size());
 
         // Szenewechsel zur GameView
         Platform.runLater(() -> {
@@ -420,23 +440,23 @@ public class Client {
 
 
     /**
-                 * Handles a "BodyReceivedChat" message from the server.
-                 *
-                 * <p>This method processes an incoming JSON string representing a chat message
-                 * by deserializing it into a {@code BodyReceivedChat} object. Based on the
-                 * message details, it displays the appropriate chat content in the console:
-                 * <ul>
-                 *   <li>Private messages are displayed as whispers.</li>
-                 *   <li>Messages from the server (identified by a {@code from} value of 0)
-                 *       are prefixed with “[SERVER]”.</li>
-                 *   <li>Public messages from other users display their usernames, resolved
-                 *       with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.</li>
-                 * </ul>
-                 *
-                 * <p>Messages sent by the current user (identified by {@code ID}) are ignored.
-                 *
-                 * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
-                 */
+     * Handles a "BodyReceivedChat" message from the server.
+     *
+     * <p>This method processes an incoming JSON string representing a chat message
+     * by deserializing it into a {@code BodyReceivedChat} object. Based on the
+     * message details, it displays the appropriate chat content in the console:
+     * <ul>
+     *   <li>Private messages are displayed as whispers.</li>
+     *   <li>Messages from the server (identified by a {@code from} value of 0)
+     *       are prefixed with “[SERVER]”.</li>
+     *   <li>Public messages from other users display their usernames, resolved
+     *       with {@code usernames.getByKeyOrDefault}, or their raw ID if no match exists.</li>
+     * </ul>
+     *
+     * <p>Messages sent by the current user (identified by {@code ID}) are ignored.
+     *
+     * @param json the JSON string containing the serialized {@code BodyReceivedChat} message
+     */
     private void handleBodyReceivedChat(String json) {
         BodyReceivedChat body = JsonUtil.parseMessage(json, BodyReceivedChat.class).messageBody();
         if (!body.from().equals(ID)) {
@@ -894,6 +914,7 @@ public class Client {
             if (reader != null) reader.close();
             if (writer != null) writer.close();
             if (socket != null && !socket.isClosed()) socket.close();
+            System.exit(0);
         } catch (IOException e) {
             System.err.println("Error closing client: " + e.getMessage());
         }

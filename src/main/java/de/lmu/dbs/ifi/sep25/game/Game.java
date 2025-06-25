@@ -8,6 +8,7 @@ import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Maps.MapType;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.Server;
@@ -163,14 +164,14 @@ public class Game {
         board = new Board(MapType.fromString(mapName));
         initializeGame();
 
-        // Broadcast MapSelected and GameStarted
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyMapSelected(mapName)
-            ));
-            //Use convertToBoardElementMap for BodyGameStarted
-            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
-        }
+//        // Broadcast MapSelected and GameStarted
+//        for (Player p : players) {
+//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyMapSelected(mapName)
+//            ));
+//            //Use convertToBoardElementMap for BodyGameStarted
+//            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
+//        }
         startGameLoop();
     }
 
@@ -428,34 +429,15 @@ public class Game {
         }
     }
 
+    /**
+     * Adds a player to the current game.
+     *
+     * @param player The Player instance to be added to the game.
+     */
     public void addPlayer(Player player) {
         players.add(player);
-        // Send existing player info and map state
-        for (Player p : players) {
-            if (p != player) {
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyPlayerAdded(p.getRobot().getId(), p.getName(), p.getRobot().getId())
-                ));
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyPlayerStatus(p.getRobot().getId(), p.isReady())
-                ));
-            }
-        }
-        if (selectedMap != null) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyMapSelected(selectedMap)
-            ));
-            if (board != null) {
-                player.getConnection().sendMessage(board.getSerializedBoardAsMessage());
-
-            }
-        }
-        // Place robot if board exists
-        if (board != null) {
-            Position pos = player.getRobot().getPosition();
-            board.placeRobot(player.getRobot(), pos.x(), pos.y());
-        }
     }
+
     /**
      * Gets the game board.
      *
