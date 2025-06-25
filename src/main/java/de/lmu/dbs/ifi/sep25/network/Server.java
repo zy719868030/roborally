@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 /**
  * Represents the game server that manages client connections, lobby management,
@@ -333,33 +334,39 @@ public class Server {
      * @return a unique name based on the provided base name
      */
     public synchronized String generateUniqueName(String baseName) {
-        Collection<String> existingNames = names.values();
+        List<String> currentNames = new ArrayList<>(names.values());
 
-        if (!existingNames.contains(baseName)) {
-            return baseName;
-        }
-
-        for (Map.Entry<ClientHandler, String> entry : names.entrySet()) {
-            if (entry.getValue().equals(baseName)) {
-                names.put(entry.getKey(), baseName + "#1");
-
-                Message<BodyPlayerRenamed> renameMsg = new Message<>(new BodyPlayerRenamed(
-                        clients.getByKey(entry.getKey()),
-                        baseName + "#1"
-                ));
-                broadcastMessage(renameMsg);
-                break;
+        int maxSuffix = 0;
+        for (String name : currentNames) {
+            if (name.equals(baseName)) {
+                for (Map.Entry<ClientHandler, String> entry : names.entrySet()) {
+                    if (entry.getValue().equals(baseName)) {
+                        String newName = baseName + "#1";
+                        entry.setValue(newName);
+                        broadcastMessage(new Message<>(new BodyPlayerRenamed(
+                                clients.getByKey(entry.getKey()), newName
+                        )));
+                        maxSuffix = Math.max(maxSuffix, 1);
+                        break;
+                    }
+                }
+            } else if (name.startsWith(baseName + "#")) {
+                try {
+                    int suffix = Integer.parseInt(name.substring(baseName.length() + 1));
+                    maxSuffix = Math.max(maxSuffix, suffix);
+                } catch (NumberFormatException ignored) {}
             }
         }
 
-        int suffix = 2;
-        String newName;
-        do {
-            newName = baseName + "#" + suffix++;
-        } while (existingNames.contains(newName));
+        if (maxSuffix == 0) {
+            return baseName;
+        }
 
-        return newName;
+        return baseName + "#" + (maxSuffix + 1);
     }
+
+
+
 
 
     /**
