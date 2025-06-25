@@ -120,10 +120,11 @@ public class Belts extends BoardElement {
      * @throws IllegalArgumentException if any of the required parameters (position, outDirection, inDirections, or speed) are null.
      */
     public Belts(Position position, Direction outDirection, List<Direction> inDirections, BeltSpeed speed, String boardId) {
+        super(position, outDirection, boardId);
+
         if (position == null || outDirection == null || inDirections == null || speed == null) {
             throw new IllegalArgumentException("Position, outDirection, inDirections, and speed cannot be null.");
         }
-        super(position, outDirection, boardId);
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
         this.outDirections = List.of(outDirection);

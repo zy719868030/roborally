@@ -274,6 +274,8 @@ public class LobbyController {
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
 
+
+
     public void showMapSelection(List<String> maps) {
         if (mapChoiceBox == null || mapSelectionBox == null) {
             System.err.println("[ERROR] mapChoiceBox oder mapSelectionBox ist null in showMapSelection!");
@@ -301,9 +303,11 @@ public class LobbyController {
 
             //  Szene wechseln nach Auswahl
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("src/main/resources/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
                 Parent root = loader.load();
                 GameController controller = loader.getController();
+                // Spieler aus Lobby an GameController übergeben
+                controller.setPlayersFromLobby(players);  // `players` ist die ObservableList in deinem LobbyController
 
                 // Falls Map bereits bekannt:
                 //controller.drawBoard(/* boardMap von Server oder lokal */);
