@@ -14,11 +14,11 @@
 <VBox alignment="CENTER" spacing="20" style="-fx-padding: 30; -fx-background-image: url('/assets/cover.png'); -fx-background-size: cover;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
 
 
-    <TextField fx:id="nameField" promptText="Dein Name" />
+    <TextField fx:id="nameField" promptText="Dein Name" styleClass="chat-input" />
 
-    <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" />
+    <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" styleClass="combo-recipient" />
 
-    <Button onAction="#handleLogin" text="Weiter zur Lobby">
+    <Button onAction="#handleLogin" text="Weiter zur Lobby" styleClass="senden-button">
       <font>
          <Font name="Berlin Sans FB Demi Bold" size="12.0" />
       </font></Button>
@@ -43,12 +43,12 @@
          <font>
             <Font name="Berlin Sans FB" size="14.0" />
          </font></Label>
-        <TextField fx:id="hostField" promptText="localhost" />
+        <TextField fx:id="hostField" promptText="localhost" styleClass="chat-input" />
         <Label text="Port:" textFill="#f7f7f7">
          <font>
             <Font name="Berlin Sans FB" size="14.0" />
          </font></Label>
-        <TextField fx:id="portField" promptText="12345" />
+        <TextField fx:id="portField" promptText="12345" styleClass="chat-input" />
     </HBox>
 
 </VBox>
