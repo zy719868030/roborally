@@ -23,7 +23,7 @@ public class FieldDeserializer implements JsonDeserializer<MessageDefinitions.Fi
             case "Wall" -> context.deserialize(obj, MessageDefinitions.FieldWall.class);
             case "Laser" -> context.deserialize(obj, MessageDefinitions.FieldLaser.class);
             case "Antenna" -> context.deserialize(obj, MessageDefinitions.FieldAntenna.class);
-            case "CheckPoint" -> context.deserialize(obj, MessageDefinitions.FieldCheckpoint.class);
+            case "CheckPoint" -> context.deserialize(obj, MessageDefinitions.FieldCheckPoint.class);
             case "RestartPoint" -> context.deserialize(obj, MessageDefinitions.FieldRestartPoint.class);
 
             default -> throw new JsonParseException("Unknown field type: " + type);

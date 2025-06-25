@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Console (optional) -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- Main application log -->
+        <File name="AppFile" fileName="logs/app.log" append="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+        </File>
+
+        <!-- Dedicated message log -->
+        <File name="MessageFile" fileName="logs/messages.log" append="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+        </File>
+
+        <!-- Per-client routing appender -->
+        <Routing name="ClientRouting">
+            <Routes pattern="$${ctx:clientId}">
+                <Route>
+                    <File name="PerClientFile" fileName="logs/client-${ctx:clientId}.log" append="false">
+                        <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+                    </File>
+                </Route>
+            </Routes>
+        </Routing>
+    </Appenders>
+
+    <Loggers>
+        <!-- Logger for message I/O -->
+        <Logger name="MessageLogger" level="info" additivity="false">
+            <AppenderRef ref="MessageFile"/>
+        </Logger>
+
+        <!-- Logger for per-client routing -->
+        <Logger name="PerClientLogger" level="info" additivity="false">
+            <AppenderRef ref="ClientRouting"/>
+        </Logger>
+
+        <!-- Root logger for everything else -->
+        <Root level="info">
+            <AppenderRef ref="AppFile"/>
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

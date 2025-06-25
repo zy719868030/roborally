@@ -1,18 +1,24 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.GameController;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
 import de.lmu.dbs.ifi.sep25.ui.LoginController;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,8 +28,20 @@ import java.net.Socket;
 import java.util.*;
 
 public class Client {
+    // 0. Logging
+//    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
+    private static final Logger clientLogger = LogManager.getLogger("PerClientLogger");
+
     // 1. Constants / configuration
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    private final Gson gsonPretty = new GsonBuilder()
+            .setPrettyPrinting()
+            .create();
+
     private final String protocol = "Version 0.1";
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
@@ -47,6 +65,15 @@ public class Client {
     private final Map<Integer, Integer> energy = new HashMap<>();
     private final Map<Integer, Integer> checkpointsReached = new HashMap<>();
 
+    private List<List<List<MessageDefinitions.Field>>> currentGameMap;
+
+    public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
+        this.currentGameMap = map;
+    }
+
+    public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
+        return currentGameMap;
+    }
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -99,8 +126,12 @@ public class Client {
             String json;
             while ((json = reader.readLine()) != null) {
                 try {
-                    System.out.println("[DEBUG] Received: " + json);
                     String messageType = JsonUtil.parseUnknown(json).messageType();
+                    if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
+                        ThreadContext.put("clientId", ID.toString());
+                        clientLogger.info("Received " + messageType + ": " + gsonPretty.toJson(JsonUtil.parseUnknown(json)));
+                        ThreadContext.clearAll();
+                    }
                     switch (messageType) {
                         case "HelloClient" -> handleBodyHelloClient(json);
                         case "Alive" -> handleBodyAlive(json);
@@ -138,6 +169,7 @@ public class Client {
                     }
                 } catch (Exception e) {
                     System.err.println("[ERROR] Error handling message: " + e.getMessage());
+                    System.err.println("[ERROR] Message: " + json);
                     e.printStackTrace();
                 }
             }
@@ -343,35 +375,13 @@ public class Client {
      *             expected to contain the necessary data to identify the selected map.
      */
     private void handleBodyMapSelected(String json) {
-        Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
+        Message<MessageDefinitions.BodyMapSelected> message =
+                JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
 
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-                Parent root = loader.load();
-                GameController gameController = loader.getController();
+        System.out.println("[SERVER] Map selected: " + selectedMap);
 
-                // Map-Datei laden
-               // List<List<List<MessageDefinitions.Field>>> mapData = MapLoader.loadMap(selectedMap);
-
-                // Board zeichnen
-                //gameController.drawBoard(mapData);
-
-                // Szene setzen
-                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
-                stage.setScene(new Scene(root));
-
-            } catch (IOException e) {
-                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-        });
-
-        //TODO fx display selected map Raneem
     }
-
 
     /**
      * Handles the event when the body of a game started message is received.
@@ -384,42 +394,61 @@ public class Client {
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
 
-        for (Integer id : Server.getInstance().getClients().valueSet()) {
-            energy.put(id, body.energy());
-            checkpointsReached.put(id, 0);
-        }
-        // Speichere Energie & Checkpoints lokal
-        for (Integer id : Server.getInstance().getClients().valueSet()) {
-            energy.put(id, body.energy());
-            checkpointsReached.put(id, 0);
-        }
-        //TODO start displaying energy and checkpointsreached
-
-
+        // BoardMap vom Server holen
         List<List<List<Field>>> boardMap = body.gameMap();
+        if (boardMap == null || boardMap.isEmpty()) {
+            System.err.println("[ERROR] Empfangenes boardMap ist null oder leer!");
+            return;
+        }
 
+        // Energie und Checkpoints initialisieren
+        for (Integer playerId : usernames.keySet()) {
+            energy.put(playerId, body.energy());
+            checkpointsReached.put(playerId, 0);
+        }
+
+        // Lokale Map speichern (z.B. in ClientSingleton oder deiner eigenen Struktur)
+        this.setCurrentGameMap(boardMap);
+
+//        System.out.println("[DEBUG] handleBodyGameStarted aufgerufen");
+//        System.out.println("Map-Größe: " + boardMap.size() + " × " + boardMap.getFirst().size());
+
+        // Szenewechsel zur GameView
         Platform.runLater(() -> {
             try {
-                // Lade GameView
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
                 Parent root = loader.load();
                 GameController controller = loader.getController();
+                controller.setRoot(root);
+                // Im Controller-Registry speichern
+                ControllerRegistry.setGameController(controller);
 
-                // Übergib Spielfeld
                 controller.drawBoard(boardMap);
-
-                // Übergib Energie/Checkpoint-Infos wenn nötig
                 controller.setInitialPlayerStats(energy, checkpointsReached);
 
-                // Wechsle Szene
-                Stage stage = (Stage) ControllerRegistry.getLobbyController().getRoot().getScene().getWindow();
-                stage.setScene(new Scene(root));
+                // Szene wechseln
+                Stage stage = ControllerRegistry.getPrimaryStage();
+                if (stage != null) {
+                    Scene scene = new Scene(root);
+                    scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+                    stage.setScene(scene);
+                    stage.show();
+                    stage.setTitle("Robo Rally Game");
+                    controller.setPlayersFromLobby(ControllerRegistry.getLobbyController().getPlayers());
+
+                } else {
+                    System.err.println("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
+                }
+
+
+
             } catch (IOException e) {
                 System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
                 e.printStackTrace();
             }
         });
     }
+
 
     /**
      * Handles a "BodyReceivedChat" message from the server.
@@ -454,10 +483,14 @@ public class Client {
             String fullMessage = sender + ": " + body.message();
 
             javafx.application.Platform.runLater(() -> {
-                LobbyController controller = ControllerRegistry.getLobbyController();
-                if (controller != null) {
-                    controller.appendChatMessage(fullMessage);
+                GameController gameController = ControllerRegistry.getGameController();
+                LobbyController lobbyController = ControllerRegistry.getLobbyController();
+                if (gameController != null && gameController.getRoot().isVisible()) {
+                    gameController.appendChatMessage(fullMessage);
+                } else if (lobbyController != null) {
+                    lobbyController.appendChatMessage(fullMessage);
                 }
+
             });
         }
     }
@@ -896,6 +929,7 @@ public class Client {
             if (reader != null) reader.close();
             if (writer != null) writer.close();
             if (socket != null && !socket.isClosed()) socket.close();
+            System.exit(0);
         } catch (IOException e) {
             System.err.println("Error closing client: " + e.getMessage());
         }

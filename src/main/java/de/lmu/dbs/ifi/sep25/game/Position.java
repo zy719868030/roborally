@@ -5,10 +5,7 @@ package de.lmu.dbs.ifi.sep25.game;
  * This class is implemented as a record, providing immutable x and y coordinates.
  */
 @SuppressWarnings("unused")
-public record Position(int x, int y, String boardId) {
-    public Position(int x, int y){
-        this(x,y,null);
-    }
+public record Position(int x, int y) {
 
     /**
      * Moves the current position by the specified delta values for x and y.

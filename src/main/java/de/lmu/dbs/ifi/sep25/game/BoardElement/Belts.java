@@ -104,25 +104,34 @@ public class Belts extends BoardElement {
 
      */
 
+    public Belts(Position position, Direction outDirection, Direction inDirection, BeltSpeed speed, String boardId) {
+        this(position, outDirection, List.of(inDirection), speed, boardId);
+    }
+
 
     /**
-     * Constructor with position, exit direction list, entry direction list, and speed parameters.
-     * Used to create a rotating conveyor belt.
+     * Constructs a new Belts instance representing a conveyor belt with the specified properties.
      *
-     * @param position The position of the conveyor belt.
-     * @param outDirections The exit direction list of the conveyor belt.
-     * @param inDirections The entry direction list of the conveyor belt.
-     * @param speed The speed of the conveyor belt.
+     * @param position the position of the conveyor belt on the board, cannot be null.
+     * @param outDirection the primary direction where the conveyor belt exits, cannot be null.
+     * @param inDirections a list of directions where the conveyor belt receives input, cannot be null.
+     * @param speed the speed of the belt, determining how many tiles the robot moves (SLOW or FAST), cannot be null.
+     * @param boardId the identifier of the board to which this belt belongs.
+     * @throws IllegalArgumentException if any of the required parameters (position, outDirection, inDirections, or speed) are null.
      */
-    public Belts(Position position, List<Direction> outDirections, List<Direction> inDirections, BeltSpeed speed, String boardId) {
-        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardId);
+    public Belts(Position position, Direction outDirection, List<Direction> inDirections, BeltSpeed speed, String boardId) {
+        super(position, outDirection, boardId);
+
+        if (position == null || outDirection == null || inDirections == null || speed == null) {
+            throw new IllegalArgumentException("Position, outDirection, inDirections, and speed cannot be null.");
+        }
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-        this.outDirections = new ArrayList<>(outDirections);
+        this.outDirections = List.of(outDirection);
         this.inDirections = new ArrayList<>(inDirections);
         // If the export direction and import direction are different, it is a rotating conveyor belt.
-        this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
-                !outDirections.get(0).equals(inDirections.get(0).turnAround());
+        this.isRotating = !inDirections.isEmpty() &&
+                !outDirections.getFirst().equals(inDirections.getFirst().turnAround());
         this.isOnBoard = false;
         this.boardId = boardId;
         //this.boardId = "";

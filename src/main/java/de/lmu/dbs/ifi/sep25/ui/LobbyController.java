@@ -11,6 +11,7 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -26,6 +27,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,10 +64,69 @@ public class LobbyController {
     private Button selectMapButton;
     @FXML private ImageView mapPreviewImage;
     @FXML private StackPane mapPreviewContainer;
+    @FXML private VBox chatBox;
+    @FXML private VBox lobbyBox;
+    @FXML private HBox iconMenu;
+    @FXML private Button lobbyToggleButton;
+    @FXML private Button chatToggleButton;
+    @FXML private Button lobbyRestoreButton;
+    @FXML private Button chatRestoreButton;
+
 
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
     private Parent root;
+
+    @FXML
+    private void toggleLobbyBox() {
+        if (lobbyBox.isVisible()) {
+            slideOut(lobbyBox);
+            lobbyToggleButton.setVisible(false);
+            lobbyToggleButton.setManaged(false);
+            lobbyRestoreButton.setVisible(true);
+            lobbyRestoreButton.setManaged(true);
+        } else {
+            slideIn(lobbyBox);
+            lobbyToggleButton.setVisible(true);
+            lobbyToggleButton.setManaged(true);
+            lobbyRestoreButton.setVisible(false);
+            lobbyRestoreButton.setManaged(false);
+        }
+        updateIconMenuVisibility();
+    }
+
+    @FXML
+    private void toggleChatBox() {
+        if (chatBox.isVisible()) {
+            slideOut(chatBox);
+            chatToggleButton.setVisible(false);
+            chatToggleButton.setManaged(false);
+            chatRestoreButton.setVisible(true);
+            chatRestoreButton.setManaged(true);
+        } else {
+            slideIn(chatBox);
+            chatToggleButton.setVisible(true);
+            chatToggleButton.setManaged(true);
+            chatRestoreButton.setVisible(false);
+            chatRestoreButton.setManaged(false);
+        }
+        updateIconMenuVisibility();
+    }
+
+    private void updateIconMenuVisibility() {
+        boolean irgendwasMinimiert =
+                chatRestoreButton.isVisible() || lobbyRestoreButton.isVisible();
+
+        iconMenu.setVisible(irgendwasMinimiert);
+        iconMenu.setManaged(irgendwasMinimiert);
+
+
+
+    }
+
+
+
+
 
 
     @FXML
@@ -75,17 +136,27 @@ public class LobbyController {
 
 
 
-        playerList.setCellFactory(list -> new ListCell<>() {
+        playerList.setCellFactory(listView -> new ListCell<>() {
             @Override
             protected void updateItem(PlayerEntry player, boolean empty) {
                 super.updateItem(player, empty);
                 if (empty || player == null) {
                     setText(null);
+                    setStyle(null);
+                    getStyleClass().clear();
                 } else {
                     setText(player.toString());
+                    getStyleClass().clear();
+                    getStyleClass().add("player-cell");
+                    if (player.isReady()) {
+                        getStyleClass().add("player-cell-ready");
+                    } else {
+                        getStyleClass().add("player-cell-unready");
+                    }
                 }
             }
         });
+
         //Combobox conf
         PlayerEntry alleOption = new PlayerEntry(-1, "Alle", -1, false);
         recipientBox.getItems().add(alleOption);
@@ -110,6 +181,12 @@ public class LobbyController {
         recipientBox.getSelectionModel().clearSelection();
         chatInput.setOnAction(e -> handleSendChat());
         updateReadyButtons(false);
+        chatBox.setVisible(true);
+        chatBox.setManaged(true);
+        iconMenu.setVisible(false);
+        iconMenu.setManaged(false);
+
+
 // Listener für Kartenwechsel in der ComboBox
         mapChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldMap, newMap) -> {
             if (newMap != null) {
@@ -146,6 +223,10 @@ public class LobbyController {
         sendReadyStatus(true);
         statusLabel.setText("Du bist bereit.");
         updateReadyButtons(true);
+        if (!lobbyBox.getStyleClass().contains("lobby-box-ready")) {
+            lobbyBox.getStyleClass().add("lobby-box-ready");
+        }
+
     }
 
     @FXML
@@ -153,6 +234,8 @@ public class LobbyController {
         sendReadyStatus(false);
         statusLabel.setText("Du bist nicht bereit.");
         updateReadyButtons(false);
+        lobbyBox.getStyleClass().remove("lobby-box-ready");
+
     }
 
     private void sendReadyStatus(boolean ready) {
@@ -191,6 +274,8 @@ public class LobbyController {
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
 
+
+
     public void showMapSelection(List<String> maps) {
         if (mapChoiceBox == null || mapSelectionBox == null) {
             System.err.println("[ERROR] mapChoiceBox oder mapSelectionBox ist null in showMapSelection!");
@@ -216,20 +301,7 @@ public class LobbyController {
                     new Message<>(new MessageDefinitions.BodyMapSelected(selectedMap))
             );
 
-            //  Szene wechseln nach Auswahl
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("src/main/resources/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-                Parent root = loader.load();
-                GameController controller = loader.getController();
 
-                // Falls Map bereits bekannt:
-                //controller.drawBoard(/* boardMap von Server oder lokal */);
-
-                Stage stage = (Stage) selectMapButton.getScene().getWindow();
-                stage.setScene(new Scene(root));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -377,6 +449,37 @@ public class LobbyController {
 
 
     }
+    public List<PlayerEntry> getPlayers() {
+        return players.stream()
+                .map(p -> new PlayerEntry(
+                        p.getClientID(),
+                        p.getName().replace(" (du)", ""), // falls notwendig
+                        p.getFigure(),
+                        p.isReady()
+                ))
+                .toList();
+    }
+
+
+    private void slideOut(Node node) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
+        tt.setToY(50);
+        tt.setOnFinished(e -> {
+            node.setVisible(false);
+            node.setManaged(false);
+        });
+        tt.play();
+    }
+
+    private void slideIn(Node node) {
+        node.setVisible(true);
+        node.setManaged(true);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
+        tt.setFromY(50);
+        tt.setToY(0);
+        tt.play();
+    }
+
     public void setRoot(Parent root) {
         this.root = root;
     }
