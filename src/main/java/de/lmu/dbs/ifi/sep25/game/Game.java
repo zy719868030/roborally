@@ -96,9 +96,75 @@ public class Game {
 
 
     //TODO @yu or @prajal
+    // Initialize 40 upgrade cards according to the game rulebook.
     private void initializeUpgradeCards() {
-        //add upgrade cards
 
+        // Permanent Upgrade Card (yellow)
+        String[] permanentUpgrades = {
+                "AdminPrivilege", "AdminPrivilege", "AdminPrivilege",
+                "BlueScreenOfDeath", "BlueScreenOfDeath",
+                "Brakes", "Brakes", "Brakes",
+                "CacheMemory",
+                "CrabLegs",
+                "CorruptionWave",
+                "DefragGizmo",
+                "DeflectorShield", "DeflectorShield",
+                "DoubleBarrelLaser", "DoubleBarrelLaser",
+                "Firewall", "Firewall",
+                "HoverUnit", "HoverUnit", "HoverUnit",
+                "MemoryStick", "MemoryStick",
+                "MiniHowitzer",
+                "ModularChassis",
+                "PressorBeam",
+                "RailGun",
+                "RammingGear", "RammingGear",
+                "RearLaser", "RearLaser",
+                "Scrambler",
+                "SideArms",
+                "TractorBeam",
+                "TrojanNeedler",
+                "VirusModule"
+        };
+
+        // Temporary upgrade card (red)
+        String[] temporaryUpgrades = {
+                "Boink", "Boink", "Boink",
+                "EnergyRoutine",
+                "Hack", "Hack", "Hack",
+                "ManualSort", "ManualSort",
+                "MemorySwap", "MemorySwap",
+                "Reboot", "Reboot",
+                "Recharge",
+                "Recompile",
+                "Refresh", "Refresh",
+                "RepeatRoutine",
+                "SandboxRoutine",
+                "SpamBlocker",
+                "SpamFolderRoutine",
+                "SpeedRoutine",
+                "Teleporter",
+                "WeaselRoutine",
+                "Zoop", "Zoop"
+        };
+
+        // When CardFactory supports upgrade card creation:
+        // Add permanent upgrade card
+//        for (String cardName : permanentUpgrades) {
+//            UpgradeCard card = CardFactory.createUpgradeCard(cardName);
+//            if (card != null) {
+//                upgradeCards.addCard(card);
+//            }
+//        }
+//
+//        // Add temporary upgrade card
+//        for (String cardName : temporaryUpgrades) {
+//            UpgradeCard card = CardFactory.createUpgradeCard(cardName);
+//            if (card != null) {
+//                upgradeCards.addCard(card);
+//            }
+//        }
+
+        upgradeCards.shuffle();
     }
 
 
@@ -170,6 +236,125 @@ public class Game {
     public void determineTurn() {
         // Stub
         setCurrentPlayer();
+    }
+
+    /**
+     * Handle player selection of starting position
+     * @param player Player selecting starting position
+     * @param x X-coordinate of starting position
+     * @param y Y-coordinate of starting position
+     * @return Returns true if starting position is successfully set, otherwise returns false
+     */
+    public boolean setPlayerStartingPosition(Player player, int x, int y) {
+        if (player == null) {
+            return false;
+        }
+
+        // Check if it is in the setup phase
+        if (currentPhase != GamePhase.SETUP) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Not in setup phase")
+            ));
+            return false;
+        }
+
+        Position targetPos = new Position(x, y);
+
+        // Check if the location is valid
+        if (!board.isValidPosition(targetPos)) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Invalid position: (" + x + ", " + y + ")")
+            ));
+            return false;
+        }
+
+        // Check if this location is the starting point
+        List<BoardElement> elements = board.getElements(x, y);
+        boolean isStartPoint = false;
+        StartPoint startPointElement = null;
+
+        for (BoardElement element : elements) {
+            if (element instanceof StartPoint) {
+                startPointElement = (StartPoint) element;
+                isStartPoint = true;
+                break;
+            }
+        }
+
+        if (!isStartPoint) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Position (" + x + ", " + y + ") is not a starting point")
+            ));
+            return false;
+        }
+
+        // Check whether the starting point is already occupied
+        if (startPointElement.isOccupied()) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Starting point at (" + x + ", " + y + ") is already occupied")
+            ));
+            return false;
+        }
+
+        // If the player has already selected a starting position, the previous position must be released.
+        Robot robot = player.getRobot();
+        Position currentPos = robot.getPosition();
+        if (currentPos != null) {
+            List<BoardElement> currentElements = board.getElements(currentPos.x(), currentPos.y());
+            for (BoardElement element : currentElements) {
+                if (element instanceof StartPoint) {
+                    ((StartPoint) element).release();
+                    break;
+                }
+            }
+        }
+
+        // Occupy a new starting point
+        startPointElement.occupy(robot.getId());
+
+        // Set robot position and orientation
+        robot.setPosition(targetPos);
+        robot.setDirection(startPointElement.getRobotDirection());
+
+        // Update robot position on board
+        board.updateRobotPosition(robot, targetPos);
+
+        // Determine direction string (based on map type)
+        String directionStr;
+        switch (selectedMap) {
+            case "Heavy Merge Area":
+            case "Death Trap":
+                directionStr = "left";
+                break;
+            case "Pilgrimage":
+            case "Gear Stripper":
+                directionStr = "top";
+                break;
+            default:
+                directionStr = "right";
+                break;
+        }
+
+        // TODO @lukas:Message that the broadcast start position is already occupied
+        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyStartingPointTaken(x, y, directionStr, robot.getId())
+        ));
+
+        return true;
+    }
+
+    /**
+     * Check whether all players have selected their starting positions.
+     * @return Returns true if all players have selected their starting positions, otherwise returns false.
+     */
+    public boolean allPlayersHaveStartingPositions() {
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            if (robot.getPosition() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // TODO game.initializeGame(); (in Server)
