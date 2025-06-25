@@ -8,7 +8,9 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,8 @@ public class GameController {
     @FXML private TextField chatInput;
     @FXML private Label statusLabel;
     @FXML private ComboBox<PlayerEntry> recipientBox;
+    @FXML private VBox chatBox;
+    @FXML private HBox iconMenu;
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
@@ -281,6 +285,14 @@ public class GameController {
         chatArea.appendText(message + "\n");
     }
     public void updatePhase(String phaseName) {
+    }
+    @FXML
+    private void toggleChatBox() {
+        boolean currentlyVisible = chatBox.isVisible();
+        chatBox.setVisible(!currentlyVisible);
+        chatBox.setManaged(!currentlyVisible);
+        iconMenu.setVisible(currentlyVisible);
+        iconMenu.setManaged(currentlyVisible);
     }
 
     public void setInitialPlayerStats(Map<Integer, Integer> energy, Map<Integer, Integer> checkpointsReached) {

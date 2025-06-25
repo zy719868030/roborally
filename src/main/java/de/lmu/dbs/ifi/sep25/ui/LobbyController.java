@@ -301,22 +301,7 @@ public class LobbyController {
                     new Message<>(new MessageDefinitions.BodyMapSelected(selectedMap))
             );
 
-            //  Szene wechseln nach Auswahl
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-                Parent root = loader.load();
-                GameController controller = loader.getController();
-                // Spieler aus Lobby an GameController übergeben
-                controller.setPlayersFromLobby(players);  // `players` ist die ObservableList in deinem LobbyController
 
-                // Falls Map bereits bekannt:
-                //controller.drawBoard(/* boardMap von Server oder lokal */);
-
-                Stage stage = (Stage) selectMapButton.getScene().getWindow();
-                stage.setScene(new Scene(root));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -464,6 +449,17 @@ public class LobbyController {
 
 
     }
+    public List<PlayerEntry> getPlayers() {
+        return players.stream()
+                .map(p -> new PlayerEntry(
+                        p.getClientID(),
+                        p.getName().replace(" (du)", ""), // falls notwendig
+                        p.getFigure(),
+                        p.isReady()
+                ))
+                .toList();
+    }
+
 
     private void slideOut(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
