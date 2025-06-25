@@ -26,29 +26,30 @@ public class Game {
     private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
 
     // Map selection fields
-    private Player firstReadyPlayer;
+//    private Player firstReadyPlayer;
     private String selectedMap;
-    private boolean mapSelectionPending;
+//    private boolean mapSelectionPending;
     private GamePhase currentPhase = null;
     private int currentRegister = 0;
     private int roundNumber = 0;
     private int currentPlayerIndex; // Index in players list
-    private Timer programmingTimer; // For 30-second timer
-    private List<Integer> slowPlayers; // Track slow players
+//    private Timer programmingTimer; // For 30-second timer
+//    private List<Integer> slowPlayers; // Track slow players
 
     private Game(String mapName) {
         players = new ArrayList<>();
         board = new Board(MapType.fromString(mapName));
         currentPlayer = null;
-        currentPlayerIndex = 0;
+//        currentPlayerIndex = 0;
         //currentPhase = -1; // Pre-game (map selection)
         // Initialize map selection state
-        firstReadyPlayer = null;
+//        firstReadyPlayer = null;
         selectedMap = mapName;
-        mapSelectionPending = true;
-        slowPlayers = new ArrayList<>();
+//        mapSelectionPending = true;
+//        slowPlayers = new ArrayList<>();
         initializeProgrammingDeck();
     }
+
     private void initializeProgrammingDeck() {
         // List of card names with desired counts for Dizzy Highway
         String[] cardNames = {
@@ -100,135 +101,6 @@ public class Game {
 
     }
 
-
-    // Handle player readiness and map selection
-    public void setPlayerReady(Player player, boolean ready) {
-        player.setReady(ready);
-        // Broadcast PlayerStatus
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyPlayerStatus(player.getRobot().getId(), ready)
-            ));
-        }
-
-        // Send SelectMap to first ready player
-        if (ready && firstReadyPlayer == null && mapSelectionPending) {
-            firstReadyPlayer = player;
-            List<String> availableMaps = new ArrayList<>();
-            availableMaps.add("Dizzy Highway");
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodySelectMap(availableMaps)
-            ));
-        } else if (!ready && firstReadyPlayer == player) {
-            // Handle unready player
-            firstReadyPlayer = null;
-            for (Player p : players) {
-                if (p.isReady()) {
-                    firstReadyPlayer = p;
-                    List<String> availableMaps = new ArrayList<>();
-                    availableMaps.add("Dizzy Highway");
-                    p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodySelectMap(availableMaps)
-                    ));
-                    break;
-                }
-            }
-        }
-    }
-
-    // Process map selection
-    public void selectMap(Player player, String mapName) {
-        // Validate player and map
-        if (player != null && (player != firstReadyPlayer || !mapSelectionPending)) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Not authorized to select map")
-            ));
-            return;
-        }
-
-        MapType mapType = MapType.fromString(mapName);
-        if (mapType == null) {
-            if (player != null) {
-                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyError("Invalid map: " + mapName)
-                ));
-            }
-            return;
-        }
-
-
-        // Set map and initialize board
-        selectedMap = mapName;
-        mapSelectionPending = false;
-
-        board = new Board(MapType.fromString(mapName));
-        initializeGame();
-
-//        // Broadcast MapSelected and GameStarted
-//        for (Player p : players) {
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyMapSelected(mapName)
-//            ));
-//            //Use convertToBoardElementMap for BodyGameStarted
-//            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
-//        }
-        startGameLoop();
-    }
-
-    // Convert map to List<Object> for BodyGameStarted
-    private List<Object> convertToObjectList(List<List<List<BoardElement>>> map) {
-        List<Object> result = new ArrayList<>();
-        for (List<List<BoardElement>> col : map) {
-            List<Object> colList = new ArrayList<>();
-            for (List<BoardElement> row : col) {
-                colList.add(row == null ? null : new ArrayList<>(row));
-            }
-            result.add(colList);
-        }
-        return result;
-    }
-
-    // Helper method to convert serialized map to List<List<List<BoardElement>>> if needed
-    private List<List<List<BoardElement>>> convertToBoardElementMap() {
-        List<List<List<BoardElement>>> result = new ArrayList<>();
-        Tile[][] grid = board.getGrid();// Assuming getGrid returns BoardElement[][][]
-
-        for (int x = 0; x < board.getWidth(); x++) {
-            List<List<BoardElement>> col = new ArrayList<>();
-            for (int y = 0; y < board.getHeight(); y++) {
-                List<BoardElement> elements = grid[x][y].toSerializableList();
-                col.add(elements);
-            }
-            result.add(col);
-        }
-        return result;
-    }
-
-    // Added: Stub for AI-only map selection
-    public void selectMapForAI() {
-        if (mapSelectionPending && players.stream().allMatch(p -> p.getConnection() == null)) {
-            String[] availableMaps = {"Dizzy Highway", "Extra Crispy", "Lost Bearings", "Death Trap"};
-            String selectedMap = availableMaps[new Random().nextInt(availableMaps.length)];
-
-            selectMap(null, selectedMap);
-        }
-    }
-
-    /**
-     * Starts the game by setting up the initial game phase
-     * Called after map selection and board initialization
-     */
-    private void startGame() {
-        if (!mapSelectionPending && players.size() >= 2) {
-            // Set up the initial stage
-            setPhase(GamePhase.SETUP);
-            // Send current player information
-            setCurrentPlayer();
-            // Start the game main loop (if necessary)
-//            new Thread(this::startGameLoop).start();
-            System.out.println("Game started with map: " + selectedMap);
-        }
-    }
 
     public void setCurrentPlayer() {
         if (players.isEmpty()) return;
@@ -285,66 +157,12 @@ public class Game {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
             currentPlayer = players.get(currentPlayerIndex);
         }
-        // Send CurrentPlayer message
+        // TODO @lukas Send CurrentPlayer message
         for (Player p : players) {
             p.getConnection().sendMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyCurrentPlayer(currentPlayer.getRobot().getId())
             ));
         }
-    }
-
-    private void startTimer() {
-        programmingTimer = new Timer();
-        // Timer and TimerTask classes in java.util
-        programmingTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                handleTimerEnded();
-            }
-        }, 30_000);
-
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyTimerStarted()
-            ));
-        }
-    }
-
-    private void handleTimerEnded() {
-        for (Player p : players) {
-            if (!p.isReadyRegister()) {
-                slowPlayers.add(p.getRobot().getId());
-                fillRemainingRegisters(p);
-            }
-        }
-
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyTimerEnded(slowPlayers)
-            ));
-        }
-        setPhase(GamePhase.ACTIVATION);
-    }
-
-    private void fillRemainingRegisters(Player player) {
-        List<RegisterCard> hand = player.getHand();
-        int index = 0;
-        for (int i = 0; i < 5; i++) {
-            if (player.getRegister().get(i) == null && index < hand.size()) {
-                RegisterCard card = hand.get(index);
-                String cardName = CardFactory.getCardName(card);
-                player.chooseCard(((Card) hand.get(index)).getDescription(), i);
-                index++;
-            }
-        }
-
-        List<String> newCards = player.getRegister().stream()
-                .filter(Objects::nonNull)
-                .map(card -> ((Card) card).getDescription())
-                .collect(Collectors.toList());
-        player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyCardsYouGotNow(newCards)
-        ));
     }
 
 
@@ -365,11 +183,6 @@ public class Game {
             Robot robot = player.getRobot();
             robot.setBoard(board);
         }
-    }
-
-    // Getter for map selection state
-    public boolean isMapSelectionPending() {
-        return mapSelectionPending;
     }
 
     // Get all robots within the specified range (for use with VIRUS cards)
@@ -474,60 +287,12 @@ public class Game {
         }
     }
 
-
-    /**
-     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
-     */
-    public void initPlacement() {
-        Server server = Server.getInstance();
-        List<ClientHandler> placementOrder = server.getLobby().getClients();
-
-        for (ClientHandler handler : placementOrder) {
-            int clientID = handler.getMyID();
-            // Send a message to let players choose their starting position.
-            handler.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(clientID)
-            ));
-            // Wait for the player's response TODO (this requires asynchronous processing)
-        }
-    }
-
-
-    /**
-     * Start the game main loop
-     */
-    public void startGameLoop() {
-        // Setup phase
-        setPhase(GamePhase.SETUP);
-        handleSetupPhase();
-
-        // Game continues until a player wins
-        while (true) {
-            // Start a new round
-            roundNumber++;
-            System.out.println("Starting round " + roundNumber);
-
-            // Programming phase
-            setPhase(GamePhase.PROGRAMMING);
-            handleProgrammingPhase();
-
-            // Activation phase
-            setPhase(GamePhase.ACTIVATION);
-            handleActivationPhase();
-
-            // Check if the game has ended
-            if (checkGameEnd()) {
-                break;
-            }
-        }
-    }
-
     /**
      * Handle the setup phase
      */
     private void handleSetupPhase() {
         // Players choose starting positions
-        broadcastCurrentPhase();
+         broadcastCurrentPhase();
 
         // Wait for all players to choose starting positions
         // This logic is triggered by the client, server responds
@@ -564,12 +329,12 @@ public class Game {
                 }
             }
 
-            // Notify player of their cards
+            // TODO @lukas:Notify player of their cards
             player.getConnection().sendMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyYourCards(cardNames)
             ));
 
-            // Notify other players of card count
+            // TODO @lukas:Notify other players of card count
             for (Player otherPlayer : players) {
                 if (otherPlayer != player) {
                     otherPlayer.getConnection().sendMessage(new MessageDefinitions.Message<>(
@@ -610,7 +375,7 @@ public class Game {
                 }
             }
 
-            // Broadcast CurrentCards message
+            // TODO @lukas:Broadcast CurrentCards message
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCurrentCards(activeCards)
@@ -651,6 +416,8 @@ public class Game {
     /**
      * Broadcast the current game phase to all clients
      */
+    // TODO @lukas:Check whether to keep it here or write it to the server/client.
+    //  If you want to modify it, please also modify the part where I call this method, as well as four other places.
     private void broadcastCurrentPhase() {
         MessageDefinitions.Message<MessageDefinitions.BodyActivePhase> message =
                 new MessageDefinitions.Message<>(new MessageDefinitions.BodyActivePhase(currentPhase.getValue()));
@@ -674,7 +441,7 @@ public class Game {
         // TODO:Simplified here, actual implementation should be more complex
 
 
-        // Broadcast current player order
+        // TODO @lukas:Broadcast current player order
         for (Player player : sortedPlayers) {
             MessageDefinitions.Message<MessageDefinitions.BodyCurrentPlayer> message = new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyCurrentPlayer(player.getRobot().getId()));
@@ -693,13 +460,13 @@ public class Game {
         if (register < playerRegister.size() && playerRegister.get(register) != null) {
             RegisterCard card = playerRegister.get(register);
 
-//            // Broadcast card before execution
-//            String cardName = CardFactory.getCardName(card);
-//            Server.getInstance().broadcastMessage(
-//                    new MessageDefinitions.Message<>(
-//                            new MessageDefinitions.BodyCardPlayed(player.getRobot().getId(), cardName)
-//                    )
-//            );
+            // TODO @lukas:Broadcast card before execution
+            String cardName = CardFactory.getCardName(card);
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyCardPlayed(player.getRobot().getId(), cardName)
+                    )
+            );
 
             // Handle DamageCard effects explicitly
             if (card instanceof DamageCard damageCard) {
@@ -806,7 +573,7 @@ public class Game {
                             // Apply gear effect
                             gear.applyEffect(robot, board);
 
-                            // Broadcast rotation if direction changed
+                            // TODO @lukas:Broadcast rotation if direction changed
                             if (oldDirection != robot.getDirection()) {
                                 String rotation = gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE
                                         ? "clockwise" : "counterclockwise";
@@ -819,7 +586,7 @@ public class Game {
                                         )
                                 );
 
-                                // Animation
+                                // TODO @lukas:Animation
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyAnimation("Gear")
@@ -845,7 +612,7 @@ public class Game {
 
                             // If damage increased, broadcast damage
                             if (robot.getDamage() > oldDamage) {
-                                // Animation
+                                // TODO @lukas:Animation
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyAnimation("WallShooting")
@@ -858,6 +625,7 @@ public class Game {
                                     damageCards.add("Spam");
                                 }
 
+                                //TODO @lukas:MessageDefinitions.BodyDrawDamage
 //                                Server.getInstance().broadcastMessage(
 //                                        new MessageDefinitions.Message<>(
 //                                                MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
@@ -890,7 +658,7 @@ public class Game {
                                 int oldEnergy = player.getEnergy();
                                 energySpace.applyEffect(robot, board);
 
-                                // If energy increased, broadcast energy update
+                                // TODO @lukas：If energy increased, broadcast energy update
                                 if (player.getEnergy() > oldEnergy) {
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
@@ -902,7 +670,7 @@ public class Game {
                                             )
                                     );
 
-                                    // Animation
+                                    //TODO @lukas：Animation
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
                                                     new MessageDefinitions.BodyAnimation("EnergySpace")
@@ -927,7 +695,7 @@ public class Game {
                             checkpoint.applyEffect(robot, board);
                             int newCheckpoints = checkpoint.getRobotHighestCheckpoint(robot.getId());
 
-                            // If new checkpoint reached, broadcast update
+                            // TODO @lukas：If new checkpoint reached, broadcast update
                             if (newCheckpoints > oldCheckpoints) {
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
@@ -937,14 +705,14 @@ public class Game {
                                         )
                                 );
 
-                                // Animation
+                                // TODO @lukas：Animation
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyAnimation("CheckPoint")
                                         )
                                 );
 
-                                // Check for game win
+                                // TODO @lukas：Check for game win
                                 if (newCheckpoints >= board.getTotalCheckpoints()) {
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
@@ -1000,7 +768,7 @@ public class Game {
                     // Deal damage to the robot
                     targetRobot.takeDamage(1);
 
-                    // Broadcast laser hit message
+                    // TODO @lukas：Broadcast laser hit message
                     Server.getInstance().broadcastMessage(
                             new MessageDefinitions.Message<>(
                                     new MessageDefinitions.BodyAnimation("PlayerShooting")
@@ -1054,7 +822,7 @@ public class Game {
         Direction defaultDirection = Direction.NORTH;
         robot.setDirection(defaultDirection);
 
-        // Broadcast movement to reboot position
+        // TODO @lukas：Broadcast movement to reboot position
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyMovement(
@@ -1065,7 +833,7 @@ public class Game {
                 )
         );
 
-        // Broadcast direction
+        // TODO @lukas：Broadcast direction
         String directionStr = "top"; // Default direction
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
@@ -1094,47 +862,6 @@ public class Game {
     public List<Player> getPlayers() {
         return new ArrayList<>(players);
     }
-    /**
-     * Start the programming phase for all players
-     */
-    public void startProgrammingPhase() {
-        setPhase(GamePhase.PROGRAMMING);
-
-        // Deal cards to all players
-        for (Player player : players) {
-            // Clear previous programming
-            player.endRound();
-
-            // Deal new cards
-            player.dealProgrammingCards();
-
-            // Send cards to player
-            List<String> cardNames = new ArrayList<>();
-            for (RegisterCard card : player.getHand()) {
-                cardNames.add(CardFactory.getCardName(card));
-            }
-
-            player.getConnection().sendMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyYourCards(cardNames)
-                    )
-            );
-
-            // Notify others
-            int cardCount = player.getHand().size();
-            for (Player otherPlayer : players) {
-                if (otherPlayer != player) {
-                    otherPlayer.getConnection().sendMessage(
-                            new MessageDefinitions.Message<>(
-                                    new MessageDefinitions.BodyNotYourCards(
-                                            player.getRobot().getId(), cardCount
-                                    )
-                            )
-                    );
-                }
-            }
-        }
-    }
 
     private void endRound() {
         // Clear registers and move cards to discard pile
@@ -1162,7 +889,7 @@ public class Game {
         // Reset the current register counter
         currentRegister = 0;
 
-        // Broadcast end of round message
+        // TODO @lukas：Broadcast end of round message
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
@@ -1183,7 +910,7 @@ public class Game {
                         )
                 );
 
-                // Send final chat message
+                // TODO @lukas：Send final chat message
                 Server.getInstance().broadcastMessage(
                         new MessageDefinitions.Message<>(
                                 new MessageDefinitions.BodyReceivedChat(
@@ -1199,6 +926,283 @@ public class Game {
         }
         return false;
     }
+
+    // Handle player readiness and map selection
+//    public void setPlayerReady(Player player, boolean ready) {
+//        player.setReady(ready);
+//        // Broadcast PlayerStatus
+//        for (Player p : players) {
+//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyPlayerStatus(player.getRobot().getId(), ready)
+//            ));
+//        }
+//
+//        // Send SelectMap to first ready player
+//        if (ready && firstReadyPlayer == null && mapSelectionPending) {
+//            firstReadyPlayer = player;
+//            List<String> availableMaps = new ArrayList<>();
+//            availableMaps.add("Dizzy Highway");
+//            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodySelectMap(availableMaps)
+//            ));
+//        } else if (!ready && firstReadyPlayer == player) {
+//            // Handle unready player
+//            firstReadyPlayer = null;
+//            for (Player p : players) {
+//                if (p.isReady()) {
+//                    firstReadyPlayer = p;
+//                    List<String> availableMaps = new ArrayList<>();
+//                    availableMaps.add("Dizzy Highway");
+//                    p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                            new MessageDefinitions.BodySelectMap(availableMaps)
+//                    ));
+//                    break;
+//                }
+//            }
+//        }
+//    }
+
+    // Process map selection
+//    public void selectMap(Player player, String mapName) {
+//        // Validate player and map
+//        if (player != null && (player != firstReadyPlayer || !mapSelectionPending)) {
+//            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyError("Not authorized to select map")
+//            ));
+//            return;
+//        }
+//
+//        MapType mapType = MapType.fromString(mapName);
+//        if (mapType == null) {
+//            if (player != null) {
+//                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                        new MessageDefinitions.BodyError("Invalid map: " + mapName)
+//                ));
+//            }
+//            return;
+//        }
+//
+//
+//        // Set map and initialize board
+//        selectedMap = mapName;
+//        mapSelectionPending = false;
+//
+//        board = new Board(MapType.fromString(mapName));
+//        initializeGame();
+//
+//        // Broadcast MapSelected and GameStarted
+//        for (Player p : players) {
+//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyMapSelected(mapName)
+//            ));
+//            //Use convertToBoardElementMap for BodyGameStarted
+//            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
+//        }
+//        startGameLoop();
+//    }
+
+//    // Convert map to List<Object> for BodyGameStarted
+//    private List<Object> convertToObjectList(List<List<List<BoardElement>>> map) {
+//        List<Object> result = new ArrayList<>();
+//        for (List<List<BoardElement>> col : map) {
+//            List<Object> colList = new ArrayList<>();
+//            for (List<BoardElement> row : col) {
+//                colList.add(row == null ? null : new ArrayList<>(row));
+//            }
+//            result.add(colList);
+//        }
+//        return result;
+//    }
+
+    // Helper method to convert serialized map to List<List<List<BoardElement>>> if needed
+//    private List<List<List<BoardElement>>> convertToBoardElementMap() {
+//        List<List<List<BoardElement>>> result = new ArrayList<>();
+//        Tile[][] grid = board.getGrid();// Assuming getGrid returns BoardElement[][][]
+//
+//        for (int x = 0; x < board.getWidth(); x++) {
+//            List<List<BoardElement>> col = new ArrayList<>();
+//            for (int y = 0; y < board.getHeight(); y++) {
+//                List<BoardElement> elements = grid[x][y].toSerializableList();
+//                col.add(elements);
+//            }
+//            result.add(col);
+//        }
+//        return result;
+//    }
+
+//    // Added: Stub for AI-only map selection
+//    public void selectMapForAI() {
+//        if (mapSelectionPending && players.stream().allMatch(p -> p.getConnection() == null)) {
+//            String[] availableMaps = {"Dizzy Highway", "Extra Crispy", "Lost Bearings", "Death Trap"};
+//            String selectedMap = availableMaps[new Random().nextInt(availableMaps.length)];
+//
+//            selectMap(null, selectedMap);
+//        }
+//    }
+
+    /**
+     * Starts the game by setting up the initial game phase
+     * Called after map selection and board initialization
+     */
+//    private void startGame() {
+//        if (!mapSelectionPending && players.size() >= 2) {
+//            // Set up the initial stage
+//            setPhase(GamePhase.SETUP);
+//            // Send current player information
+//            setCurrentPlayer();
+//            // Start the game main loop (if necessary)
+////            new Thread(this::startGameLoop).start();
+////            System.out.println("Game started with map: " + selectedMap);
+//        }
+//    }
+
+//    private void startTimer() {
+//        programmingTimer = new Timer();
+//        // Timer and TimerTask classes in java.util
+//        programmingTimer.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//                handleTimerEnded();
+//            }
+//        }, 30_000);
+//
+//        for (Player p : players) {
+//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyTimerStarted()
+//            ));
+//        }
+//    }
+
+//    private void handleTimerEnded() {
+//        for (Player p : players) {
+//            if (!p.isReadyRegister()) {
+//                slowPlayers.add(p.getRobot().getId());
+//                fillRemainingRegisters(p);
+//            }
+//        }
+//
+//        for (Player p : players) {
+//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyTimerEnded(slowPlayers)
+//            ));
+//        }
+//        setPhase(GamePhase.ACTIVATION);
+//    }
+
+//    private void fillRemainingRegisters(Player player) {
+//        List<RegisterCard> hand = player.getHand();
+//        int index = 0;
+//        for (int i = 0; i < 5; i++) {
+//            if (player.getRegister().get(i) == null && index < hand.size()) {
+//                RegisterCard card = hand.get(index);
+//                String cardName = CardFactory.getCardName(card);
+//                player.chooseCard(((Card) hand.get(index)).getDescription(), i);
+//                index++;
+//            }
+//        }
+//
+//        List<String> newCards = player.getRegister().stream()
+//                .filter(Objects::nonNull)
+//                .map(card -> ((Card) card).getDescription())
+//                .collect(Collectors.toList());
+//        player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+//                new MessageDefinitions.BodyCardsYouGotNow(newCards)
+//        ));
+//    }
+
+    //    // Getter for map selection state
+//    public boolean isMapSelectionPending() {
+//        return mapSelectionPending;
+//    }
+
+    /**
+     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
+     */
+//    public void initPlacement() {
+//        Server server = Server.getInstance();
+//        List<ClientHandler> placementOrder = server.getLobby().getClients();
+//
+//        for (ClientHandler handler : placementOrder) {
+//            int clientID = handler.getMyID();
+//            // Send a message to let players choose their starting position.
+//            handler.sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyCurrentPlayer(clientID)
+//            ));
+//            // Wait for the player's response TODO (this requires asynchronous processing)
+//        }
+//    }
+
+
+    /**
+     * Start the game main loop
+     */
+//    public void startGameLoop() {
+//        // Setup phase
+//        setPhase(GamePhase.SETUP);
+//        handleSetupPhase();
+//
+//        // Game continues until a player wins
+//        while (true) {
+//            // Start a new round
+//            roundNumber++;
+//            System.out.println("Starting round " + roundNumber);
+//
+//            // Programming phase
+//            setPhase(GamePhase.PROGRAMMING);
+//            handleProgrammingPhase();
+//
+//            // Activation phase
+//            setPhase(GamePhase.ACTIVATION);
+//            handleActivationPhase();
+//
+//            // Check if the game has ended
+//            if (checkGameEnd()) {
+//                break;
+//            }
+//        }
+//    }
+
+    /**
+     * Start the programming phase for all players
+     */
+//    public void startProgrammingPhase() {
+//        setPhase(GamePhase.PROGRAMMING);
+//
+//        // Deal cards to all players
+//        for (Player player : players) {
+//            // Clear previous programming
+//            player.endRound();
+//
+//            // Deal new cards
+//            player.dealProgrammingCards();
+//
+//            // Send cards to player
+//            List<String> cardNames = new ArrayList<>();
+//            for (RegisterCard card : player.getHand()) {
+//                cardNames.add(CardFactory.getCardName(card));
+//            }
+//
+//            player.getConnection().sendMessage(
+//                    new MessageDefinitions.Message<>(
+//                            new MessageDefinitions.BodyYourCards(cardNames)
+//                    )
+//            );
+//
+//            // Notify others
+//            int cardCount = player.getHand().size();
+//            for (Player otherPlayer : players) {
+//                if (otherPlayer != player) {
+//                    otherPlayer.getConnection().sendMessage(
+//                            new MessageDefinitions.Message<>(
+//                                    new MessageDefinitions.BodyNotYourCards(
+//                                            player.getRobot().getId(), cardCount
+//                                    )
+//                            )
+//                    );
+//                }
+//            }
+//        }
+//    }
 
 }
 
