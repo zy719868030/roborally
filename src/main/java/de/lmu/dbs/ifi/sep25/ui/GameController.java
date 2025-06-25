@@ -61,18 +61,22 @@ public class GameController {
     public void drawBoard(List<List<List<MessageDefinitions.Field>>> boardMap) {
         gameBoardPane.getChildren().clear();
 
+        int columns = boardMap.size();
+        int rows = boardMap.get(0).size();
+
         for (int x = 0; x < boardMap.size(); x++) {
             List<List<MessageDefinitions.Field>> col = boardMap.get(x);
             for (int y = 0; y < col.size(); y++) {
                 List<MessageDefinitions.Field> elements = col.get(y);
 
-                StackPane tile = createTile(elements); // ← nutze deine gute Methode
+                StackPane tile = createTile(elements);
                 gameBoardPane.add(tile, x, y);
             }
         }
-
         gameBoardPane.setVisible(true);
         gameBoardPane.setManaged(true);
+        gameBoardPane.setPrefWidth(columns * TILE_SIZE);
+        gameBoardPane.setPrefHeight(rows * TILE_SIZE);
     }
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         if (ClientSingleton.getInstance().getID() == clientID) return; // Sich selbst nicht hinzufügen
@@ -141,28 +145,35 @@ public class GameController {
 
             //ConveyorBelt – 1 Basisbild pro Speed (slow/fast), dann Rotation
             if (element instanceof MessageDefinitions.FieldConveyorBelt belt) {
-                String speed = belt.speed() == 2 ? "Fast" : "Slow";
-                ImageView beltImg = new ImageView(tileImages.get("Belt_" + speed + "_N"));
+                String baseKey = belt.speed() == 2 ? "blue_conveyor_belt_n" : "green_conveyor_belt_n";
+                Image image = tileImages.get(baseKey);
+                if (image == null) {
+                    System.err.println("Fehlendes Bild: " + baseKey);
+                    continue;
+                }
+
+                ImageView beltImg = new ImageView(image);
                 beltImg.setFitWidth(TILE_SIZE);
                 beltImg.setFitHeight(TILE_SIZE);
 
-                String dir = belt.directions().getFirst(); // "NORTH", etc.
+                String dir = belt.directions().getFirst(); // PUSH Richtung
                 beltImg.setRotate(switch (dir) {
                     case "EAST" -> 90;
                     case "SOUTH" -> 180;
                     case "WEST" -> 270;
-                    default -> 0;
+                    default -> 0; // NORTH
                 });
 
                 pane.getChildren().add(beltImg);
-                continue;
             }
+
+
             // PushPanel – 1 Bild, je nach Register-Kombination, rotiert nach Richtung
             if (element instanceof MessageDefinitions.FieldPushPanel pp) {
                 // Register: z. B. [1, 3, 5] → "1_3_5"
                 List<String> registerStrings = pp.registers().stream()
                         .map(String::valueOf)
-                        .toList(); // Falls Java <16, .collect(Collectors.toList())
+                        .toList();
                 String registerKey = String.join("_", registerStrings); // z. B. "1_3_5"
 
                 Image baseImage = tileImages.get("PushPanel_" + registerKey);
@@ -204,7 +215,8 @@ public class GameController {
         tileImages.put("Wall_N", new Image(getClass().getResourceAsStream("/assets/wall_n.png")));
         tileImages.put("Gear_Green", new Image(getClass().getResourceAsStream("/assets/Gear_green.png")));
         tileImages.put("Gear_Red", new Image(getClass().getResourceAsStream("/assets/Gear_red.png")));
-        tileImages.put("Conveyor_green_NORTH", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt_n.png")));
+        tileImages.put("Conveyor_Slow_N", new Image(getClass().getResourceAsStream("/assets/green_conveyor_belt_n.png")));
+        tileImages.put("Conveyor_Fast_N", new Image(getClass().getResourceAsStream("/assets/blue_conveyor_belt_n.png"))); // oder ein anderes Bild falls vorhanden
         tileImages.put("Laser_N", new Image(getClass().getResourceAsStream("/assets/laser_n.png")));
         tileImages.put("Conveyor_green_Rotate", new Image(getClass().getResourceAsStream("/assets/green_conveyor_rotate_n.png")));
         tileImages.put("PushPanel_1", new Image(getClass().getResourceAsStream("/assets/pushpanel_1.png")));
@@ -214,6 +226,21 @@ public class GameController {
         tileImages.put("PushPanel_5", new Image(getClass().getResourceAsStream("/assets/pushpanel_5.png")));
         tileImages.put("PushPanel_1_3_5", new Image(getClass().getResourceAsStream("/assets/pushpanel_1_3_5.png")));
         tileImages.put("PushPanel_2_4", new Image(getClass().getResourceAsStream("/assets/pushpanel_2_4.png")));
+        tileImages.put("checkpoint1", new Image(getClass().getResourceAsStream("/assets/checkpoint1.png")));
+        tileImages.put("checkpoint2", new Image(getClass().getResourceAsStream("/assets/checkpoint2.png")));
+        tileImages.put("checkpoint3", new Image(getClass().getResourceAsStream("/assets/checkpoint3.png")));
+        tileImages.put("checkpoint4", new Image(getClass().getResourceAsStream("/assets/checkpoint4.png")));
+        tileImages.put("startpoint_1A", new Image(getClass().getResourceAsStream("/assets/startpoint_1A.png")));
+        tileImages.put("startpoint_2A", new Image(getClass().getResourceAsStream("/assets/startpoint_2A.png")));
+        tileImages.put("startpoint_4A", new Image(getClass().getResourceAsStream("/assets/startpoint_4A.png")));
+        tileImages.put("startpoint_5B", new Image(getClass().getResourceAsStream("/assets/startpoint_5B.png")));
+        tileImages.put("Pit", new Image(getClass().getResourceAsStream("/assets/Pit.png")));
+        tileImages.put("energyspace", new Image(getClass().getResourceAsStream("/assets/energyspace.png")));
+        tileImages.put("reboot", new Image(getClass().getResourceAsStream("/assets/reboot.png")));
+        tileImages.put("antenna", new Image(getClass().getResourceAsStream("/assets/antenna.png")));
+        tileImages.put("black and white gears", new Image(getClass().getResourceAsStream("/assets/b&w_gear.png")));
+
+
 
 
     }
@@ -223,8 +250,12 @@ public class GameController {
 
         return switch (type) {
             case "Empty" -> "Floor"; // Hintergrund
-            case "StartPoint" -> "startpoint";
-            case "Pit" -> "pit";
+            case "StartPoint" -> {
+                String label = ((MessageDefinitions.FieldStartPoint) element).label(); // z.B. "1A"
+                yield "startpoint_" + label;
+            }
+            case "black and white gears" -> "black and white gears";
+            case "Pit" -> "Pit";
             case "RestartPoint" -> "reboot";
             case "Energy-Space" -> "energyspace";
             case "CheckPoint" -> "checkpoint" + ((MessageDefinitions.FieldCheckPoint) element).count();

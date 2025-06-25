@@ -80,10 +80,18 @@ public class MessageDefinitions {
     }
 
     public static class FieldStartPoint extends Field {
-        public FieldStartPoint(String isOnBoard) {
+        private final String label; // z. B. "1A", "2B"
+
+        public FieldStartPoint(String isOnBoard, String label) {
             super(isOnBoard);
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
         }
     }
+
 
     public static class FieldConveyorBelt extends Field {
         private final Integer speed;
