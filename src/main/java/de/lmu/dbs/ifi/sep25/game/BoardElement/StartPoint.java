@@ -186,10 +186,14 @@ public class StartPoint extends BoardElement {
      *
      * @return A FieldStartPoint object corresponding to this starting point, initialized with the associated board ID.
      */
+
     @Override
     public MessageDefinitions.FieldStartPoint toField() {
-        return new MessageDefinitions.FieldStartPoint(boardId);
+        // Beispiel-Label erzeugen aus Position oder BoardId
+        String label = position.x() + "" + position.y();
+        return new MessageDefinitions.FieldStartPoint(boardId, label);
     }
+
 
 
 }

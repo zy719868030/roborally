@@ -9,9 +9,7 @@
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
       spacing="30" styleClass="root-background">
-    <stylesheets>
-        <URL value="@style.css"/>
-    </stylesheets>
+
 
     <!-- === Linke Seitenleiste: Spielerstatus + Chat === -->
     <VBox fx:id="leftSidebar" spacing="15" alignment="TOP_CENTER" styleClass="lobby-box">
@@ -49,7 +47,7 @@
 
     <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->
     <VBox spacing="10" alignment="TOP_CENTER">
-        <ScrollPane fitToWidth="true" fitToHeight="true" prefViewportWidth="700" prefViewportHeight="600">
+        <ScrollPane fitToWidth="true" fitToHeight="true">
             <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
         </ScrollPane>
 
