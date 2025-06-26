@@ -47,7 +47,7 @@ public class Client {
 
     // 2. Main identity/data
     private Integer ID;
-    private volatile boolean isAI = false;
+    private final boolean isAI = false;
     private volatile boolean firstReadyRegistry = true;
 
     // 3. Networking / I/O
@@ -420,7 +420,7 @@ public class Client {
                 Parent root = loader.load();
                 GameController controller = loader.getController();
                 controller.setRoot(root);
-                // Optional: Im Controller-Registry speichern
+                // Im Controller-Registry speichern
                 ControllerRegistry.setGameController(controller);
 
                 controller.drawBoard(boardMap);
@@ -429,8 +429,13 @@ public class Client {
                 // Szene wechseln
                 Stage stage = ControllerRegistry.getPrimaryStage();
                 if (stage != null) {
-                    stage.setScene(new Scene(root));
+                    Scene scene = new Scene(root);
+                    scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+                    stage.setScene(scene);
                     stage.show();
+                    stage.setTitle("Robo Rally Game");
+                    controller.setPlayersFromLobby(ControllerRegistry.getLobbyController().getPlayers());
+
                 } else {
                     System.err.println("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
                 }
@@ -478,10 +483,14 @@ public class Client {
             String fullMessage = sender + ": " + body.message();
 
             javafx.application.Platform.runLater(() -> {
-                LobbyController controller = ControllerRegistry.getLobbyController();
-                if (controller != null) {
-                    controller.appendChatMessage(fullMessage);
+                GameController gameController = ControllerRegistry.getGameController();
+                LobbyController lobbyController = ControllerRegistry.getLobbyController();
+                if (gameController != null && gameController.getRoot().isVisible()) {
+                    gameController.appendChatMessage(fullMessage);
+                } else if (lobbyController != null) {
+                    lobbyController.appendChatMessage(fullMessage);
                 }
+
             });
         }
     }

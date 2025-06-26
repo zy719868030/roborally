@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.RegularPro;
 import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.SpecialPro;
+import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Robot;
@@ -140,4 +141,86 @@ public class CardFactory {
 
         return null;
     }
+
+    /**
+     * Create an upgrade card.
+     * @param cardName Upgrade card name.
+     * @return Corresponding upgrade card object.
+     */
+//    public static UpgradeCard createUpgradeCard(String cardName) {
+//        if (cardName == null || cardName.isEmpty()) {
+//            return null;
+//        }
+//
+//        return switch (cardName) {
+//            // Permanent Upgrade Card
+//            case "AdminPrivilege" -> new AdminPrivilege();
+//            case "BlueScreenOfDeath" -> new BlueScreenOfDeath();
+//            case "Brakes" -> new Brakes();
+//            case "CacheMemory" -> new CacheMemory();
+//            case "CrabLegs" -> new CrabLegs();
+//            case "CorruptionWave" -> new CorruptionWave();
+//            case "DefragGizmo" -> new DefragGizmo();
+//            case "DeflectorShield" -> new DeflectorShield();
+//            case "DoubleBarrelLaser" -> new DoubleBarrelLaser();
+//            case "Firewall" -> new Firewall();
+//            case "HoverUnit" -> new HoverUnit();
+//            case "MemoryStick" -> new MemoryStick();
+//            case "MiniHowitzer" -> new MiniHowitzer();
+//            case "ModularChassis" -> new ModularChassis();
+//            case "PressorBeam" -> new PressorBeam();
+//            case "RailGun" -> new RailGun();
+//            case "RammingGear" -> new RammingGear();
+//            case "RearLaser" -> new RearLaser();
+//            case "Scrambler" -> new Scrambler();
+//            case "SideArms" -> new SideArms();
+//            case "TractorBeam" -> new TractorBeam();
+//            case "TrojanNeedler" -> new TrojanNeedler();
+//            case "VirusModule" -> new VirusModule();
+//
+//            // Temporary upgrade card
+//            case "Boink" -> new Boink();
+//            case "EnergyRoutine" -> new EnergyRoutineUpgrade();
+//            case "Hack" -> new Hack();
+//            case "ManualSort" -> new ManualSort();
+//            case "MemorySwap" -> new MemorySwap();
+//            case "Reboot" -> new RebootUpgrade();
+//            case "Recharge" -> new Recharge();
+//            case "Recompile" -> new Recompile();
+//            case "Refresh" -> new Refresh();
+//            case "RepeatRoutine" -> new RepeatRoutineUpgrade();
+//            case "SandboxRoutine" -> new SandboxRoutineUpgrade();
+//            case "SpamBlocker" -> new SpamBlocker();
+//            case "SpamFolderRoutine" -> new SpamFolderRoutineUpgrade();
+//            case "SpeedRoutine" -> new SpeedRoutineUpgrade();
+//            case "Teleporter" -> new Teleporter();
+//            case "WeaselRoutine" -> new WeaselRoutineUpgrade();
+//            case "Zoop" -> new Zoop();
+//
+//            default -> null;
+//        };
+//    }
+
+    /**
+     * Get the string identifier of the upgrade card.
+     * @param card Upgrade card object.
+     * @return String identifier of the upgrade card.
+     */
+    public static String getUpgradeCardName(UpgradeCard card) {
+        if (card == null) {
+            return null;
+        }
+
+        // Return the corresponding name based on the class name
+        String className = card.getClass().getSimpleName();
+        return switch (className) {
+            case "AdminPrivilege" -> "AdminPrivilege";
+            case "BlueScreenOfDeath" -> "BlueScreenOfDeath";
+            case "Brakes" -> "Brakes";
+            case "EnergyRoutineUpgrade" -> "EnergyRoutine";
+            case "RebootUpgrade" -> "Reboot";
+            default -> className;
+        };
+    }
+
 }

@@ -80,10 +80,11 @@ public class MessageDefinitions {
     }
 
     public static class FieldStartPoint extends Field {
-        public FieldStartPoint(String isOnBoard) {
+        public FieldStartPoint(String isOnBoard, String label) {
             super(isOnBoard);
         }
     }
+
 
     public static class FieldConveyorBelt extends Field {
         private final Integer speed;
@@ -117,7 +118,7 @@ public class MessageDefinitions {
 
         /**
          * @param registers active on x register
-         * **/
+         **/
         public FieldPushPanel(String isOnBoard, List<String> orientations, List<Integer> registers) {
             super(isOnBoard);
             if (orientations.isEmpty())
@@ -141,7 +142,7 @@ public class MessageDefinitions {
 
         /**
          * @param orientations "clockwise" | "counterclockwise"
-         * **/
+         **/
         public FieldGear(String isOnBoard, List<String> orientations) {
             super(isOnBoard);
             if (orientations.size() != 1)
@@ -166,7 +167,7 @@ public class MessageDefinitions {
 
         /**
          * @param count stored energy
-         * **/
+         **/
         public FieldEnergySpace(String isOnBoard, Integer count) {
             super(isOnBoard);
             this.count = count;
@@ -202,7 +203,7 @@ public class MessageDefinitions {
 
         /**
          * @param orientations direction in which laser faces
-         * @param count laser number count (1-3)
+         * @param count        laser number count (1-3)
          */
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
             super(isOnBoard);
@@ -229,7 +230,7 @@ public class MessageDefinitions {
 
         /**
          * @param orientations direction of signal (max size 1)
-         * **/
+         **/
         public FieldAntenna(String isOnBoard, List<String> orientations) {
             super(isOnBoard);
             if (orientations.size() != 1)
@@ -263,8 +264,18 @@ public class MessageDefinitions {
     }
 
     public static class FieldRestartPoint extends Field {
-        public FieldRestartPoint(String isOnBoard) {
+        private final List<String> orientations;
+
+        public FieldRestartPoint(String isOnBoard, List<String> orientations) {
             super(isOnBoard);
+            if (orientations.size() != 1)
+                throw new IllegalArgumentException("RestartPoint requires exactly 1 orientation");
+            this.orientations = orientations;
+
+        }
+
+        public List<String> orientations() {
+            return orientations;
         }
     }
 
@@ -276,6 +287,7 @@ public class MessageDefinitions {
 
     public record BodyError(String error) {
     }
+
     //1.0
     public record BodyConnectionUpdate(Integer clientID, Boolean isConnected, String action) {
     }
@@ -339,14 +351,19 @@ public class MessageDefinitions {
 
     public record BodyPlayerTurning(Integer clientID, String rotation) {
     }
+
     //1.0
     public record BodyDrawDamage(Integer clientID, List<String> cards) {
 
     }
+
     //1.0
-    public record BodyPickDamage(Integer count, List<String> availablePiles) {}
+    public record BodyPickDamage(Integer count, List<String> availablePiles) {
+    }
+
     // 1.0
-    public record BodySelectedDamage(List<String> cards) {}
+    public record BodySelectedDamage(List<String> cards) {
+    }
 
     public record BodyAnimation(String type) {
     }
@@ -365,6 +382,8 @@ public class MessageDefinitions {
 
     public record BodyGameFinished(Integer clientID) {
     }
-    public record BodyPlayerRenamed(int clientID, String newName) {}//@SEBAS
+
+    public record BodyPlayerRenamed(int clientID, String newName) {
+    }//@SEBAS
 
 }
