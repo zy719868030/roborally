@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
-import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +56,7 @@ public class ClientHandler implements Runnable {
     // 3. State flags
     private volatile boolean alive = true;
     private volatile boolean mapSelecting = false;
+    private CountDownLatch placementLatch;
 
     // 4. Game connection
     private Player player;
@@ -341,23 +342,11 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodySetStartingPoint(String json) {
         BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
-        final int x = body.x();
-        final int y = body.y();
-        List<Position> startingPoints = game.getBoard().getStartingPoints();
-        List<Position> robotPositions = server.getRobotPositions();
-        List<Position> validStartingPositions = startingPoints.stream().filter(robotPositions::contains).toList();
 
-        if (validStartingPositions.contains(new Position(x, y))) {
-            player.getRobot().setPosition(x, y);
-            final String direction;
-            switch (server.getGame().getMapType()) {
-                case "Heavy Merge Area", "Death Trap" -> direction = "left";
-                case "Pilgrimage", "Gear Stripper" -> direction = "up";
-                default -> direction = "right";
-            }
-            broadcastMessage(new Message<>(new BodyStartingPointTaken(x, y, direction, myID)));
-        } else {
-            sendMessage(new Message<>(new BodyError("Starting point invalid.")));
+        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
+            //TODO maybe send a message for reselection
+        } else if (placementLatch != null) {
+            placementLatch.countDown();
         }
     }
 
@@ -407,6 +396,15 @@ public class ClientHandler implements Runnable {
 
 
     // -------------
+
+    /**
+     * Sets the placement latch to the specified CountDownLatch instance.
+     *
+     * @param latch the CountDownLatch instance to be assigned to the placement latch
+     */
+    public void setPlacementLatch(CountDownLatch latch) {
+        this.placementLatch = latch;
+    }
 
     /**
      * Marks the entity associated with this instance as ready to register

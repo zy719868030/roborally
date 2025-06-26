@@ -481,6 +481,8 @@ public class Server {
         System.out.println("Starting game...");
         resetReadyRegister();
         broadcastMessage(game.getBoard().getSerializedBoardAsMessage());
+
+        game.startGameLoop();
     }
 
     /**
