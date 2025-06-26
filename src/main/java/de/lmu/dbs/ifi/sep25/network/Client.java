@@ -47,7 +47,7 @@ public class Client {
 
     // 2. Main identity/data
     private Integer ID;
-    private volatile boolean isAI = false;
+    private final boolean isAI = false;
     private volatile boolean firstReadyRegistry = true;
 
     // 3. Networking / I/O

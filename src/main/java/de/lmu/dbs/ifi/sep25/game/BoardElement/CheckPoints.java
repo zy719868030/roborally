@@ -4,6 +4,8 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,25 +18,25 @@ import java.util.Map;
 public class CheckPoints extends BoardElement {
     //number indicates the checkpoint number.（count）
     private int number;
-    private Map<Integer, Integer> robotCheckpoints;
+    private final Map<Integer, Integer> robotCheckpoints;
     private String boardId;
     private boolean isOnBoard;
 
-    public CheckPoints() {
-        super();
-        this.number = 1;
-        this.robotCheckpoints = new HashMap<>();
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public CheckPoints(Position position, String boardId) {
-        super(position, boardId);
-        this.number = 1;
-        this.robotCheckpoints = new HashMap<>();
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public CheckPoints() {
+//        super();
+//        this.number = 1;
+//        this.robotCheckpoints = new HashMap<>();
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public CheckPoints(Position position, String boardId) {
+//        super(position, boardId);
+//        this.number = 1;
+//        this.robotCheckpoints = new HashMap<>();
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     /*
     public CheckPoints(Position position, int number) {
@@ -45,11 +47,16 @@ public class CheckPoints extends BoardElement {
         this.boardId = "";
     }
     */
+
+    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
+
     public CheckPoints(Position position, int number, String boardId) {
         super(position, boardId);
         this.number = number;
         this.robotCheckpoints = new HashMap<>();
         this.setBoardId(boardId);
+
+        messageLogger.info("Checkpoints created at " + position + " with number " + getNumber() + " on board " + boardId);
     }
 
     public boolean isOnBoard() {
@@ -188,7 +195,7 @@ public class CheckPoints extends BoardElement {
      */
     @Override
     public MessageDefinitions.FieldCheckPoint toField() {
-        return new MessageDefinitions.FieldCheckPoint(boardId, number);
+        return new MessageDefinitions.FieldCheckPoint(boardId, getNumber());
     }
 
 }

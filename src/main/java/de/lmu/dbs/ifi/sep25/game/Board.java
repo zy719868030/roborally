@@ -7,6 +7,8 @@ import de.lmu.dbs.ifi.sep25.game.Maps.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +22,8 @@ import java.util.Map;
 public class Board implements GameMap {
 
     // 0. Logging
-    private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger(Board.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(Board.class);
+    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
 
     // 1. Resource
     private final Gson mapGson = new GsonBuilder()
@@ -162,110 +165,9 @@ public class Board implements GameMap {
         logger.info("Board elements:");
         logger.info(getElements(1, 1).toString());
         logger.info(getElements(antennaPosition.x(), antennaPosition.y()).toString());
-    }
 
-    // Initialize board with tiles based on map type
-    private void initializeDizzyHighway() {
-        // Dizzy Highway with Start A and 5B
-
-        // Start A (y: 0–2)
-        addElement(new Wall(new Position(1, 7), Direction.NORTH, "StartA"));
-        addElement(new Wall(new Position(2, 5), Direction.EAST, "StartA"));
-        addElement(new Wall(new Position(2, 4), Direction.EAST, "StartA"));
-        addElement(new Wall(new Position(1, 2), Direction.SOUTH, "StartA"));
-
-        addElement(new Antenna(new Position(0, 5), Direction.EAST, "StartA"));
-
-        List.of(new Position(1, 8), new Position(0, 6), new Position(1, 5),
-                new Position(1, 4), new Position(0, 3), new Position(1, 1)
-        ).forEach(pos -> addElement(new StartPoint(pos, Direction.EAST, "StartA")));
-
-        addElement(new Belts(new Position(2, 0), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
-        addElement(new Belts(new Position(2, 9), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
-
-        // 5B (y: 3–12)
-
-        //Belts
-        addElement(new Belts(new Position(3, 2), Direction.EAST, Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
-        addElement(new Belts(new Position(10, 0), Direction.NORTH, Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
-        addElement(new Belts(new Position(12, 7), Direction.WEST, Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
-        addElement(new Belts(new Position(5, 9), Direction.SOUTH, Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
-
-        for (int y = 9; y >= 1; y--)
-            switch (y) {
-                case 8 ->
-                        addElement(new Belts(new Position(4, y), Direction.SOUTH, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 2 ->
-                        addElement(new Belts(new Position(4, y), Direction.SOUTH, List.of(Direction.NORTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
-                case 1 ->
-                        addElement(new Belts(new Position(4, y), Direction.EAST, List.of(Direction.NORTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
-                default ->
-                        addElement(new Belts(new Position(4, y), Direction.SOUTH, Direction.NORTH, Belts.BeltSpeed.FAST, "5B"));
-            }
-
-        for (int x = 3; x <= 12; x++)
-            switch (x) {
-                case 4 -> {
-                }
-                case 10 ->
-                        addElement(new Belts(new Position(x, 1), Direction.EAST, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
-                case 11 ->
-                        addElement(new Belts(new Position(x, 1), Direction.NORTH, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
-                default ->
-                        addElement(new Belts(new Position(x, 1), Direction.EAST, Direction.WEST, Belts.BeltSpeed.FAST, "5B"));
-            }
-
-        for (int y = 0; y <= 8; y++)
-            switch (y) {
-                case 1 ->
-                        addElement(new Belts(new Position(11, y), Direction.NORTH, List.of(Direction.SOUTH, Direction.WEST), Belts.BeltSpeed.FAST, "5B"));
-                case 7 ->
-                        addElement(new Belts(new Position(11, y), Direction.NORTH, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 8 ->
-                        addElement(new Belts(new Position(11, y), Direction.WEST, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                default ->
-                        addElement(new Belts(new Position(11, y), Direction.NORTH, Direction.SOUTH, Belts.BeltSpeed.FAST, "5B"));
-            }
-
-        for (int x = 5; x <= 12; x++)
-            switch (x) {
-                case 5 ->
-                        addElement(new Belts(new Position(x, 8), Direction.SOUTH, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 6 ->
-                        addElement(new Belts(new Position(x, 8), Direction.WEST, List.of(Direction.NORTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                case 11 ->
-                        addElement(new Belts(new Position(x, 8), Direction.WEST, List.of(Direction.SOUTH, Direction.EAST), Belts.BeltSpeed.FAST, "5B"));
-                default ->
-                        addElement(new Belts(new Position(x, 8), Direction.WEST, Direction.EAST, Belts.BeltSpeed.FAST, "5B"));
-            }
-
-        //EnergySpaces
-        List.of(new Position(3, 0), new Position(10, 2), new Position(12, 9), new Position(5, 7), new Position(7, 4), new Position(8, 5)).forEach(pos -> addElement(new EnergySpace(pos, "5B")));
-
-        //Checkpoints
-        addElement(new CheckPoints(new Position(12, 6), 1, "5B"));
-
-        //Reboot
-        Reboot reboot = Reboot.getInstance();
-        reboot.setPosition(new Position(7, 6));
-        reboot.setBoardId("5B");
-        addElement(reboot);
-
-        //Walls
-        addElement(new Wall(new Position(6, 6), Direction.NORTH, "5B"));
-        addElement(new Wall(new Position(6, 5), Direction.SOUTH, "5B"));
-        addElement(new Wall(new Position(8, 6), Direction.WEST, "5B"));
-        addElement(new Wall(new Position(9, 6), Direction.EAST, "5B"));
-        addElement(new Wall(new Position(9, 4), Direction.NORTH, "5B"));
-        addElement(new Wall(new Position(9, 3), Direction.SOUTH, "5B"));
-        addElement(new Wall(new Position(7, 4), Direction.EAST, "5B"));
-        addElement(new Wall(new Position(6, 4), Direction.WEST, "5B"));
-
-        //Lasers
-        addElement(new Laser(new Position(6, 6), Direction.NORTH, 1, "5B"));
-        addElement(new Laser(new Position(6, 3), Direction.WEST, 1, "5B"));
-        addElement(new Laser(new Position(9, 3), Direction.SOUTH, 1, "5B"));
-        addElement(new Laser(new Position(9, 6), Direction.EAST, 1, "5B"));
+        logger.info("Checkpoint: " + getElements(12, 3).toString());
+        logger.info("Checkpoint: " + getElements(12, 3).getFirst().toString());
     }
 
     /**

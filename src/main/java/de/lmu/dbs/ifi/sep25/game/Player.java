@@ -36,16 +36,16 @@ public class Player {
         }
     }
 
-    // Handle map selection
-    public void selectMap(String mapName) {
-        if (Game.getInstance().isMapSelectionPending()) {
-            Game.getInstance().selectMap(this, mapName);
-        } else {
-            connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Map selection phase has ended")
-            ));
-        }
-    }
+//    // Handle map selection
+//    public void selectMap(String mapName) {
+//        if (Game.getInstance().isMapSelectionPending()) {
+//            Game.getInstance().selectMap(this, mapName);
+//        } else {
+//            connection.sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyError("Map selection phase has ended")
+//            ));
+//        }
+//    }
 
     public void setStartingPoint(int x, int y, String direction) {
         if (Game.getInstance().getCurrentPhase() != 0) {

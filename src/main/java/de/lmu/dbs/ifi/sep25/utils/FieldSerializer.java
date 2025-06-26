@@ -48,9 +48,13 @@ public class FieldSerializer implements JsonSerializer<MessageDefinitions.Field>
                 MessageDefinitions.FieldEnergySpace f = (MessageDefinitions.FieldEnergySpace) src;
                 obj.addProperty("count", f.count());
             }
-            case "Checkpoint" -> {
+            case "CheckPoint" -> {
                 MessageDefinitions.FieldCheckPoint f = (MessageDefinitions.FieldCheckPoint) src;
                 obj.addProperty("count", f.count());
+            }
+            case "RestartPoint" -> {
+                MessageDefinitions.FieldRestartPoint f = (MessageDefinitions.FieldRestartPoint) src;
+                obj.add("orientations", context.serialize(f.orientations()));
             }
             // Other types (Empty, Pit, RestartPoint, StartPoint) have no extra fields
         }

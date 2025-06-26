@@ -1,9 +1,11 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
-import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
+import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+
+import java.util.List;
 
 
 public class Reboot extends BoardElement {
@@ -133,7 +135,7 @@ public class Reboot extends BoardElement {
      */
     @Override
     public MessageDefinitions.FieldRestartPoint toField() {
-        return new MessageDefinitions.FieldRestartPoint(boardId);
+        return new MessageDefinitions.FieldRestartPoint(boardId, List.of(getDirection().toString()));
     }
 }
 
