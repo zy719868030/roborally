@@ -189,7 +189,7 @@ public class Laser extends BoardElement {
      */
     @Override
     public MessageDefinitions.FieldLaser toField() {
-        return new MessageDefinitions.FieldLaser(boardId, List.of(direction.toString()), power);
+        return new MessageDefinitions.FieldLaser(boardId, List.of(direction.toString()), power, true); // oder false je nach Zustand
     }
 
 }

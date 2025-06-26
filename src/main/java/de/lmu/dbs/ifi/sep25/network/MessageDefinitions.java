@@ -173,6 +173,9 @@ public class MessageDefinitions {
             this.count = count;
 
         }
+        public Integer getCount() {
+            return count;
+        }
 
         public Integer count() {
             return count;
@@ -200,21 +203,32 @@ public class MessageDefinitions {
     public static class FieldLaser extends Field {
         private final Integer count;
         private final List<String> orientations;
+        private final boolean active;
+
 
         /**
          * @param orientations direction in which laser faces
          * @param count        laser number count (1-3)
          */
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
+            this(isOnBoard, orientations, count, true); // Standardmäßig aktiv
+        }
+
+        public FieldLaser(String isOnBoard, List<String> orientations, Integer count, boolean active) {
             super(isOnBoard);
             if (orientations.size() != 1)
                 throw new IllegalArgumentException("Laser requires exactly 1 orientation");
-            this.orientations = orientations;
             if (count < 1 || count > 3)
                 throw new IllegalArgumentException("Laser requires count between 1 and 3");
-            this.count = count;
 
+            this.orientations = orientations;
+            this.count = count;
+            this.active = active;
         }
+        public boolean isActive() {
+            return active;
+        }
+
 
         public List<String> orientations() {
             return orientations;

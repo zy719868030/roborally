@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.fxml.FXML;
@@ -145,49 +146,69 @@ public class GameController {
         for (MessageDefinitions.Field element : elements) {
             switch (element.type()) {
                 case "Wall" -> {
-                    // TODO add different corner and passageway wall assets with lasers etc. or find a different solution. Can only display single walls or laser on a single wall rn.
-                    for (String dir : ((MessageDefinitions.FieldWall) element).orientations()) {
-                        ImageView wallImg = new ImageView(tileImages.get("Wall_N"));
+                    MessageDefinitions.FieldWall wall = (MessageDefinitions.FieldWall) element;
+                    List<String> directions = wall.orientations();
+
+                    // Alle Laser auf dem Feld sammeln
+                    List<MessageDefinitions.FieldLaser> laserFields = elements.stream()
+                            .filter(e -> e instanceof MessageDefinitions.FieldLaser)
+                            .map(e -> (MessageDefinitions.FieldLaser) e)
+                            .toList();
+
+                    for (String dir : directions) {
+                        // Standardbild
+                        String imageKey = "wall_n";
+
+                        for (MessageDefinitions.FieldLaser laser : laserFields) {
+                            // Passt Richtung an
+                            if (laser.orientations().getFirst().equals(dir)) {
+                                int count = laser.count();
+                                boolean active = laser.isActive(); // Laser ist an oder aus
+                                imageKey = "wall_laser_" + count + "_" + (active ? "on" : "off");
+                                break;
+                            }
+                        }
+
+                        ImageView wallImg = new ImageView(tileImages.get(imageKey));
                         wallImg.setFitWidth(TILE_SIZE);
                         wallImg.setFitHeight(TILE_SIZE);
-
                         wallImg.setRotate(convertDirectionToRotation(dir));
-
                         pane.getChildren().add(wallImg);
                     }
                 }
 
-                case "Laser" -> {
-                    MessageDefinitions.FieldLaser laser = (MessageDefinitions.FieldLaser) element;
-
-                    //TODO add the laser off assets
-                    ImageView laserImg = new ImageView(tileImages.get(switch (laser.count()) {
-                        case 1 -> "Laser_1";
-                        case 2 -> "Laser_2";
-                        default -> "Laser_3";
-                    }));
-
-                    laserImg.setFitWidth(TILE_SIZE);
-                    laserImg.setFitHeight(TILE_SIZE);
-
-                    laserImg.setRotate(convertDirectionToRotation(laser.orientations().getFirst()) + 90);
-
-                    pane.getChildren().add(laserImg);
-                }
-
                 case "ConveyorBelt" -> {
                     MessageDefinitions.FieldConveyorBelt belt = (MessageDefinitions.FieldConveyorBelt) element;
-                    Image image = tileImages.get(belt.speed() == 2 ? "Conveyor_Fast_N" : "Conveyor_Slow_N");
+                    String color = belt.speed() == 2 ? "blue" : "green";
 
-                    //TODO after adding blue_conveyor_intersection, the blue conveyor intersections, add to the check by checking for direction size etc.!
-                    ImageView beltImg = new ImageView(image);
-                    beltImg.setFitWidth(TILE_SIZE);
-                    beltImg.setFitHeight(TILE_SIZE);
+                    // Parse Direction enum aus Strings
+                    Direction outDir = parseProtocolDirection(belt.directions().getFirst());
+                    List<Direction> inDirs = belt.directions().stream()
+                            .skip(1)
+                            .map(this::parseProtocolDirection)
+                            .toList();
 
-                    beltImg.setRotate(convertDirectionToRotation(belt.directions().getFirst()));
+                    String imageKey;
+                    boolean isSplit = inDirs.stream()
+                            .filter(in -> !in.turnAround().equals(outDir))
+                            .count() >= 1;
 
-                    pane.getChildren().add(beltImg);
+                    if (isSplit) {
+                        imageKey = color + "_" + getSplitImageSuffix(outDir, inDirs, color);
+                    } else {
+                        imageKey = color + "_conveyor_belt_straight";
+                    }
+
+
+                    Image image = tileImages.get(imageKey);
+                    ImageView imgView = new ImageView(image);
+                    imgView.setFitWidth(TILE_SIZE);
+                    imgView.setFitHeight(TILE_SIZE);
+                    imgView.setRotate(convertDirectionToRotation(outDir.toString().toLowerCase()));
+                    pane.getChildren().add(imgView);
                 }
+
+
 
                 case "PushPanel" -> {
                     MessageDefinitions.FieldPushPanel pushPanel = (MessageDefinitions.FieldPushPanel) element;
@@ -257,6 +278,86 @@ public class GameController {
 
         return pane;
     }
+    private boolean isOpposite(String a, String b) {
+        return (a.equals("top") && b.equals("bottom")) ||
+                (a.equals("bottom") && b.equals("top")) ||
+                (a.equals("left") && b.equals("right")) ||
+                (a.equals("right") && b.equals("left"));
+    }
+
+    private int getCornerRotation(String push, String pull) {
+        return switch (push + "_" + pull) {
+            case "top_right" -> 0;
+            case "right_bottom" -> 90;
+            case "bottom_left" -> 180;
+            case "left_top" -> 270;
+            case "right_top" -> 270;
+            case "bottom_right" -> 0;
+            case "left_bottom" -> 90;
+            case "top_left" -> 180;
+            default -> 0;
+        };
+    }
+
+    private String getSplitImageKeyForDirection(String pushDir) {
+        // Diese Methode gibt entweder "conveyor_split_left" oder "conveyor_split_right" zurück
+        return switch (pushDir) {
+            case "top" -> "conveyor_split_right";
+            case "right" -> "conveyor_split_left";
+            case "bottom" -> "conveyor_split_left";
+            case "left" -> "conveyor_split_right";
+            default -> "conveyor_split_left";
+        };
+    }
+    private String getSplitImageSuffix(Direction outDir, List<Direction> inDirs, String color)
+    {        if (inDirs.size() < 2) return (color + "_conveyor_belt_straight");
+        // Standard-Gerade
+
+        // Split: welcher Eingang ist NICHT gegenüber vom Ausgang?
+        for (Direction inDir : inDirs) {
+            if (!inDir.turnAround().equals(outDir)) {
+                int relative = getRelativeTurn(outDir, inDir);
+                return (relative == 1) ? "conveyor_split_right" : "conveyor_split_left";
+            }
+        }
+        return "conveyor_belt_straight";
+    }
+    private Direction parseProtocolDirection(String dirString) {
+        return switch (dirString.toLowerCase()) {
+            case "top" -> Direction.NORTH;
+            case "bottom" -> Direction.SOUTH;
+            case "left" -> Direction.WEST;
+            case "right" -> Direction.EAST;
+            default -> throw new IllegalArgumentException("Ungültige Richtung: " + dirString);
+        };
+    }
+
+    // 0 = gerade, 1 = rechts, -1 = links
+    private int getRelativeTurn(Direction from, Direction to) {
+        return switch (from) {
+            case NORTH -> switch (to) {
+                case EAST -> 1;
+                case WEST -> -1;
+                default -> 0;
+            };
+            case EAST -> switch (to) {
+                case SOUTH -> 1;
+                case NORTH -> -1;
+                default -> 0;
+            };
+            case SOUTH -> switch (to) {
+                case WEST -> 1;
+                case EAST -> -1;
+                default -> 0;
+            };
+            case WEST -> switch (to) {
+                case NORTH -> 1;
+                case SOUTH -> -1;
+                default -> 0;
+            };
+        };
+    }
+
 
     /**
      * Loads the tile images for various game elements and populates them into the `tileImages` map.
@@ -274,15 +375,17 @@ public class GameController {
     private void loadTileImages() {
         final Map<String, String> imagePaths = Map.ofEntries(
                 entry("Floor", "floor.png"),
-                entry("Wall_N", "wall_n.png"),
+                entry("wall_n", "wall_n.png"),
                 entry("Gear_Green", "Gear_green.png"),
                 entry("Gear_Red", "Gear_red.png"),
-                entry("Conveyor_Slow_N", "green_conveyor_belt_n.png"),
-                entry("Conveyor_Fast_N", "blue_conveyor_belt_n.png"),
-                entry("Laser_1", "Board_Lasers_1.png"),
-                entry("Laser_2", "Board_Lasers_2.png"),
-                entry("Laser_3", "Board_Lasers_3.png"),
-                entry("Conveyor_green_Rotate", "green_conveyor_rotate_n.png"),
+                entry("green_conveyor_belt_straight", "green_conveyor_belt_n.png"),
+                entry("blue_conveyor_belt_straight", "blue_conveyor_belt_n.png"),
+                entry("Laser_1_on", "wall_laser_1_on.png"),
+                entry("wall_laser_1_on", "wall_laser_1_on.png"),
+                entry("wall_laser_1_off", "wall_laser_1_off.png"),
+                entry("wall_laser_2_on", "wall_laser_2.png"),
+                entry("wall_laser_3_on", "wall_laser_3.png"),
+                entry("Conveyor_green_Rotate", "green_conveyor_corner_r.png"),
                 entry("PushPanel_1", "pushpanel_1.png"),
                 entry("PushPanel_2", "pushpanel_2.png"),
                 entry("PushPanel_3", "pushpanel_3.png"),
@@ -299,10 +402,16 @@ public class GameController {
                 entry("startpoint_4A", "startpoint_4A.png"),
                 entry("startpoint_5B", "startpoint_5B.png"),
                 entry("Pit", "Pit.png"),
-                entry("energyspace", "energyspace.png"),
+                entry("energyspace_green", "energyspace_green.png"),
+                entry("energyspace_red", "energyspace_red.png"),
                 entry("reboot", "reboot.png"),
                 entry("antenna", "antenna.png"),
-                entry("black and white gears", "b&w_gear.png")
+                entry("black and white gears", "b&w_gear.png"),
+                entry("blue_conveyor_corner", "blue_conveyor_corner_r.png"),
+                entry("blue_conveyor_merge", "blue_conveyor_merge_triple.png"),
+                entry("blue_conveyor_split_left", "blue_conveyor_split_left.png"),
+                entry("blue_conveyor_split_right", "blue_conveyor_split_right.png")
+
         );
 
         imagePaths.forEach((key, file) ->
@@ -323,16 +432,24 @@ public class GameController {
      * or "unknown" for undefined types.
      */
     private String getTileKeyForElement(MessageDefinitions.Field element) {
-        return switch (element.type()) {
-            case "Empty" -> "Floor"; // Hintergrund
-            case "StartPoint" -> "black and white gears";
-            case "Pit" -> "Pit";
-            case "Energy-Space" -> "energyspace";
-            case "CheckPoint" -> "checkpoint" + ((MessageDefinitions.FieldCheckPoint) element).count().toString();
-            case "Gear" ->
-                    ((MessageDefinitions.FieldGear) element).orientations().getFirst().equalsIgnoreCase("clockwise") ? "Gear_Green" : "Gear_Red";
-            default -> "unknown";
-        };
+        switch (element.type()) {
+            case "Empty":
+                return "Floor";
+            case "StartPoint":
+                return "black and white gears";
+            case "Pit":
+                return "Pit";
+            case "Energy-Space" :
+                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
+                Integer count = es.getCount();
+                return count != null && count > 0 ? "energyspace_green" : "energyspace_red";
+            case "CheckPoint":
+                return "checkpoint" + ((MessageDefinitions.FieldCheckPoint) element).count().toString();
+            case "Gear":
+                return ((MessageDefinitions.FieldGear) element).orientations().getFirst().equalsIgnoreCase("clockwise") ? "Gear_Green" : "Gear_Red";
+            default:
+                return "unknown";
+        }
     }
 
 
