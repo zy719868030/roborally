@@ -53,6 +53,9 @@
 
         <!-- Handkartenbereich -->
         <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>
+        <!-- Gespielte Karten -->
+        <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
+
 
         <!-- Miniatur-Icons für Restore (z. B. Chat) – gehört hier rein -->
         <HBox fx:id="iconMenu" spacing="5" alignment="CENTER"

@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.ui;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -12,6 +13,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,7 +28,6 @@ import static java.util.Map.entry;
 public class GameController {
     // 0. Logger
     private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
-
     @FXML
     private GridPane gameBoardPane;
     @FXML
@@ -41,6 +42,9 @@ public class GameController {
     private VBox chatBox;
     @FXML
     private HBox iconMenu;
+    @FXML private HBox playedCardsBox;
+
+    @FXML private  HBox handCardBox;
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
@@ -512,4 +516,478 @@ public class GameController {
 
     public void setInitialPlayerStats(Map<Integer, Integer> energy, Map<Integer, Integer> checkpointsReached) {
     }
+
+    /**
+     * Zeigt eine gespielte Karte visuell im Kartenbereich an.
+     *
+     * @param clientID Die ID des Spielers, der die Karte gespielt hat.
+     * @param cardName Der Name der gespielten Karte (z. B. "move_1", "turn_right").
+     */
+    public void showPlayedCard(int clientID, String cardName) {
+        // Verwende Platzhalter, wenn Bild fehlt
+        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+        Image cardImage;
+        try {
+            cardImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+        } catch (Exception e) {
+            cardImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
+        }
+
+        ImageView cardView = new ImageView(cardImage);
+        cardView.setFitWidth(60);
+        cardView.setFitHeight(90);
+        cardView.setPreserveRatio(true);
+        cardView.setSmooth(true);
+
+        playedCardsBox.getChildren().add(cardView);
+        if (playedCardsBox.getChildren().size() > 5) {
+            playedCardsBox.getChildren().remove(0);
+        }
+    }
+    /**
+     * Hebt den Spieler hervor, der aktuell am Zug ist.
+     *
+     * @param clientID Die Client-ID des Spielers
+     */
+    public void markCurrentPlayer(int clientID) {
+        System.out.println("[INFO] Aktueller Spieler ist: " + clientID);
+
+        // Spielername herausfinden (aus der ComboBox)
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() == clientID) {
+                String playerName = entry.getName();
+
+                // Nachricht im Chat anzeigen
+                appendChatMessage("[INFO] " + playerName + " ist am Zug.");
+
+                // Status-Label oben aktualisieren
+                statusLabel.setText(playerName + " ist am Zug.");
+
+                // Optional: Spieler in ComboBox markieren
+                recipientBox.getSelectionModel().select(entry);
+
+                return;
+            }
+        }
+
+        // Falls der Spieler nicht gefunden wurde
+        appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
+        statusLabel.setText("Spieler " + clientID + " ist am Zug.");
+    }
+
+
+    /**
+     * Zeigt die Startposition eines Roboters im Spielfeld an.
+     *
+     * @param x         X-Koordinate auf dem Spielfeld
+     * @param y         Y-Koordinate auf dem Spielfeld
+     * @param clientID  Die Client-ID des Spielers
+     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "up", "down")
+     */
+    public void displayStartingPoint(int x, int y, int clientID, String direction) {
+        try {
+            // Platzhalter-Bild (z. B. cover.png)
+            Image robotImg = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            ImageView robotView = new ImageView(robotImg);
+            robotView.setFitWidth(40);
+            robotView.setFitHeight(40);
+            robotView.setPreserveRatio(true);
+
+            // Drehe Bild je nach Richtung
+            switch (direction.toLowerCase()) {
+                case "right" -> robotView.setRotate(0);
+                case "down"  -> robotView.setRotate(90);
+                case "left"  -> robotView.setRotate(180);
+                case "up"    -> robotView.setRotate(270);
+            }
+
+            // Setze Roboter auf das Spielfeld (Grid)
+            StackPane tile = getTileAt(x, y);
+            tile.getChildren().add(robotView);
+
+        } catch (Exception e) {
+            System.err.println("[FEHLER] Roboter konnte nicht angezeigt werden an (" + x + "," + y + ")");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Holt das StackPane an der gegebenen Spielfeldposition.
+     *
+     * @param x X-Koordinate
+     * @param y Y-Koordinate
+     * @return Das StackPane an der Position oder neu erstellt
+     */
+    private StackPane getTileAt(int x, int y) {
+        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
+            if (GridPane.getColumnIndex(node) == x && GridPane.getRowIndex(node) == y && node instanceof StackPane pane) {
+                return pane;
+            }
+        }
+        StackPane fallback = new StackPane();
+        gameBoardPane.add(fallback, x, y);
+        return fallback;
+    }
+
+    /**
+     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
+     *
+     * @param cardNames Liste der Kartennamen (z. B. "MoveI", "TurnLeft", ...)
+     */
+    public void displayHandCards(List<String> cardNames) {
+        if (cardNames == null || cardNames.isEmpty()) {
+            System.err.println("[INFO] Spieler hat keine Karten erhalten.");
+            return;
+        }
+
+        // Beispiel-Container, musst du im FXML haben: <HBox fx:id="handCardsBox" />
+        HBox handCardsBox = (HBox) root.lookup("#handCardsBox");
+        if (handCardsBox == null) {
+            System.err.println("[FEHLER] Kein Container für Handkarten gefunden (fx:id=handCardsBox).");
+            return;
+        }
+
+        handCardsBox.getChildren().clear();
+
+        for (String name : cardNames) {
+            String imagePath = "/assets/cards/" + name.toLowerCase() + ".png";
+
+            Image img;
+            try {
+                img = new Image(getClass().getResourceAsStream(imagePath));
+            } catch (Exception e) {
+                System.err.println("[WARNUNG] Bild nicht gefunden für Karte: " + name + " → verwende Platzhalter.");
+                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
+
+            ImageView view = new ImageView(img);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            view.setSmooth(true);
+
+            handCardsBox.getChildren().add(view);
+        }
+    }
+    /**
+     * Zeigt für einen anderen Spieler Kartenrückseiten an.
+     *
+     * @param clientID Spieler-ID
+     * @param count    Anzahl der Karten
+     */
+    public void displayHiddenCardsForPlayer(int clientID, int count) {
+        handCardBox.getChildren().clear();
+
+        for (int i = 0; i < count; i++) {
+            Image back = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
+
+            ImageView cardBack = new ImageView(back);
+            cardBack.setFitWidth(60);
+            cardBack.setFitHeight(90);
+            cardBack.setPreserveRatio(true);
+            cardBack.setSmooth(true);
+
+            handCardBox.getChildren().add(cardBack);
+        }
+
+        appendChatMessage("Spieler #" + clientID + " hat " + count + " Karten erhalten.");
+    }
+    /**
+     * Zeigt eine optionale Animation oder Nachricht an, dass das Deck gemischt wurde.
+     */
+    public void showShuffleAnimation() {
+        appendChatMessage("[INFO] Das Programmierdeck wurde neu gemischt.");
+        // Optional: UI-Animation hier einbauen @Raneem
+    }
+
+    /**
+     * Wird aufgerufen, wenn ein Spieler eine Karte für sein Register ausgewählt hat.
+     *
+     * @param clientID Die ID des Spielers
+     * @param filled Ob das Register des Spielers vollständig ist
+     */
+    public void handleCardSelection(int clientID, boolean filled) {
+        String message = filled
+                ? "Spieler " + clientID + " hat sein Programm fertiggestellt."
+                : "Spieler " + clientID + " hat eine Karte ausgewählt.";
+        appendChatMessage("[INFO] " + message);
+    }
+
+    /**
+     * Hebt hervor, dass ein Spieler sein Programm abgeschlossen hat.
+     *
+     * @param clientID Die ID des Spielers
+     */
+    public void markPlayerReady(int clientID) {
+        appendChatMessage("[INFO] Spieler " + clientID + " ist bereit.");
+    }
+
+    public void showTimerEnded(List<Integer> slowPlayers) {
+        appendChatMessage("[TIMER] Zeit ist abgelaufen.");
+
+        if (slowPlayers != null && !slowPlayers.isEmpty()) {
+            appendChatMessage("Folgende Spieler waren zu langsam: " + slowPlayers);
+
+            for (PlayerEntry entry : recipientBox.getItems()) {
+                if (slowPlayers.contains(entry.getClientID())) {
+                    // Spieler visuell markieren (z. B. ✖ vor den Namen setzen)
+                    entry.setName("✖ " + entry.getName());
+                }
+            }
+
+            // Optional: Auswahl zurücksetzen, falls vorheriger Eintrag jetzt verändert wurde
+            recipientBox.getSelectionModel().clearSelection();
+        }
+    }
+
+    /**
+     * Zeigt die vom Spieler bestätigten Karten, z. B. im Register oder Kartenbereich.
+     *
+     * @param cards Liste der Kartennamen (z. B. ["move_1", "turn_left", ...])
+     */
+    public void displayConfirmedCards(List<String> cards) {
+        handCardBox.getChildren().clear();
+
+        for (String card : cards) {
+            String imagePath = "/assets/cards/" + card.toLowerCase() + ".png";
+
+            Image cardImage;
+            try {
+                cardImage = new Image(getClass().getResourceAsStream(imagePath));
+            } catch (Exception e) {
+                cardImage = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
+
+            ImageView cardView = new ImageView(cardImage);
+            cardView.setFitWidth(60);
+            cardView.setFitHeight(90);
+            cardView.setPreserveRatio(true);
+            cardView.setSmooth(true);
+
+            handCardBox.getChildren().add(cardView);
+        }
+    }
+
+    /**
+     * Displays the name of a played card below the board.
+     *
+     * @param clientID ID of the player
+     * @param cardName Name of the played card
+     */
+    public void showActiveCard(int clientID, String cardName) {
+        Label label = new Label("Player " + clientID + ": " + cardName);
+        label.setStyle("-fx-font-size: 14px; -fx-text-fill: white;");
+        handCardBox.getChildren().add(label);
+    }
+    /**
+     * Basic placeholder animation for a robot action.
+     *
+     * @param clientID ID of the robot
+     * @param cardName The card causing the action
+     */
+    public void animateRobotAction(int clientID, String cardName) {
+        int x = 5;
+        int y = 5;
+
+        Label arrow = new Label("→");
+        arrow.setStyle("-fx-font-size: 30px; -fx-text-fill: red;");
+
+        StackPane cell = getCellAt(x, y);
+        if (cell != null) {
+            cell.getChildren().add(arrow);
+
+            PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
+            pause.setOnFinished(e -> cell.getChildren().remove(arrow));
+            pause.play();
+        }
+    }
+    /**
+     * Holt die StackPane für ein Spielfeldfeld bei (x, y).
+     *
+     * @param x Spaltenindex
+     * @param y Zeilenindex
+     * @return StackPane der Zelle oder null, wenn nicht gefunden
+     */
+    private StackPane getCellAt(int x, int y) {
+        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
+            if (GridPane.getColumnIndex(node) == x && GridPane.getRowIndex(node) == y) {
+                return (StackPane) node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Ersetzt eine Karte in einem bestimmten Register (z. B. durch Schaden).
+     *
+     * @param clientID ID des Spielers
+     * @param register Register-Slot (0–4)
+     * @param newCard  Name der neuen Karte
+     */
+    public void replaceCardInRegister(int clientID, int register, String newCard) {
+        // Placeholder: Anzeige im Chat (später grafisch auf dem Spielfeld zeigen)
+        appendChatMessage("[INFO] Spieler " + clientID + " ersetzt Karte in Register " + register + " durch: " + newCard);
+
+        // TODO (optional): Animation oder visuelles Update für Register-Karte
+    }
+
+/**
+ * Aktualisiert die Position eines Roboters auf dem Spielfeld.
+ *
+ * @param clientID ID des Spielers/Roboters
+ * @param x        Neue X-Position
+ * @param y        Neue Y-Position
+ */
+    /**
+     * Bewegt den Roboter eines Spielers auf das Feld (x, y).
+     *
+     * @param clientID Die ID des Spielers
+     * @param x        Die Zielspalte
+     * @param y        Die Zielzeile
+     */
+    public void moveRobotTo(int clientID, int x, int y) {
+        // Beispiel-Icon für Roboter
+        ImageView robot = new ImageView(new Image(getClass().getResourceAsStream("/assets/cover.png")));
+        robot.setFitWidth(40);
+        robot.setFitHeight(40);
+
+        // Bestehende Roboter entfernen (optional)
+        StackPane cell = getCellAt(x, y);
+        if (cell != null) {
+            cell.getChildren().removeIf(n -> n instanceof ImageView && ((ImageView) n).getImage().getUrl().contains("robot"));
+            cell.getChildren().add(robot);
+        }
+
+        appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
+    }
+
+    /**
+     * Dreht den Roboter eines Spielers in eine bestimmte Richtung.
+     *
+     * @param clientID Die ID des Spielers
+     * @param rotation "clockwise" oder "counterclockwise"
+     */
+    public void rotateRobot(int clientID, String rotation) {
+        // Beispiel: aktuelle Roboterposition (vereinfachtes Beispiel)
+        int x = 5; // TODO: echte Roboterposition verwenden
+        int y = 5;
+
+        StackPane cell = getCellAt(x, y);
+        if (cell != null) {
+            for (javafx.scene.Node node : cell.getChildren()) {
+                if (node instanceof ImageView img && img.getImage().getUrl().contains("robot")) {
+                    double currentRotation = img.getRotate();
+                    img.setRotate(rotation.equals("clockwise") ? currentRotation + 90 : currentRotation - 90);
+                    appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Spielt eine einfache Animation basierend auf dem Animationstyp.
+     *
+     * @param type Typ der Animation (z. B. "Movement", "Clockwise", "Checkpoint")
+     */
+    public void playAnimation(String type) {
+        appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
+
+        // Platzhalter: Optional kleine visuelle Effekte
+        // z. B. Blinken des Spielfelds, Richtungspfeil, etc.
+        // TODO: Ersetze durch echte Animationen in späterem Schritt
+    }
+
+    /**
+     * Zeigt eine visuelle Nachricht oder Platzhalter an, dass ein Spieler rebootet wurde.
+     *
+     * @param clientID ID des Spielers
+     */
+    public void showReboot(int clientID) {
+        // Optional: Spielername ermitteln – hier als Platzhalter
+        String playerName = "Spieler " + clientID;
+
+        // Nachricht im Chat anzeigen
+        appendChatMessage("[REBOOT] " + playerName + " wurde rebootet.");
+
+        // TODO: Hier könnte man auch eine Reboot-Animation zeigen
+        // oder ein Symbol auf dem Spielfeld darstellen
+    }
+
+    /**
+     * Zeigt eine visuelle Reboot-Ausrichtung für den Spieler an.
+     *
+     * @param direction Die vom Spieler gewählte Richtung ("up", "down", "left", "right")
+     */
+    public void showRebootDirection(String direction) {
+        appendChatMessage("[INFO] Reboot-Richtung: " + direction);
+
+        // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
+        Label arrow = new Label(switch (direction.toLowerCase()) {
+            case "up" -> "↑";
+            case "down" -> "↓";
+            case "left" -> "←";
+            case "right" -> "→";
+            default -> "?";
+        });
+
+        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
+        StackPane centerTile = getCellAt(5, 5); // Beispielposition – später echte Roboterposition verwenden
+
+        if (centerTile != null) {
+            centerTile.getChildren().add(arrow);
+
+            // Pfeil nach kurzer Zeit entfernen
+            PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
+            pause.setOnFinished(e -> centerTile.getChildren().remove(arrow));
+            pause.play();
+        }
+    }
+
+    /**
+     * Zeigt die Energieänderung für einen bestimmten Spieler an.
+     *
+     * @param clientID Die Client-ID des Spielers
+     * @param energy   Neue Energieanzahl
+     * @param source   Quelle der Energie (z. B. "EnergySpace", "Laser")
+     */
+    public void showEnergyChange(int clientID, int energy, String source) {
+        String playerName = "Spieler " + clientID;
+        appendChatMessage("[ENERGIE] " + playerName + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")");
+
+        // Optional: weitere Anzeige z. B. Energiebalken, Symbol-Update etc.
+    }
+
+    /**
+     * Zeigt an, dass ein Spieler einen Checkpoint erreicht hat.
+     *
+     * @param clientID Die ID des Spielers
+     * @param checkpointNumber Die Nummer des erreichten Checkpoints
+     */
+    public void showCheckpointReached(int clientID, int checkpointNumber) {
+        String playerName = "Spieler " + clientID;
+        appendChatMessage("[ZIEL] " + playerName + " hat Checkpoint #" + checkpointNumber + " erreicht! 🏁");
+
+        // Optional: UI-Markierung im Spielfeld oder Spieleranzeige
+    }
+
+    /**
+     * Zeigt das Spielende an und informiert den Benutzer, ob er gewonnen oder verloren hat.
+     *
+     * @param isWinner true, wenn der Spieler gewonnen hat; false sonst
+     */
+    public void showGameResult(boolean isWinner) {
+        String resultText = isWinner ? "🎉 Glückwunsch, du hast GEWONNEN! 🎉"
+                : "☠️ Leider verloren. Versuch es erneut! ☠️";
+        appendChatMessage("[SPIELENDE] " + resultText);
+
+        // Optional: Fenster, Animation oder Szenewechsel
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Spiel beendet");
+        alert.setHeaderText(null);
+        alert.setContentText(resultText);
+        alert.showAndWait();
+    }
+
 }
+
