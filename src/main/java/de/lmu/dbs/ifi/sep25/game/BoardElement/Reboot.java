@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
@@ -11,23 +12,23 @@ import java.util.List;
 public class Reboot extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
-    private static Reboot instance = null;
+//    private static Reboot instance = null;
     // boardName for protocol's isOnBoard attribute
     private String boardName;
 
-    private Reboot() {
-        super(""); // Calls BoardElement() constructor
-        this.isOnBoard = false;
-        this.boardId = "";
-        //this.boardName = "";
-        // Private constructor for singleton
-
-    }
-    public Reboot(Position position) {
-        super(position, "");
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public Reboot() {
+//        super(""); // Calls BoardElement() constructor
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//        //this.boardName = "";
+//        // Private constructor for singleton
+//
+//    }
+//    public Reboot(Position position) {
+//        super(position, "");
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     /*
     public Reboot(Position position, String boardId) {
@@ -37,8 +38,14 @@ public class Reboot extends BoardElement {
     }
     */
 
-    public Reboot(Position position, String boardId) {
-        super(position, boardId); // Calls BoardElement(Position, String)
+//    public Reboot(Position position, String boardId) {
+//        super(position, boardId); // Calls BoardElement(Position, String)
+//        this.boardId = boardId;
+//        this.isOnBoard = !boardId.isEmpty();
+//    }
+
+    public Reboot(Position position, Direction direction, String boardId) {
+        super(position, direction, boardId);
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
     }
@@ -58,14 +65,6 @@ public class Reboot extends BoardElement {
     public void setBoardId(String boardId) {
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
-    }
-
-
-    public static Reboot getInstance() {
-        if (instance == null) {
-            instance = new Reboot();
-        }
-        return instance;
     }
 
     // Added: Setter for boardName

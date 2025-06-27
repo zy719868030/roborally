@@ -56,7 +56,7 @@ public class Client {
     private PrintWriter writer;
 
     // 4. Game state
-    private int phase = -1;
+    private int phase = 0;
     private final List<String> hand = new ArrayList<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
     private int currentRegister = 0;

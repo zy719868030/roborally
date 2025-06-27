@@ -38,21 +38,21 @@ public class Gear extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Gear() {
-        super();
-        this.rotationDirection = RotationDirection.CLOCKWISE;
-        this.color = GearColor.GREEN;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Gear(Position position, String boardId) {
-        super(position, boardId);
-        this.rotationDirection = RotationDirection.CLOCKWISE;
-        this.color = GearColor.GREEN;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public Gear() {
+//        super();
+//        this.rotationDirection = RotationDirection.CLOCKWISE;
+//        this.color = GearColor.GREEN;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Gear(Position position, String boardId) {
+//        super(position, boardId);
+//        this.rotationDirection = RotationDirection.CLOCKWISE;
+//        this.color = GearColor.GREEN;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
 
     /**

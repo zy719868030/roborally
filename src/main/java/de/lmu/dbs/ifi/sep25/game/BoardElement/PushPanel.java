@@ -19,37 +19,37 @@ public class PushPanel extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public PushPanel() {
-        super();
-        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public PushPanel(Position position, String boardId) {
-        super(position, boardId);
-        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public PushPanel(Position position, Direction direction) {
-        super(position, direction);
-        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public PushPanel(Position position, Direction direction, List<Integer> activeRegisters) {
-        super(position, direction);
-        this.activeRegisters = new ArrayList<>(activeRegisters);
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public PushPanel() {
+//        super();
+//        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public PushPanel(Position position, String boardId) {
+//        super(position, boardId);
+//        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public PushPanel(Position position, Direction direction) {
+//        super(position, direction);
+//        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public PushPanel(Position position, Direction direction, List<Integer> activeRegisters) {
+//        super(position, direction);
+//        this.activeRegisters = new ArrayList<>(activeRegisters);
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     public PushPanel(Position position, Direction direction, List<Integer> activeRegisters, String boardId) {
         super(position, direction);

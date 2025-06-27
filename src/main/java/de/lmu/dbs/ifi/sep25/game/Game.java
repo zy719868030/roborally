@@ -1,6 +1,5 @@
 package de.lmu.dbs.ifi.sep25.game;
 
-import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
@@ -12,42 +11,84 @@ import de.lmu.dbs.ifi.sep25.game.Maps.MapType;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.Server;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.CountDownLatch;
 
 public class Game {
+    // Constants
+    private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
+
+    // Singleton instance
     private static Game instance;
-    private Player currentPlayer;
+
+    // Game state
+    private GamePhase currentPhase = null;
+    private int currentRegister = 0;
+    private int roundNumber = 0;
+    private int currentPlayerIndex;
+
+    // Core game components
+    private final Board board;
     private final List<Player> players;
-    private Board board;
+    private Player currentPlayer;
+    private final String selectedMap;
+
+    // Card decks
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
     private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
 
-    // Map selection fields
-//    private Player firstReadyPlayer;
-    private String selectedMap;
-//    private boolean mapSelectionPending;
-    private GamePhase currentPhase = null;
-    private int currentRegister = 0;
-    private int roundNumber = 0;
-    private int currentPlayerIndex; // Index in players list
-//    private Timer programmingTimer; // For 30-second timer
-//    private List<Integer> slowPlayers; // Track slow players
+    /* unnecessary globar variables
+    private boolean mapSelectionPending;
+    private Player firstReadyPlayer;
+    private Timer programmingTimer; // For 30-second timer
+    private List<Integer> slowPlayers; // Track slow players
+    */
+
+
+    // 1. Initialization and Setup Methods
 
     private Game(String mapName) {
         players = new ArrayList<>();
         board = new Board(MapType.fromString(mapName));
         currentPlayer = null;
-//        currentPlayerIndex = 0;
-        //currentPhase = -1; // Pre-game (map selection)
-        // Initialize map selection state
-//        firstReadyPlayer = null;
+        currentPhase = GamePhase.SETUP;
         selectedMap = mapName;
+
+        players.stream().forEach(p -> p.getRobot().setBoard(board));
 //        mapSelectionPending = true;
 //        slowPlayers = new ArrayList<>();
         initializeProgrammingDeck();
+    }
+
+    public static Game getInstance() {
+        if (instance != null) {
+            return instance;
+        }
+        throw new IllegalStateException("Game instance has not been initialized yet.");
+    }
+
+    public static Game getInstance(String mapName) {
+
+        if (instance == null) {
+            instance = new Game(mapName);
+        }
+        return instance;
+    }
+
+    /**
+     * Set Board references for all robots when initializing the game
+     */
+    public void initializeGame() {
+        // TODO game.initializeGame(); (in Server)
+
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            robot.setBoard(board);
+        }
     }
 
     private void initializeProgrammingDeck() {
@@ -78,26 +119,9 @@ public class Game {
         programmingDeck.shuffle();
     }
 
-    public static Game getInstance() {
-        if (instance != null) {
-            return instance;
-        }
-        throw new IllegalStateException("Game instance has not been initialized yet.");
-    }
-
-
-    public static Game getInstance(String mapName) {
-
-        if (instance == null) {
-            instance = new Game(mapName);
-        }
-        return instance;
-    }
-
-
-    //TODO @yu or @prajal
-    // Initialize 40 upgrade cards according to the game rulebook.
     private void initializeUpgradeCards() {
+        //TODO @yu or @prajal
+        // Initialize 40 upgrade cards according to the game rulebook.
 
         // Permanent Upgrade Card (yellow)
         String[] permanentUpgrades = {
@@ -167,251 +191,32 @@ public class Game {
         upgradeCards.shuffle();
     }
 
-
-    public void setCurrentPlayer() {
-        if (players.isEmpty()) return;
-        // Use antenna-based priority for Setup Phase (Phase 0)
-        if (currentPhase == GamePhase.SETUP) {
-            Position antennaPos = board.getAntennaPosition();
-            Antenna antenna = null;
-            for (BoardElement element : board.getElements(antennaPos.x(), antennaPos.y())) {
-                if (element instanceof Antenna) {
-                    antenna = (Antenna) element;
-                    break;
-                }
-            }
-
-            if (antenna == null) {
-                throw new IllegalStateException("Antenna must be present on the board.");
-            } else {
-                // Sort players by distance to antenna
-                Map<Integer, List<Robot>> distanceGroups = new HashMap<>();
-                for (Player p : players) {
-                    Robot robot = p.getRobot();
-                    Position robotPos = robot.getPosition();
-                    if (robotPos != null && !board.hasRobotFallen(robot)) {
-                        int distance = antenna.distanceToRobot(robotPos);
-                        distanceGroups.computeIfAbsent(distance, k -> new ArrayList<>()).add(robot);
-                    }
-                }
-                List<Player> sortedPlayers = new ArrayList<>();
-                List<Integer> sortedDistances = new ArrayList<>(distanceGroups.keySet());
-                Collections.sort(sortedDistances);
-                for (int distance : sortedDistances) {
-                    List<Robot> robots = antenna.sortTiedRobotsByPriority(distanceGroups.get(distance));
-                    for (Robot robot : robots) {
-                        for (Player p : players) {
-                            if (p.getRobot().equals(robot)) {
-                                sortedPlayers.add(p);
-                                break;
-                            }
-                        }
-                    }
-                }
-                // Include fallen robots (lowest priority)
-                for (Player p : players) {
-                    if (!sortedPlayers.contains(p)) {
-                        sortedPlayers.add(p);
-                    }
-                }
-                // Set current player to the next in sorted order
-                currentPlayerIndex = (currentPlayerIndex + 1) % sortedPlayers.size();
-                currentPlayer = sortedPlayers.get(currentPlayerIndex);
-            }
-        } else {
-            // For other phases, use round-robin (to be updated if needed)
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-            currentPlayer = players.get(currentPlayerIndex);
-        }
-        // TODO @lukas Send CurrentPlayer message
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(currentPlayer.getRobot().getId())
-            ));
-        }
-    }
-
-
-
-    public void determineTurn() {
-        // Stub
-        setCurrentPlayer();
-    }
+    // 2. Game Flow Control Methods
 
     /**
-     * Handle player selection of starting position
-     * @param player Player selecting starting position
-     * @param x X-coordinate of starting position
-     * @param y Y-coordinate of starting position
-     * @return Returns true if starting position is successfully set, otherwise returns false
+     * Start the game main loop
      */
-    public boolean setPlayerStartingPosition(Player player, int x, int y) {
-        if (player == null) {
-            return false;
-        }
+    public void startGameLoop() {
+        // Setup phase
+        setPhase(GamePhase.SETUP);
+        handleSetupPhase();
 
-        // Check if it is in the setup phase
-        if (currentPhase != GamePhase.SETUP) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Not in setup phase")
-            ));
-            return false;
-        }
+        // Game continues until a player wins
+        do {
+            // Start a new round
+            roundNumber++;
+            System.out.println("Starting round " + roundNumber);
 
-        Position targetPos = new Position(x, y);
+            // Programming phase
+            setPhase(GamePhase.PROGRAMMING);
+            handleProgrammingPhase();
 
-        // Check if the location is valid
-        if (!board.isValidPosition(targetPos)) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Invalid position: (" + x + ", " + y + ")")
-            ));
-            return false;
-        }
+            // Activation phase
+            setPhase(GamePhase.ACTIVATION);
+            handleActivationPhase();
 
-        // Check if this location is the starting point
-        List<BoardElement> elements = board.getElements(x, y);
-        boolean isStartPoint = false;
-        StartPoint startPointElement = null;
-
-        for (BoardElement element : elements) {
-            if (element instanceof StartPoint) {
-                startPointElement = (StartPoint) element;
-                isStartPoint = true;
-                break;
-            }
-        }
-
-        if (!isStartPoint) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Position (" + x + ", " + y + ") is not a starting point")
-            ));
-            return false;
-        }
-
-        // Check whether the starting point is already occupied
-        if (startPointElement.isOccupied()) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Starting point at (" + x + ", " + y + ") is already occupied")
-            ));
-            return false;
-        }
-
-        // If the player has already selected a starting position, the previous position must be released.
-        Robot robot = player.getRobot();
-        Position currentPos = robot.getPosition();
-        if (currentPos != null) {
-            List<BoardElement> currentElements = board.getElements(currentPos.x(), currentPos.y());
-            for (BoardElement element : currentElements) {
-                if (element instanceof StartPoint) {
-                    ((StartPoint) element).release();
-                    break;
-                }
-            }
-        }
-
-        // Occupy a new starting point
-        startPointElement.occupy(robot.getId());
-
-        // Set robot position and orientation
-        robot.setPosition(targetPos);
-        robot.setDirection(startPointElement.getRobotDirection());
-
-        // Update robot position on board
-        board.updateRobotPosition(robot, targetPos);
-
-        // Determine direction string (based on map type)
-        String directionStr;
-        switch (selectedMap) {
-            case "Heavy Merge Area":
-            case "Death Trap":
-                directionStr = "left";
-                break;
-            case "Pilgrimage":
-            case "Gear Stripper":
-                directionStr = "top";
-                break;
-            default:
-                directionStr = "right";
-                break;
-        }
-
-        // TODO @lukas:Message that the broadcast start position is already occupied
-        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyStartingPointTaken(x, y, directionStr, robot.getId())
-        ));
-
-        return true;
-    }
-
-    /**
-     * Check whether all players have selected their starting positions.
-     * @return Returns true if all players have selected their starting positions, otherwise returns false.
-     */
-    public boolean allPlayersHaveStartingPositions() {
-        for (Player player : players) {
-            Robot robot = player.getRobot();
-            if (robot.getPosition() == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // TODO game.initializeGame(); (in Server)
-    //Set Board references for all robots when initializing the game
-    public void initializeGame() {
-        if (board == null) {
-            board = new Board(MapType.fromString(selectedMap));
-        }
-
-        for (Player player : players) {
-            Robot robot = player.getRobot();
-            robot.setBoard(board);
-        }
-    }
-
-    // Get all robots within the specified range (for use with VIRUS cards)
-    public List<Robot> getRobotsInRange(Position center, int range) {
-        List<Robot> robotsInRange = new ArrayList<>();
-        for (Player player : players) {
-            Robot robot = player.getRobot();
-            Position robotPos = robot.getPosition();
-            if (robotPos.distanceTo(center) <= range) {
-                robotsInRange.add(robot);
-            }
-        }
-        return robotsInRange;
-    }
-
-
-    // Use the damage card pool in the Game class.
-    public void dealSpamDamage(Robot robot) {
-        DamageCard spamCard = DamageCardPool.getInstance()
-                .getDamageCard(DamageCard.DamageType.SPAM);
-        if (spamCard != null) {
-            robot.addDamageCard(spamCard.getDamageType());
-        }
-    }
-
-    public void dealVirusDamage(Robot robot) {
-        DamageCard virusCard = DamageCardPool.getInstance()
-                .getDamageCard(DamageCard.DamageType.VIRUS);
-        if (virusCard != null) {
-            robot.addDamageCard(virusCard.getDamageType());
-        }
-    }
-
-    // Spread the virus effect
-    public void spreadVirusFrom(Position virusSource) {
-        List<Robot> nearbyRobots = getRobotsInRange(virusSource, 6);
-
-        for (Robot robot : nearbyRobots) {
-            DamageCard spamCard = DamageCardPool.getInstance()
-                    .getDamageCard(DamageCard.DamageType.SPAM);  // 正确的参数类型
-            if (spamCard != null) {
-                robot.addDamageCard(spamCard.getDamageType());
-            }
-        }
+            // Check if the game has ended
+        } while (!checkGameEnd());
     }
 
     public void playRound() {
@@ -427,34 +232,86 @@ public class Game {
         }
     }
 
-    /**
-     * Adds a player to the current game.
-     *
-     * @param player The Player instance to be added to the game.
-     */
-    public void addPlayer(Player player) {
-        players.add(player);
+    private void endRound() {
+        // Clear registers and move cards to discard pile
+        for (Player player : players) {
+            List<RegisterCard> register = player.getRegister();
+            for (RegisterCard card : register) {
+                if (card != null) {
+                    // Move card to discard pile (if it's not a damage card)
+                    // Damage cards should be handled differently
+                    if (!(card instanceof DamageCard)) {
+                        player.discardCard(card);
+                    }
+                }
+            }
+
+            // Clear the register for next round
+            for (int i = 0; i < register.size(); i++) {
+                player.removeCard(null, i);
+            }
+
+            // Reset player's ready state for next round
+            player.setReadyRegister(false);
+        }
+
+        // Reset the current register counter
+        currentRegister = 0;
+
+        // TODO @lukas：Broadcast end of round message
+        Server.getInstance().broadcastMessage(
+                new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
+                                " completed.", 0, false)
+                )
+        );
     }
 
-    /**
-     * Gets the game board.
-     *
-     * @return The Board instance used in this game.
-     */
-    public Board getBoard() {
-        return board;
+    private boolean checkGameEnd() {
+        for (Player player : players) {
+            // Check if any player has reached all checkpoints
+            int checkpointsReached = player.getReachedCheckpoints();
+            if (checkpointsReached >= board.getTotalCheckpoints()) {
+                // Broadcast game end message
+                Server.getInstance().broadcastMessage(
+                        new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodyGameFinished(player.getRobot().getId())
+                        )
+                );
+
+                // TODO @lukas：Send final chat message
+                Server.getInstance().broadcastMessage(
+                        new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodyReceivedChat(
+                                        "Game over! Player " + player.getName() +
+                                                " has won by reaching all checkpoints!",
+                                        0, false
+                                )
+                        )
+                );
+
+                return true;
+            }
+        }
+        return false;
     }
 
-    /**
-     * Retrieves the type of map currently selected for the game.
-     *
-     * @return A string representation of the selected map type. Possible values may include descriptive names
-     *         such as "Risky Crossing" or "Dizzy Highway".
-     */
-    public String getMapType() {
-        return selectedMap;
-    }
+    // 3. Phase Management Methods
 
+    /**
+     * Represents the various phases of the game, defining the sequence of operations
+     * that occur during the game's lifecycle.
+     *
+     * <p>The game progresses through the following phases:
+     * <ul>
+     *   <li><b>SETUP</b>: Initial configuration and game setup.</li>
+     *   <li><b>UPGRADE</b>: Players acquire and apply upgrades.</li>
+     *   <li><b>PROGRAMMING</b>: Players select and sequence robot actions.</li>
+     *   <li><b>ACTIVATION</b>: Execution of the programmed actions.</li>
+     * </ul>
+     *
+     * <p>Each phase may be associated with an integer value for easier representation or comparison.
+     */
     public enum GamePhase {
         SETUP(0),
         UPGRADE(1),
@@ -470,14 +327,39 @@ public class Game {
         public int getValue() {
             return value;
         }
+
+    }
+
+    /**
+     * Sets the current phase of the game and broadcasts the updated phase to all connected clients.
+     *
+     * @param phase The new game phase to be set. Must be one of the defined values in the {@code GamePhase} enum.
+     */
+    public void setPhase(GamePhase phase) {
+        this.currentPhase = phase;
+        broadcastCurrentPhase();
+
+//        // Trigger the appropriate processing as needed.
+//        switch(phase) {
+//            case SETUP: handleSetupPhase(); break;
+//            case PROGRAMMING: handleProgrammingPhase(); break;
+//            case ACTIVATION: handleActivationPhase(); break;
+//        }
+    }
+
+    /**
+     * Broadcast the current game phase to all clients
+     */
+    private void broadcastCurrentPhase() {
+        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyActivePhase(currentPhase.getValue())));
     }
 
     /**
      * Handle the setup phase
      */
     private void handleSetupPhase() {
-        // Players choose starting positions
-         broadcastCurrentPhase();
+
+        initPlacement();
 
         // Wait for all players to choose starting positions
         // This logic is triggered by the client, server responds
@@ -584,29 +466,167 @@ public class Game {
     }
 
     /**
-     * Set the current game phase and broadcast to all clients
+     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
      */
-    public void setPhase(GamePhase phase) {
-        this.currentPhase = phase;
-        broadcastCurrentPhase();
+    public void initPlacement() {
+        final List<ClientHandler> clients = Server.getInstance().getLobby().getClients();
+        final int clientCount = clients.size();
+        final CountDownLatch latch = new CountDownLatch(clientCount);
 
-        // Trigger the appropriate processing as needed.
-        switch(phase) {
-            case SETUP: handleSetupPhase(); break;
-            case PROGRAMMING: handleProgrammingPhase(); break;
-            case ACTIVATION: handleActivationPhase(); break;
+        for (ClientHandler handler : clients) {
+            int clientID = handler.getMyID();
+
+            handler.setPlacementLatch(latch);
+
+            // TODO @Lukas send CurrentPlayer
+            handler.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyCurrentPlayer(clientID)
+            ));
+        }
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Interrupted while waiting for placements.");
         }
     }
 
     /**
-     * Broadcast the current game phase to all clients
+     * Start the programming phase for all players
      */
-    // TODO @lukas:Check whether to keep it here or write it to the server/client.
-    //  If you want to modify it, please also modify the part where I call this method, as well as four other places.
-    private void broadcastCurrentPhase() {
-        MessageDefinitions.Message<MessageDefinitions.BodyActivePhase> message =
-                new MessageDefinitions.Message<>(new MessageDefinitions.BodyActivePhase(currentPhase.getValue()));
-        Server.getInstance().broadcastMessage(message);
+    public void startProgrammingPhase() {
+        setPhase(GamePhase.PROGRAMMING);
+
+        // Deal cards to all players
+        for (Player player : players) {
+            // Clear previous programming
+            player.endRound();
+
+            // Deal new cards
+            player.dealProgrammingCards();
+
+            // Send cards to player
+            List<String> cardNames = new ArrayList<>();
+            for (RegisterCard card : player.getHand()) {
+                cardNames.add(CardFactory.getCardName(card));
+            }
+
+            player.getConnection().sendMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyYourCards(cardNames)
+                    )
+            );
+
+            // Notify others
+            int cardCount = player.getHand().size();
+            for (Player otherPlayer : players) {
+                if (otherPlayer != player) {
+                    otherPlayer.getConnection().sendMessage(
+                            new MessageDefinitions.Message<>(
+                                    new MessageDefinitions.BodyNotYourCards(
+                                            player.getRobot().getId(), cardCount
+                                    )
+                            )
+                    );
+                }
+            }
+        }
+    }
+
+    // 4. Player Management Methods
+
+    /**
+     * Adds a player to the current game.
+     *
+     * @param player The Player instance to be added to the game.
+     */
+    public void addPlayer(Player player) {
+        players.add(player);
+    }
+
+    /**
+     * Handle player selection of starting position
+     *
+     * @param player Player selecting starting position
+     * @param x      X-coordinate of starting position
+     * @param y      Y-coordinate of starting position
+     * @return Returns true if starting position is successfully set, otherwise returns false
+     */
+    public boolean setPlayerStartingPosition(Player player, int x, int y) {
+        if (player == null) {
+            return false;
+        }
+
+        // Check if it is in the setup phase
+        if (currentPhase != GamePhase.SETUP) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Not in setup phase")
+            ));
+            return false;
+        }
+
+        final Position targetPos = new Position(x, y);
+
+        // Check if the location is valid
+        if (!board.isValidPosition(targetPos)) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Invalid position: (" + x + ", " + y + ")")
+            ));
+            return false;
+        }
+
+        // Check if this location is the starting point
+        boolean isStartPoint = board.getStartingPoints().contains(targetPos);
+
+        if (!isStartPoint) {
+            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Position (" + x + ", " + y + ") is not a starting point")
+            ));
+            return false;
+        }
+
+        // If the player has already selected a starting position, the previous position must be released.
+        Robot robot = player.getRobot();
+        Position currentPos = robot.getPosition();
+        if (currentPos != null) {
+            List<BoardElement> currentElements = board.getElements(currentPos.x(), currentPos.y());
+            for (BoardElement element : currentElements) {
+                if (element instanceof StartPoint) {
+                    ((StartPoint) element).release();
+                    break;
+                }
+            }
+        }
+
+        final StartPoint startPoint = (StartPoint) board.getElements(x, y).stream().filter(e -> e instanceof StartPoint).findFirst().orElse(null);
+
+        if (startPoint == null) {
+            errorLogger.error("No start point found at (" + x + ", " + y + ")");
+            return false;
+        }
+
+        // Occupy a new starting point
+        startPoint.occupy(robot.getId());
+
+        // Set robot position and orientation
+        robot.setPosition(targetPos);
+        robot.setDirection(startPoint.getRobotDirection());
+
+        // Update robot position on board
+        board.updateRobotPosition(robot, targetPos);
+
+        // Determine direction string (based on map type)
+        // TODO @lukas:Message that the broadcast start position is already occupied
+        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyStartingPointTaken(x, y, switch (selectedMap) {
+                    case "Heavy Merge Area", "Death Trap" -> "left";
+                    case "Pilgrimage", "Gear Stripper" -> "top";
+                    default -> "right";
+                }, robot.getId())
+        ));
+
+        return true;
     }
 
     /**
@@ -635,6 +655,71 @@ public class Game {
 
         return sortedPlayers;
     }
+
+    public void setCurrentPlayer() {
+        if (players.isEmpty()) return;
+        // Use antenna-based priority for Setup Phase (Phase 0)
+        if (currentPhase == GamePhase.SETUP) {
+            Position antennaPos = board.getAntennaPosition();
+            Antenna antenna = null;
+            for (BoardElement element : board.getElements(antennaPos.x(), antennaPos.y())) {
+                if (element instanceof Antenna) {
+                    antenna = (Antenna) element;
+                    break;
+                }
+            }
+
+            if (antenna == null) {
+                throw new IllegalStateException("Antenna must be present on the board.");
+            } else {
+                // Sort players by distance to antenna
+                Map<Integer, List<Robot>> distanceGroups = new HashMap<>();
+                for (Player p : players) {
+                    Robot robot = p.getRobot();
+                    Position robotPos = robot.getPosition();
+                    if (robotPos != null && !board.hasRobotFallen(robot)) {
+                        int distance = antenna.distanceToRobot(robotPos);
+                        distanceGroups.computeIfAbsent(distance, k -> new ArrayList<>()).add(robot);
+                    }
+                }
+                List<Player> sortedPlayers = new ArrayList<>();
+                List<Integer> sortedDistances = new ArrayList<>(distanceGroups.keySet());
+                Collections.sort(sortedDistances);
+                for (int distance : sortedDistances) {
+                    List<Robot> robots = antenna.sortTiedRobotsByPriority(distanceGroups.get(distance));
+                    for (Robot robot : robots) {
+                        for (Player p : players) {
+                            if (p.getRobot().equals(robot)) {
+                                sortedPlayers.add(p);
+                                break;
+                            }
+                        }
+                    }
+                }
+                // Include fallen robots (lowest priority)
+                for (Player p : players) {
+                    if (!sortedPlayers.contains(p)) {
+                        sortedPlayers.add(p);
+                    }
+                }
+                // Set current player to the next in sorted order
+                currentPlayerIndex = (currentPlayerIndex + 1) % sortedPlayers.size();
+                currentPlayer = sortedPlayers.get(currentPlayerIndex);
+            }
+        } else {
+            // For other phases, use round-robin (to be updated if needed)
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+            currentPlayer = players.get(currentPlayerIndex);
+        }
+        // TODO @lukas Send CurrentPlayer message
+        for (Player p : players) {
+            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyCurrentPlayer(currentPlayer.getRobot().getId())
+            ));
+        }
+    }
+
+    // 5. Card and Action Methods
 
     /**
      * Activate a player's card in the specified register
@@ -676,7 +761,12 @@ public class Game {
         }
     }
 
-    // Method to handle DamageCard effects
+    /**
+     * Handles the effects of a DamageCard on a player's robot based on the card's damage type.
+     *
+     * @param card   The DamageCard to be processed. Contains information about the specific type of damage.
+     * @param player The player whose robot is affected by the damage card effect.
+     */
     private void handleDamageCardEffect(DamageCard card, Player player) {
         Robot robot = player.getRobot();
         switch (card.getDamageType()) {
@@ -696,6 +786,52 @@ public class Game {
         }
     }
 
+    /**
+     * Deals a spam damage card to the specified robot by retrieving it from the damage card pool.
+     *
+     * @param robot The Robot instance to which a spam damage card will be added.
+     */
+    public void dealSpamDamage(Robot robot) {
+        DamageCard spamCard = DamageCardPool.getInstance()
+                .getDamageCard(DamageCard.DamageType.SPAM);
+        if (spamCard != null) {
+            robot.addDamageCard(spamCard.getDamageType());
+        }
+    }
+
+    /**
+     * Deals a virus damage card to the specified robot by retrieving it from
+     * the damage card pool. If a virus damage card is available, it will be
+     * added to the robot's damage cards.
+     *
+     * @param robot The Robot instance to which a virus damage card will be added.
+     */
+    public void dealVirusDamage(Robot robot) {
+        DamageCard virusCard = DamageCardPool.getInstance()
+                .getDamageCard(DamageCard.DamageType.VIRUS);
+        if (virusCard != null) {
+            robot.addDamageCard(virusCard.getDamageType());
+        }
+    }
+
+    // 6. Board-related Methods
+
+    /**
+     * Activates all board elements for the current game state. This method processes
+     * the following elements in sequence:
+     *
+     * <ol>
+     *   <li><b>Fast Conveyor Belts (Blue)</b>: Moves robots on fast belts and updates their positions.</li>
+     *   <li><b>Slow Conveyor Belts (Green)</b>: Moves robots on slow belts and updates their positions.</li>
+     *   <li><b>Push Panels</b>: Triggers panels if active in the current register, affecting any robot present.</li>
+     *   <li><b>Gears</b>: Rotates robots on gear tiles based on direction, broadcasting orientation changes.</li>
+     *   <li><b>Board Lasers</b>: Deals damage to robots hit by fixed board lasers, broadcasting damage updates.</li>
+     *   <li><b>Energy Spaces</b>: Grants energy points to robots on these tiles, broadcasting collection events.</li>
+     *   <li><b>Checkpoints</b>: Marks progress if a robot reaches a new checkpoint, possibly ending the game.</li>
+     * </ol>
+     *
+     * <p><b>Note:</b> Robot-to-robot laser interactions are handled separately in {@code handleRobotLasers()}.
+     */
     private void activateBoardElements() {
         // 1. Blue conveyor belts (fast)
         for (int y = 0; y < board.getHeight(); y++) {
@@ -915,6 +1051,33 @@ public class Game {
         // Note: Robot lasers are handled separately in handleRobotLasers()
     }
 
+    /**
+     * Processes robot laser firing during the game. Each robot fires a laser in its current
+     * direction, potentially damaging other robots in its path.
+     *
+     * <p><b>Functionality:</b>
+     * <ul>
+     *   <li>Skips robots that are powered down or have fallen off the board.</li>
+     *   <li>Iterates along the laser path from the robot's position in its current direction.</li>
+     *   <li>If a wall blocks the laser, the beam stops.</li>
+     *   <li>If another robot is hit, it takes 1 damage, and the beam stops.</li>
+     *   <li>Broadcasts a server message when a laser hits a robot.</li>
+     * </ul>
+     *
+     * <p><b>Preconditions:</b>
+     * <ul>
+     *   <li>The board, players, and robot states are fully initialized.</li>
+     *   <li>Each robot has a valid position and direction.</li>
+     * </ul>
+     *
+     * <p><b>Postconditions:</b>
+     * <ul>
+     *   <li>Robots hit by lasers take 1 damage.</li>
+     *   <li>Clients receive a broadcast message indicating the laser hit.</li>
+     * </ul>
+     *
+     * <p><b>Note:</b> The laser advances step by step until it hits a wall, robot, or goes off the board.
+     */
     private void handleRobotLasers() {
         for (Player player : players) {
             Robot robot = player.getRobot();
@@ -971,6 +1134,7 @@ public class Game {
 
     /**
      * Handle robot rebooting
+     *
      * @param robot The robot that needs to reboot
      */
     private void handleRobotReboot(Robot robot) {
@@ -1028,7 +1192,66 @@ public class Game {
     }
 
     /**
+     * Retrieves a list of robots located within a specified range from a given central position.
+     * This method is particularly used for actions involving VIRUS cards.
+     *
+     * @param center The central position from which the range is calculated.
+     * @param range  The maximum distance from the center to consider a robot within range.
+     * @return A list of Robot objects that are within the specified range from the given position.
+     */
+    public List<Robot> getRobotsInRange(Position center, int range) {
+        List<Robot> robotsInRange = new ArrayList<>();
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            Position robotPos = robot.getPosition();
+            if (robotPos.distanceTo(center) <= range) {
+                robotsInRange.add(robot);
+            }
+        }
+        return robotsInRange;
+    }
+
+    /**
+     * Spreads the virus effect
+     *
+     * @param virusSource position of initial virusSource
+     */
+    public void spreadVirusFrom(Position virusSource) {
+        List<Robot> nearbyRobots = getRobotsInRange(virusSource, 6);
+
+        for (Robot robot : nearbyRobots) {
+            DamageCard spamCard = DamageCardPool.getInstance()
+                    .getDamageCard(DamageCard.DamageType.SPAM);  // 正确的参数类型
+            if (spamCard != null) {
+                robot.addDamageCard(spamCard.getDamageType());
+            }
+        }
+    }
+
+    // 7. Utility and Getter Methods
+
+    /**
+     * Gets the game board.
+     *
+     * @return The Board instance used in this game.
+     */
+    public Board getBoard() {
+        return board;
+    }
+
+    /**
+     * Retrieves the type of map currently selected for the game.
+     *
+     * @return A string representation of the selected map type. Possible values may include descriptive names
+     * such as "Risky Crossing" or "Dizzy Highway".
+     */
+    public String getMapType() {
+        return selectedMap;
+    }
+
+    /**
      * Find the player who owns the given robot
+     *
      * @param robot The robot to find the owner for
      * @return The player who owns the robot, or null if not found
      */
@@ -1040,6 +1263,7 @@ public class Game {
         }
         return null;
     }
+
     public int getCurrentPhase() {
         return currentPhase != null ? currentPhase.getValue() : -1;
     }
@@ -1048,69 +1272,6 @@ public class Game {
         return new ArrayList<>(players);
     }
 
-    private void endRound() {
-        // Clear registers and move cards to discard pile
-        for (Player player : players) {
-            List<RegisterCard> register = player.getRegister();
-            for (RegisterCard card : register) {
-                if (card != null) {
-                    // Move card to discard pile (if it's not a damage card)
-                    // Damage cards should be handled differently
-                    if (!(card instanceof DamageCard)) {
-                        player.discardCard(card);
-                    }
-                }
-            }
-
-            // Clear the register for next round
-            for (int i = 0; i < register.size(); i++) {
-                player.removeCard(null, i);
-            }
-
-            // Reset player's ready state for next round
-            player.setReadyRegister(false);
-        }
-
-        // Reset the current register counter
-        currentRegister = 0;
-
-        // TODO @lukas：Broadcast end of round message
-        Server.getInstance().broadcastMessage(
-                new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
-                                " completed.", 0, false)
-                )
-        );
-    }
-
-    private boolean checkGameEnd() {
-        for (Player player : players) {
-            // Check if any player has reached all checkpoints
-            int checkpointsReached = player.getReachedCheckpoints();
-            if (checkpointsReached >= board.getTotalCheckpoints()) {
-                // Broadcast game end message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyGameFinished(player.getRobot().getId())
-                        )
-                );
-
-                // TODO @lukas：Send final chat message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyReceivedChat(
-                                        "Game over! Player " + player.getName() +
-                                                " has won by reaching all checkpoints!",
-                                        0, false
-                                )
-                        )
-                );
-
-                return true;
-            }
-        }
-        return false;
-    }
 
     // Handle player readiness and map selection
 //    public void setPlayerReady(Player player, boolean ready) {
@@ -1298,95 +1459,6 @@ public class Game {
     //    // Getter for map selection state
 //    public boolean isMapSelectionPending() {
 //        return mapSelectionPending;
-//    }
-
-    /**
-     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
-     */
-//    public void initPlacement() {
-//        Server server = Server.getInstance();
-//        List<ClientHandler> placementOrder = server.getLobby().getClients();
-//
-//        for (ClientHandler handler : placementOrder) {
-//            int clientID = handler.getMyID();
-//            // Send a message to let players choose their starting position.
-//            handler.sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyCurrentPlayer(clientID)
-//            ));
-//            // Wait for the player's response TODO (this requires asynchronous processing)
-//        }
-//    }
-
-
-    /**
-     * Start the game main loop
-     */
-//    public void startGameLoop() {
-//        // Setup phase
-//        setPhase(GamePhase.SETUP);
-//        handleSetupPhase();
-//
-//        // Game continues until a player wins
-//        while (true) {
-//            // Start a new round
-//            roundNumber++;
-//            System.out.println("Starting round " + roundNumber);
-//
-//            // Programming phase
-//            setPhase(GamePhase.PROGRAMMING);
-//            handleProgrammingPhase();
-//
-//            // Activation phase
-//            setPhase(GamePhase.ACTIVATION);
-//            handleActivationPhase();
-//
-//            // Check if the game has ended
-//            if (checkGameEnd()) {
-//                break;
-//            }
-//        }
-//    }
-
-    /**
-     * Start the programming phase for all players
-     */
-//    public void startProgrammingPhase() {
-//        setPhase(GamePhase.PROGRAMMING);
-//
-//        // Deal cards to all players
-//        for (Player player : players) {
-//            // Clear previous programming
-//            player.endRound();
-//
-//            // Deal new cards
-//            player.dealProgrammingCards();
-//
-//            // Send cards to player
-//            List<String> cardNames = new ArrayList<>();
-//            for (RegisterCard card : player.getHand()) {
-//                cardNames.add(CardFactory.getCardName(card));
-//            }
-//
-//            player.getConnection().sendMessage(
-//                    new MessageDefinitions.Message<>(
-//                            new MessageDefinitions.BodyYourCards(cardNames)
-//                    )
-//            );
-//
-//            // Notify others
-//            int cardCount = player.getHand().size();
-//            for (Player otherPlayer : players) {
-//                if (otherPlayer != player) {
-//                    otherPlayer.getConnection().sendMessage(
-//                            new MessageDefinitions.Message<>(
-//                                    new MessageDefinitions.BodyNotYourCards(
-//                                            player.getRobot().getId(), cardCount
-//                                    )
-//                            )
-//                    );
-//                }
-//            }
-//        }
 //    }
 
 }

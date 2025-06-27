@@ -19,7 +19,7 @@ import java.util.Map;
  * Represents the game board where all gameplay elements and interactions occur.
  * The Board class manages the layout, positions of robots, and special tiles.
  */
-public class Board implements GameMap {
+public class Board {
 
     // 0. Logging
     private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(Board.class);
@@ -86,9 +86,6 @@ public class Board implements GameMap {
                 Floor.createFloor("StartA");
                 Floor.createFloor("5B");
 
-                subBoards.put("StartA", new SubBoard("StartA", 0, 2)); // Columns 0–2
-                subBoards.put("5B", new SubBoard("5B", 3, 12)); // Columns 3–12
-
                 logger.info("Initializing \"normal\" board with map type: " + mapType);
 
                 for (int x = 0; x < width; x++) {
@@ -106,9 +103,6 @@ public class Board implements GameMap {
 
                 Floor.createFloor("StartA");
                 Floor.createFloor("5B");
-
-                subBoards.put("StartA", new SubBoard("StartA", 10, 12)); // Columns 0–2
-                subBoards.put("5B", new SubBoard("5B", 0, 9)); // Columns 3–12
 
                 logger.info("Initializing \"normal\" board with map type: " + mapType);
 
@@ -220,7 +214,6 @@ public class Board implements GameMap {
         }
     }
 
-    @Override
     public List<BoardElement> getElements() {
         List<BoardElement> elements = new ArrayList<>();
         for (int x = 0; x < width; x++) {
@@ -240,12 +233,6 @@ public class Board implements GameMap {
             return grid[x][y].getElements();
         }
         return new ArrayList<>();
-    }
-
-
-    @Override
-    public Map<String, SubBoard> getSubBoards() {
-        return new HashMap<>(subBoards);
     }
 
     public void placeRobot(Robot robot, int x, int y) {
@@ -584,6 +571,21 @@ public class Board implements GameMap {
         // If no antenna is found, return a default position (0,0)
         System.err.println("Warning: No antenna found on the board! Using default position.");
         return new Position(0, 0);
+    }
+
+    /**
+     * Retrieves the first available "Reboot" element from the board based on its type.
+     * If no "Reboot" element exists, an {@link IllegalStateException} is thrown.
+     *
+     * @return The {@link Reboot} element found on the board.
+     * @throws IllegalStateException If no "Reboot" element is found on the board.
+     */
+    public Reboot getReboot() {
+        //TODO add position param to check for subboard
+        final Reboot reboot = (Reboot) getElements(getRebootPosition()).stream().filter(e -> e.getType().equals("Reboot")).findFirst().orElse(null);
+        if (reboot == null)
+            throw new IllegalStateException("Reboot element not found on board!");
+        return reboot;
     }
 
 }

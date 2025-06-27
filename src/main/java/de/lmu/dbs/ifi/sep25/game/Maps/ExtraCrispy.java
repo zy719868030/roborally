@@ -4,71 +4,112 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
+import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class ExtraCrispy implements GameMap {
-    private final List<BoardElement> elements = new ArrayList<>();
-    private final Map<String, Board.SubBoard> subBoards = new HashMap<>();
-    private final Position antennaPosition;
+public class ExtraCrispy extends GameMap {
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(ExtraCrispy.class);
+    private final String boardId = "4A";
 
     public ExtraCrispy() {
-        // Initialize sub-boards
-        subBoards.put("StartA", new Board.SubBoard("StartA", 0, 2)); // y=0–2 (same as DizzyHighway)
-        subBoards.put("EC1", new Board.SubBoard("EC1", 3, 12)); // y=3–12
+        super(new Position(0, 4));
+        elements.add(new Antenna(antennaPosition, Direction.EAST, "StartA"));
 
-        // Initialize antenna position (matches Antenna element in StartA)
-        antennaPosition = new Position(5, 0);
-
-        // Add StartA elements (identical to DizzyHighway and LostBearings)
-        elements.add(new Antenna(new Position(5, 0), Direction.EAST, "StartA"));
-        elements.add(new Wall(new Position(7, 1), Direction.NORTH, "StartA"));
-        elements.add(new Wall(new Position(5, 2), Direction.EAST, "StartA"));
-        elements.add(new Wall(new Position(4, 2), Direction.EAST, "StartA"));
-        elements.add(new Wall(new Position(2, 1), Direction.SOUTH, "StartA"));
-        Position[] startPositions = {
-                new Position(8, 1), new Position(6, 0), new Position(5, 1),
-                new Position(4, 1), new Position(3, 0), new Position(1, 1)
-        };
-        for (Position pos : startPositions) {
-            elements.add(new StartPoint(pos, Direction.EAST, "StartA"));
-        }
-
-        // Add EC1 elements (y=3–12)
-        for (int x = 0; x <= 4; x++) {
-            elements.add(new Belts(new Position(x, 4), Direction.EAST, Belts.BeltSpeed.FAST, "EC1"));
-        }
-        List<Direction> outDirs = new ArrayList<>();
-        outDirs.add(Direction.NORTH);
-        List<Direction> inDirs = new ArrayList<>();
-        inDirs.add(Direction.WEST);
-//        elements.add(new Belts(new Position(4, 5), outDirs, inDirs, Belts.BeltSpeed.FAST, "EC1"));
-        elements.add(new CheckPoints(new Position(3, 6), 1, "EC1"));
-        elements.add(new Laser(new Position(2, 5), Direction.SOUTH, 1, "EC1"));
-        elements.add(new Pit(new Position(1, 7), "EC1"));
-        elements.add(new EnergySpace(new Position(4, 8), "EC1"));
-        elements.add(new Gear(new Position(2, 9), Gear.RotationDirection.COUNTERCLOCKWISE, "EC1"));
-        Reboot reboot = Reboot.getInstance();
-        reboot.setPosition(new Position(3, 10));
-        reboot.setBoardId("EC1");
-        elements.add(reboot);
+        initializeSubBoards();
+        initializeBoard("StartA", Direction.EAST);
+        initializeElements();
     }
 
-    @Override
-    public List<BoardElement> getElements() {
-        return new ArrayList<>(elements);
+    protected void initializeSubBoards() {
+        subBoards.put("StartA", new Board.SubBoard("StartA", 0, 2));
+        subBoards.put(boardId, new Board.SubBoard(boardId, 3, 12));
     }
 
-    @Override
-    public Map<String, Board.SubBoard> getSubBoards() {
-        return new HashMap<>(subBoards);
-    }
+    protected void initializeElements() {
+        // 4A
+        // Reboot
+        elements.add(new Reboot(new Position(0, 0), Direction.EAST, "StartA"));
 
-    @Override
-    public Position getAntennaPosition() {
-        return antennaPosition;
+        // Pit
+        List.of(new Position(6, 2), new Position(6, 3),
+                        new Position(9, 2), new Position(9, 3),
+                        new Position(6, 6), new Position(6, 7),
+                        new Position(9, 6), new Position(9, 7))
+                .forEach(pos -> elements.add(new Pit(pos, boardId)));
+
+        // EnergySpace
+        List.of(new Position(3, 4), new Position(3, 9), new Position(7, 5),
+                        new Position(8, 0), new Position(11, 4))
+                .forEach(pos -> elements.add(new EnergySpace(pos, boardId)));
+
+        // Wall
+        List.of(new Position(3, 4), new Position(5, 2),
+                        new Position(10, 2), new Position(12, 4))
+                .forEach(pos -> elements.add(new Wall(pos, Direction.NORTH, boardId)));
+
+        List.of(new Position(11, 0), new Position(9, 4), new Position(8, 3),
+                        new Position(8, 6), new Position(6, 9))
+                .forEach(pos -> elements.add(new Wall(pos, Direction.EAST, boardId)));
+
+        List.of(new Position(3, 5), new Position(5, 7), new Position(10, 7),
+                        new Position(12, 5))
+                .forEach(pos -> elements.add(new Wall(pos, Direction.SOUTH, boardId)));
+
+        List.of(new Position(4, 9), new Position(6, 5), new Position(7, 3),
+                        new Position(7, 6), new Position(9, 0))
+                .forEach(pos -> elements.add(new Wall(pos, Direction.WEST, boardId)));
+
+        // ConveyorBelt
+        for (int y = 0; y <= 2; y++)
+            elements.add(new Belts(new Position(4, y), Direction.SOUTH, List.of(Direction.NORTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(4, 3), Direction.EAST, List.of(Direction.NORTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(5, 3), Direction.EAST, List.of(Direction.WEST), Belts.BeltSpeed.FAST, boardId));
+
+        for (int y = 7; y <= 9; y++)
+            elements.add(new Belts(new Position(11, y), Direction.NORTH, List.of(Direction.SOUTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(11, 6), Direction.WEST, List.of(Direction.SOUTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(10, 6), Direction.WEST, List.of(Direction.EAST), Belts.BeltSpeed.FAST, boardId));
+
+        elements.add(new Belts(new Position(11, 1), Direction.SOUTH, List.of(Direction.NORTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(11, 2), Direction.SOUTH, List.of(Direction.NORTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(11, 3), Direction.WEST, List.of(Direction.NORTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(10, 3), Direction.WEST, List.of(Direction.EAST), Belts.BeltSpeed.FAST, boardId));
+
+        elements.add(new Belts(new Position(4, 8), Direction.NORTH, List.of(Direction.SOUTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(4, 7), Direction.NORTH, List.of(Direction.SOUTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(4, 6), Direction.EAST, List.of(Direction.SOUTH), Belts.BeltSpeed.FAST, boardId));
+        elements.add(new Belts(new Position(5, 6), Direction.EAST, List.of(Direction.WEST), Belts.BeltSpeed.FAST, boardId));
+
+        elements.add(new Belts(new Position(8, 8), Direction.EAST, List.of(Direction.WEST), Belts.BeltSpeed.SLOW, boardId));
+        elements.add(new Belts(new Position(9, 8), Direction.NORTH, List.of(Direction.WEST), Belts.BeltSpeed.SLOW, boardId));
+
+        elements.add(new Belts(new Position(6, 1), Direction.SOUTH, List.of(Direction.EAST), Belts.BeltSpeed.SLOW, boardId));
+        elements.add(new Belts(new Position(7, 1), Direction.WEST, List.of(Direction.EAST), Belts.BeltSpeed.SLOW, boardId));
+
+
+        // Laser
+        elements.add(new Laser(new Position(4, 9), Direction.WEST, 1, boardId));
+        elements.add(new Laser(new Position(6, 9), Direction.EAST, 1, boardId));
+        elements.add(new Laser(new Position(9, 0), Direction.WEST, 1, boardId));
+        elements.add(new Laser(new Position(11, 0), Direction.EAST, 1, boardId));
+        elements.add(new Laser(new Position(7, 3), Direction.WEST, 1, boardId));
+        elements.add(new Laser(new Position(8, 3), Direction.EAST, 1, boardId));
+        elements.add(new Laser(new Position(7, 6), Direction.WEST, 1, boardId));
+        elements.add(new Laser(new Position(8, 6), Direction.EAST, 1, boardId));
+
+        elements.add(new Laser(new Position(5, 2), Direction.NORTH, 1, boardId));
+        elements.add(new Laser(new Position(10, 2), Direction.NORTH, 1, boardId));
+        elements.add(new Laser(new Position(5, 7), Direction.SOUTH, 1, boardId));
+        elements.add(new Laser(new Position(10, 7), Direction.SOUTH, 1, boardId));
+
+        // Gear
+        elements.add(new Gear(new Position(6, 4), Gear.RotationDirection.CLOCKWISE, boardId));
+        elements.add(new Gear(new Position(9, 5), Gear.RotationDirection.COUNTERCLOCKWISE, boardId));
+
+        // Checkpoint
+        final Position[] checkpointPositions = {new Position(10, 2), new Position(5, 7), new Position(10, 7), new Position(5, 2)};
+        for (int i = 1; i <= 4; i++)
+            elements.add(new CheckPoints(checkpointPositions[i - 1], i, boardId));
     }
 }

@@ -49,44 +49,44 @@ public class Belts extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Belts(String boardId) {
-        super(boardId);
-        this.speed = BeltSpeed.SLOW;
-        this.color = BeltColor.GREEN;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(Direction.NORTH);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = boardId; // Set boardId to boardName
-    }
-
-    public Belts(Position position, String boardId) {
-        super(position, boardId);
-        this.speed = BeltSpeed.SLOW;
-        this.color = BeltColor.GREEN;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(Direction.NORTH);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = boardId;
-    }
-
-
-    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardID) {
-        super(position, outDirection, boardID);
-        this.speed = speed;
-        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(outDirection);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = boardID;
-        this.setBoardId(boardId); // Updates isOnBoard
-
-    }
+//    public Belts(String boardId) {
+//        super(boardId);
+//        this.speed = BeltSpeed.SLOW;
+//        this.color = BeltColor.GREEN;
+//        this.outDirections = new ArrayList<>();
+//        this.outDirections.add(Direction.NORTH);
+//        this.inDirections = new ArrayList<>();
+//        this.isRotating = false;
+//        this.isOnBoard = false;
+//        this.boardId = boardId; // Set boardId to boardName
+//    }
+//
+//    public Belts(Position position, String boardId) {
+//        super(position, boardId);
+//        this.speed = BeltSpeed.SLOW;
+//        this.color = BeltColor.GREEN;
+//        this.outDirections = new ArrayList<>();
+//        this.outDirections.add(Direction.NORTH);
+//        this.inDirections = new ArrayList<>();
+//        this.isRotating = false;
+//        this.isOnBoard = false;
+//        this.boardId = boardId;
+//    }
+//
+//
+//    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardID) {
+//        super(position, outDirection, boardID);
+//        this.speed = speed;
+//        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
+//        this.outDirections = new ArrayList<>();
+//        this.outDirections.add(outDirection);
+//        this.inDirections = new ArrayList<>();
+//        this.isRotating = false;
+//        this.isOnBoard = false;
+//        this.boardId = boardID;
+//        this.setBoardId(boardId); // Updates isOnBoard
+//
+//    }
     /*
     public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardName) {
         super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardName);
