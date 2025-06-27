@@ -16,19 +16,19 @@ public class Reboot extends BoardElement {
     // boardName for protocol's isOnBoard attribute
     private String boardName;
 
-    public Reboot() {
-        super(""); // Calls BoardElement() constructor
-        this.isOnBoard = false;
-        this.boardId = "";
-        //this.boardName = "";
-        // Private constructor for singleton
-
-    }
-    public Reboot(Position position) {
-        super(position, "");
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public Reboot() {
+//        super(""); // Calls BoardElement() constructor
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//        //this.boardName = "";
+//        // Private constructor for singleton
+//
+//    }
+//    public Reboot(Position position) {
+//        super(position, "");
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     /*
     public Reboot(Position position, String boardId) {
@@ -38,11 +38,11 @@ public class Reboot extends BoardElement {
     }
     */
 
-    public Reboot(Position position, String boardId) {
-        super(position, boardId); // Calls BoardElement(Position, String)
-        this.boardId = boardId;
-        this.isOnBoard = !boardId.isEmpty();
-    }
+//    public Reboot(Position position, String boardId) {
+//        super(position, boardId); // Calls BoardElement(Position, String)
+//        this.boardId = boardId;
+//        this.isOnBoard = !boardId.isEmpty();
+//    }
 
     public Reboot(Position position, Direction direction, String boardId) {
         super(position, direction, boardId);
@@ -65,11 +65,6 @@ public class Reboot extends BoardElement {
     public void setBoardId(String boardId) {
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
-    }
-
-
-    public static Reboot getInstance() {
-        return new Reboot();
     }
 
     // Added: Setter for boardName

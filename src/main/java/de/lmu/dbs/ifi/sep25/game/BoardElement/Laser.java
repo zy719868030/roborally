@@ -18,33 +18,33 @@ public class Laser extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Laser() {
-        super();
-        this.power = 1;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Laser(Position position, String boardName) {
-        super(position, boardName);
-        this.power = 1;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Laser(Position position, Direction direction) {
-        super(position, direction);
-        this.power = 1;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Laser(Position position, Direction direction, int power) {
-        super(position, direction);
-        this.power = power;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public Laser() {
+//        super();
+//        this.power = 1;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Laser(Position position, String boardName) {
+//        super(position, boardName);
+//        this.power = 1;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Laser(Position position, Direction direction) {
+//        super(position, direction);
+//        this.power = 1;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Laser(Position position, Direction direction, int power) {
+//        super(position, direction);
+//        this.power = power;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     public Laser(Position position, Direction direction, int power, String boardId) {
         super(position, direction);

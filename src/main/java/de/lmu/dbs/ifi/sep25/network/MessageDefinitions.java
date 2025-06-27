@@ -285,7 +285,6 @@ public class MessageDefinitions {
             if (orientations.size() != 1)
                 throw new IllegalArgumentException("RestartPoint requires exactly 1 orientation");
             this.orientations = orientations;
-
         }
 
         public List<String> orientations() {

@@ -2,11 +2,8 @@ package de.lmu.dbs.ifi.sep25.card.DamageCard;
 
 import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
-import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.*;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Reboot;
-import de.lmu.dbs.ifi.sep25.game.Player;
-import de.lmu.dbs.ifi.sep25.game.Position;
-import de.lmu.dbs.ifi.sep25.game.Robot;
 
 import java.util.List;
 
@@ -42,7 +39,7 @@ public class DamageCard extends Card implements RegisterCard{
                 // WORM card: Restart the robot immediately.
                 System.out.println("Robot " + robot.getId() + " executes WORM - must reboot!");
 
-                Reboot rebootElement = Reboot.getInstance();
+                Reboot rebootElement = Game.getInstance().getBoard().getReboot();
                 Board currentBoard = robot.getBoard();
                 rebootElement.applyEffect(robot, currentBoard);
                 break;

@@ -145,6 +145,7 @@ public class GameController {
 
         for (MessageDefinitions.Field element : elements) {
             switch (element.type()) {
+                case "Laser" -> {} //skip
                 case "Wall" -> {
                     MessageDefinitions.FieldWall wall = (MessageDefinitions.FieldWall) element;
                     List<String> directions = wall.orientations();
@@ -182,10 +183,10 @@ public class GameController {
                     String color = belt.speed() == 2 ? "blue" : "green";
 
                     // Parse Direction enum aus Strings
-                    Direction outDir = parseProtocolDirection(belt.directions().getFirst());
+                    Direction outDir = Direction.fromString(belt.directions().getFirst());
                     List<Direction> inDirs = belt.directions().stream()
                             .skip(1)
-                            .map(this::parseProtocolDirection)
+                            .map(Direction::fromString)
                             .toList();
 
                     String imageKey;
@@ -278,6 +279,7 @@ public class GameController {
 
         return pane;
     }
+
     private boolean isOpposite(String a, String b) {
         return (a.equals("top") && b.equals("bottom")) ||
                 (a.equals("bottom") && b.equals("top")) ||
@@ -309,8 +311,9 @@ public class GameController {
             default -> "conveyor_split_left";
         };
     }
-    private String getSplitImageSuffix(Direction outDir, List<Direction> inDirs, String color)
-    {        if (inDirs.size() < 2) return (color + "_conveyor_belt_straight");
+
+    private String getSplitImageSuffix(Direction outDir, List<Direction> inDirs, String color) {
+        if (inDirs.size() < 2) return (color + "_conveyor_belt_straight");
         // Standard-Gerade
 
         // Split: welcher Eingang ist NICHT gegenüber vom Ausgang?
@@ -322,15 +325,18 @@ public class GameController {
         }
         return "conveyor_belt_straight";
     }
-    private Direction parseProtocolDirection(String dirString) {
-        return switch (dirString.toLowerCase()) {
-            case "top" -> Direction.NORTH;
-            case "bottom" -> Direction.SOUTH;
-            case "left" -> Direction.WEST;
-            case "right" -> Direction.EAST;
-            default -> throw new IllegalArgumentException("Ungültige Richtung: " + dirString);
-        };
-    }
+
+    // von @Lukas: @raneem ist schon in Direction enum integriert unter Direction.fromString(str)
+
+//    private Direction parseProtocolDirection(String dirString) {
+//        return switch (dirString.toLowerCase()) {
+//            case "top" -> Direction.NORTH;
+//            case "bottom" -> Direction.SOUTH;
+//            case "left" -> Direction.WEST;
+//            case "right" -> Direction.EAST;
+//            default -> throw new IllegalArgumentException("Ungültige Richtung: " + dirString);
+//        };
+//    }
 
     // 0 = gerade, 1 = rechts, -1 = links
     private int getRelativeTurn(Direction from, Direction to) {
@@ -357,7 +363,6 @@ public class GameController {
             };
         };
     }
-
 
     /**
      * Loads the tile images for various game elements and populates them into the `tileImages` map.
@@ -448,7 +453,7 @@ public class GameController {
             case "Gear":
                 return ((MessageDefinitions.FieldGear) element).orientations().getFirst().equalsIgnoreCase("clockwise") ? "Gear_Green" : "Gear_Red";
             default:
-                return "unknown";
+                return "Unknown type received: " + element.type();
         }
     }
 
