@@ -125,6 +125,7 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
+                System.out.println("[DEBUG] JSON empfangen: " + json); // Test
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
                     if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
@@ -526,24 +527,75 @@ public class Client {
     /****/
     private void handleBodyCardPlayed(String json) {
         Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
-        //TODO fx display played card to client Sebas
+        BodyCardPlayed body = message.messageBody();
+        int clientID = body.clientID();
+        String card = body.card();
+        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler"+clientID);
+        String logMessage = playerName + "hat Karte gespielt" + card;
+        System.out.println("[GAME]" + logMessage);
+
+        Platform.runLater(() -> {
+            GameController gameCtrl = ControllerRegistry.getGameController();
+            if (gameCtrl != null) {
+                gameCtrl.appendChatMessage("[GAME]" + logMessage);
+                gameCtrl.showPlayedCard(clientID,card);
+            } else {
+                System.err.println("[WARN] GameController ist null in handleBodyCardPlayed");
+            }
+        });
     }
 
-    /****/
-    private void handleBodyCurrentPlayer(String json) {
-        // TODO @Lukas
-        //  - check if equals sent id
-        //  - check for game phase
-        // set player turn maybe?
+
+    private GameController waitForGameController() {
+        int maxRetries = 10;
+        int delayMillis = 100;
+
+        for (int i = 0; i < maxRetries; i++) {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                return controller;
+            }
+
+            try {
+                Thread.sleep(delayMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        return null;
     }
+
 
     /**
-     * Handles the "BodyActivePhase" message received from the server.
-     * This method processes a JSON string representing a {@code BodyActivePhase} message,
-     * extracts the phase information from the message body, and updates the client's internal state.
+     * Verarbeitet die Nachricht, welcher Spieler gerade am Zug ist.
      *
-     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+     * @param json JSON-String mit der Client-ID des aktiven Spielers
      */
+    private void handleBodyCurrentPlayer(String json) {//@SEBAS
+        Message<MessageDefinitions.BodyCurrentPlayer> message =
+                JsonUtil.parseMessage(json, MessageDefinitions.BodyCurrentPlayer.class);
+
+        int currentClientID = message.messageBody().clientID();
+
+        Platform.runLater(() -> {
+            GameController controller = waitForGameController();
+            if (controller != null) {
+                controller.markCurrentPlayer(currentClientID);
+            } else {
+                System.err.println("[WARN] GameController ist null nach Warten in handleBodyCurrentPlayer");
+            }
+        });
+    }
+
+        /**
+         * Handles the "BodyActivePhase" message received from the server.
+         * This method processes a JSON string representing a {@code BodyActivePhase} message,
+         * extracts the phase information from the message body, and updates the client's internal state.
+         *
+         * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+         */
     private void handleBodyActivePhase(String json) {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();
@@ -561,37 +613,119 @@ public class Client {
         });
     }
 
-    /****/
+    /**
+     * Handles the "StartingPointTaken" message from the server, indicating that a player
+     * has selected and occupied a starting position on the board.
+     *
+     * @param json the JSON string containing the serialized {@code BodyStartingPointTaken} message
+     */
     private void handleBodyStartingPointTaken(String json) {
-        //TODO fx display robot
+        Message<MessageDefinitions.BodyStartingPointTaken> message =
+                JsonUtil.parseMessage(json, MessageDefinitions.BodyStartingPointTaken.class);
+        MessageDefinitions.BodyStartingPointTaken body = message.messageBody();
+
+        int x = body.x();
+        int y = body.y();
+        int clientID = body.clientID();
+        String direction = body.direction();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.displayStartingPoint(x, y, clientID, direction);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyStartingPointTaken");
+            }
+        });
     }
 
-    /****/
+
+    /**
+     * Handles the list of cards the player receives from the server.
+     * Updates the local hand and displays it in the GUI.
+     *
+     * @param json JSON string containing the list of cards
+     */
     private void handleBodyYourCards(String json) {
         Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
         BodyYourCards body = message.messageBody();
 
+        hand.clear();  // Clear old cards
         hand.addAll(body.cardsInHand());
-        broadcastMessage(new Message<>(new BodyYourCards(body.cardsInHand())), Server.getInstance().getClients().getByValue(ID));
 
-
-        //TODO fx display hand
+        Platform.runLater(() -> {
+            GameController controller = waitForGameController();
+            if (controller != null) {
+                controller.displayHandCards(body.cardsInHand());
+            } else {
+                System.err.println("[FEHLER] GameController ist null nach Warten in handleBodyYourCards");
+            }
+        });
     }
 
-    /****/
+        /**
+         * Handles a message indicating how many cards another player has received.
+         * This does not include the content of the cards, only the count,
+         * and is used to visually show hidden cards (e.g., card backs).
+         *
+         * @param json JSON string containing the client ID and number of cards
+         */
     private void handleBodyNotYourCards(String json) {
-        //TODO fx display other hands Sebas
+        Message<BodyNotYourCards> message = JsonUtil.parseMessage(json, BodyNotYourCards.class);
+        BodyNotYourCards body = message.messageBody();
+
+        int clientID = body.clientID();
+        int count = body.cardsInHand();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.displayHiddenCardsForPlayer(clientID, count);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyNotYourCards");
+            }
+        });
     }
 
-    /****/
+    /**
+     * Handles a message indicating that the programming deck was shuffled.
+     * Can be used to trigger a visual animation or log event.
+     *
+     * @param json JSON string with no additional body information
+     */
     private void handleBodyShuffleCoding(String json) {
-        //TODO fx display deck size | optional: animation Raneem
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showShuffleAnimation(); // Optional UI effect
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyShuffleCoding");
+            }        //TODO fx display deck size | optional: animation Raneem
+
+        });
     }
 
-    /****/
+    /**
+     * Handles a message indicating that a card has been selected for a register.
+     * Can be used to highlight selected cards or update UI state.
+     *
+     * @param json JSON string containing the card selection info
+     */
     private void handleBodyCardSelected(String json) {
+        Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
+        BodyCardSelected body = message.messageBody();
 
-        //TODO fx display card selection Sebas
+        int clientID = body.clientID();
+        boolean filled = body.filled();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.handleCardSelection(clientID, filled); // implement in GameController
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyCardSelected");
+            }
+        });
     }
 
     /**
@@ -603,46 +737,121 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyCardSelected} message
      */
+
     private void handleBodySelectionFinished(String json) {
         Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
         BodyCardSelected body = message.messageBody();
 
         if (body.clientID().equals(ID) && body.filled()) {
             if (firstReadyRegistry) {
-                sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyTimerStarted()));
+                sendMessage(new Message<>(new BodyTimerStarted()));
             }
             firstReadyRegistry = false;
         }
 
-        //TODO fx display selection finished
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.markPlayerReady(body.clientID());
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodySelectionFinished");
+            }
+        });
     }
 
-    /****/
+    /**
+     * Handles the message indicating that the programming timer has ended.
+     * Optionally highlights players who did not complete selection in time.
+     *
+     * @param json JSON string containing a list of slow players (optional)
+     */
     private void handleBodyTimerEnded(String json) {
-        //TODO fx display timer ended
+        Message<BodyTimerEnded> message = JsonUtil.parseMessage(json, BodyTimerEnded.class);
+        BodyTimerEnded body = message.messageBody();
+
+        List<Integer> clientIDs = body.clientIDs();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showTimerEnded(clientIDs);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyTimerEnded");
+            }
+        });
     }
 
-    /****/
+    /**
+     * Handles the cards the server confirms the player now has registered.
+     * These are the cards already selected and locked for execution.
+     *
+     * @param json JSON string containing the list of selected cards
+     */
     private void handleBodyCardsYouGotNow(String json) {
-        //TODO fx display cards to register
+        Message<BodyCardsYouGotNow> message = JsonUtil.parseMessage(json, BodyCardsYouGotNow.class);
+        BodyCardsYouGotNow body = message.messageBody();
+
+        List<String> cards = body.cards();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.displayConfirmedCards(cards); //
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyCardsYouGotNow");
+            }
+        });
     }
 
-    /****/
+
+    /**
+     * Handles the list of active cards for all players.
+     * Displays the card names and triggers basic animations.
+     *
+     * @param json JSON string containing active cards
+     */
     private void handleBodyCurrentCards(String json) {
         Message<BodyCurrentCards> message = JsonUtil.parseMessage(json, BodyCurrentCards.class);
-        BodyCurrentCards body = message.messageBody();
+        List<ActiveCard> activeCards = message.messageBody().activeCards();
 
-        //TODO display robot animations
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                for (ActiveCard card : activeCards) {
+                    int clientID = card.clientID();
+                    String cardName = card.card();
+
+                    controller.showActiveCard(clientID, cardName); // Visually show
+                    controller.animateRobotAction(clientID, cardName); // Basic arrow
+                }
+            }
+        });
 
         currentRegister++;
     }
 
-    /****/
+    /**
+     * Handles a message indicating that a specific card in a register
+     * has been replaced (e.g. due to damage or effect).
+     *
+     * @param json JSON string containing the register number, new card name, and client ID
+     */
     private void handleBodyReplaceCard(String json) {
         Message<BodyReplaceCard> message = JsonUtil.parseMessage(json, BodyReplaceCard.class);
         BodyReplaceCard body = message.messageBody();
 
-        //TODO display replaced card in register
+        int register = body.register();
+        String newCard = body.newCard();
+        int clientID = body.clientID();
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.replaceCardInRegister(clientID, register, newCard);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyReplaceCard");
+            }
+        });
     }
 
     /**
@@ -653,42 +862,58 @@ public class Client {
      * @param json The JSON string containing body movement information, including
      *             client ID, coordinates, and other relevant data.
      */
+    /**
+     * Handles the movement of a robot on the board.
+     * Updates the UI with the new position of the robot.
+     *
+     * @param json JSON string containing the new coordinates and client ID
+     */
     public void handleBodyMovement(String json) {
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
         BodyMovement body = message.messageBody();
-        Server server = Server.getInstance();
+        // Server server = Server.getInstance();
 
-        if (rebootingInProgress == body.clientID()) {
-            rebootPosition = body;
-            rebootingInProgress = -1;
-        } else {
-            final int newX = body.x();
-            final int newY = body.y();
-            final int robotID = server.getFigures().getByKey(server.getClients().getByValue(body.clientID()));
+        int clientID = body.clientID();
+        int x = body.x();
+        int y = body.y();
 
-            //TODO display:
-            // maybe clear board of robot, set robot at new position?
-            // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Movement"))
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.moveRobotTo(clientID, x, y);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyMovement");
+            }
+        });
 
-        }
+        //TODO display:
+        // maybe clear board of robot, set robot at new position?
+        // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Movement"))
     }
 
-    /****/
-    public void handleBodyPlayerTurning(String json) {
+
+    /**
+     * Handles a message indicating that a player's robot should rotate.
+     *
+     * @param json JSON string containing clientID and rotation direction
+     */
+    private void handleBodyPlayerTurning(String json) {
         Message<BodyPlayerTurning> message = JsonUtil.parseMessage(json, BodyPlayerTurning.class);
         BodyPlayerTurning body = message.messageBody();
-        Server server = Server.getInstance();
-        final int robotID = server.getFigures().getByKey(server.getClients().getByValue(body.clientID()));
 
-        //TODO display robot turning
-        // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Turning"))
+        int clientID = body.clientID();
+        String rotation = body.rotation(); // "clockwise" or "counterclockwise"
 
-        switch (body.rotation()) {
-//            case "clockwise" ->
-//            case "counterclockwise" ->
-            default -> System.err.println("Unknown rotation: " + body.rotation());
-        }
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.rotateRobot(clientID, rotation);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyPlayerTurning");
+            }
+        });
     }
+
 
     /**
      * Represents the various types of animations available within the system.
@@ -743,79 +968,134 @@ public class Client {
      *
      * @param json the input JSON string containing information about the body animation
      */
-    public void handleBodyAnimation(String json) {
-        AnimationType animation = AnimationType.fromString(JsonUtil.parseMessage(json, BodyAnimation.class).messageBody().type());
 
-        switch (animation) {
-//            case MOVEMENT ->
-            default -> sendMessageSelf(new Message<>(new BodyError("Animation error: " + animation.asString())));
-        }
+    private void handleBodyAnimation(String json) {
+        Message<BodyAnimation> message = JsonUtil.parseMessage(json, BodyAnimation.class);
+        BodyAnimation body = message.messageBody();
 
-        //TODO display animations
+        String type = body.type(); // e.g., "Movement", "Clockwise", "Checkpoint"
 
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.playAnimation(type);  // Visual feedback in GUI
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyAnimation");
+            }
+        });
     }
 
     /**
-     * Handles the body reboot process by processing the provided JSON message.
-     * Parses the JSON message to extract the body reboot information and determines
-     * the reboot direction, sending a response message if the client ID matches.
+     * Handles the reboot notification from the server for a specific player.
+     * If the client is the one rebooting, it sends back the chosen reboot direction.
      *
-     * @param json the JSON string containing the body reboot information. The JSON
-     *             is expected to represent a message with a body reboot payload.
+     * @param json the JSON string containing the reboot message
      */
     public void handleBodyReboot(String json) {
         Message<BodyReboot> message = JsonUtil.parseMessage(json, BodyReboot.class);
         BodyReboot body = message.messageBody();
-        rebootingInProgress = body.clientID();
+        rebootingInProgress = body.clientID(); // mark that a reboot is pending
 
+        // If it's this client's reboot, send the direction back
         if (body.clientID().equals(ID)) {
-            String rebootDirection = "top"; //default
+            String rebootDirection = "top"; // Placeholder direction (can be improved via GUI selection later)
 
-            //TODO reboot direction selection
-            // display rotation, best directly in/during selection
-            // Sollte die Nachricht zur Ausrichtung nicht bis zum Ende der aktuellen Runde
-            // angekommen sein, wird die Standardausrichtung verwendet.
-
+            // Send reboot direction back to server
             sendMessage(new Message<>(new BodyRebootDirection(rebootDirection)));
         }
+
+        // Optional: display something in the GUI
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showReboot(body.clientID());
+            }
+        });
+
+        //TODO reboot direction selection
+        // display rotation, best directly in/during selection
+        // Sollte die Nachricht zur Ausrichtung nicht bis zum Ende der aktuellen Runde
+        // angekommen sein, wird die Standardausrichtung verwendet.
     }
 
-    /****/
+    /**
+     * Handles the server response indicating the direction chosen for a rebooted robot.
+     * Sends the saved reboot movement and triggers an optional reboot animation.
+     *
+     * @param json JSON string containing the reboot direction
+     */
     public void handleBodyRebootDirection(String json) {
-        final String direction = JsonUtil.parseMessage(json, BodyRebootDirection.class).messageBody().direction();
+        Message<BodyRebootDirection> message = JsonUtil.parseMessage(json, BodyRebootDirection.class);
+        String direction = message.messageBody().direction();
 
-        //TODO turn robot in correct direction ui logic
-        // can also add cases to handleBodyTurnRobot
 
-        sendMessageSelf(new Message<>(rebootPosition));
-        rebootPosition = null;
+        // Send the previously saved reboot movement
+        if (rebootPosition != null) {
+            sendMessageSelf(new Message<>(rebootPosition));
+            rebootPosition = null;
+        }
 
-        //TODO display reboot animation with already correct rotation
+        // Optional: display a reboot animation
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showRebootDirection(direction);
+            }
+        });
 
+        // Optionally notify via animation message
         sendMessageSelf(new Message<>(new BodyAnimation("Reboot")));
-
     }
 
-    /****/
-    public void handleBodyEnergy(String json) {
+
+    /**
+     * Handles a message indicating an energy change for a player.
+     *
+     * @param json the JSON string containing the energy update
+     */
+    private void handleBodyEnergy(String json) {
         Message<BodyEnergy> message = JsonUtil.parseMessage(json, BodyEnergy.class);
         BodyEnergy body = message.messageBody();
 
-        energy.put(body.clientID(), body.count());
+        int clientID = body.clientID();
+        int count = body.count();  // energy value
+        String source = body.source();  // e.g., "EnergySpace", "Laser"
 
-        //TODO optional: play energy animation depending on: id -> source
+        energy.put(clientID, count);  // update internal tracking
 
-        //TODO update energy counter
-
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showEnergyChange(clientID, count, source);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyEnergy");
+            }
+            //TODO optional: play energy animation depending on: id -> source
+        });
     }
 
-    /****/
-    public void handleBodyCheckPointReached(String json) {
-        BodyCheckPointReached body = JsonUtil.parseMessage(json, BodyCheckPointReached.class).messageBody();
-        checkpointsReached.put(body.clientID(), body.number());
+    /**
+     * Handles a message indicating that a player reached a checkpoint.
+     *
+     * @param json the JSON string containing the checkpoint information
+     */
+    private void handleBodyCheckPointReached(String json) {
+        Message<BodyCheckPointReached> message = JsonUtil.parseMessage(json, BodyCheckPointReached.class);
+        BodyCheckPointReached body = message.messageBody();
 
-        //TODO display a option to see which checkpoints are reached by whom
+        int clientID = body.clientID();
+        int number = body.number();  // Checkpoint number
 
+        checkpointsReached.put(clientID, number);
+
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showCheckpointReached(clientID, number);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyCheckPointReached");
+            }
+        });
     }
 
     /**
@@ -825,16 +1105,21 @@ public class Client {
      * @param json the JSON string containing the game finished message, which includes details
      *             about the client ID and the game outcome
      */
-    public void handleBodyGameFinished(String json) {
-        BodyGameFinished body = JsonUtil.parseMessage(json, BodyGameFinished.class).messageBody();
+    private void handleBodyGameFinished(String json) {
+        Message<BodyGameFinished> message = JsonUtil.parseMessage(json, BodyGameFinished.class);
+        BodyGameFinished body = message.messageBody();
 
-        //TODO display win/lose
+        int winnerID = body.clientID();
+        boolean isWinner = (winnerID == this.ID);
 
-        if (Objects.equals(body.clientID(), ID)) {
-            //play win screen
-        } else {
-            //play lose screen
-        }
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showGameResult(isWinner);
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyGameFinished");
+            }
+        });
     }
 
 
