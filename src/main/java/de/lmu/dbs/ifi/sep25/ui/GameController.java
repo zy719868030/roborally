@@ -276,7 +276,32 @@ public class GameController {
                     }
                 }
             }
-        }
+
+            }
+//startpoint
+            boolean isStartPoint = elements.stream().anyMatch(e -> e.type().equals("StartPoint"));
+
+            if (isStartPoint) {
+                pane.setOnMouseClicked(event -> {
+                    Integer x = GridPane.getColumnIndex(pane);
+                    Integer y = GridPane.getRowIndex(pane);
+
+                    if (x == null || y == null) return;
+
+                    String direction = "up"; //
+
+                    var message = new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodySetStartingPoint(x, y, direction)
+                    );
+
+                    ClientSingleton.getInstance().sendMessage(message);
+
+                    System.out.println("[DEBUG] sending StartingPointSelected: (" + x + ", " + y + ") Richtung: " + direction + ")");
+                });
+
+                pane.setStyle("-fx-border-color: yellow; -fx-border-width: 2px;"); // visual
+            }
+
 
         pane.requestLayout();
         pane.requestFocus();
@@ -586,8 +611,8 @@ public class GameController {
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         try {
-            // Platzhalter-Bild (z. B. cover.png)
-            Image robotImg = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            String imagePath = "/assets/robot_" + clientID + ".png";
+            Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
@@ -640,14 +665,14 @@ public class GameController {
             return;
         }
 
-        // Beispiel-Container, musst du im FXML haben: <HBox fx:id="handCardsBox" />
-        HBox handCardsBox = (HBox) root.lookup("#handCardsBox");
-        if (handCardsBox == null) {
-            System.err.println("[FEHLER] Kein Container für Handkarten gefunden (fx:id=handCardsBox).");
+        // Beispiel-Container,  im FXML: <HBox fx:id="handCardBox" />
+        HBox handCardBox = (HBox) root.lookup("#handCardBox");
+        if (handCardBox == null) {
+            System.err.println("[FEHLER] Kein Container für Handkarten gefunden (fx:id=handCardBox).");
             return;
         }
 
-        handCardsBox.getChildren().clear();
+        handCardBox.getChildren().clear();
 
         for (String name : cardNames) {
             String imagePath = "/assets/cards/" + name.toLowerCase() + ".png";
@@ -666,7 +691,7 @@ public class GameController {
             view.setPreserveRatio(true);
             view.setSmooth(true);
 
-            handCardsBox.getChildren().add(view);
+            handCardBox.getChildren().add(view);
         }
     }
     /**
@@ -846,10 +871,15 @@ public class GameController {
      * @param y        Die Zielzeile
      */
     public void moveRobotTo(int clientID, int x, int y) {
-        // Beispiel-Icon für Roboter
-        ImageView robot = new ImageView(new Image(getClass().getResourceAsStream("/assets/cover.png")));
-        robot.setFitWidth(40);
-        robot.setFitHeight(40);
+        try {
+            String imagePath = "/assets/robot_" + clientID + ".png";
+            Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+            ImageView robot = new ImageView(new Image(getClass().getResourceAsStream("/assets/cover.png")));
+
+            ImageView robotView = new ImageView(robotImg);
+            robotView.setFitWidth(40);
+            robotView.setFitHeight(40);
+            robotView.setPreserveRatio(true);
 
         // Bestehende Roboter entfernen (optional)
         StackPane cell = getCellAt(x, y);
@@ -859,6 +889,10 @@ public class GameController {
         }
 
         appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
+        } catch (Exception e) {
+            System.err.println("[FEHLER] Roboterbild konnte nicht geladen werden für Spieler " + clientID);
+            e.printStackTrace();
+        }
     }
 
     /**
