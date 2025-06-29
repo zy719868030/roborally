@@ -26,6 +26,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Client {
     // 0. Logging
@@ -46,6 +48,7 @@ public class Client {
 
     private final String protocol = "Version 0.1";
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
+    private final BlockingQueue<String> incomingMessages = new LinkedBlockingQueue<>();
 
     // 2. Main identity/data
     private Integer ID;
@@ -92,8 +95,9 @@ public class Client {
 
             System.out.println("[SERVER] Connected to server.");
 
-            // Start listening thread
-            new Thread(this::listenForMessages).start();
+            // Start threads
+            new Thread(this::listenForMessages, "MessageReader").start();
+            new Thread(this::processMessages, "MessageProcessor").start();
 
         } catch (IOException e) {
             System.err.println("Connection error: " + e.getMessage());
@@ -124,6 +128,25 @@ public class Client {
      * the method exits the listening loop and releases all allocated resources.
      */
     private void listenForMessages() {
+        try {
+            String json;
+            while ((json = reader.readLine()) != null) {
+
+                if (json == null) {
+                    System.err.println("Server closed connection.");
+                    closeAll();
+                    break;
+                }
+
+                incomingMessages.put(json); // enqueue immediately
+            }
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Error reading messages: " + e.getMessage());
+            closeAll();
+        }
+    }
+
+    private void processMessages() {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
