@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<?import java.net.URL?>
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
+      spacing="30" styleClass="root-background">
+
+
+    <!-- === Linke Seitenleiste: Spielerstatus + Chat === -->
+    <VBox fx:id="leftSidebar" spacing="15" alignment="TOP_CENTER" styleClass="lobby-box">
+
+        <!-- Spielfeld-Label oder Spielstatus -->
+        <Label fx:id="statusLabel" text="Spiel läuft..." styleClass="status-label"/>
+
+        <!-- Chat Minimieren -->
+        <Button fx:id="chatToggleButton"
+                onAction="#toggleChatBox"
+                style="-fx-background-color: transparent; -fx-cursor: hand;"
+                prefWidth="200" prefHeight="60">
+            <tooltip>
+                <Tooltip text="Chat ausblenden"/>
+            </tooltip>
+            <graphic>
+                <ImageView fitHeight="60" fitWidth="200" preserveRatio="true">
+                    <image>
+                        <Image url="/assets/chat_lobby1.png"/>
+                    </image>
+                </ImageView>
+            </graphic>
+        </Button>
+
+        <!-- === Chat-Box === -->
+        <VBox fx:id="chatBox" spacing="10" alignment="TOP_CENTER">
+            <TextArea fx:id="chatArea" styleClass="chat-area" editable="false" wrapText="true" prefHeight="200" prefWidth="300"/>
+            <HBox spacing="10" alignment="CENTER">
+                <TextField fx:id="chatInput" styleClass="chat-input" promptText="Nachricht eingeben..." HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="recipientBox" promptText="An..." prefWidth="100" styleClass="combo-recipient"/>
+                <Button text="Senden" onAction="#handleSendChat" styleClass="senden-button"/>
+            </HBox>
+        </VBox>
+    </VBox>
+
+    <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->
+    <VBox spacing="10" alignment="TOP_CENTER">
+        <!-- 🔔 TIMER LABEL -->
+        <Label fx:id="timerLabel"
+               text="Zeit: 30s"
+               styleClass="status-label"
+               visible="true" />
+        <ScrollPane fitToWidth="true" fitToHeight="true">
+            <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
+        </ScrollPane>
+
+        <!-- Handkartenbereich -->
+        <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>
+        <!-- Gespielte Karten -->
+        <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
+
+
+        <!-- Miniatur-Icons für Restore (z. B. Chat) – gehört hier rein -->
+        <HBox fx:id="iconMenu" spacing="5" alignment="CENTER"
+              visible="false" managed="false">
+            <Button fx:id="chatRestoreButton"
+                    onAction="#toggleChatBox"
+                    styleClass="neon-thumbnail"
+                    prefWidth="240" prefHeight="60">
+                <tooltip><Tooltip text="Chat anzeigen"/></tooltip>
+                <graphic>
+                    <ImageView fitHeight="60" fitWidth="240" preserveRatio="true">
+                        <image>
+                            <Image url="/assets/chat_lobby1.png"/>
+                        </image>
+                    </ImageView>
+                </graphic>
+            </Button>
+        </HBox>
+    </VBox>
+
+</HBox>

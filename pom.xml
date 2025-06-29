@@ -69,9 +69,32 @@
             <classifier>linux</classifier>
         </dependency>
 
+        <!-- Log4j API -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.20.0</version>
+        </dependency>
+
+        <!-- Log4j Core Implementation -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.20.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+        </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -92,8 +115,9 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>de.lmu.dbs.ifi.sep25.ee.ee/de.lmu.dbs.ifi.sep25.ui.HelloApplication
+                            <mainClass>de.lmu.dbs.ifi.sep25.ee.ee/de.lmu.dbs.ifi.sep25.Main
                             </mainClass>
+                            <jvmArgs>--enable-preview --enable-native-access=ALL-UNNAMED</jvmArgs>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

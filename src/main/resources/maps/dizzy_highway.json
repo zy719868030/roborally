@@ -1,0 +1,17 @@
+[
+  [
+    [ { "type": "StartPoint", "figure": 0 } ],
+    [ { "type": "Empty" } ],
+    [ { "type": "StartPoint", "figure": 1 } ]
+  ],
+  [
+    [ { "type": "Wall", "orientations": ["top"] } ],
+    [ { "type": "Checkpoint", "number": 1 } ],
+    [ { "type": "Pit" } ]
+  ],
+  [
+    [ { "type": "ConveyorBelt", "speed": 1, "orientations": ["right"] } ],
+    [ { "type": "Laser", "orientations": ["left"], "count": 1 } ],
+    [ { "type": "Wall", "orientations": ["left", "bottom"] } ]
+  ]
+]

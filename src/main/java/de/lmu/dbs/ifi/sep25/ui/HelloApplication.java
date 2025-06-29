@@ -28,25 +28,16 @@ import javafx.stage.Stage;
             // Lade die Login-Oberfläche aus dem FXML-File
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/LoginView.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 400, 300);
-
+            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            // Controller holen und Stage setzen
+            LoginController controller = fxmlLoader.getController();
+            controller.setStage(stage);
             // Setze Fenstertitel und Szene
             stage.setTitle("RoboRally – Login");
             stage.setScene(scene);
             stage.show();
         }
 
-        /**
-         * Hauptmethode, die zuerst die Serververbindung startet und anschließend die GUI.
-         *
-         * @param args Startargumente der Anwendung.
-         */
-        //public static void main(String[] args) {
-            // Starte die Client-Verbindung in einem Hintergrund-Thread
-           // startClientConnection();
-
-            // Starte die JavaFX-Anwendung (ruft start())
-           // launch(args);
-        //}
 
 //startClientConnection via MAIN
 

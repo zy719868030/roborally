@@ -4,9 +4,12 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a conveyor belt element on the game board.
@@ -46,73 +49,93 @@ public class Belts extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Belts() {
-        super();
-        this.speed = BeltSpeed.SLOW;
-        this.color = BeltColor.GREEN;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(Direction.NORTH);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Belts(Position position) {
-        super(position);
-        this.speed = BeltSpeed.SLOW;
-        this.color = BeltColor.GREEN;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(Direction.NORTH);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Belts(Position position, Direction outDirection, BeltSpeed speed) {
-        super(position);
+//    public Belts(String boardId) {
+//        super(boardId);
+//        this.speed = BeltSpeed.SLOW;
+//        this.color = BeltColor.GREEN;
+//        this.outDirections = new ArrayList<>();
+//        this.outDirections.add(Direction.NORTH);
+//        this.inDirections = new ArrayList<>();
+//        this.isRotating = false;
+//        this.isOnBoard = false;
+//        this.boardId = boardId; // Set boardId to boardName
+//    }
+//
+//    public Belts(Position position, String boardId) {
+//        super(position, boardId);
+//        this.speed = BeltSpeed.SLOW;
+//        this.color = BeltColor.GREEN;
+//        this.outDirections = new ArrayList<>();
+//        this.outDirections.add(Direction.NORTH);
+//        this.inDirections = new ArrayList<>();
+//        this.isRotating = false;
+//        this.isOnBoard = false;
+//        this.boardId = boardId;
+//    }
+//
+//
+//    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardID) {
+//        super(position, outDirection, boardID);
+//        this.speed = speed;
+//        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
+//        this.outDirections = new ArrayList<>();
+//        this.outDirections.add(outDirection);
+//        this.inDirections = new ArrayList<>();
+//        this.isRotating = false;
+//        this.isOnBoard = false;
+//        this.boardId = boardID;
+//        this.setBoardId(boardId); // Updates isOnBoard
+//
+//    }
+    /*
+    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardName) {
+        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardName);
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
         this.outDirections = new ArrayList<>();
         this.outDirections.add(outDirection);
         this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.isOnBoard = false;
-        this.boardId = "";
+        //this.isRotating = false;
+        //this.setBoardId(boardId);
+
+        this.boardId = boardName; // Added: Set boardId to boardName
+        this.setBoardName(boardName);
     }
 
-    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardId) {
-        super(position);
-        this.speed = speed;
-        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(outDirection);
-        this.inDirections = new ArrayList<>();
-        this.isRotating = false;
-        this.setBoardId(boardId);
+     */
+
+    public Belts(Position position, Direction outDirection, Direction inDirection, BeltSpeed speed, String boardId) {
+        this(position, outDirection, List.of(inDirection), speed, boardId);
     }
+
 
     /**
-     * Constructor with position, exit direction list, entry direction list, and speed parameters.
-     * Used to create a rotating conveyor belt.
+     * Constructs a new Belts instance representing a conveyor belt with the specified properties.
      *
-     * @param position The position of the conveyor belt.
-     * @param outDirections The exit direction list of the conveyor belt.
-     * @param inDirections The entry direction list of the conveyor belt.
-     * @param speed The speed of the conveyor belt.
+     * @param position the position of the conveyor belt on the board, cannot be null.
+     * @param outDirection the primary direction where the conveyor belt exits, cannot be null.
+     * @param inDirections a list of directions where the conveyor belt receives input, cannot be null.
+     * @param speed the speed of the belt, determining how many tiles the robot moves (SLOW or FAST), cannot be null.
+     * @param boardId the identifier of the board to which this belt belongs.
+     * @throws IllegalArgumentException if any of the required parameters (position, outDirection, inDirections, or speed) are null.
      */
-    public Belts(Position position, List<Direction> outDirections, List<Direction> inDirections, BeltSpeed speed) {
-        super(position);
+    public Belts(Position position, Direction outDirection, List<Direction> inDirections, BeltSpeed speed, String boardId) {
+        super(position, outDirection, boardId);
+
+        if (position == null || outDirection == null || inDirections == null || speed == null) {
+            throw new IllegalArgumentException("Position, outDirection, inDirections, and speed cannot be null.");
+        }
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-        this.outDirections = new ArrayList<>(outDirections);
+        this.outDirections = List.of(outDirection);
         this.inDirections = new ArrayList<>(inDirections);
         // If the export direction and import direction are different, it is a rotating conveyor belt.
-        this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
-                !outDirections.get(0).equals(inDirections.get(0).turnAround());
+        this.isRotating = !inDirections.isEmpty() &&
+                !outDirections.getFirst().equals(inDirections.getFirst().turnAround());
         this.isOnBoard = false;
-        this.boardId = "";
+        this.boardId = boardId;
+        //this.boardId = "";
+        this.setBoardId(boardId);
     }
 
     public BeltSpeed getSpeed() {
@@ -133,6 +156,106 @@ public class Belts extends BoardElement {
             outDirections.add(direction);
         }
     }
+
+//    /**
+//     * Convert the Direction enumeration to the direction string required by the protocol.
+//     * @param direction Direction enumeration value.
+//     * @return Direction string used by the protocol: “top”, “bottom”, ‘right’, “left”.
+//     */
+//    private String directionToString(Direction direction) {
+//        return switch (direction) {
+//            case NORTH -> "top";
+//            case SOUTH -> "bottom";
+//            case EAST -> "right";
+//            case WEST -> "left";
+//        };
+//    }
+
+//    /**
+//     * Convert the direction string in the protocol to a Direction enumeration.
+//     * @param dirString Direction string in the protocol: “top”, “bottom”, ‘right’, “left”
+//     * @return Corresponding Direction enumeration value.
+//     */
+//    private Direction stringToDirection(String dirString) {
+//        return switch (dirString) {
+//            case "top" -> Direction.NORTH;
+//            case "bottom" -> Direction.SOUTH;
+//            case "right" -> Direction.EAST;
+//            case "left" -> Direction.WEST;
+//            default -> throw new IllegalArgumentException("Invalid direction string: " + dirString);
+//        };
+//    }
+
+//    /**
+//     * Get the list of directions for serialization, in a format that complies with the protocol requirements.
+//     * The first direction is the outbound direction, followed by the inbound direction.
+//     * @return List of direction strings.
+//     */
+//    public List<String> getOrientationsForProtocol() {
+//        List<String> orientations = new ArrayList<>();
+//        if (!outDirections.isEmpty()) {
+//            orientations.add(directionToString(outDirections.get(0)));
+//        }
+//
+//        for (Direction inDir : inDirections) {
+//            orientations.add(directionToString(inDir));
+//        }
+//
+//        return orientations;
+//    }
+
+//    /**
+//     * Create a conveyor belt instance from the protocol representation.
+//     * @param position Position.
+//     * @param orientations List of orientations, with the first being the outflow direction and the rest being the inflow directions.
+//     * @param speed Speed (1 = green belt, 2 = blue belt).
+//     * @param boardId Board ID.
+//     */
+//    public Belts(Position position, List<String> orientations, int speed, String boardId) {
+//        super(position, boardId);
+//
+//        this.speed = speed == 1 ? BeltSpeed.SLOW : BeltSpeed.FAST;
+//        this.color = speed == 1 ? BeltColor.GREEN : BeltColor.BLUE;
+//
+//        this.outDirections = new ArrayList<>();
+//        this.inDirections = new ArrayList<>();
+//
+//        if (!orientations.isEmpty()) {
+//            this.outDirections.add(stringToDirection(orientations.get(0)));
+//
+//            for (int i = 1; i < orientations.size(); i++) {
+//                this.inDirections.add(stringToDirection(orientations.get(i)));
+//            }
+//        }
+//
+//        // Determine whether it is a rotating conveyor belt
+//        this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
+//                !outDirections.get(0).equals(inDirections.get(0).turnAround());
+//
+//        this.isOnBoard = true;
+//        this.boardId = boardId;
+//    }
+
+//    /**
+//     * Get the serialized representation of the conveyor belt.
+//     * @return Serialized Map representation.
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "ConveyorBelt");
+//        result.put("isOnBoard", boardId);
+//        result.put("speed", getSpeedForProtocol());
+//        result.put("orientations", getOrientationsForProtocol());
+//        return result;
+//    }
+//
+//    /**
+//     * Get the speed value used for the protocol.
+//     * @return 1 for green belt, 2 for blue belt.
+//     */
+//    public int getSpeedForProtocol() {
+//        return speed.getValue();
+//    }
 
     public List<Direction> getOutDirections() {
         return new ArrayList<>(outDirections);
@@ -404,4 +527,19 @@ public class Belts extends BoardElement {
 
         return sb.toString();
     }
+
+    /**
+     * Converts the conveyor belt instance into a FieldConveyorBelt representation.
+     *
+     * @return A {@code MessageDefinitions.FieldConveyorBelt} object containing the conveyor belt's board ID, speed,
+     *         and the concatenated list of exit and entry direction strings.
+     */
+    @Override
+    public MessageDefinitions.FieldConveyorBelt toField() {
+        return new MessageDefinitions.FieldConveyorBelt(boardId, speed.getValue(), Stream.concat(
+                Stream.of(outDirections.getFirst().toString()),
+                inDirections.stream().map(Direction::toString)
+        ).collect(Collectors.toList()));
+    }
+
 }

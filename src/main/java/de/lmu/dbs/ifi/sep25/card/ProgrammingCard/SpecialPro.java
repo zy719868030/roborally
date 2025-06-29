@@ -27,7 +27,7 @@ public class SpecialPro extends ProgrammingCard {
                 executeAgain(robot, board);
                 break;
             case "energy routine":
-                player.addEnergy(1);
+                player.addEnergy(1, "Power Up");
                 System.out.println("Robot " + robot.getId() + " executes Energy Routine - gained 1 energy");
                 break;
             case "speed routine":

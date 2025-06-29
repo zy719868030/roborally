@@ -1,28 +1,53 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
-import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
+import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+
+import java.util.List;
+
 
 public class Reboot extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
-    private static Reboot instance = null;
+//    private static Reboot instance = null;
+    // boardName for protocol's isOnBoard attribute
+    private String boardName;
 
-    private Reboot() {
-        this.isOnBoard = false;
-        this.boardId = "";
-        // Private constructor for singleton
-    }
-    public Reboot(Position position) {
-        super(position);
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public Reboot() {
+//        super(""); // Calls BoardElement() constructor
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//        //this.boardName = "";
+//        // Private constructor for singleton
+//
+//    }
+//    public Reboot(Position position) {
+//        super(position, "");
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
+    /*
     public Reboot(Position position, String boardId) {
-        super(position);
+        super(position, boardId);
         this.setBoardId(boardId);
+        this.boardName = boardId;
+    }
+    */
+
+//    public Reboot(Position position, String boardId) {
+//        super(position, boardId); // Calls BoardElement(Position, String)
+//        this.boardId = boardId;
+//        this.isOnBoard = !boardId.isEmpty();
+//    }
+
+    public Reboot(Position position, Direction direction, String boardId) {
+        super(position, direction, boardId);
+        this.boardId = boardId;
+        this.isOnBoard = !boardId.isEmpty();
     }
 
     public boolean isOnBoard() {
@@ -42,13 +67,12 @@ public class Reboot extends BoardElement {
         this.isOnBoard = !boardId.isEmpty();
     }
 
+    // Added: Setter for boardName
+    //public void setBoardName(String boardName) { this.boardName = boardName; }
 
-    public static Reboot getInstance() {
-        if (instance == null) {
-            instance = new Reboot();
-        }
-        return instance;
-    }
+    // Added: Override getBoardName
+    //@Override
+    //public String getBoardName() {        return boardName;    }
 
     @Override
     public void activate(Robot robot) {
@@ -99,6 +123,18 @@ public class Reboot extends BoardElement {
     public String toString() {
             return "Reboot point at " + (position != null ? position.toString() : "unspecified position") +
                     (isOnBoard ? " on board " + boardId : " not on any board");
+    }
+
+    /**
+     * Converts the current Reboot instance to its corresponding
+     * FieldRestartPoint representation.
+     *
+     * @return A new instance of MessageDefinitions.FieldRestartPoint that
+     *         represents the restart point associated with the Reboot instance.
+     */
+    @Override
+    public MessageDefinitions.FieldRestartPoint toField() {
+        return new MessageDefinitions.FieldRestartPoint(boardId, List.of(getDirection().toString()));
     }
 }
 

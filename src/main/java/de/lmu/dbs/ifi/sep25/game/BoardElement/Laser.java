@@ -4,6 +4,9 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+
+import java.util.List;
 
 /**
  * Represents a laser element on the game board.
@@ -15,33 +18,33 @@ public class Laser extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public Laser() {
-        super();
-        this.power = 1;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Laser(Position position) {
-        super(position);
-        this.power = 1;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Laser(Position position, Direction direction) {
-        super(position, direction);
-        this.power = 1;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public Laser(Position position, Direction direction, int power) {
-        super(position, direction);
-        this.power = power;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public Laser() {
+//        super();
+//        this.power = 1;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Laser(Position position, String boardName) {
+//        super(position, boardName);
+//        this.power = 1;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Laser(Position position, Direction direction) {
+//        super(position, direction);
+//        this.power = 1;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public Laser(Position position, Direction direction, int power) {
+//        super(position, direction);
+//        this.power = power;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     public Laser(Position position, Direction direction, int power, String boardId) {
         super(position, direction);
@@ -178,4 +181,15 @@ public class Laser extends BoardElement {
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", direction: " + direction.getName() + ", power: " + power;
     }
+
+    /**
+     * Converts the current Laser instance to a FieldLaser representation.
+     *
+     * @return A FieldLaser object containing the board ID, direction, and power of the laser.
+     */
+    @Override
+    public MessageDefinitions.FieldLaser toField() {
+        return new MessageDefinitions.FieldLaser(boardId, List.of(direction.toString()), power, true); // oder false je nach Zustand
+    }
+
 }

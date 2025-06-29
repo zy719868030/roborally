@@ -1,24 +1,20 @@
+
 package de.lmu.dbs.ifi.sep25.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 /**
  * Utility class for JSON serialization and deserialization of Message objects.
  */
 public class JsonUtil {
-    private static final Gson gson = new Gson();
-    private static final Gson gson2;
-
-    static {
-        gson2 = new GsonBuilder()
-                .registerTypeAdapter(BoardElement.class, new BoardElementDeserializer())
-                .setPrettyPrinting()
-                .create();
-    }
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .setPrettyPrinting()
+            .create();
 
     /**
      * Parses a JSON string into a Message object with a specific body type.
@@ -35,14 +31,5 @@ public class JsonUtil {
     public static MessageDefinitions.Message<?> parseUnknown(String json) {
         return gson.fromJson(json, new TypeToken<MessageDefinitions.Message<Object>>() {
         }.getType());
-    }
-
-
-    public static String toJson(Object obj) {
-        return gson2.toJson(obj);
-    }
-
-    public static <T> T fromJson(String json, Class<T> clazz) {
-        return gson2.fromJson(json, clazz);
     }
 }

@@ -13,6 +13,11 @@ public class ConcurrentBidirectionalMap<K, V> {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void put(K key, V value) {
+        if (key == null || value == null) {
+            System.err.println("[WARN] Skip put: key or value is null.");
+            return;
+        }
+
         lock.writeLock().lock();
         try {
             V oldValue = forward.put(key, value);
@@ -28,6 +33,7 @@ public class ConcurrentBidirectionalMap<K, V> {
             lock.writeLock().unlock();
         }
     }
+
 
     public V getByKey(K key) {
         return forward.get(key);
@@ -85,6 +91,10 @@ public class ConcurrentBidirectionalMap<K, V> {
 
     public Set<K> keySet() {
         return new HashSet<>(forward.keySet());
+    }
+
+    public Set<V> valueSet() {
+        return new HashSet<>(reverse.keySet());
     }
 
     public V getByKeyOrDefault(K key, V defaultValue) {

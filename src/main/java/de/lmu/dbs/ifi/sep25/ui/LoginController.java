@@ -1,29 +1,29 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.network.Client;
+import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Alert;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
-
-import java.io.IOException;
+import java.util.Random;
 
 /**
  * Controller für die Login-Oberfläche.
- *
+ * <p>
  * Verarbeitet Benutzereingaben für Name und Spielfigur,
  * sendet Login-Nachrichten an den Server und wechselt bei Erfolg zur Lobby-Ansicht.
  */
@@ -34,20 +34,28 @@ public class LoginController {
     @FXML
     private TextField portField;
 
-    /** Eingabefeld für den Spielernamen. */
+    /**
+     * Eingabefeld für den Spielernamen.
+     */
     @FXML
     private TextField nameField;
 
-    /** Auswahlfeld für die Spielfigur (Index 0–5). */
+    /**
+     * Auswahlfeld für die Spielfigur (Index 0–5).
+     */
     @FXML
     private ComboBox<Integer> figureBox;
 
-    /** Property zur Bindung des Spielernamens. */
+    /**
+     * Property zur Bindung des Spielernamens.
+     */
     private StringProperty playerName = new SimpleStringProperty();
 
-    /** Property zur Bindung der ausgewählten Spielfigur. */
+    /**
+     * Property zur Bindung der ausgewählten Spielfigur.
+     */
     private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
-
+    private Stage stage;
     /**
      * Initialisiert die Login-Oberfläche:
      * - registriert den Controller
@@ -76,25 +84,17 @@ public class LoginController {
     private void handleLogin(ActionEvent event) {
         String name = nameField.getText();
         Integer figure = figureBox.getValue();
-        String host =  hostField.getText();
-        String portText = portField.getText();
+        // Falls Host oder Port leer → Standardwerte nutzen
+        String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
+        String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+
 
         if (name == null || name.isBlank() || figure == null) {
             showAlert("Bitte Namen und Spielfigur auswählen.");
             return;
         }
-        if (host == null || host.isBlank() || portText == null || portText.isBlank()) {
-            showAlert("Bitte IP-Adresse und Port eingeben.");
-            return;
-        }
-        int port;
-        try {
-            port = Integer.parseInt(portText);
-        } catch (NumberFormatException e) {
-            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
-            return;
-        }
 
+        int port;
         try {
             port = Integer.parseInt(portText);
         } catch (NumberFormatException e) {
@@ -106,7 +106,6 @@ public class LoginController {
             Client client = new Client();
             client.start(host, port);
             ClientSingleton.setInstance(client);
-
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
             return;
@@ -114,6 +113,60 @@ public class LoginController {
 
         Message<BodyPlayerValues> msg = new Message<>(new BodyPlayerValues(name, figure));
         ClientSingleton.getInstance().sendMessage(msg);
+    }
+    /**
+     * Wird aufgerufen, wenn der Nutzer auf "KI beitreten" klickt.
+     * Stellt eine Verbindung zum Server her und meldet einen Bot-Spieler automatisch an.
+     * Die Eingabefelder werden deaktiviert, um eine manuelle Eingabe zu verhindern.
+     *
+     * @param event Das zugehörige ActionEvent (nicht verwendet).
+     */
+    @FXML
+    private void handleBotLogin(ActionEvent event) {
+        // Eingabefelder deaktivieren, damit der Nutzer nichts mehr ändern kann
+        nameField.setDisable(true);
+        figureBox.setDisable(true);
+        hostField.setDisable(true);
+        portField.setDisable(true);
+
+        // Zufälligen Namen und Figur für den Bot wählen
+        String name = "KI-Spieler";
+        int figure = new Random().nextInt(6); // Zufällige Figur (0–5)
+
+        // Host und Port auslesen oder Standard setzen
+        String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
+        String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+
+        int port;
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException e) {
+            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
+            return;
+        }
+
+        try {
+            // Client erstellen und starten
+            Client client = new Client();
+            client.start(host, port);
+            ClientSingleton.setInstance(client);
+
+            // Bot als KI markieren (AI = true)
+            Message<MessageDefinitions.BodyHelloServer> hello = new Message<>(new MessageDefinitions.BodyHelloServer("Edle Eisbecher", true, "Version 0.1"));
+            client.sendMessage(hello);
+
+            // Spielerinformationen (Name, Figur) an den Server senden
+            client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+
+        } catch (Exception e) {
+            showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
+
+            // Falls Verbindung fehlschlägt, Felder wieder aktivieren
+            nameField.setDisable(false);
+            figureBox.setDisable(false);
+            hostField.setDisable(false);
+            portField.setDisable(false);
+        }
     }
 
     /**
@@ -129,10 +182,14 @@ public class LoginController {
             Parent root = loader.load();
 
             LobbyController controller = loader.getController();
+            controller.setRoot(root);
             ControllerRegistry.setLobbyController(controller);
 
             Stage stage = (Stage) nameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            ControllerRegistry.setPrimaryStage(stage);
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            stage.setScene(scene);
             stage.setTitle("Lobby");
             stage.show();
 
@@ -168,5 +225,8 @@ public class LoginController {
         alert.setHeaderText(null);
         alert.setContentText(text);
         alert.showAndWait();
+    }
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 }

@@ -3,6 +3,7 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,16 +25,16 @@ public class Wall extends BoardElement {
         this.boardId = "";
     }
 
-    public Wall(Position position) {
-        super(position);
+    public Wall(Position position, String boardId) {
+        super(position, boardId);
         this.blockedDirections = new ArrayList<>();
         this.isOnBoard = false;
         this.boardId = "";
     }
 
     //Constructor with position and blocking direction parameters
-    public Wall(Position position, Direction blockedDirection) {
-        super(position);
+    public Wall(Position position, Direction blockedDirection, String boardId) {
+        super(position, boardId);
         this.blockedDirections = new ArrayList<>();
         this.blockedDirections.add(blockedDirection);
         this.isOnBoard = false;
@@ -41,18 +42,20 @@ public class Wall extends BoardElement {
     }
 
     //Constructor with position and multiple blocking direction parameters
-    public Wall(Position position, List<Direction> blockedDirections) {
-        super(position);
+    public Wall(Position position, List<Direction> blockedDirections, String boardId) {
+        super(position, boardId);
         this.blockedDirections = new ArrayList<>(blockedDirections);
         this.isOnBoard = false;
         this.boardId = "";
     }
-
+    /*
     public Wall(Position position, List<Direction> blockedDirections, String boardId) {
         super(position);
         this.blockedDirections = new ArrayList<>(blockedDirections);
         this.setBoardId(boardId);
     }
+
+   */
 
     public boolean isOnBoard() {
         return isOnBoard;
@@ -160,4 +163,17 @@ public class Wall extends BoardElement {
 
         return sb.toString();
     }
+
+    /**
+     * Converts the current Wall object to a FieldWall object representation.
+     * This includes the board ID and a list of blocked directions as strings.
+     *
+     * @return a FieldWall object containing the board ID and the blocked directions of the wall.
+     */
+    @Override
+    public MessageDefinitions.FieldWall toField() {
+        return new MessageDefinitions.FieldWall(boardId, blockedDirections.stream().map(Direction::toString).toList());
+    }
+
+
 }

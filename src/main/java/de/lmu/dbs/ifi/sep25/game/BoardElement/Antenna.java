@@ -3,10 +3,11 @@ package de.lmu.dbs.ifi.sep25.game.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 
 /**
@@ -18,6 +19,7 @@ public class Antenna extends BoardElement {
     private boolean isOnBoard;
 
     public Antenna(Position position, Direction direction) {
+
         super(position, direction);
         this.isOnBoard = false;
         this.boardId = "";
@@ -150,5 +152,81 @@ public class Antenna extends BoardElement {
                 (isOnBoard ? " on board " + boardId : " not on any board") +
                 ", direction: " + direction.getName();
     }
+
+    /**
+     * Converts the current Antenna object to a FieldAntenna representation.
+     * This method is used for serializing the antenna information for message definitions.
+     *
+     * @return A new instance of MessageDefinitions.FieldAntenna containing the board ID
+     *         and a list representation of the antenna's direction.
+     */
+    @Override
+    public MessageDefinitions.FieldAntenna toField() {
+        return new MessageDefinitions.FieldAntenna(boardId, List.of(direction.toString()));
+    }
+
+//    /**
+//     * Convert the Direction enumeration to the direction string required by the protocol.
+//     * @param direction Direction enumeration value.
+//     * @return Direction string used by the protocol: “top”, “bottom”, ‘right’, “left”.
+//     */
+//    private String directionToString(Direction direction) {
+//        if (direction == null) return null;
+//        return switch (direction) {
+//            case NORTH -> "top";
+//            case SOUTH -> "bottom";
+//            case EAST -> "right";
+//            case WEST -> "left";
+//        };
+//    }
+//
+//    /**
+//     * Convert the direction string in the protocol to a Direction enumeration.
+//     * @param dirString Direction string in the protocol: “top”, “bottom”, ‘right’, “left”
+//     * @return Corresponding Direction enumeration value.
+//     */
+//    private Direction stringToDirection(String dirString) {
+//        if (dirString == null) return null;
+//        return switch (dirString) {
+//            case "top" -> Direction.NORTH;
+//            case "bottom" -> Direction.SOUTH;
+//            case "right" -> Direction.EAST;
+//            case "left" -> Direction.WEST;
+//            default -> throw new IllegalArgumentException("Invalid direction string: " + dirString);
+//        };
+//    }
+
+//    /**
+//     * Serialize to protocol format
+//     * @return Map that complies with the protocol
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "Antenna");
+//        result.put("isOnBoard", boardId);
+//
+//        if (direction != null) {
+//            List<String> orientations = new ArrayList<>();
+//            orientations.add(directionToString(direction));
+//            result.put("orientations", orientations);
+//        }
+//
+//        return result;
+//    }
+//
+//    /**
+//     * Create an antenna instance from the protocol representation.
+//     * @param position Position
+//     * @param orientation Direction string: “top”, “bottom”, ‘right’, “left”
+//     * @param boardId Board ID
+//     */
+//    public Antenna(Position position, String orientation, String boardId) {
+//        super(position, boardId);
+//        if (orientation != null) {
+//            this.direction = stringToDirection(orientation);
+//        }
+//        this.isOnBoard = true;
+//        this.boardId = boardId;
+//    }
 
 }

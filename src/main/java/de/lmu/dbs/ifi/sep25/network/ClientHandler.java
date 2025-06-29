@@ -1,14 +1,27 @@
 package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -28,24 +41,32 @@ import java.net.Socket;
  * broadcasting messages, client lifecycle management, and error handling.
  */
 public class ClientHandler implements Runnable {
+    // 0. Logger
+    private static final Logger appLogger = LogManager.getLogger(ClientHandler.class);
+    private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
 
     // 1. Constants / configuration
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    private Integer myID;
 
     // 2. Networking / I/O
     private final Socket socket;
     private final BufferedReader reader;
     private final PrintWriter writer;
+    private final Server server;
 
     // 3. State flags
-    private volatile boolean alive = true;
+    private final AtomicBoolean alive = new AtomicBoolean(true);
+    private volatile boolean mapSelecting = false;
+    private CountDownLatch placementLatch;
 
     // 4. Game connection
     private Player player;
-
-    private String name;
-    private int figure;
-
+    private Game game;
 
 
     /**
@@ -61,7 +82,15 @@ public class ClientHandler implements Runnable {
         this.socket = socket;
         this.reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
         this.writer = new PrintWriter(socket.getOutputStream(), true);
+        this.server = Server.getInstance();
     }
+
+    public void setGame(Game game) {
+        System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
+        this.game = game;
+    }
+
+
 
     /**
      * Executes the main logic for handling incoming messages from a client.
@@ -99,36 +128,17 @@ public class ClientHandler implements Runnable {
                     case "SendChat" -> handleBodySendChat(json);
                     case "ReceivedChat" -> handleBodyReceivedChat(json);
                     case "Error" -> handleBodyError(json);
-                    //                   case "PlayCard" -> handleBodyPlayCard(json);
-//                    case "CardPlayed" -> handleBodyCardPlayed(json);
-//                    case "CurrentPlayer" -> handleBodyCurrentPlayer(json);
-//                    case "ActivePhase" -> handleBodyActivePhase(json);
-//                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-//                    case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
-//                    case "YourCards" -> handleBodyYourCards(json);
-//                    case "NotYourCards" -> handleBodyNotYourCards(json);
-//                    case "ShuffleCoding" -> handleBodyShuffleCoding(json);
-//                    case "SelectedCard" -> handleBodySelectedCard(json);
-//                    case "CardSelected" -> handleBodyCardSelected(json);
-//                    case "SelectionFinished" -> handleBodySelectionFinished(json);
-//                    case "TimerStarted" -> handleBodyTimerStarted(json);
-//                    case "TimerEnded" -> handleBodyTimerEnded(json);
-//                    case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
-//                    case "CurrentCards" -> handleBodyCurrentCards(json);
-//                    case "ReplaceCard" -> handleBodyReplaceCard(json);
-//                    case "Movement" -> handleBodyMovement(json);
-//                    case "PlayerTurning" -> handleBodyPlayerTurning(json);
-//                    case "Animation" -> handleBodyAnimation(json);
-//                    case "Reboot" -> handleBodyReboot(json);
-//                    case "RebootDirection" -> handleBodyRebootDirection(json);
-//                    case "Energy" -> handleBodyEnergy(json);
-//                    case "CheckPointReached" -> handleBodyCheckPointReached(json);
-//                    case "GameFinished" -> handleBodyGameFinished(json);
+                    case "PlayCard" -> handleBodyPlayCard(json);
+                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
+                    case "SelectedCard" -> handleBodySelectedCard(json);
+                    case "TimerStarted" -> handleBodyTimerStarted();
+                    case "RebootDirection" -> handleBodyRebootDirection(json);
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
             }
         } catch (IOException e) {
             sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
+            e.printStackTrace();
             closeAll();
         }
     }
@@ -156,8 +166,10 @@ public class ClientHandler implements Runnable {
      * directly on the {@code alive} field of the {@code ClientHandler} instance.
      */
     private void handleBodyAlive() {
-        alive = true;
+        alive.set(true);
+        heartbeatLogger.info("Client {} set alive to: {}", myID, alive);
     }
+
 
     /**
      * Handles the processing of a "HelloServer" message body. This method parses the incoming JSON,
@@ -171,11 +183,11 @@ public class ClientHandler implements Runnable {
     private void handleBodyHelloServer(String json) {
         Message<BodyHelloServer> message = JsonUtil.parseMessage(json, BodyHelloServer.class);
         BodyHelloServer body = message.messageBody();
-        if (!body.protocol().equalsIgnoreCase(Server.getInstance().getProtocol())) {
-            sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + Server.getInstance().getProtocol())));
+        if (!body.protocol().equalsIgnoreCase(server.getProtocol())) {
+            sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + server.getProtocol())));
             closeAll();
         }
-        Server.getInstance().getIsAI().put(this, body.isAI());
+        server.getIsAI().put(this, body.isAI());
     }
 
     /**
@@ -190,25 +202,20 @@ public class ClientHandler implements Runnable {
     private void handleBodyPlayerValues(String json) {
         Message<BodyPlayerValues> message = JsonUtil.parseMessage(json, BodyPlayerValues.class);
         BodyPlayerValues body = message.messageBody();
-        Server server = Server.getInstance();
 
         if (server.assignFigure(body.figure(), this)) {
-            this.playerName = Server.getInstance().generateUniqueName(body.name());
-            this.figure = body.figure();
-            this.player = new Player(playerName, figure, this);
-            this.player.setReady(false);
+            final String name = server.generateUniqueName(body.name());
+            this.player = new Player(name, body.figure(), this);
+            this.myID = server.getClients().getByKey(this);
 
-            server.getNames().put(this, playerName);
-            server.getFigures().put(this, body.figure());
-            server.getLobby().add(this);
-
-            int myID = server.getClients().getByKey(this);
+            server.getNames().put(this, name);
+            server.addToLobby(this);
 
             sendMessage(new Message<>(new BodyWelcome(myID)));
 
-            sendMessage(new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure())));
+            broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
-            // notiffy all
+            // notify all
             for (ClientHandler other : server.getLobby().getClients()) {
                 if (other == this) continue;
                 Integer otherID = server.getClients().getByKey(other);
@@ -219,14 +226,6 @@ public class ClientHandler implements Runnable {
                     sendMessage(new Message<>(new BodyPlayerAdded(otherID, otherName, otherFigure)));
                 }
             }
-
-            Message<BodyPlayerAdded> msg = new Message<>(new BodyPlayerAdded(myID, this.playerName, body.figure()));
-            for (ClientHandler other : server.getLobby().getClients()) {
-                if (other != this) {
-                    other.sendMessage(msg);
-                }
-            }
-
 
         } else {
             sendMessage(new Message<>(new BodyError("Figure already selected.")));
@@ -243,30 +242,30 @@ public class ClientHandler implements Runnable {
      *             the readiness status of the player
      */
     private void handleBodySetStatus(String json) {
-        Server server = Server.getInstance();
         Message<BodySetStatus> message = JsonUtil.parseMessage(json, BodySetStatus.class);
         boolean ready = message.messageBody().ready();
-        int clientID = server.getClients().getByKey(this);
 
         if (player == null) {
-            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + clientID + ")");
+            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + myID + ")");
             sendMessage(new Message<>(new BodyError("Cannot change ready state: Player not initialized.")));
             return;
         }
 
         player.setReady(ready);
-        server.broadcastMessage(new Message<>(new BodyPlayerStatus(clientID, ready)));
+        broadcastMessage(new Message<>(new BodyPlayerStatus(myID, ready)));
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
             if (ready) {
+                if (server.readyIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
+                    server.setMapSelectionOngoing(true);
+                    setMapSelecting(true);
+                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                }
                 server.markReady(this);
-            }
-        } else {
-            server.unmarkReady(this);
+            } else
+                server.unmarkReady(this);
         }
     }
-
-
 
     /**
      * Handles the processing of a "BodyMapSelected" message. This method parses the incoming
@@ -279,9 +278,10 @@ public class ClientHandler implements Runnable {
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
         String map = message.messageBody().map();
-        Server server = Server.getInstance();
 
-        server.broadcastMessage(new Message<>(new BodyMapSelected(map)));
+        broadcastMessage(new Message<>(new BodyMapSelected(map)));
+        server.setMapSelectionOngoing(false);
+        setMapSelecting(false);
         server.newGame(map);
     }
 
@@ -301,28 +301,27 @@ public class ClientHandler implements Runnable {
     private void handleBodySendChat(String json) {
         Message<BodySendChat> message = JsonUtil.parseMessage(json, BodySendChat.class);
         BodySendChat body = message.messageBody();
-        Integer from = Server.getInstance().getClients().getByKey(this);
-        if (from == null) {
+
+        if (myID == null) {
             sendMessage(new Message<>(new BodyError("Sender ID not found.")));
             return;
         }
 
         if (body.to() == -1) {
-            Server.getInstance().broadcastMessage(
-                    new Message<>(new BodyReceivedChat(body.message(), from, false))
+            server.broadcastMessage(
+                    new Message<>(new BodyReceivedChat(body.message(), myID, false))
             );
         } else {
-            ClientHandler recipient = Server.getInstance().getClients().getByValue(body.to());
+            ClientHandler recipient = server.getClients().getByValue(body.to());
             if (recipient != null) {
                 recipient.sendMessage(
-                        new Message<>(new BodyReceivedChat(body.message(), from, true))
+                        new Message<>(new BodyReceivedChat(body.message(), myID, true))
                 );
             } else {
                 sendMessage(new Message<>(new BodyError("Recipient not found.")));
             }
         }
     }
-
 
     /**
      * Handles the processing of a received chat message in JSON format.
@@ -332,6 +331,113 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyReceivedChat(String json) {
         this.sendMessage(json);
+    }
+
+    /**
+     * Handles the processing of a "BodyPlayCard" message. This method parses the incoming
+     * JSON string into a {@link Message} object containing a {@link BodyPlayCard} message body.
+     * It then broadcasts a message indicating that a card has been played to all connected
+     * clients.
+     *
+     * @param json the JSON string representing a "BodyPlayCard" message which contains
+     *             the details of the played card
+     */
+    private void handleBodyPlayCard(String json) {
+        Message<BodyPlayCard> message = JsonUtil.parseMessage(json, BodyPlayCard.class);
+        broadcastMessage(new Message<>(new BodyCardPlayed(myID, message.messageBody().card())));
+    }
+
+    /**
+     * Handles the process of setting a robot's starting position on the game board.
+     * Validates the provided starting point coordinates and updates the robot's position if valid.
+     * Sends appropriate messages based on the validation result.
+     *
+     * @param json the JSON string containing data to set the starting position,
+     *             parsed into a {@code BodySetStartingPoint} object which provides the coordinates (x, y).
+     */
+    private void handleBodySetStartingPoint(String json) {
+        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
+
+        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
+            //TODO maybe send a message for reselection
+        } else if (placementLatch != null) {
+            placementLatch.countDown();
+        }
+    }
+
+    /**
+     * Handles the processing of a body-selected card event. Calls chooseCard in player.
+     *
+     * @param json the JSON string representation of the BodySelectedCard object
+     */
+    private void handleBodySelectedCard(String json) {
+        BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
+        //notify is in player class
+        player.chooseCard(body.card(), body.register());
+    }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    private void handleBodyTimerStarted() {
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            List<Integer> readyRegister = server.getReadyRegister();
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+            //TODO @Lukas add code to call random selection for remaining players in readyRegister
+
+        }, 30, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Handles the body reboot direction specified in the given JSON message.
+     * Parses the direction from the message, updates the robot's direction,
+     * and broadcasts the new direction information.
+     *
+     * @param json the JSON message containing the body reboot direction
+     */
+    private void handleBodyRebootDirection(String json) {
+        String direction = JsonUtil.parseMessage(json, BodyRebootDirection.class).messageBody().direction();
+        player.getRobot().setDirection(Direction.fromString(direction));
+        broadcastMessage(new Message<>(new BodyRebootDirection(direction)), this);
+    }
+
+
+    // -------------
+
+    /**
+     * Sets the placement latch to the specified CountDownLatch instance.
+     *
+     * @param latch the CountDownLatch instance to be assigned to the placement latch
+     */
+    public void setPlacementLatch(CountDownLatch latch) {
+        this.placementLatch = latch;
+    }
+
+    /**
+     * Marks the entity associated with this instance as ready to register
+     * in the server and broadcasts a message indicating completion of the
+     * selection process.
+     * <p>
+     * This method performs the following actions:
+     * 1. Marks the entity identified by `myID` as ready for registration
+     * using the server instance.
+     * 2. Broadcasts a message to notify other entities about the completion
+     * of the selection process for this instance.
+     * <p>
+     * Utilizes the `server` instance for registration marking and the
+     * `broadcastMessage` method to send out a notification message.
+     */
+    public void setReadyRegister() {
+        server.markReadyRegister(myID);
+        broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
     }
 
     /**
@@ -348,7 +454,9 @@ public class ClientHandler implements Runnable {
      * and able to receive and process messages properly.
      */
     public void checkLiveness() {
-        alive = false;
+        heartbeatLogger.info("Checking liveness of client: {}. Sending Alive Message.", myID);
+        alive.set(false);
+        heartbeatLogger.info("Set alive to false");
         sendMessage(new Message<>(new BodyAlive()));
     }
 
@@ -389,6 +497,25 @@ public class ClientHandler implements Runnable {
     }
 
     /**
+     * Sends the given message to all connected clients via the server.
+     *
+     * @param msg the message to be broadcasted to all connected clients
+     */
+    public void broadcastMessage(Message<?> msg) {
+        server.broadcastMessage(msg);
+    }
+
+    /**
+     * Sends the specified message to all connected clients except the excluded client.
+     *
+     * @param msg     the message to be broadcasted to connected clients
+     * @param exclude the client handler to be excluded from receiving the message
+     */
+    public void broadcastMessage(Message<?> msg, ClientHandler exclude) {
+        server.broadcastMessage(msg, exclude);
+    }
+
+    /**
      * Closes all resources associated with the client connection managed by this
      * {@code ClientHandler}. This includes removing the client handler from the
      * server's management, closing the input/output streams, and terminating
@@ -410,14 +537,14 @@ public class ClientHandler implements Runnable {
      */
     public void closeAll() {
         try {
-            Server.getInstance().removeClientHandler(this);
+            server.removeClientHandler(this);
             if (reader != null)
                 reader.close();
             if (writer != null)
                 writer.close();
             if (socket != null && !socket.isClosed())
                 socket.close();
-            alive = false;
+            alive.set(false);
             System.out.println("Closed connection for client handler.");
         } catch (IOException e) {
             System.err.println("Error closing resources for client: " + e.getMessage());
@@ -430,7 +557,8 @@ public class ClientHandler implements Runnable {
      * @return {@code true} if the client connection is alive, {@code false} otherwise
      */
     public boolean isAlive() {
-        return alive;
+        heartbeatLogger.info("Returning to server if client is alive: " + myID + ", " + alive + ".");
+        return alive.get();
     }
 
     /**
@@ -441,15 +569,22 @@ public class ClientHandler implements Runnable {
     public Player getPlayer() {
         return player;
     }
-    public String getName() {
-        return name;
+
+    /**
+     * Retrieves the ID associated with the current instance.
+     *
+     * @return the ID of the current instance
+     */
+    public int getMyID() {
+        return myID;
     }
 
-    public int getFigure() {
-        return figure;
+    public boolean isMapSelecting() {
+        return mapSelecting;
     }
-    private String playerName;
 
-
-
+    public void setMapSelecting(boolean mapSelecting) {
+        this.mapSelecting = mapSelecting;
+    }
 }
+

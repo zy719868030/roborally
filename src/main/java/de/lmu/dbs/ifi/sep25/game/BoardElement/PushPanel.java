@@ -4,10 +4,9 @@ import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -20,37 +19,37 @@ public class PushPanel extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-    public PushPanel() {
-        super();
-        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public PushPanel(Position position) {
-        super(position);
-        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public PushPanel(Position position, Direction direction) {
-        super(position, direction);
-        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-
-    public PushPanel(Position position, Direction direction, List<Integer> activeRegisters) {
-        super(position, direction);
-        this.activeRegisters = new ArrayList<>(activeRegisters);
-        this.currentRegister = 0;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
+//    public PushPanel() {
+//        super();
+//        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public PushPanel(Position position, String boardId) {
+//        super(position, boardId);
+//        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public PushPanel(Position position, Direction direction) {
+//        super(position, direction);
+//        this.activeRegisters = new ArrayList<>(Arrays.asList(0, 1, 2, 3, 4));
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
+//
+//    public PushPanel(Position position, Direction direction, List<Integer> activeRegisters) {
+//        super(position, direction);
+//        this.activeRegisters = new ArrayList<>(activeRegisters);
+//        this.currentRegister = 0;
+//        this.isOnBoard = false;
+//        this.boardId = "";
+//    }
 
     public PushPanel(Position position, Direction direction, List<Integer> activeRegisters, String boardId) {
         super(position, direction);
@@ -277,4 +276,52 @@ public class PushPanel extends BoardElement {
 
         return sb.toString();
     }
+
+    /**
+     * Converts the PushPanel into its corresponding field representation.
+     *
+     * @return A MessageDefinitions.FieldPushPanel object that represents the push panel,
+     *         including its board identifier, direction, and active register configurations.
+     */
+    @Override
+    public MessageDefinitions.FieldPushPanel toField() {
+        return new MessageDefinitions.FieldPushPanel(boardId, List.of(direction.toString()), activeRegisters);
+    }
+
+//    /**
+//     * Convert the Direction enumeration to the direction string required by the protocol.
+//     */
+//    private String directionToString(Direction direction) {
+//        if (direction == null) return null;
+//        return switch (direction) {
+//            case NORTH -> "top";
+//            case SOUTH -> "bottom";
+//            case EAST -> "right";
+//            case WEST -> "left";
+//        };
+//    }
+
+
+//    /**
+//     * Serialize to protocol format
+//     * @return Map that complies with the protocol
+//     */
+//    public Map<String, Object> serialize() {
+//        Map<String, Object> result = new HashMap<>();
+//        result.put("type", "PushPanel");
+//        result.put("isOnBoard", boardId);
+//
+//        // Add direction
+//        if (direction != null) {
+//            List<String> orientations = new ArrayList<>();
+//            orientations.add(directionToString(direction));
+//            result.put("orientations", orientations);
+//        }
+//
+//        // Add activated registers
+//        result.put("registers", activeRegisters);
+//
+//        return result;
+//    }
+
 }

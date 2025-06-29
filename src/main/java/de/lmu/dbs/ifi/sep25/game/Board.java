@@ -1,178 +1,185 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
+import de.lmu.dbs.ifi.sep25.game.Maps.*;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
+import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents the game board where all gameplay elements and interactions occur.
+ * The Board class manages the layout, positions of robots, and special tiles.
+ */
 public class Board {
-    private final List<BoardElement>[][] grid;
+
+    // 0. Logging
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(Board.class);
+    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
+
+    // 1. Resource
+    private final Gson mapGson = new GsonBuilder()
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
+            .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    // 2. Board state
+    private final Tile[][] grid;
     private final int width;
     private final int height;
     private final Map<Position, Robot> robotPositions = new HashMap<>();
     private final Map<Robot, Position> robotToPosition = new HashMap<>();
-
-    // Added to store robots that fall off the board
     private final List<Robot> fallenRobots = new ArrayList<>();
-    // Designated point for fallen robots (outside 12x12 grid)
     private static final Position VOID_POINT = new Position(-1, -1);
+    private Position antennaPosition;
+    public final Map<String, SubBoard> subBoards = new HashMap<>();
+
+    // SubBoard class to manage boardId and coordinate ranges
+    public static class SubBoard {
+        private final String boardId;
+        private final int minX;
+        private final int maxX;
+
+        public SubBoard(String boardId, int minX, int maxX) {
+            this.boardId = boardId;
+            this.minX = minX;
+            this.maxX = maxX;
+        }
+
+        boolean contains(Position pos) {
+            return pos.y() >= minX && pos.y() <= maxX;
+        }
+
+        String getBoardId() {
+            return boardId;
+        }
+    }
 
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Constructs a Board object and initializes it based on the given map type.
+     * This process involves determining the board dimensions, creating sub-boards,
+     * initializing tiles, and setting up specific board configurations depending
+     * on the provided map type.
+     *
+     * @param mapType The type of map to initialize. It defines the board's structure,
+     *                sub-board arrangement, and tile settings based on the map style
+     *                (e.g., "normal" or "reverse").
+     * @throws IllegalArgumentException if the map type corresponds to an unknown
+     *                                  or unsupported board style.
+     */
     public Board(MapType mapType) {
-        this.width = 10;
-        this.height = 13;
+        switch (MapType.boardStyleFromMapType(mapType)) {
+            case "normal" -> {
+                this.width = 13;
+                this.height = 10;
+                this.grid = new Tile[width][height];
 
-        this.grid = new ArrayList[width][height];
+                Floor.createFloor("StartA");
+                Floor.createFloor("5B");
+
+                logger.info("Initializing \"normal\" board with map type: " + mapType);
+
+                for (int x = 0; x < width; x++) {
+                    Floor floor = (x < 3) ? Floor.getInstance("StartA") : Floor.getInstance("5B");
+                    for (int y = 0; y < height; y++) {
+                        grid[x][y] = new Tile();
+                        grid[x][y].addElement(floor);
+                    }
+                }
+            }
+            case "reverse" -> {
+                this.width = 13;
+                this.height = 10;
+                this.grid = new Tile[width][height];
+
+                Floor.createFloor("StartA");
+                Floor.createFloor("5B");
+
+                logger.info("Initializing \"normal\" board with map type: " + mapType);
+
+                for (int x = 0; x < width; x++) {
+                    Floor floor = (x > 9) ? Floor.getInstance("StartA") : Floor.getInstance("5B");
+                    for (int y = 0; y < height; y++) {
+                        grid[x][y] = new Tile();
+                        grid[x][y].addElement(floor);
+                    }
+                }
+
+            }
+            default ->
+                    throw new IllegalArgumentException("Unknown/Not implemented board style: " + MapType.boardStyleFromMapType(mapType));
+        }
+
+        logger.info("Board initialized.");
+        logger.info("Initializing board implementation...");
+
         initializeBoard(mapType);
     }
 
-    public enum MapType {
-        DEFAULT, MAP1, MAP2, MAP3, MAP4, MAP5
-    }
-
-    // Initialize board with tiles based on map type
+    /**
+     * Initializes the game board based on the specified map type. This method sets up the grid,
+     * board elements, and antenna position for the game. Depending on the map type, different
+     * implementations and configurations of the board are applied.
+     *
+     * @param mapType The type of map to initialize. It determines the specific board configuration
+     *                and elements for the game environment.
+     */
     private void initializeBoard(MapType mapType) {
-        // Populate grid with Floor tiles by default
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                grid[x][y] = new ArrayList<>();
-                grid[x][y].add(Floor.getInstance());
+        GameMap mapImplementation = switch (mapType) {
+            case DIZZY_HIGHWAY -> new DizzyHighway();
+            case LOST_BEARINGS -> new LostBearings();
+            case EXTRA_CRISPY -> new ExtraCrispy();
+            case DEATH_TRAP -> new DeathTrap();
+            default -> throw new IllegalArgumentException("Unknown map type: " + mapType);
+        };
+
+        // Copy elements and antenna from the map implementation
+        this.antennaPosition = mapImplementation.getAntennaPosition();
+
+        logger.info("Board implementation initialized.");
+        logger.info("Adding elements to board...");
+
+        for (BoardElement element : mapImplementation.getElements()) {
+            if (!(element instanceof Floor)) {
+                addElement(element);
             }
         }
 
-                // Dizzy Highway as the default map (starter course)
+        logger.info("Added elements to board.");
 
-                // Walls
-                // (7,1) top: blocks movement upward (NORTH)
-                grid[7][1].add(new Wall(new Position(7, 1), Direction.NORTH));
-                // (5,2) right: blocks movement to the right (EAST)
-                grid[5][2].add(new Wall(new Position(5, 2), Direction.EAST));
-                // (4,2) right: blocks movement to the right (EAST)
-                grid[4][2].add(new Wall(new Position(4, 2), Direction.EAST));
-                // (2,1) bottom: blocks movement downward (SOUTH)
-                grid[2][1].add(new Wall(new Position(2, 1), Direction.SOUTH));
+        logger.info("Board elements:");
+        logger.info(getElements(1, 1).toString());
+        logger.info(getElements(antennaPosition.x(), antennaPosition.y()).toString());
 
-                // Todo: Antenna at (5,0) facing right (toward (5,1))
-
-                // Conveyor Belts (double arrows = FAST/blue, single arrow at curve = rotating)
-                // 1. (9,4) to (1,4), curves at (1,4) toward (1,5)
-                for (int x = 9; x >= 2; x--) {
-                    grid[x][4].add(new Belts(new Position(x, 4), Direction.NORTH, Belts.BeltSpeed.FAST));
-                }
-                List<Direction> outDirs1 = new ArrayList<>();
-                outDirs1.add(Direction.EAST);
-                List<Direction> inDirs1 = new ArrayList<>();
-                inDirs1.add(Direction.SOUTH);
-                grid[1][4].set(1, new Belts(new Position(1, 4), outDirs1, inDirs1, Belts.BeltSpeed.FAST));
-
-                // Belt 2: (9,5) to (8,5), then curve at (8,5) toward (8,4)
-                // Belt from (9,5) to (8,5) — straight upward
-                grid[9][5].add(new Belts(new Position(9, 5), Direction.NORTH, Belts.BeltSpeed.FAST));
-
-                // Curve at (8,5): south → west (⤶)
-                List<Direction> outDirs2a = new ArrayList<>();
-                outDirs2a.add(Direction.WEST);
-                List<Direction> inDirs2a = new ArrayList<>();
-                inDirs2a.add(Direction.SOUTH);
-                grid[8][5].set(1, new Belts(new Position(8, 5), outDirs2a, inDirs2a, Belts.BeltSpeed.FAST));
-
-                // Curve at (8,4): east → north (⬐)
-                List<Direction> outDirs2b = new ArrayList<>();
-                outDirs2b.add(Direction.NORTH);
-                List<Direction> inDirs2b = new ArrayList<>();
-                inDirs2b.add(Direction.EAST);
-                grid[8][4].set(1, new Belts(new Position(8, 4), outDirs2b, inDirs2b, Belts.BeltSpeed.FAST));
-
-                // 3. (2,3) to (2,4), curves at (2,4) toward (1,4)
-                grid[2][3].add(new Belts(new Position(2, 3), Direction.EAST, Belts.BeltSpeed.FAST));
-                List<Direction> outDirs3 = new ArrayList<>();
-                outDirs3.add(Direction.NORTH);
-                List<Direction> inDirs3 = new ArrayList<>();
-                inDirs3.add(Direction.WEST);
-                grid[2][4].set(1, new Belts(new Position(2, 4), outDirs3, inDirs3, Belts.BeltSpeed.FAST));
-
-                // 4. (1,3) to (1,11), curves at (1,11) toward (2,11)
-                for (int y = 3; y <= 10; y++) {
-                    grid[1][y].add(new Belts(new Position(1, y), Direction.EAST, Belts.BeltSpeed.FAST));
-                }
-                List<Direction> outDirs4 = new ArrayList<>();
-                outDirs4.add(Direction.SOUTH);
-                List<Direction> inDirs4 = new ArrayList<>();
-                inDirs4.add(Direction.WEST);
-                grid[1][11].set(1, new Belts(new Position(1, 11), outDirs4, inDirs4, Belts.BeltSpeed.FAST));
-
-                // 5. (0,10) to (1,10), curves at (1,10) toward (1,11)
-                grid[0][10].add(new Belts(new Position(0, 10), Direction.SOUTH, Belts.BeltSpeed.FAST));
-                List<Direction> outDirs5 = new ArrayList<>();
-                outDirs5.add(Direction.EAST);
-                List<Direction> inDirs5 = new ArrayList<>();
-                inDirs5.add(Direction.NORTH);
-                grid[1][10].set(1, new Belts(new Position(1, 10), outDirs5, inDirs5, Belts.BeltSpeed.FAST));
-
-                // 6. (0,11) to (8,11), curves at (8,11) toward (8,10)
-                for (int x = 0; x <= 7; x++) {
-                    grid[x][11].add(new Belts(new Position(x, 11), Direction.NORTH, Belts.BeltSpeed.FAST));
-                }
-                List<Direction> outDirs6 = new ArrayList<>();
-                outDirs6.add(Direction.WEST);
-                List<Direction> inDirs6 = new ArrayList<>();
-                inDirs6.add(Direction.SOUTH);
-                grid[8][11].set(1, new Belts(new Position(8, 11), outDirs6, inDirs6, Belts.BeltSpeed.FAST));
-
-                // 7. (7,12) to (7,11), curves at (7,11) toward (8,11)
-                grid[7][12].add(new Belts(new Position(7, 12), Direction.WEST, Belts.BeltSpeed.FAST));
-                List<Direction> outDirs7 = new ArrayList<>();
-                outDirs7.add(Direction.NORTH);
-                List<Direction> inDirs7 = new ArrayList<>();
-                inDirs7.add(Direction.EAST);
-                grid[7][11].set(1, new Belts(new Position(7, 11), outDirs7, inDirs7, Belts.BeltSpeed.FAST));
-
-                // Belt 8: from (8,12) ⇦ to (8,5)
-                for (int y = 12; y >= 5; y--) {
-                    grid[8][y].add(new Belts(new Position(8, y), Direction.WEST, Belts.BeltSpeed.FAST));
-                }
-
-                // Energy Spaces
-                Position[] energyPositions = {
-                        new Position(0, 3), new Position(2, 10), new Position(9, 12),
-                        new Position(7, 5), new Position(4, 7), new Position(5, 8)
-                };
-                for (Position pos : energyPositions) {
-                    grid[pos.x()][pos.y()].add(new EnergySpace(pos));
-                }
-
-                // Checkpoint at (6,12)
-                CheckPoints checkpoint = new CheckPoints(new Position(6, 12), 1);
-                grid[6][12].add(checkpoint);
-
-                // Reboot at (6,7)
-                Reboot reboot = Reboot.getInstance();
-                reboot.setPosition(new Position(6, 7));
-                grid[6][7].add(reboot);
-
-                // Lasers
-                // 1. (6,6) top to (5,6) bottom, firing from (5,6) bottom to (6,6) top (NORTH)
-                grid[6][6].add(new Laser(new Position(6, 6), Direction.NORTH, 1));
-                // 2. (3,6) left to (3,7) right, firing from (3,7) right to (3,6) left (WEST)
-                grid[3][6].add(new Laser(new Position(3, 6), Direction.WEST, 1));
-                // 3. (3,9) bottom to (4,9) top, firing from (4,9) top to (3,9) bottom (SOUTH)
-                grid[3][9].add(new Laser(new Position(3, 9), Direction.SOUTH, 1));
-                // 4. (6,8) left to (6,9) right, firing from (6,8) left to (6,9) right (EAST)
-                grid[6][9].add(new Laser(new Position(6, 9), Direction.EAST, 1));
-
+        logger.info("Checkpoint: " + getElements(12, 3).toString());
+        logger.info("Checkpoint: " + getElements(12, 3).getFirst().toString());
     }
 
-    // Todo: Loads a map from MapType
-    /*public void loadMap(MapType mapType) {
-        mapType.loadMap(this);
+    /**
+     * Adds a {@link BoardElement} to the board at its specified position,
+     * if the position is within the bounds of the grid.
+     *
+     * @param element The board element to add. Its position is determined
+     *                using the {@code getPosition()} method.
+     */
+    private void addElement(BoardElement element) {
+        Position pos = element.getPosition();
+        if (isValidPosition(pos)) {
+            grid[pos.x()][pos.y()].addElement(element);
+        }
     }
-    */
 
     // Sets initial robot position based on map type and player choice (0-4)
-    public void setDHStartPosition(Robot robot, int playerChoice) {
+    public void setStartPosition(Robot robot, int playerChoice) {
         // Define 5 possible starting positions per map
         Position[] startPositions = {
                 new Position(8, 1), new Position(6, 0), new Position(5, 1),
@@ -194,13 +201,36 @@ public class Board {
             System.out.println("Warning: Start position for Robot " + robot.getId() + " may overlap.");
         }
         robot.setPosition(startPos);
+        robot.setDirection(Direction.EAST);
         updateRobotPosition(robot, startPos);
+        Player player = Game.getInstance().getPlayers().stream()
+                .filter(p -> p.getRobot() == robot)
+                .findFirst()
+                .orElse(null);
+        if (player != null) {
+            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyStartingPointTaken(startPos.x(), startPos.y(), Direction.EAST.toString(), robot.getId())
+            ));
+        }
     }
 
-    // Gets elements at a position (used for tile effects)
+    public List<BoardElement> getElements() {
+        List<BoardElement> elements = new ArrayList<>();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                elements.addAll(grid[x][y].getElements());
+            }
+        }
+        return elements;
+    }
+
+    public List<BoardElement> getElements(Position position) {
+        return getElements(position.x(), position.y());
+    }
+
     public List<BoardElement> getElements(int x, int y) {
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-            return grid[x][y];
+        if (isValidPosition(new Position(x, y)) && grid[x][y] != null) {
+            return grid[x][y].getElements();
         }
         return new ArrayList<>();
     }
@@ -218,10 +248,63 @@ public class Board {
     public void applyEffects(Robot robot, int x, int y) {
         // Skip if robot has fallen off
         if (fallenRobots.contains(robot)) return;
-        List<BoardElement> elementsAt = getElements(x, y);
-        for (BoardElement element : elementsAt) {
-            element.applyEffect(robot, this);
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            grid[x][y].applyEffects(robot, this);
+            //List<BoardElement> elementsAt = getElements(x, y);
+            for (BoardElement element : grid[x][y].getElements()) {
+                String animationType = mapElementToAnimationType(element.getType()); // Check mapping below
+                if (animationType != null) {
+                    Player player = Game.getInstance().getPlayers().stream()
+                            .filter(p -> p.getRobot() == robot)
+                            .findFirst()
+                            .orElse(null);
+                    if (player != null) {
+                        player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodyAnimation(animationType)
+                        ));
+                    }
+                }
+                if (element instanceof EnergySpace) {
+                    Player player = Game.getInstance().getPlayers().stream()
+                            .filter(p -> p.getRobot() == robot)
+                            .findFirst()
+                            .orElse(null);
+                    if (player != null) {
+                        player.addEnergy(1, "EnergySpace");
+                    }
+                }
+                if (element instanceof CheckPoints checkPoint) {
+                    int checkpoints = checkPoint.getRobotHighestCheckpoint(robot.getId()); // Check CheckPoints class for correct implementation
+                    if (checkpoints > 0) {
+                        Player player = Game.getInstance().getPlayers().stream()
+                                .filter(p -> p.getRobot() == robot)
+                                .findFirst()
+                                .orElse(null);
+                        if (player != null) {
+                            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                                    new MessageDefinitions.BodyCheckPointReached(robot.getId(), checkpoints)
+                            ));
+                            if (checkpoints == getTotalCheckpoints()) {
+                                player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                                        new MessageDefinitions.BodyGameFinished(robot.getId())
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    private String mapElementToAnimationType(String elementType) {
+        return switch (elementType) {
+            case "Belts" -> "BlueConveyorBelt"; // Adjust based on BeltSpeed if needed
+            case "Gear" -> "Gear";
+            case "Laser" -> "PlayerShooting";
+            case "PushPanel" -> "PushPanel";
+            case "EnergySpace" -> "EnergySpace";
+            default -> null;
+        };
     }
 
     /**
@@ -266,7 +349,7 @@ public class Board {
         return new Position(0, 0); // Fallback to (0,0) instead of null
     }
 
-    public List<BoardElement>[][] getGrid() {
+    public Tile[][] getGrid() {
         return grid;
     }
 
@@ -321,21 +404,32 @@ public class Board {
      *
      * @return A three-dimensional list representing the serialized state of the board.
      */
-    public List<List<List<BoardElement>>> toSerializableMap() {
-        List<List<List<BoardElement>>> map = new ArrayList<>();
-        for (int x = 0; x < grid.length; x++) {
-            List<List<BoardElement>> col = new ArrayList<>();
+    private List<List<List<MessageDefinitions.Field>>> toSerializableMap() {
+        List<List<List<MessageDefinitions.Field>>> map = new ArrayList<>();
+        for (Tile[] tiles : grid) {
+            List<List<MessageDefinitions.Field>> col = new ArrayList<>();
             for (int y = 0; y < grid[0].length; y++) {
-                //Tile tile = grid[x][y]; //FIXME will be fixed when board is fixed....
-                //col.add(tile == null ? null : tile.getElements());
-                // Fixed: Replaced Tile with List<BoardElement> to match grid type
-                // grid[x][y] is never null (always has Floor), so no need for null check
-                List<BoardElement> elements = grid[x][y];
-                col.add(elements);
+                Tile tile = tiles[y];
+
+                if (tile == null) {
+                    col.add(null);
+                } else {
+                    col.add(tiles[y].toSerializableList().stream().map(BoardElement::toField).toList());
+                }
             }
             map.add(col);
         }
         return map;
+    }
+
+    /**
+     * Serializes the current state of the board into a JSON-formatted message.
+     * The resulting message includes metadata and the serialized map representation of the board.
+     *
+     * @return A JSON string representing the serialized board as a message.
+     */
+    public String getSerializedBoardAsMessage() {
+        return mapGson.toJson(new MessageDefinitions.Message<>(new MessageDefinitions.BodyGameStarted(5, toSerializableMap())));
     }
 
     /**
@@ -360,6 +454,7 @@ public class Board {
 
         return count;
     }
+
     // Handles robots falling off the 12x12 grid
     public void handleFall(Robot robot) {
         // Set position to VOID_POINT (-1, -1)
@@ -378,7 +473,6 @@ public class Board {
         System.out.println("Robot " + robot.getId() + " fell off the board and is at VOID_POINT (-1, -1)");
     }
 
-    // Checks if a robot has fallen off the board
     public boolean hasRobotFallen(Robot robot) {
         return fallenRobots.contains(robot);
     }
@@ -386,12 +480,35 @@ public class Board {
     // Reboots a fallen robot to the reboot point
     public void rebootRobot(Robot robot) {
         Position rebootPos = getRebootPosition();
-        robot.setPosition(rebootPos.x(), rebootPos.y());
+        Robot otherRobot = getRobotAt(rebootPos);
+        if (otherRobot != null) {
+            Reboot reboot = (Reboot) getElements(rebootPos.x(), rebootPos.y()).stream()
+                    .filter(e -> e.getType().equals("Reboot"))
+                    .findFirst()
+                    .orElse(null);
+            if (reboot != null) {
+                Direction pushDir = reboot.getDirection(); // Check Reboot class for correct implementation
+                Position pushPos = rebootPos.move(pushDir);
+                if (isValidPosition(pushPos) && getRobotAt(pushPos) == null) {
+                    otherRobot.setPosition(pushPos);
+                    updateRobotPosition(otherRobot, pushPos);
+                    otherRobot.notifyMovement();
+                } else {
+                    List<Position> startPoints = getStartingPoints();
+                    Position altPos = startPoints.stream()
+                            .filter(pos -> getRobotAt(pos) == null)
+                            .findFirst()
+                            .orElse(rebootPos);
+                    rebootPos = altPos;
+                }
+            }
+        }
+        robot.setPosition(rebootPos);
         updateRobotPosition(robot, rebootPos);
         robot.takeDamage(2);
         robot.cancelProgramming();
         System.out.println("Robot " + robot.getId() + " rebooted to " + rebootPos);
-        fallenRobots.remove(robot);
+
     }
 
     /**
@@ -433,6 +550,42 @@ public class Board {
             }
         }
         return positions;
+    }
+
+    /**
+     * Gets the position of the priority antenna on the board.
+     * This is used to determine player priority during the game.
+     *
+     * @return the Position of the antenna, or a default position if no antenna is found
+     */
+    public Position getAntennaPosition() {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                for (BoardElement element : getElements(x, y)) {
+                    if (element instanceof Antenna) {
+                        return element.getPosition();
+                    }
+                }
+            }
+        }
+        // If no antenna is found, return a default position (0,0)
+        System.err.println("Warning: No antenna found on the board! Using default position.");
+        return new Position(0, 0);
+    }
+
+    /**
+     * Retrieves the first available "Reboot" element from the board based on its type.
+     * If no "Reboot" element exists, an {@link IllegalStateException} is thrown.
+     *
+     * @return The {@link Reboot} element found on the board.
+     * @throws IllegalStateException If no "Reboot" element is found on the board.
+     */
+    public Reboot getReboot() {
+        //TODO add position param to check for subboard
+        final Reboot reboot = (Reboot) getElements(getRebootPosition()).stream().filter(e -> e.getType().equals("Reboot")).findFirst().orElse(null);
+        if (reboot == null)
+            throw new IllegalStateException("Reboot element not found on board!");
+        return reboot;
     }
 
 }

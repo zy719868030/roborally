@@ -1,0 +1,17 @@
+[
+  [
+    [ { "type": "Floor" } ],
+    [ { "type": "StartPoint", "orientations": ["east"] } ],
+    [ { "type": "Wall", "orientations": ["north"] } ]
+  ],
+  [
+    [ { "type": "Floor" } ],
+    [ { "type": "Energy-Space", "count": 1 } ],
+    [ { "type": "CheckPoint", "count": 1 } ]
+  ],
+  [
+    null,
+    [ { "type": "Pit" } ],
+    [ { "type": "Laser", "orientations": ["south"], "count": 1 } ]
+  ]
+]

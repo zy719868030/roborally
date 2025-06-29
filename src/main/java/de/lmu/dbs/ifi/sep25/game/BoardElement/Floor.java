@@ -1,8 +1,11 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents a floor tile in the game that serves as a basic passive element.
@@ -14,24 +17,25 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
  */
 @SuppressWarnings("unused")
 public class Floor extends BoardElement {
-    private static final Floor INSTANCE = new Floor();
+    private final static Map<String, Floor> INSTANCES = new HashMap<>();
     private String boardId;
     private boolean isOnBoard;
 
-    private Floor() {
-        this.isOnBoard = false;
-        this.boardId = "";
+    private Floor(String boardId) {
+        this.setIsOnBoard(true);
+        this.setBoardId(boardId);
     }
 
-    public static Floor getInstance() {
-        return INSTANCE;
+    public static Floor createFloor(String boardId) {
+        Floor floor = new Floor(boardId);
+        INSTANCES.putIfAbsent(boardId, floor);
+        return floor;
     }
 
-    public static Floor createFloor(Position position, String boardId) {
-        Floor floor = new Floor();
-        floor.setPosition(position);
-        floor.setBoardId(boardId);
-        floor.setIsOnBoard(true);
+    public static Floor getInstance(String boardId) {
+        Floor floor = INSTANCES.getOrDefault(boardId, null);
+        if (floor == null)
+            throw new IllegalArgumentException("No Floor instance with boardId " + boardId + " exists!");
         return floor;
     }
 
@@ -55,7 +59,7 @@ public class Floor extends BoardElement {
 
     @Override
     public void activate(Robot robot) {
-            // No effect
+        // No effect
     }
 
     @Override
@@ -77,6 +81,18 @@ public class Floor extends BoardElement {
     public String toString() {
         return "Floor at " + (position != null ? position.toString() : "unspecified position")
                 + (isOnBoard ? " on board " + boardId : " not on any board");
+    }
+
+    /**
+     * Converts this Floor instance into a FieldEmpty object from MessageDefinitions.
+     * This method is used to represent the current Floor instance in a format
+     * suitable for use in message definitions.
+     *
+     * @return A new instance of MessageDefinitions.FieldEmpty with the board ID of this Floor.
+     */
+    @Override
+    public MessageDefinitions.FieldEmpty toField() {
+        return new MessageDefinitions.FieldEmpty(boardId);
     }
 }
 

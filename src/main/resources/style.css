@@ -1,0 +1,211 @@
+.vbox {
+    -fx-background-image: url("/assets/cover_image.png");
+    -fx-background-size: cover;
+}
+
+.ready-button {
+    -fx-background-color: #28a745;
+    -fx-text-fill: white;
+    -fx-front-weight: bold;
+}
+.not-ready-button {
+    -fx-background-color: #dc3545;
+    -fx-text-fill: white;
+    -fx-front-weigh: bold;
+
+}
+/* Style for players who are ready: light green background */
+.player-ready {
+    -fx-background-color: #b6fcb6;
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+}
+/* Style for players who are not ready: transparent background */
+.player-unready {
+    -fx-background-color: transparent;
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+}
+.map-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #336699;
+    -fx-font-weight: bold;
+}
+
+.root-background {
+    -fx-background-image: url("/assets/lobby_back.png");
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-background-position: center;
+}
+.status-label {
+    -fx-text-fill: #00ffd0;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+
+/* Stil für den modernen Bereit-Button */
+.ready-button {
+    -fx-background-radius: 20;
+    -fx-background-color: #4488ff; /* Azul moderno */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+/* Stil für den roten Nicht-Bereit-Button */
+.not-ready-button {
+    -fx-background-radius: 20;
+    -fx-background-color: #e74c3c; /* Rojo */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+/* Stil für modernen "Senden"-Button */
+.senden-button {
+    -fx-background-color: #00ffd0;
+    -fx-text-fill: #0a0a0a;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 4, 0.3, 0, 0);
+    -fx-cursor: hand;
+}
+
+.senden-button:hover {
+    -fx-background-color: #00e6c0;
+}
+
+
+.chat-area {
+    -fx-background-color: rgba(20, 20, 30, 0.8);
+    -fx-control-inner-background: rgba(20, 20, 30, 0.8);
+    -fx-text-fill: #00ffd0;
+    -fx-font-family: "Consolas", "Segoe UI", monospace;
+    -fx-font-size: 13px;
+    -fx-background-radius: 12;
+    -fx-border-color: #00ffd0;
+    -fx-border-radius: 12;
+    -fx-padding: 10;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 5, 0.5, 0, 0);
+}
+
+.chat-input {
+    -fx-background-color: rgba(40, 40, 50, 0.9);
+    -fx-border-color: #00ffd0;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: #00ffd0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 6 10;
+}
+.combo-recipient {
+    -fx-background-color: rgba(40, 40, 50, 0.9);
+    -fx-border-color: #00ffd0;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: #00ffd0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 6 10;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 5, 0.3, 0, 0);
+}
+
+
+
+/* Stil für den Button, der die Dropdown-Liste öffnet */
+.combo-recipient .arrow-button {
+    -fx-background-color: transparent; /* Unsichtbarer Hintergrund */
+}
+
+/* Stil für den Pfeil (Icon) im Button */
+.combo-recipient .arrow {
+    -fx-background-color: #00ffd0; /* Cyanfarbiger Pfeil */
+}
+
+/* Stil für die Einträge (Listenzellen) im Dropdown-Menü */
+.combo-recipient .list-cell {
+    -fx-background-color: rgba(20, 20, 30, 0.95); /* Sehr dunkler Hintergrund */
+    -fx-text-fill: #00ffd0;                      /* Text in Cyan */
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 13px;
+}
+
+/* Stil beim Hover über einen Eintrag */
+.combo-recipient .list-cell:hover {
+    -fx-background-color: #004f4f; /* Abdunkelung beim Überfahren */
+    -fx-text-fill: #00ffd0;
+}
+.lobby-list {
+    -fx-background-color: rgba(20, 20, 30, 0.8);
+    -fx-control-inner-background: rgba(20, 20, 30, 0.8);
+    -fx-border-color: #00ffd0;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-font-family: "Consolas", monospace;
+    -fx-text-fill: #00ffd0;
+    -fx-padding: 5;
+}
+.lobby-box {
+    -fx-background-color: rgba(20, 20, 30, 0.8);
+    -fx-background-radius: 12;
+    -fx-border-color: #00ffd0;
+    -fx-border-radius: 12;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 6, 0.5, 0, 0);
+    -fx-text-fill: #00ffd0;
+}
+
+
+.lobby-box-ready {
+    -fx-background-color: rgba(255, 230, 100, 0.1);
+    -fx-border-color: #ffe664;
+    -fx-effect: dropshadow(gaussian, #ffe664, 8, 0.5, 0, 0);
+}
+
+.player-cell {
+    -fx-padding: 8 12;
+    -fx-font-size: 14px;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+}
+
+/* Spieler in bereit */
+.player-cell-ready {
+    -fx-background-color: rgba(40, 255, 120, 0.2);
+    -fx-border-color: #28a745;
+    -fx-border-radius: 8;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, #28a745, 6, 0.5, 0, 0);
+}
+
+/* Spieler nicht bereit */
+.player-cell-unready {
+    -fx-background-color: rgba(50, 50, 60, 0.2);
+    -fx-border-color: transparent;
+}
+
+.neon-thumbnail {
+    -fx-background-color: transparent;
+    -fx-border-color: #00ffd0;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 6, 0.5, 0, 0);
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.neon-thumbnail:hover {
+    -fx-border-color: #00ffee;
+    -fx-effect: dropshadow(gaussian, #00ffee, 10, 0.8, 0, 0);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-cursor: hand;
+
+
+}
+
