@@ -24,6 +24,18 @@
             </Filters>
         </File>
 
+        <!-- Alive log -->
+        <RollingFile name="HeartbeatFile"
+                     fileName="logs/heartbeat.log"
+                     filePattern="logs/heartbeat-%d{yyyy-MM-dd}.log.gz"
+                     append="false">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
+
+
         <!-- Per-client routing appender -->
         <Routing name="ClientRouting">
             <Routes pattern="$${ctx:clientId}">
@@ -50,6 +62,11 @@
         <!-- Logger for errors -->
         <Logger name="ErrorLogger" level="error" additivity="false">
             <AppenderRef ref="ErrorFile"/>
+        </Logger>
+
+        <!-- Logger for alive checks -->
+        <Logger name="heartbeatLogger" level="info" additivity="false">
+            <AppenderRef ref="HeartbeatFile"/>
         </Logger>
 
         <!-- Root logger for everything else -->

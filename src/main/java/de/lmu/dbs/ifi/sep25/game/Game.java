@@ -58,7 +58,7 @@ public class Game {
     private Game(String mapName) {
         players = new ArrayList<>();
         board = new Board(MapType.fromString(mapName));
-        currentPhase = GamePhase.SETUP;
+        currentPhase = null;
         selectedMap = mapName;
         currentPlayerTurn = new Stack<>();
 
@@ -344,7 +344,11 @@ public class Game {
      * @param phase The new game phase to be set. Must be one of the defined values in the {@code GamePhase} enum.
      */
     public void setPhase(GamePhase phase) {
-        appLogger.info("Exiting {} phase.", currentPhase);
+        if (currentPhase == null) {
+            appLogger.info("Setting initial phase to {}.", phase);
+        } else {
+            appLogger.info("Exiting {} phase.", currentPhase);
+        }
 
         this.currentPhase = phase;
 
@@ -678,7 +682,7 @@ public class Game {
                     throw new IllegalAccessError("determinePlayerOrder shot not be called in phase: " + currentPhase);
         }
 
-        appLogger.info("Current player order set: {}", currentPlayerTurn);
+        appLogger.info("Current player order set: {}", currentPlayerTurn.stream().map(Player::toString).toList());
     }
 
     // 5. Card and Action Methods

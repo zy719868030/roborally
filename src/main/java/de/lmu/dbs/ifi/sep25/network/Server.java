@@ -4,6 +4,8 @@ import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,7 +13,6 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 /**
  * Represents the game server that manages client connections, lobby management,
@@ -21,8 +22,9 @@ import java.util.regex.Pattern;
  */
 public class Server {
 
-    // 0. Singleton instance
+    // 0. Singleton instance and Loggers
     private static Server instance;
+    private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
 
     // 1. Constants / configuration
     private final String protocol = "Version 0.1";
@@ -108,6 +110,7 @@ public class Server {
     public void start() {
         System.out.println("Server started!");
         System.out.println("Waiting for clients...");
+
         initHeartbeat();
 
         try {
@@ -247,17 +250,37 @@ public class Server {
      */
     private void initHeartbeat() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        heartbeatLogger.info("\n========== HEARTBEAT CYCLE ==========");
+
         scheduler.scheduleAtFixedRate(() -> {
+            // Reset alive flag in checkLiveness and alive check client
             for (ClientHandler client : clients.keySet()) {
-                if (!client.isAlive()) {
-                    System.err.println("Client did not respond to Alive. Disconnecting...");
-                    client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
-                    client.closeAll();
-                } else {
-                    client.checkLiveness();
-                }
+                heartbeatLogger.info("\n--- Checking client: " + clients.getByKey(client) + " ---");
+
+                client.checkLiveness(); // sets alive = false and sends BodyAlive
+
+                heartbeatLogger.info("Alive set to false.");
+                heartbeatLogger.info("Sent Alive message to client " + clients.getByKey(client));
             }
-        }, 0, 5, TimeUnit.SECONDS);
+
+            // After a short delay, check if anyone failed to respond
+            scheduler.schedule(() -> {
+                for (ClientHandler client : clients.keySet()) {
+                    heartbeatLogger.info("\n>>> Checking response from client: {}", clients.getByKey(client));
+                    heartbeatLogger.info("Alive status: {}", client.isAlive());
+
+                    if (!client.isAlive()) {
+                        System.err.println("Client did not respond to Alive. Disconnecting...");
+                        heartbeatLogger.info("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
+                        client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
+                        client.closeAll();
+                    }
+                }
+
+            }, 4, TimeUnit.SECONDS); // ← Delay before checking response
+
+        }, 0, 5, TimeUnit.SECONDS); // Repeat full cycle every 5 seconds
     }
 
     /**
@@ -354,7 +377,8 @@ public class Server {
                 try {
                     int suffix = Integer.parseInt(name.substring(baseName.length() + 1));
                     maxSuffix = Math.max(maxSuffix, suffix);
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
             }
         }
 
@@ -364,9 +388,6 @@ public class Server {
 
         return baseName + "#" + (maxSuffix + 1);
     }
-
-
-
 
 
     /**

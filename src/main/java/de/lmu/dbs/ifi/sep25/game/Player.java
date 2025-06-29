@@ -409,4 +409,13 @@ public class Player {
     }
 
 
+    public String toString() {
+        return "Player{" +
+                "id=" + robot.getId() +
+                ", name='" + name + '\'' +
+                ", robot=" + robot +
+                ", register=" + register +
+                '}';
+    }
+
 }

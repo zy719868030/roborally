@@ -9,6 +9,7 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -20,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -40,7 +42,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClientHandler implements Runnable {
     // 0. Logger
-    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(ClientHandler.class);
+    private static final Logger appLogger = LogManager.getLogger(ClientHandler.class);
+    private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
@@ -57,7 +60,7 @@ public class ClientHandler implements Runnable {
     private final Server server;
 
     // 3. State flags
-    private volatile boolean alive = true;
+    private final AtomicBoolean alive = new AtomicBoolean(true);
     private volatile boolean mapSelecting = false;
     private CountDownLatch placementLatch;
 
@@ -163,8 +166,8 @@ public class ClientHandler implements Runnable {
      * directly on the {@code alive} field of the {@code ClientHandler} instance.
      */
     private void handleBodyAlive() {
-        appLogger.info("Set alive " + alive + ", for client: " + myID);
-        alive = true;
+        alive.set(true);
+        heartbeatLogger.info("Client {} set alive to: {}", myID, alive);
     }
 
 
@@ -451,8 +454,9 @@ public class ClientHandler implements Runnable {
      * and able to receive and process messages properly.
      */
     public void checkLiveness() {
-        appLogger.info("Checking liveness of client: " + myID + ". Sending Alive Message.");
-        alive = false;
+        heartbeatLogger.info("Checking liveness of client: {}. Sending Alive Message.", myID);
+        alive.set(false);
+        heartbeatLogger.info("Set alive to false");
         sendMessage(new Message<>(new BodyAlive()));
     }
 
@@ -540,7 +544,7 @@ public class ClientHandler implements Runnable {
                 writer.close();
             if (socket != null && !socket.isClosed())
                 socket.close();
-            alive = false;
+            alive.set(false);
             System.out.println("Closed connection for client handler.");
         } catch (IOException e) {
             System.err.println("Error closing resources for client: " + e.getMessage());
@@ -553,8 +557,8 @@ public class ClientHandler implements Runnable {
      * @return {@code true} if the client connection is alive, {@code false} otherwise
      */
     public boolean isAlive() {
-        appLogger.info("Returning to server if client is alive: " + myID + ": " + alive);
-        return alive;
+        heartbeatLogger.info("Returning to server if client is alive: " + myID + ", " + alive + ".");
+        return alive.get();
     }
 
     /**

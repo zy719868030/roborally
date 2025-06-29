@@ -329,6 +329,15 @@ public class Robot {
         System.out.println("Robot " + id + " replaces damage card with programming card");
     }
 
+    /**
+     * Returns a string representation of a robot object. Has a null check for position.
+     *
+     * @return String representation of robot object with id and position/direction
+     * **/
+    public String toString() {
+        return position == null ? "Robot " + id + " (no position or direction)" : "Robot " + id + " (" + position.x() + ", " + position.y() + ") " + direction;
+    }
+
 
 //    public void addEnergy(int amount) {
 //        this.energy += amount;

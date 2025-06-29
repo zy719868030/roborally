@@ -26,13 +26,13 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
-import java.util.Objects;
 
 public class Client {
     // 0. Logging
-//    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
     private static final Logger clientLogger = LogManager.getLogger("PerClientLogger");
-    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Client.class);
+    private static final Logger appLogger = LogManager.getLogger(Client.class);
+    private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
+    private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
@@ -127,10 +127,12 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                System.out.println("[DEBUG] JSON empfangen: " + json); // Test
+                System.out.println("[DEBUG] JSON received: " + json); // Test
+
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
                     if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
+
                         ThreadContext.put("clientId", ID.toString());
                         clientLogger.info("Received " + messageType + ": " + gsonPretty.toJson(JsonUtil.parseUnknown(json)));
                         ThreadContext.clearAll();
@@ -207,9 +209,14 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
-        appLogger.info("Alive received from server: " + ID + ", " + JsonUtil.parseMessage(json, BodyAlive.class));
+        heartbeatLogger.info("Alive received from server: {}, {}", ID, JsonUtil.parseMessage(json, BodyAlive.class));
+        System.out.println("[DEBUG] handleBodyAlive called at " + System.currentTimeMillis());
+        System.out.println("[DEBUG] socket closed? " + socket.isClosed());
+
         sendMessage(new Message<>(new BodyAlive()));
-        System.out.println("[DEBUG] Client sent Alive response");
+
+        System.out.println("[DEBUG] handleBodyAlive finished. Alive message sent.");
+        heartbeatLogger.info("Client {} sent Alive response.", ID);
     }
 
     /**
@@ -447,7 +454,6 @@ public class Client {
                 }
 
 
-
             } catch (IOException e) {
                 System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
                 e.printStackTrace();
@@ -535,7 +541,7 @@ public class Client {
         BodyCardPlayed body = message.messageBody();
         int clientID = body.clientID();
         String card = body.card();
-        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler"+clientID);
+        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
         String logMessage = playerName + "hat Karte gespielt" + card;
         System.out.println("[GAME]" + logMessage);
 
@@ -543,7 +549,7 @@ public class Client {
             GameController gameCtrl = ControllerRegistry.getGameController();
             if (gameCtrl != null) {
                 gameCtrl.appendChatMessage("[GAME]" + logMessage);
-                gameCtrl.showPlayedCard(clientID,card);
+                gameCtrl.showPlayedCard(clientID, card);
             } else {
                 System.err.println("[WARN] GameController ist null in handleBodyCardPlayed");
             }
@@ -594,13 +600,13 @@ public class Client {
         });
     }
 
-        /**
-         * Handles the "BodyActivePhase" message received from the server.
-         * This method processes a JSON string representing a {@code BodyActivePhase} message,
-         * extracts the phase information from the message body, and updates the client's internal state.
-         *
-         * @param json the JSON string containing the serialized {@code BodyActivePhase} message
-         */
+    /**
+     * Handles the "BodyActivePhase" message received from the server.
+     * This method processes a JSON string representing a {@code BodyActivePhase} message,
+     * extracts the phase information from the message body, and updates the client's internal state.
+     *
+     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+     */
     private void handleBodyActivePhase(String json) {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();
@@ -668,13 +674,13 @@ public class Client {
         });
     }
 
-        /**
-         * Handles a message indicating how many cards another player has received.
-         * This does not include the content of the cards, only the count,
-         * and is used to visually show hidden cards (e.g., card backs).
-         *
-         * @param json JSON string containing the client ID and number of cards
-         */
+    /**
+     * Handles a message indicating how many cards another player has received.
+     * This does not include the content of the cards, only the count,
+     * and is used to visually show hidden cards (e.g., card backs).
+     *
+     * @param json JSON string containing the client ID and number of cards
+     */
     private void handleBodyNotYourCards(String json) {
         Message<BodyNotYourCards> message = JsonUtil.parseMessage(json, BodyNotYourCards.class);
         BodyNotYourCards body = message.messageBody();
@@ -763,6 +769,7 @@ public class Client {
             }
         });
     }
+
     private void handleBodyTimerStarted(String json) {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
@@ -1152,8 +1159,9 @@ public class Client {
         try {
             writer.println(msg);
             writer.flush();
+            System.out.println("[DEBUG] writer error: " + writer.checkError());
         } catch (Exception e) {
-            System.err.println("Failed to send message: " + e.getMessage());
+            errorLogger.error("Failed to send message to client {}: {}", ID, e.getMessage());
         }
     }
 
@@ -1171,7 +1179,7 @@ public class Client {
             String json = gson.toJson(msg);
             sendMessage(json);
         } catch (Exception e) {
-            System.err.println("Failed to serialize and send message: " + e.getMessage());
+            errorLogger.error("Failed to serialize and send message: {}", e.getMessage(), e);
         }
     }
 
@@ -1229,9 +1237,9 @@ public class Client {
             if (reader != null) reader.close();
             if (writer != null) writer.close();
             if (socket != null && !socket.isClosed()) socket.close();
-            System.exit(0);
+//            System.exit(0);
         } catch (IOException e) {
-            System.err.println("Error closing client: " + e.getMessage());
+            errorLogger.error("Error closing client: {}", e.getMessage());
         }
     }
 
