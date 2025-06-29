@@ -205,13 +205,8 @@ public class MessageDefinitions {
         private final List<String> orientations;
         private final boolean active;
 
-
-        /**
-         * @param orientations direction in which laser faces
-         * @param count        laser number count (1-3)
-         */
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
-            this(isOnBoard, orientations, count, true); // Standardmäßig aktiv
+            this(isOnBoard, orientations, count, true); // default true
         }
 
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count, boolean active) {
@@ -225,19 +220,20 @@ public class MessageDefinitions {
             this.count = count;
             this.active = active;
         }
+
         public boolean isActive() {
             return active;
-        }
-
-
-        public List<String> orientations() {
-            return orientations;
         }
 
         public Integer count() {
             return count;
         }
+
+        public List<String> orientations() {
+            return orientations;
+        }
     }
+
 
     public static class FieldAntenna extends Field {
         private final List<String> orientations;

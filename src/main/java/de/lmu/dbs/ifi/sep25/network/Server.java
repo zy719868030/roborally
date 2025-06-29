@@ -474,8 +474,10 @@ public class Server {
         System.out.println("Creating new game with map " + mapName + "...");
         this.game = Game.getInstance(mapName);
         for (ClientHandler client : clients.keySet()) {
+            client.setGame(this.game); // Set the game instance for each client handler to avoid crashes
             game.addPlayer(client.getPlayer());
         }
+
         if (lobby.allReady()) {
             startGame();
         }

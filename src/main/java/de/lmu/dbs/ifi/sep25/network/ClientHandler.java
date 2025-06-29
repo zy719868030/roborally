@@ -60,7 +60,7 @@ public class ClientHandler implements Runnable {
 
     // 4. Game connection
     private Player player;
-    private final Game game;
+    private Game game;
 
 
     /**
@@ -77,8 +77,14 @@ public class ClientHandler implements Runnable {
         this.reader = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
         this.writer = new PrintWriter(socket.getOutputStream(), true);
         this.server = Server.getInstance();
-        this.game = server.getGame();
     }
+
+    public void setGame(Game game) {
+        System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
+        this.game = game;
+    }
+
+
 
     /**
      * Executes the main logic for handling incoming messages from a client.
@@ -155,6 +161,7 @@ public class ClientHandler implements Runnable {
     private void handleBodyAlive() {
         alive = true;
     }
+
 
     /**
      * Handles the processing of a "HelloServer" message body. This method parses the incoming JSON,
