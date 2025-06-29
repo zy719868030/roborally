@@ -73,8 +73,8 @@ public class LostBearings extends GameMap {
                 .forEach(pos -> elements.add(new EnergySpace(pos, boardId)));
 
         // Laser
-        elements.add(new Laser(new Position(9, 3), Direction.WEST, 1, boardId));
-        elements.add(new Laser(new Position(6, 6), Direction.EAST, 1, boardId));
+        elements.add(new Laser(new Position(9, 3), Direction.EAST, 1, boardId));
+        elements.add(new Laser(new Position(6, 6), Direction.WEST, 1, boardId));
 
         // Gear
         List.of(new Position(5, 5), new Position(7, 5), new Position(10, 4))
