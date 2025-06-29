@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import javafx.beans.property.ObjectProperty;
@@ -17,6 +18,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+
+import java.util.Random;
 
 /**
  * Controller für die Login-Oberfläche.
@@ -110,6 +113,60 @@ public class LoginController {
 
         Message<BodyPlayerValues> msg = new Message<>(new BodyPlayerValues(name, figure));
         ClientSingleton.getInstance().sendMessage(msg);
+    }
+    /**
+     * Wird aufgerufen, wenn der Nutzer auf "KI beitreten" klickt.
+     * Stellt eine Verbindung zum Server her und meldet einen Bot-Spieler automatisch an.
+     * Die Eingabefelder werden deaktiviert, um eine manuelle Eingabe zu verhindern.
+     *
+     * @param event Das zugehörige ActionEvent (nicht verwendet).
+     */
+    @FXML
+    private void handleBotLogin(ActionEvent event) {
+        // Eingabefelder deaktivieren, damit der Nutzer nichts mehr ändern kann
+        nameField.setDisable(true);
+        figureBox.setDisable(true);
+        hostField.setDisable(true);
+        portField.setDisable(true);
+
+        // Zufälligen Namen und Figur für den Bot wählen
+        String name = "KI-Spieler";
+        int figure = new Random().nextInt(6); // Zufällige Figur (0–5)
+
+        // Host und Port auslesen oder Standard setzen
+        String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
+        String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+
+        int port;
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException e) {
+            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
+            return;
+        }
+
+        try {
+            // Client erstellen und starten
+            Client client = new Client();
+            client.start(host, port);
+            ClientSingleton.setInstance(client);
+
+            // Bot als KI markieren (AI = true)
+            Message<MessageDefinitions.BodyHelloServer> hello = new Message<>(new MessageDefinitions.BodyHelloServer("Edle Eisbecher", true, "Version 0.1"));
+            client.sendMessage(hello);
+
+            // Spielerinformationen (Name, Figur) an den Server senden
+            client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+
+        } catch (Exception e) {
+            showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
+
+            // Falls Verbindung fehlschlägt, Felder wieder aktivieren
+            nameField.setDisable(false);
+            figureBox.setDisable(false);
+            hostField.setDisable(false);
+            portField.setDisable(false);
+        }
     }
 
     /**
