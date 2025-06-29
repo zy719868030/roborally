@@ -157,6 +157,7 @@ public class Client {
                         case "CardSelected" -> handleBodyCardSelected(json);
                         case "SelectionFinished" -> handleBodySelectionFinished(json);
                         case "TimerEnded" -> handleBodyTimerEnded(json);
+                        case "TimerStarted" -> handleBodyTimerStarted(json);
                         case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
                         case "CurrentCards" -> handleBodyCurrentCards(json);
                         case "ReplaceCard" -> handleBodyReplaceCard(json);
@@ -759,6 +760,16 @@ public class Client {
                 controller.markPlayerReady(body.clientID());
             } else {
                 System.err.println("[WARN] GameController is null in handleBodySelectionFinished");
+            }
+        });
+    }
+    private void handleBodyTimerStarted(String json) {
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.startCountdown();
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyTimerStarted");
             }
         });
     }

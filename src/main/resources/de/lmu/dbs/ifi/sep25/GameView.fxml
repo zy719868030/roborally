@@ -47,6 +47,11 @@
 
     <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->
     <VBox spacing="10" alignment="TOP_CENTER">
+        <!-- 🔔 TIMER LABEL -->
+        <Label fx:id="timerLabel"
+               text="Zeit: 30s"
+               styleClass="status-label"
+               visible="true" />
         <ScrollPane fitToWidth="true" fitToHeight="true">
             <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
         </ScrollPane>
