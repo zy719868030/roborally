@@ -1,9 +1,12 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Belts;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -49,6 +52,12 @@ public class GameController {
 
     private final Map<String, Image> tileImages = new HashMap<>();
     private Parent root;
+    @FXML
+    private Label timerLabel;
+
+    private Timeline countdownTimer;
+    private int secondsLeft = 30;
+
 
     @FXML
     public void initialize() {
@@ -181,10 +190,56 @@ public class GameController {
                         pane.getChildren().add(wallImg);
                     }
                 }
-
                 case "ConveyorBelt" -> {
+                    MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
+
+                    int speed = conveyor.speed(); // 1 = green, 2 = blue
+                    List<String> orientations = conveyor.directions();
+
+                    if (orientations == null || orientations.size() < 1) break;
+
+                    Direction outDir = Direction.fromString(orientations.get(0));
+                    List<Direction> inDirs = orientations.subList(1, orientations.size()).stream()
+                            .map(Direction::fromString)
+                            .toList();
+
+                    String colorPrefix = (speed == 2) ? "blue" : "green";
+
+                    String tileName;
+                    double rotation;
+
+                    if (inDirs.isEmpty()) {
+                        tileName = colorPrefix + "_conveyor_belt_straight";
+                        rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
+                    } else {
+                        Direction inDir = inDirs.get(0);
+                        int turn = getRelativeTurn(inDir, outDir);
+
+                        if (turn == 1) {
+                            tileName = colorPrefix + "_conveyor_corner_r";
+                        } else if (turn == -1) {
+                            tileName = colorPrefix + "_conveyor_corner_l";
+                        } else {
+                            tileName = colorPrefix + "_conveyor_belt_straight";
+                        }
+
+                        rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
+                    }
+
+                    ImageView beltImg = new ImageView(tileImages.get(tileName));
+                    beltImg.setFitWidth(TILE_SIZE);
+                    beltImg.setFitHeight(TILE_SIZE);
+                    beltImg.setRotate(rotation);
+
+                    pane.getChildren().add(beltImg);
+                }
+
+
+
+               /* case "ConveyorBelt" -> {
                     MessageDefinitions.FieldConveyorBelt belt = (MessageDefinitions.FieldConveyorBelt) element;
                     String color = belt.speed() == 2 ? "blue" : "green";
+
 
                     // Parse Direction enum aus Strings
                     Direction outDir = Direction.fromString(belt.directions().getFirst());
@@ -213,6 +268,7 @@ public class GameController {
                     pane.getChildren().add(imgView);
                 }
 
+*/
 
 
                 case "PushPanel" -> {
@@ -315,6 +371,35 @@ public class GameController {
         return pane;
     }
 
+
+    private int getCornerImageRotation(Direction inDir, Direction outDir) {
+        if (inDir == null || outDir == null) return 0;
+
+        return switch (inDir) {
+            case NORTH -> switch (outDir) {
+                case EAST -> 270;
+                case WEST -> 90;
+                default -> 0;
+            };
+            case EAST -> switch (outDir) {
+                case SOUTH -> 270;
+                case NORTH -> 90;
+                default -> 0;
+            };
+            case SOUTH -> switch (outDir) {
+                case WEST -> 270;
+                case EAST -> 90;
+                default -> 0;
+            };
+            case WEST -> switch (outDir) {
+                case NORTH -> 270;
+                case SOUTH -> 90;
+                default -> 0;
+            };
+        };
+    }
+
+
     private boolean isOpposite(String a, String b) {
         return (a.equals("top") && b.equals("bottom")) ||
                 (a.equals("bottom") && b.equals("top")) ||
@@ -373,33 +458,18 @@ public class GameController {
 //        };
 //    }
 
-    // 0 = gerade, 1 = rechts, -1 = links
+
     private int getRelativeTurn(Direction from, Direction to) {
-        return switch (from) {
-            case NORTH -> switch (to) {
-                case EAST -> 1;
-                case WEST -> -1;
-                default -> 0;
-            };
-            case EAST -> switch (to) {
-                case SOUTH -> 1;
-                case NORTH -> -1;
-                default -> 0;
-            };
-            case SOUTH -> switch (to) {
-                case WEST -> 1;
-                case EAST -> -1;
-                default -> 0;
-            };
-            case WEST -> switch (to) {
-                case NORTH -> 1;
-                case SOUTH -> -1;
-                default -> 0;
-            };
+        int delta = (to.ordinal() - from.ordinal() + 4) % 4;
+
+        return switch (delta) {
+            case 1 -> 1;   // Rechtsdrehung
+            case 3 -> -1;  // Linksdrehung
+            default -> 0;  // Gerade oder U-Turn (ignoriert U-Turn als Sonderfall)
         };
     }
 
-    /**
+    /**dd
      * Loads the tile images for various game elements and populates them into the `tileImages` map.
      * <p>
      * This method maps specific tile keys to corresponding image file paths stored in the assets folder.
@@ -427,7 +497,6 @@ public class GameController {
                 entry("wall_laser_2_off", "wall_laser_2_off.png"),
                 entry("wall_laser_3_on", "wall_laser_3.png"),
                 entry("wall_laser_3_off", "wall_laser_3_off.png"),
-                entry("Conveyor_green_Rotate", "green_conveyor_corner_r.png"),
                 entry("PushPanel_1", "pushpanel_1.png"),
                 entry("PushPanel_2", "pushpanel_2.png"),
                 entry("PushPanel_3", "pushpanel_3.png"),
@@ -450,10 +519,14 @@ public class GameController {
                 entry("reboot", "reboot.png"),
                 entry("antenna", "antenna.png"),
                 entry("black and white gears", "b&w_gear.png"),
-                entry("blue_conveyor_corner", "blue_conveyor_corner_r.png"),
+                entry("blue_conveyor_corner_r", "blue_conveyor_corner_r.png"),
+                entry("blue_conveyor_corner_l", "blue_conveyor_corner_l.png"),
                 entry("blue_conveyor_merge", "blue_conveyor_merge_triple.png"),
                 entry("blue_conveyor_split_left", "blue_conveyor_split_left.png"),
-                entry("blue_conveyor_split_right", "blue_conveyor_split_right.png")
+                entry("blue_conveyor_split_right", "blue_conveyor_split_right.png"),
+                entry("green_conveyor_corner_r", "green_conveyor_corner_r.png"),
+                entry("green_conveyor_corner_l", "green_conveyor_corner_l.png")
+
 
         );
 
@@ -772,8 +845,60 @@ public class GameController {
     public void markPlayerReady(int clientID) {
         appendChatMessage("[INFO] Spieler " + clientID + " ist bereit.");
     }
+/**
+ * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
+ *
+ * <p>Die Methode zeigt die verbleibende Zeit im `timerLabel` an und blendet das Label aus,
+ * wenn der Countdown abgelaufen ist. Der Timer wird in 1-Sekunden-Intervallen aktualisiert.</p>
+ *
+ * <p>Funktionsweise:</p>
+ * <ul>
+ *   <li>Setzt die verbleibende Zeit (`secondsLeft`) auf 30 Sekunden.</li>
+ *   <li>Zeigt das `timerLabel` an und aktualisiert es jede Sekunde.</li>
+ *   <li>Stoppt einen eventuell laufenden Timer, bevor ein neuer gestartet wird.</li>
+ *   <li>Blendet das `timerLabel` aus, wenn die Zeit abgelaufen ist.</li>
+ * </ul>
+ *
+ * <p>Diese Methode wird verwendet, um zeitgesteuerte Aktionen in der Benutzeroberfläche zu ermöglichen.</p>
+ */    public void startCountdown() {
+        secondsLeft = 30;
+        timerLabel.setText("Zeit: 30s");
+        timerLabel.setVisible(true);// Zeige das Label beim Start
 
-    public void showTimerEnded(List<Integer> slowPlayers) {
+
+        if (countdownTimer != null) countdownTimer.stop();
+
+        countdownTimer = new Timeline(
+                new KeyFrame(Duration.seconds(1), event -> {
+                    secondsLeft--;
+                    timerLabel.setText("Zeit: " + secondsLeft + "s");
+                    if (secondsLeft <= 0) {
+                        countdownTimer.stop();
+                        timerLabel.setText("Zeit abgelaufen!");
+                         timerLabel.setVisible(false); //ausblenden nach Ablauf
+                    }
+                })
+        );
+        countdownTimer.setCycleCount(30);
+        countdownTimer.play();
+    }
+
+   /**
+    * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
+    *
+    * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
+    * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
+    *
+    * <p>Funktionsweise:</p>
+    * <ul>
+    *   <li>Zeigt eine Nachricht im Chat an, dass die Zeit abgelaufen ist.</li>
+    *   <li>Listet die IDs der Spieler auf, die zu langsam waren, falls vorhanden.</li>
+    *   <li>Markiert diese Spieler visuell in der Empfänger-ComboBox (z. B. durch ein "✖" vor ihrem Namen).</li>
+    *   <li>Setzt die Auswahl in der ComboBox zurück, falls ein markierter Spieler ausgewählt war.</li>
+    * </ul>
+    *
+    * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
+    */ public void showTimerEnded(List<Integer> slowPlayers) {
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {

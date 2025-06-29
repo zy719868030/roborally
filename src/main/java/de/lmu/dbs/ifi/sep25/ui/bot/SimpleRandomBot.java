@@ -1,14 +1,17 @@
 package de.lmu.dbs.ifi.sep25.ui.bot;
 
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
+import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
-
+import java.util.ArrayList;
 import java.util.*;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class SimpleRandomBot extends RandomBot {
-    private static final String[] BOT_NAMES = {"Bot1", "Bot2", "Bot3", "Bot4"};
+    private static final boolean isBot = true;
+    private static final String[] BOT_NAMES = {"Bot1", "Bot2", "Bot3", "Bot4", "Bot5", "Bot6"};
     private static final int[] AVAILABLE_FIGURES = {0, 1, 2, 3, 4, 5};
     private static final String[] DIRECTIONS = {"top", "right", "bottom", "left"};
     private static final String[] CARD_TYPES = {"Move1", "Move2", "Move3", "TurnLeft", "TurnRight", "UTurn", "BackUp"}; // Replace with actual types
@@ -83,21 +86,50 @@ public class SimpleRandomBot extends RandomBot {
         int figure = AVAILABLE_FIGURES[random.nextInt(AVAILABLE_FIGURES.length)];
         sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
         System.out.println("[SimpleRandomBot] Sent PlayerValues: " + name + ", Figure: " + figure);
+        // Send ready status after initialization
+        sendMessage(new Message<>(new BodySetStatus(true)));
+        System.out.println("[SimpleRandomBot] Sent ready status");
+        // Set up ClientSingleton here
+        ClientSingleton.setInstance(new Client() {
+            @Override
+            public void start(String h, int p) throws IOException { SimpleRandomBot.this.start(h, p); }
+            @Override
+            public void sendMessage(Message<?> message) { SimpleRandomBot.this.sendMessage(message); }
+            @Override
+            public int getID() { return SimpleRandomBot.this.id; }
+            @Override
+            public void flushPendingPlayers() { /* No-op */ }
+        });
     }
+
+    private int figureRetryCount = 0;
+    private static final int MAX_RETRIES = AVAILABLE_FIGURES.length;
 
     private void handleBodyError(String json) {
         Message<BodyError> message = JsonUtil.parseMessage(json, BodyError.class);
         String error = message.messageBody().error();
         System.out.println("[SimpleRandomBot] Error: " + error);
-        if (error.contains("Figure already selected")) {
+        if (error.contains("Figure already selected") && figureRetryCount < MAX_RETRIES) {
+            // Try another figure
+            List<Integer> remainingFigures = Arrays.stream(AVAILABLE_FIGURES).boxed().collect(Collectors.toCollection(ArrayList::new));
+            for (int i = 0; i < figureRetryCount; i++) {
+                remainingFigures.remove(random.nextInt(remainingFigures.size()));
+            }
+            if (!remainingFigures.isEmpty()) {
             String name = BOT_NAMES[random.nextInt(BOT_NAMES.length)];
-            int figure = AVAILABLE_FIGURES[random.nextInt(AVAILABLE_FIGURES.length)];
+            int figure = remainingFigures.get(random.nextInt(remainingFigures.size()));
             sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
             System.out.println("[SimpleRandomBot] Retried PlayerValues: " + name + ", Figure: " + figure);
-        } else {
+            figureRetryCount++;
+            } else {
+            System.err.println("[SimpleRandomBot] Error: No figures available");
             closeAll();
         }
+    } else {
+        System.err.println("[SimpleRandomBot] Error: " + (figureRetryCount >= MAX_RETRIES ? "Max retries reached" : error));
+        closeAll();
     }
+}
 
     private void handleBodyCardPlayed(String json) {
         Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
@@ -116,22 +148,31 @@ public class SimpleRandomBot extends RandomBot {
     }
 
     private void handleBodyPlayerStatus(String json) {
-        Message<BodyPlayerStatus> message = JsonUtil.parseMessage(json, BodyPlayerStatus.class);
-        System.out.println("[SimpleRandomBot] Player status: ID=" + message.messageBody().clientID() +
-                ", Ready=" + message.messageBody().ready());
-        sendMessage(new Message<>(new BodySetStatus(true)));
-        System.out.println("[SimpleRandomBot] Set ready");
+        try {
+            Message<BodyPlayerStatus> message = JsonUtil.parseMessage(json, BodyPlayerStatus.class);
+            System.out.println("[SimpleRandomBot] Player status: ID=" + message.messageBody().clientID() +
+                    ", Ready=" + message.messageBody().ready());
+            //sendMessage(new Message<>(new BodySetStatus(true)));
+        } catch (Exception e) {
+            System.err.println("[SimpleRandomBot] Error handling PlayerStatus: " + e.getMessage());
+        }
+        //System.out.println("[SimpleRandomBot] Set ready");
     }
 
     private void handleRandomSelectMap(String json) {
-        Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
-        List<String> maps = message.messageBody().availableMaps();
-        if (maps != null && !maps.isEmpty()) {
-            String map = maps.get(random.nextInt(maps.size()));
-            sendMessage(new Message<>(new BodyMapSelected(map)));
-            System.out.println("[SimpleRandomBot] Selected map: " + map);
-        } else {
-            sendMessageSelf(new Message<>(new BodyError("No maps available")));
+        try {
+            Message<BodySelectMap> message = JsonUtil.parseMessage(json, BodySelectMap.class);
+            List<String> maps = message.messageBody().availableMaps();
+            if (maps != null && !maps.isEmpty()) {
+                String map = maps.get(random.nextInt(maps.size()));
+                sendMessage(new Message<>(new BodyMapSelected(map)));
+                System.out.println("[SimpleRandomBot] Selected map: " + map);
+            } else {
+                System.err.println("[SimpleRandomBot] Error: No maps available");
+                sendMessage(new Message<>(new BodyError("No maps available")));
+            }
+        }catch(Exception e) {
+            System.err.println("[SimpleRandomBot] Error handling SelectMap: " + e.getMessage());
         }
     }
 
@@ -351,11 +392,16 @@ public class SimpleRandomBot extends RandomBot {
     private record Position(int x, int y) {}
 
     public static void main(String[] args) {
-        SimpleRandomBot bot = new SimpleRandomBot();
-        try {
-            bot.start("localhost", 12345);
-        } catch (IOException e) {
-            System.err.println("[SimpleRandomBot] Failed to start: " + e.getMessage());
+        if(isBot) {
+            SimpleRandomBot bot = new SimpleRandomBot();
+            try {
+                bot.start("localhost", 12345);
+                System.out.println("[SimpleRandomBot] Bot started");
+            } catch (IOException e) {
+                System.err.println("[SimpleRandomBot] Failed to start: " + e.getMessage());
+            }
+        }else{
+            System.err.println("[SimpleRandomBot] Not running in bot mode");
         }
     }
 }

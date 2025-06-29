@@ -14,28 +14,31 @@ import de.lmu.dbs.ifi.sep25.network.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class Game {
     // Constants
     private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
+    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Game.class);
 
     // Singleton instance
     private static Game instance;
 
     // Game state
-    private GamePhase currentPhase = null;
+    private GamePhase currentPhase;
     private int currentRegister = 0;
     private int roundNumber = 0;
-    private int currentPlayerIndex;
 
     // Core game components
     private final Board board;
     private final List<Player> players;
-    private Player currentPlayer;
     private final String selectedMap;
+    private final Stack<Player> currentPlayerTurn;
 
     // Card decks
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
@@ -55,9 +58,9 @@ public class Game {
     private Game(String mapName) {
         players = new ArrayList<>();
         board = new Board(MapType.fromString(mapName));
-        currentPlayer = null;
         currentPhase = GamePhase.SETUP;
         selectedMap = mapName;
+        currentPlayerTurn = new Stack<>();
 
         players.stream().forEach(p -> p.getRobot().setBoard(board));
 //        mapSelectionPending = true;
@@ -200,13 +203,16 @@ public class Game {
     public void startGameLoop() {
         // Setup phase
         setPhase(GamePhase.SETUP);
+        determinePlayerOrder();
         handleSetupPhase();
+
+        appLogger.info("Finished setup phase. Moving to main loop.");
 
         // Game continues until a player wins
         do {
             // Start a new round
             roundNumber++;
-            System.out.println("Starting round " + roundNumber);
+            appLogger.info("Starting round {}.", roundNumber);
 
             // Programming phase
             setPhase(GamePhase.PROGRAMMING);
@@ -214,6 +220,7 @@ public class Game {
 
             // Activation phase
             setPhase(GamePhase.ACTIVATION);
+            determinePlayerOrder();
             handleActivationPhase();
 
             // Check if the game has ended
@@ -337,21 +344,13 @@ public class Game {
      * @param phase The new game phase to be set. Must be one of the defined values in the {@code GamePhase} enum.
      */
     public void setPhase(GamePhase phase) {
+        appLogger.info("Exiting {} phase.", currentPhase);
+
         this.currentPhase = phase;
-        broadcastCurrentPhase();
 
-//        // Trigger the appropriate processing as needed.
-//        switch(phase) {
-//            case SETUP: handleSetupPhase(); break;
-//            case PROGRAMMING: handleProgrammingPhase(); break;
-//            case ACTIVATION: handleActivationPhase(); break;
-//        }
-    }
+        appLogger.info("Set new phase and broadcasted: {}.", currentPhase);
 
-    /**
-     * Broadcast the current game phase to all clients
-     */
-    private void broadcastCurrentPhase() {
+        // TODO @Lukas broadcast current phase
         Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyActivePhase(currentPhase.getValue())));
     }
 
@@ -370,8 +369,6 @@ public class Game {
      * Handle the programming phase
      */
     private void handleProgrammingPhase() {
-        broadcastCurrentPhase();
-
         // Distribute programming cards to each player
         for (Player player : players) {
             // Clear previous registers if necessary
@@ -423,14 +420,12 @@ public class Game {
      * Handle the activation phase
      */
     private void handleActivationPhase() {
-        broadcastCurrentPhase();
-
         // Activate all five registers
         for (currentRegister = 0; currentRegister < 5; currentRegister++) {
             System.out.println("Activating register " + (currentRegister + 1));
 
             // Sort players by priority
-            List<Player> sortedPlayers = determinePlayerOrder();
+            List<Player> sortedPlayers = new ArrayList<>(currentPlayerTurn);
 
             // Collect all cards from players in the current register
             List<MessageDefinitions.ActiveCard> activeCards = new ArrayList<>();
@@ -470,42 +465,28 @@ public class Game {
      * Handle the initial placement phase, allowing players to select their starting positions in order of connection
      */
     public void initPlacement() {
-        final List<ClientHandler> clients = Server.getInstance().getLobby().getClients();
-        final int clientCount = clients.size();
+        while (!currentPlayerTurn.isEmpty()) {
+            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
 
-        if (clientCount == 0) {
-            // If there is no client, proceed directly to the next stage.
-            setPhase(GamePhase.PROGRAMMING);
-            handleProgrammingPhase();
-            return;
-        }
+            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
+            currentPlayerConnection.setPlacementLatch(latch);
 
-        final CountDownLatch latch = new CountDownLatch(clientCount);
-
-        for (ClientHandler handler : clients) {
-            int clientID = handler.getMyID();
-
-            handler.setPlacementLatch(latch);
-
-            // TODO @Lukas send CurrentPlayer
-            handler.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(clientID)
+            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
+            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
             ));
-        }
 
-        try {
-            boolean completed = latch.await(60, TimeUnit.SECONDS);
-            if (!completed) {
-                System.err.println("Placement phase timed out, proceeding to next phase");
+            try {
+                boolean completed = latch.await(30, TimeUnit.SECONDS); // Wait until current player confirms placement
+                if (!completed) {
+                    errorLogger.error("Placement phase timed out for client {}, closing client and connection.", currentPlayerConnection.getMyID());
+                    currentPlayerConnection.closeAll();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Interrupted while waiting for placements.");
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.err.println("Interrupted while waiting for placements.");
         }
-
-        System.out.println("Setup phase completed, proceeding to programming phase");
-        setPhase(GamePhase.PROGRAMMING);
-        handleProgrammingPhase();
     }
 
     /**
@@ -648,103 +629,56 @@ public class Game {
     /**
      * Determine player order based on priority
      */
-    private List<Player> determinePlayerOrder() {
-        List<Player> sortedPlayers = new ArrayList<>(players);
-
-        // Determine priority based on the antenna on the board
-        Position antennaPosition = board.getAntennaPosition();
-
-        if (antennaPosition == null) {
-            // If there is no antenna position, return the default order.
-            return sortedPlayers;
+    private void determinePlayerOrder() {
+        if (!currentPlayerTurn.isEmpty()) {
+            appLogger.info("Current player order not empty, repopulating.");
         }
-
-        // First sort by distance to the antenna, but only for robots with valid positions
-        sortedPlayers.sort(Comparator.comparingInt(p -> {
-            Robot robot = p.getRobot();
-            Position robotPos = robot.getPosition();
-            // Add null check
-            if (robotPos == null) {
-                return Integer.MAX_VALUE; // Robots without positions are ranked last.
+        currentPlayerTurn.clear();
+        switch (currentPhase) {
+            case SETUP -> {
+                currentPlayerTurn.addAll(players.reversed());
             }
-            return robotPos.distanceTo(antennaPosition);
-        }));
+            case ACTIVATION -> {
+                List<Player> sortedPlayers = new ArrayList<>(players);
 
-        // If players have the same distance, handle according to rules
-        // TODO:Simplified here, actual implementation should be more complex
+                // Determine priority based on the antenna on the board
+                Position antennaPosition = board.getAntennaPosition();
 
-
-        // TODO @lukas:Broadcast current player order
-        for (Player player : sortedPlayers) {
-            MessageDefinitions.Message<MessageDefinitions.BodyCurrentPlayer> message = new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(player.getRobot().getId()));
-            Server.getInstance().broadcastMessage(message);
-        }
-
-        return sortedPlayers;
-    }
-
-    public void setCurrentPlayer() {
-        if (players.isEmpty()) return;
-        // Use antenna-based priority for Setup Phase (Phase 0)
-        if (currentPhase == GamePhase.SETUP) {
-            Position antennaPos = board.getAntennaPosition();
-            Antenna antenna = null;
-            for (BoardElement element : board.getElements(antennaPos.x(), antennaPos.y())) {
-                if (element instanceof Antenna) {
-                    antenna = (Antenna) element;
+                if (antennaPosition == null) {
+                    // If there is no antenna position, return the default order.
+                    errorLogger.error("No antenna position found. currentPlayerTurn unmodified.");
                     break;
                 }
-            }
 
-            if (antenna == null) {
-                throw new IllegalStateException("Antenna must be present on the board.");
-            } else {
-                // Sort players by distance to antenna
-                Map<Integer, List<Robot>> distanceGroups = new HashMap<>();
-                for (Player p : players) {
+                // First sort by distance to the antenna, but only for robots with valid positions
+                sortedPlayers.sort(Comparator.comparingInt(p -> {
                     Robot robot = p.getRobot();
                     Position robotPos = robot.getPosition();
-                    if (robotPos != null && !board.hasRobotFallen(robot)) {
-                        int distance = antenna.distanceToRobot(robotPos);
-                        distanceGroups.computeIfAbsent(distance, k -> new ArrayList<>()).add(robot);
+                    // Add null check
+                    if (robotPos == null) {
+                        return Integer.MAX_VALUE; // Robots without positions are ranked last.
                     }
+                    return robotPos.distanceTo(antennaPosition);
+                }));
+
+                // If players have the same distance, handle according to rules
+                // TODO:Simplified here, actual implementation should be more complex
+
+
+                // TODO @lukas:Broadcast current player order
+                for (Player player : sortedPlayers) {
+                    MessageDefinitions.Message<MessageDefinitions.BodyCurrentPlayer> message = new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyCurrentPlayer(player.getRobot().getId()));
+                    Server.getInstance().broadcastMessage(message);
                 }
-                List<Player> sortedPlayers = new ArrayList<>();
-                List<Integer> sortedDistances = new ArrayList<>(distanceGroups.keySet());
-                Collections.sort(sortedDistances);
-                for (int distance : sortedDistances) {
-                    List<Robot> robots = antenna.sortTiedRobotsByPriority(distanceGroups.get(distance));
-                    for (Robot robot : robots) {
-                        for (Player p : players) {
-                            if (p.getRobot().equals(robot)) {
-                                sortedPlayers.add(p);
-                                break;
-                            }
-                        }
-                    }
-                }
-                // Include fallen robots (lowest priority)
-                for (Player p : players) {
-                    if (!sortedPlayers.contains(p)) {
-                        sortedPlayers.add(p);
-                    }
-                }
-                // Set current player to the next in sorted order
-                currentPlayerIndex = (currentPlayerIndex + 1) % sortedPlayers.size();
-                currentPlayer = sortedPlayers.get(currentPlayerIndex);
+
+                currentPlayerTurn.addAll(sortedPlayers.reversed());
             }
-        } else {
-            // For other phases, use round-robin (to be updated if needed)
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-            currentPlayer = players.get(currentPlayerIndex);
+            default ->
+                    throw new IllegalAccessError("determinePlayerOrder shot not be called in phase: " + currentPhase);
         }
-        // TODO @lukas Send CurrentPlayer message
-        for (Player p : players) {
-            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(currentPlayer.getRobot().getId())
-            ));
-        }
+
+        appLogger.info("Current player order set: {}", currentPlayerTurn);
     }
 
     // 5. Card and Action Methods

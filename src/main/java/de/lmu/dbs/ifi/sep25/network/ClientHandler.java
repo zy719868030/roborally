@@ -9,6 +9,7 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
 import de.lmu.dbs.ifi.sep25.utils.JsonUtil;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,6 +39,8 @@ import java.util.concurrent.TimeUnit;
  * broadcasting messages, client lifecycle management, and error handling.
  */
 public class ClientHandler implements Runnable {
+    // 0. Logger
+    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(ClientHandler.class);
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
@@ -132,6 +135,7 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
+            e.printStackTrace();
             closeAll();
         }
     }
@@ -159,6 +163,7 @@ public class ClientHandler implements Runnable {
      * directly on the {@code alive} field of the {@code ClientHandler} instance.
      */
     private void handleBodyAlive() {
+        appLogger.info("Set alive " + alive + ", for client: " + myID);
         alive = true;
     }
 
@@ -446,6 +451,7 @@ public class ClientHandler implements Runnable {
      * and able to receive and process messages properly.
      */
     public void checkLiveness() {
+        appLogger.info("Checking liveness of client: " + myID + ". Sending Alive Message.");
         alive = false;
         sendMessage(new Message<>(new BodyAlive()));
     }
@@ -547,6 +553,7 @@ public class ClientHandler implements Runnable {
      * @return {@code true} if the client connection is alive, {@code false} otherwise
      */
     public boolean isAlive() {
+        appLogger.info("Returning to server if client is alive: " + myID + ": " + alive);
         return alive;
     }
 

@@ -32,6 +32,7 @@ public class Client {
     // 0. Logging
 //    private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
     private static final Logger clientLogger = LogManager.getLogger("PerClientLogger");
+    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Client.class);
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
@@ -156,6 +157,7 @@ public class Client {
                         case "CardSelected" -> handleBodyCardSelected(json);
                         case "SelectionFinished" -> handleBodySelectionFinished(json);
                         case "TimerEnded" -> handleBodyTimerEnded(json);
+                        case "TimerStarted" -> handleBodyTimerStarted(json);
                         case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
                         case "CurrentCards" -> handleBodyCurrentCards(json);
                         case "ReplaceCard" -> handleBodyReplaceCard(json);
@@ -177,6 +179,7 @@ public class Client {
             }
         } catch (IOException e) {
             System.err.println("Disconnected from server.");
+            e.printStackTrace();
             closeAll();
         }
     }
@@ -204,7 +207,7 @@ public class Client {
      * @param json the JSON string containing the serialized BodyAlive message
      */
     private void handleBodyAlive(String json) {
-        System.out.println("[DEBUG] Alive empfangen und beantwortet"); //TEST
+        appLogger.info("Alive received from server: " + ID + ", " + JsonUtil.parseMessage(json, BodyAlive.class));
         sendMessage(new Message<>(new BodyAlive()));
         System.out.println("[DEBUG] Client sent Alive response");
     }
@@ -757,6 +760,16 @@ public class Client {
                 controller.markPlayerReady(body.clientID());
             } else {
                 System.err.println("[WARN] GameController is null in handleBodySelectionFinished");
+            }
+        });
+    }
+    private void handleBodyTimerStarted(String json) {
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.startCountdown();
+            } else {
+                System.err.println("[WARN] GameController is null in handleBodyTimerStarted");
             }
         });
     }
