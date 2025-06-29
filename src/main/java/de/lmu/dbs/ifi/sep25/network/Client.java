@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
+import java.util.Objects;
 
 public class Client {
     // 0. Logging
@@ -204,7 +205,8 @@ public class Client {
      */
     private void handleBodyAlive(String json) {
         System.out.println("[DEBUG] Alive empfangen und beantwortet"); //TEST
-        sendMessage(json);
+        sendMessage(new Message<>(new BodyAlive()));
+        System.out.println("[DEBUG] Client sent Alive response");
     }
 
     /**
@@ -742,7 +744,7 @@ public class Client {
         Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
         BodyCardSelected body = message.messageBody();
 
-        if (body.clientID().equals(ID) && body.filled()) {
+        if (Objects.equals(body.clientID(), ID)) {
             if (firstReadyRegistry) {
                 sendMessage(new Message<>(new BodyTimerStarted()));
             }

@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class Game {
     // Constants
@@ -471,6 +472,14 @@ public class Game {
     public void initPlacement() {
         final List<ClientHandler> clients = Server.getInstance().getLobby().getClients();
         final int clientCount = clients.size();
+
+        if (clientCount == 0) {
+            // If there is no client, proceed directly to the next stage.
+            setPhase(GamePhase.PROGRAMMING);
+            handleProgrammingPhase();
+            return;
+        }
+
         final CountDownLatch latch = new CountDownLatch(clientCount);
 
         for (ClientHandler handler : clients) {
@@ -485,11 +494,18 @@ public class Game {
         }
 
         try {
-            latch.await();
+            boolean completed = latch.await(60, TimeUnit.SECONDS);
+            if (!completed) {
+                System.err.println("Placement phase timed out, proceeding to next phase");
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             System.err.println("Interrupted while waiting for placements.");
         }
+
+        System.out.println("Setup phase completed, proceeding to programming phase");
+        setPhase(GamePhase.PROGRAMMING);
+        handleProgrammingPhase();
     }
 
     /**
@@ -638,9 +654,21 @@ public class Game {
         // Determine priority based on the antenna on the board
         Position antennaPosition = board.getAntennaPosition();
 
-        // First sort by distance to the antenna
-        sortedPlayers.sort(Comparator.comparingInt(p ->
-                p.getRobot().getPosition().distanceTo(antennaPosition)));
+        if (antennaPosition == null) {
+            // If there is no antenna position, return the default order.
+            return sortedPlayers;
+        }
+
+        // First sort by distance to the antenna, but only for robots with valid positions
+        sortedPlayers.sort(Comparator.comparingInt(p -> {
+            Robot robot = p.getRobot();
+            Position robotPos = robot.getPosition();
+            // Add null check
+            if (robotPos == null) {
+                return Integer.MAX_VALUE; // Robots without positions are ranked last.
+            }
+            return robotPos.distanceTo(antennaPosition);
+        }));
 
         // If players have the same distance, handle according to rules
         // TODO:Simplified here, actual implementation should be more complex
@@ -1089,6 +1117,11 @@ public class Game {
 
             Position position = robot.getPosition();
             Direction direction = robot.getDirection();
+
+            // Add null check - skip if robot does not yet have position or direction
+            if (position == null || direction == null) {
+                continue;
+            }
 
             // Get the position in front of the robot
             Position nextPos = position.move(direction);

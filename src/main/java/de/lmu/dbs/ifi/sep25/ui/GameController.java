@@ -279,7 +279,7 @@ public class GameController {
 
             }
 //startpoint
-            boolean isStartPoint = elements.stream().anyMatch(e -> e.type().equals("StartPoint"));
+        boolean isStartPoint = elements.stream().anyMatch(e -> e.type().equals("StartPoint"));
 
             if (isStartPoint) {
                 pane.setOnMouseClicked(event -> {
@@ -296,7 +296,13 @@ public class GameController {
 
                     ClientSingleton.getInstance().sendMessage(message);
 
-                    System.out.println("[DEBUG] sending StartingPointSelected: (" + x + ", " + y + ") Richtung: " + direction + ")");
+                    System.out.println("[DEBUG] sending StartingPointSelected: (" + x + ", " + y + ") Direction: " + direction + ")");
+
+                    // Disable clicks on the selected starting position
+                    pane.setOnMouseClicked(null);
+                    pane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
+
+                    appendChatMessage("[INFO] Starting position selected at (" + x + ", " + y + ")");
                 });
 
                 pane.setStyle("-fx-border-color: yellow; -fx-border-width: 2px;"); // visual
@@ -531,6 +537,23 @@ public class GameController {
     }
 
     public void updatePhase(String phaseName) {
+        boolean isSetupPhase = "Aufbauphase".equals(phaseName);
+
+        // Update availability of click start position depending on phase
+        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
+            if (node instanceof StackPane pane) {
+                // Update the availability of the starting position click based on the stage
+                if (pane.getOnMouseClicked() != null) {
+                    if (!isSetupPhase) {
+                        // Disable clicks outside the setup phase.
+                        pane.setOnMouseClicked(null);
+                        pane.setStyle("-fx-border-color: gray; -fx-border-width: 2px;");
+                    }
+                }
+            }
+        }
+
+        appendChatMessage("[INFO] Current phase: " + phaseName);
     }
 
     @FXML
