@@ -45,12 +45,39 @@ public abstract class RandomBot {
         System.out.println("[RandomBot] Started on " + host + ":" + port);
     }
 
-    protected void sendMessage(Message<?> message) {
+    /*protected void sendMessage(Message<?> message) {
         if (writer != null) {
             String json = gson.toJson(message);
             writer.println(json);
             writer.flush();
             System.out.println("[RandomBot] Sent: " + json);
+        }
+    }*/
+    protected void sendMessage(Message<?> message) {
+        if (writer != null && !socket.isClosed()) {
+            String json = gson.toJson(message);
+            writer.println(json);
+            writer.flush();
+            String messageType = message.messageType();
+            String details = "";
+            if (messageType.equals("HelloServer")) {
+                BodyHelloServer body = (BodyHelloServer) message.messageBody();
+                details = "group=" + body.group() + ", isAI=" + body.isAI() + ", protocol=" + body.protocol();
+            } else if (messageType.equals("PlayerValues")) {
+                BodyPlayerValues body = (BodyPlayerValues) message.messageBody();
+                details = "name=" + body.name() + ", figure=" + body.figure();
+            } else if (messageType.equals("SetStatus")) {
+                BodySetStatus body = (BodySetStatus) message.messageBody();
+                details = "ready=" + body.ready();
+            } else if (messageType.equals("MapSelected")) {
+                BodyMapSelected body = (BodyMapSelected) message.messageBody();
+                details = "map=" + body.map();
+            } else if (messageType.equals("Alive")) {
+                details = "response";
+            }
+            System.out.println("[RandomBot] Sent message: " + messageType + (details.isEmpty() ? "" : " (" + details + ")"));
+        } else {
+            System.err.println("[RandomBot] Cannot send message: Writer null or socket closed");
         }
     }
 
@@ -69,7 +96,7 @@ public abstract class RandomBot {
     protected void listenForMessages() {
         try {
             String json;
-            while ((json = reader.readLine()) != null) {
+            while ((json = reader.readLine()) != null && !socket.isClosed()) {
                 System.out.println("[RandomBot] Received: " + json);
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
