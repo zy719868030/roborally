@@ -913,11 +913,11 @@ public class Game {
                                 }
 
                                 //TODO @lukas:MessageDefinitions.BodyDrawDamage
-//                                Server.getInstance().broadcastMessage(
-//                                        new MessageDefinitions.Message<>(
-//                                                MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
-//                                        )
-//                                );
+                                Server.getInstance().broadcastMessage(
+                                        new MessageDefinitions.Message<>(
+                                                new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
+                                        )
+                                );
                             }
                         }
                     }

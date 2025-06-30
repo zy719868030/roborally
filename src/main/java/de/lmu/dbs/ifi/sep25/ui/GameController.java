@@ -57,6 +57,9 @@ public class GameController {
 
     private Timeline countdownTimer;
     private int secondsLeft = 30;
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
+    @FXML private HBox discardPileBox;
+    @FXML private Label phaseLabel;
 
 
     @FXML
@@ -206,24 +209,64 @@ public class GameController {
                     String colorPrefix = (speed == 2) ? "blue" : "green";
 
                     String tileName;
-                    double rotation;
+                    double rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
 
                     if (inDirs.isEmpty()) {
                         tileName = colorPrefix + "_conveyor_belt_straight";
-                        rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
-                    } else {
+//                      rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
+                    } else if (inDirs.size() == 1) {
                         Direction inDir = inDirs.get(0);
-                        int turn = getRelativeTurn(inDir, outDir);
 
-                        if (turn == 1) {
-                            tileName = colorPrefix + "_conveyor_corner_r";
-                        } else if (turn == -1) {
-                            tileName = colorPrefix + "_conveyor_corner_l";
-                        } else {
+                        if (inDir.turnAround().equals(outDir)) {
                             tileName = colorPrefix + "_conveyor_belt_straight";
+                        } else {
+                            // The input and output directions are not opposite, it is a corner conveyor belt,
+                            // determine whether it is left turn or right turn.
+                            int turn = getRelativeTurn(inDir, outDir);
+                            if (turn == 1) {
+                                tileName = colorPrefix + "_conveyor_corner_r";
+                            } else {
+                                tileName = colorPrefix + "_conveyor_corner_l";
+                            }
+                        }
+                    } else {
+                        boolean isMerge = true;
+                        // Check if there is any input direction that is not pointing in the direction of the output.
+                        for (Direction inDir : inDirs) {
+                            if (!inDir.turnAround().equals(outDir)) {
+                                isMerge = false;
+                                break;
+                            }
                         }
 
-                        rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
+                        if (isMerge) {
+                            // All inputs are the reverse of the outputs, which is a merge conveyor belt.
+                            tileName = colorPrefix + "_conveyor_merge";
+                        } else {
+                            // There is an input that is not the reverse of the output.
+                            // This is a separate conveyor belt. Find the input direction that is not the reverse of the output.
+                            Direction nonOppositeInDir = null;
+                            for (Direction inDir : inDirs) {
+                                if (!inDir.turnAround().equals(outDir)) {
+                                    nonOppositeInDir = inDir;
+                                    break;
+                                }
+                            }
+
+                            // Determine the direction of separation
+                            if (nonOppositeInDir != null) {
+                                int turn = getRelativeTurn(outDir, nonOppositeInDir);
+                                if (turn == 1) {
+                                    tileName = colorPrefix + "_conveyor_split_right";
+                                } else {
+                                    tileName = colorPrefix + "_conveyor_split_left";
+                                }
+                            } else {
+                                // Safety measures: If no opposite input direction is found, use a straight conveyor belt.
+                                tileName = colorPrefix + "_conveyor_belt_straight";
+                                logger.warn("无法确定传送带类型，使用默认直线传送带");
+                            }
+                        }
                     }
 
                     ImageView beltImg = new ImageView(tileImages.get(tileName));
@@ -611,6 +654,10 @@ public class GameController {
 
     public void updatePhase(String phaseName) {
         boolean isSetupPhase = "Aufbauphase".equals(phaseName);
+        // Label aktualisieren
+        if (phaseLabel != null) {
+            phaseLabel.setText("Phase: " + phaseName);
+        }
 
         // Update availability of click start position depending on phase
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
@@ -625,8 +672,18 @@ public class GameController {
                 }
             }
         }
-
+        // Info in Chat
         appendChatMessage("[INFO] Current phase: " + phaseName);
+    }
+    public void updateDiscardPile(List<String> discardedCards) {
+        discardPileBox.getChildren().clear();
+
+        for (String card : discardedCards) {
+            ImageView cardImage = new ImageView(new Image(getClass().getResourceAsStream("/cards/" + card + ".png")));
+            cardImage.setFitWidth(60);
+            cardImage.setFitHeight(90);
+            discardPileBox.getChildren().add(cardImage);
+        }
     }
 
     @FXML
@@ -864,6 +921,7 @@ public class GameController {
         secondsLeft = 30;
         timerLabel.setText("Zeit: 30s");
         timerLabel.setVisible(true);// Zeige das Label beim Start
+        timerLabel.setManaged(true);
 
 
         if (countdownTimer != null) countdownTimer.stop();
@@ -875,15 +933,20 @@ public class GameController {
                     if (secondsLeft <= 0) {
                         countdownTimer.stop();
                         timerLabel.setText("Zeit abgelaufen!");
-                         timerLabel.setVisible(false); //ausblenden nach Ablauf
+                        hideCountdown(); //ausblenden nach Ablauf
                     }
                 })
         );
         countdownTimer.setCycleCount(30);
         countdownTimer.play();
     }
+    public void hideCountdown() {
+        timerLabel.setVisible(false);
+        timerLabel.setManaged(false);
+    }
 
-   /**
+
+    /**
     * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
     *
     * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
@@ -899,6 +962,7 @@ public class GameController {
     *
     * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
     */ public void showTimerEnded(List<Integer> slowPlayers) {
+        hideCountdown();
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
