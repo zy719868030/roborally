@@ -57,6 +57,7 @@ public class GameController {
 
     private Timeline countdownTimer;
     private int secondsLeft = 30;
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
 
 
     @FXML
@@ -206,24 +207,64 @@ public class GameController {
                     String colorPrefix = (speed == 2) ? "blue" : "green";
 
                     String tileName;
-                    double rotation;
+                    double rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
 
                     if (inDirs.isEmpty()) {
                         tileName = colorPrefix + "_conveyor_belt_straight";
-                        rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
-                    } else {
+//                      rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
+                    } else if (inDirs.size() == 1) {
                         Direction inDir = inDirs.get(0);
-                        int turn = getRelativeTurn(inDir, outDir);
 
-                        if (turn == 1) {
-                            tileName = colorPrefix + "_conveyor_corner_r";
-                        } else if (turn == -1) {
-                            tileName = colorPrefix + "_conveyor_corner_l";
-                        } else {
+                        if (inDir.turnAround().equals(outDir)) {
                             tileName = colorPrefix + "_conveyor_belt_straight";
+                        } else {
+                            // The input and output directions are not opposite, it is a corner conveyor belt,
+                            // determine whether it is left turn or right turn.
+                            int turn = getRelativeTurn(inDir, outDir);
+                            if (turn == 1) {
+                                tileName = colorPrefix + "_conveyor_corner_r";
+                            } else {
+                                tileName = colorPrefix + "_conveyor_corner_l";
+                            }
+                        }
+                    } else {
+                        boolean isMerge = true;
+                        // Check if there is any input direction that is not pointing in the direction of the output.
+                        for (Direction inDir : inDirs) {
+                            if (!inDir.turnAround().equals(outDir)) {
+                                isMerge = false;
+                                break;
+                            }
                         }
 
-                        rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
+                        if (isMerge) {
+                            // All inputs are the reverse of the outputs, which is a merge conveyor belt.
+                            tileName = colorPrefix + "_conveyor_merge";
+                        } else {
+                            // There is an input that is not the reverse of the output.
+                            // This is a separate conveyor belt. Find the input direction that is not the reverse of the output.
+                            Direction nonOppositeInDir = null;
+                            for (Direction inDir : inDirs) {
+                                if (!inDir.turnAround().equals(outDir)) {
+                                    nonOppositeInDir = inDir;
+                                    break;
+                                }
+                            }
+
+                            // Determine the direction of separation
+                            if (nonOppositeInDir != null) {
+                                int turn = getRelativeTurn(outDir, nonOppositeInDir);
+                                if (turn == 1) {
+                                    tileName = colorPrefix + "_conveyor_split_right";
+                                } else {
+                                    tileName = colorPrefix + "_conveyor_split_left";
+                                }
+                            } else {
+                                // Safety measures: If no opposite input direction is found, use a straight conveyor belt.
+                                tileName = colorPrefix + "_conveyor_belt_straight";
+                                logger.warn("无法确定传送带类型，使用默认直线传送带");
+                            }
+                        }
                     }
 
                     ImageView beltImg = new ImageView(tileImages.get(tileName));
