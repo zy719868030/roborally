@@ -58,6 +58,8 @@ public class GameController {
     private Timeline countdownTimer;
     private int secondsLeft = 30;
     private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
+    @FXML private HBox discardPileBox;
+    @FXML private Label phaseLabel;
 
 
     @FXML
@@ -652,6 +654,10 @@ public class GameController {
 
     public void updatePhase(String phaseName) {
         boolean isSetupPhase = "Aufbauphase".equals(phaseName);
+        // Label aktualisieren
+        if (phaseLabel != null) {
+            phaseLabel.setText("Phase: " + phaseName);
+        }
 
         // Update availability of click start position depending on phase
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
@@ -666,8 +672,18 @@ public class GameController {
                 }
             }
         }
-
+        // Info in Chat
         appendChatMessage("[INFO] Current phase: " + phaseName);
+    }
+    public void updateDiscardPile(List<String> discardedCards) {
+        discardPileBox.getChildren().clear();
+
+        for (String card : discardedCards) {
+            ImageView cardImage = new ImageView(new Image(getClass().getResourceAsStream("/cards/" + card + ".png")));
+            cardImage.setFitWidth(60);
+            cardImage.setFitHeight(90);
+            discardPileBox.getChildren().add(cardImage);
+        }
     }
 
     @FXML
@@ -905,6 +921,7 @@ public class GameController {
         secondsLeft = 30;
         timerLabel.setText("Zeit: 30s");
         timerLabel.setVisible(true);// Zeige das Label beim Start
+        timerLabel.setManaged(true);
 
 
         if (countdownTimer != null) countdownTimer.stop();
@@ -916,15 +933,20 @@ public class GameController {
                     if (secondsLeft <= 0) {
                         countdownTimer.stop();
                         timerLabel.setText("Zeit abgelaufen!");
-                         timerLabel.setVisible(false); //ausblenden nach Ablauf
+                        hideCountdown(); //ausblenden nach Ablauf
                     }
                 })
         );
         countdownTimer.setCycleCount(30);
         countdownTimer.play();
     }
+    public void hideCountdown() {
+        timerLabel.setVisible(false);
+        timerLabel.setManaged(false);
+    }
 
-   /**
+
+    /**
     * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
     *
     * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
@@ -940,6 +962,7 @@ public class GameController {
     *
     * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
     */ public void showTimerEnded(List<Integer> slowPlayers) {
+        hideCountdown();
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
