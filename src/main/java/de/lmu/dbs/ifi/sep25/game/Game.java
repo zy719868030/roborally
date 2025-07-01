@@ -595,10 +595,21 @@ public class Game {
 
             // Handle robot lasers
             handleRobotLasers();
+
+            // Check if the game is over after each register
+            if (checkGameEnd()) {
+                appLogger.info("Game ended during activation of register {}", currentRegister + 1);
+                return;
+            }
         }
 
         // End of round processing
         endRound();
+
+        // Check if the game has ended. If the game has not ended, start a new round.
+        if (!checkGameEnd()) {
+            startNewGameRound();
+        }
     }
 
     /**
@@ -764,6 +775,15 @@ public class Game {
         ));
 
         return true;
+    }
+
+    /**
+     * Get the player order for the current round.
+     *
+     * @return The player stack for the current round.
+     */
+    public Stack<Player> getCurrentPlayerTurn() {
+        return currentPlayerTurn;
     }
 
     /**
@@ -1135,13 +1155,8 @@ public class Game {
                                         )
                                 );
 
-                                // TODO @lukas：Check for game win
                                 if (newCheckpoints >= board.getTotalCheckpoints()) {
-                                    Server.getInstance().broadcastMessage(
-                                            new MessageDefinitions.Message<>(
-                                                    new MessageDefinitions.BodyGameFinished(robot.getId())
-                                            )
-                                    );
+                                    checkGameEnd();
                                 }
                             }
                         }
@@ -1246,14 +1261,7 @@ public class Game {
      */
     private void handleRobotReboot(Robot robot) {
         // Find the player for this robot
-        Player player = null;
-        for (Player p : players) {
-            if (p.getRobot() == robot) {
-                player = p;
-                break;
-            }
-        }
-
+        Player player = getPlayerForRobot(robot);
         if (player == null) return;
 
         // Broadcast reboot message
@@ -1264,7 +1272,8 @@ public class Game {
         );
 
         // Robot takes damage and cancels programming
-        robot.takeDamage(2);
+        dealSpamDamage(robot);
+        dealSpamDamage(robot);
         robot.cancelProgramming();
 
         // Move to reboot position
@@ -1272,13 +1281,7 @@ public class Game {
         robot.setPosition(rebootPos);
         board.updateRobotPosition(robot, rebootPos);
 
-        // Wait for player to choose direction
-        // TODO:this would be async with client response
-        // For now, just default to north
-        Direction defaultDirection = Direction.NORTH;
-        robot.setDirection(defaultDirection);
-
-        // TODO @lukas：Broadcast movement to reboot position
+        // Broadcast movement to reboot position
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyMovement(
@@ -1289,15 +1292,87 @@ public class Game {
                 )
         );
 
-        // TODO @lukas：Broadcast direction
-        String directionStr = "top"; // Default direction
+        // Wait for player to choose direction
+        // TODO:this would be async with client response
+        Direction defaultDirection = Direction.NORTH;
+        if (player.getConnection() != null) {
+            player.getConnection().sendMessage(
+                    new MessageDefinitions.Message<>(
+                            // The special value “select” indicates that a selection is required.
+                            new MessageDefinitions.BodyRebootDirection("select")
+                    )
+            );
+        } else {
+            // If there is no connection (such as an AI player), use the default direction.
+            robot.setDirection(defaultDirection);
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyRebootDirection("top")  // Default direction
+                    )
+            );
+        }
+    }
+
+    /**
+     * Inflicts damage on a robot and broadcasts damage information.
+     * When the specific damage card type is depleted, allows player to choose alternative damage types.
+     *
+     * @param robot The robot that has been damaged.
+     * @param damageAmount The amount of damage to apply.
+     * @param damageType The type of damage ("Spam", "Virus", "Worm", "Trojan").
+     */
+    public void applyAndBroadcastDamage(Robot robot, int damageAmount, String damageType) {
+        if (damageAmount <= 0) return;
+        List<String> damageCards = new ArrayList<>();
+        DamageCard.DamageType type = DamageCard.DamageType.valueOf(damageType.toUpperCase());
+
+        // Check if there are enough damage cards of the specified type in the pool
+        DamageCardPool damagePool = DamageCardPool.getInstance();
+        int availableCount = damagePool.getAvailableCount(type);
+
+        // If there aren't enough damage cards of the specified type
+        // If there are other types of damage cards available, let the player choose
+        if (availableCount < damageAmount) {
+            List<String> availablePiles = new ArrayList<>();
+            for (DamageCard.DamageType damageCardType : DamageCard.DamageType.values()) {
+                if (damagePool.hasAvailable(damageCardType)) {
+                    availablePiles.add(damageCardType.name());
+                }
+            }
+
+            if (!availablePiles.isEmpty()) {
+                // Find the corresponding player
+                Player player = getPlayerForRobot(robot);
+                if (player != null) {
+                    // Request the player to select a damage card type
+                    player.getConnection().sendMessage(
+                            new MessageDefinitions.Message<>(
+                                    new MessageDefinitions.BodyPickDamage(
+                                            damageAmount, availablePiles
+                                    )
+                            )
+                    );
+                    return;
+                }
+            }
+
+            // If no damage cards are available or player can't be found, don't apply damage
+            appLogger.warn("No damage cards available for robot {}", robot.getId());
+            return;
+        }
+
+        // If there are enough damage cards of the specified type, apply and broadcast
+        for (int i = 0; i < damageAmount; i++) {
+            damageCards.add(damageType);
+            robot.addDamageCard(type);
+        }
+
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyRebootDirection(directionStr)
+                        new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
                 )
         );
     }
-
     /**
      * Retrieves a list of robots located within a specified range from a given central position.
      * This method is particularly used for actions involving VIRUS cards.
