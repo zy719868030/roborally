@@ -382,7 +382,7 @@ public class ClientHandler implements Runnable {
     private void handleBodySelectedCard(String json) {
         BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
         //notify is in player class
-        player.chooseCard(body.card(), body.register());
+        player.chooseCardToRegister(body.card(), body.register());
     }
 
     /**

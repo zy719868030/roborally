@@ -322,14 +322,14 @@ public class Game {
                     // Move card to discard pile (if it's not a damage card)
                     // Damage cards should be handled differently
                     if (!(card instanceof DamageCard)) {
-                        player.discardCard(card);
+                        player.discardCardFromHand(card);
                     }
                 }
             }
 
             // Clear the register for next round
             for (int i = 0; i < register.size(); i++) {
-                player.removeCard(null, i);
+                player.removeCardFromRegister(i);
             }
 
             // Reset player's ready state for next round

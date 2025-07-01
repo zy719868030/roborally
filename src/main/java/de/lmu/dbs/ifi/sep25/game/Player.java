@@ -199,40 +199,57 @@ public class Player {
         return false;
     }
 
-    // CARDS
+    // CARDS & HAND
 
     /**
-     * Deal cards to player at the start of a programming phase
-     */
-    public List<RegisterCard> dealProgrammingCards() {
-        // Clear hand
-        hand.clear();
+     * Adds a card to the hand and sends the new hand to the clients.
+     * **/
+    public void addToHand(RegisterCard card) {
+        hand.add(card);
+        updateHand();
+    }
 
-        final List<RegisterCard> drawnCards = new ArrayList<>();
+    /**
+     * Removes a card from the hand and updates the clients.
+     * **/
+    public void removeFromHand(RegisterCard card) {
+        hand.remove(card);
+        updateHand();
+    }
 
-        // Draw 9 cards (or fewer if damaged)
-        int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
-        for (int i = 0; i < cardsToDraw; i++) {
-            drawnCards.add(drawCard());
-        }
-
-        // Reset register state
-        setReadyRegister(false);
-
+    /**
+     * Sends the current hand to the server.
+     * **/
+    public void updateHand() {
         // Send and broadcast cards
-        final List<String> drawnCardNames = drawnCards.stream().map(CardFactory::getCardName).toList();
+        final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
 
         connection.sendMessage(new MessageDefinitions.Message<>(
                 new MessageDefinitions.BodyYourCards(
-                        drawnCardNames
+                        handWithNames
                 )));
 
         connection.broadcastMessage(new MessageDefinitions.Message<>(
                 new MessageDefinitions.BodyNotYourCards(
-                        connection.getMyID(), cardsToDraw
+                        connection.getMyID(), handWithNames.size()
                 )), connection);
+    }
 
-        return drawnCards;
+    /**
+     * Deal cards to player at the start of a programming phase
+     */
+    public void dealProgrammingCards() {
+        // Clear hand
+        resetHand();
+
+        // Draw 9 cards (or fewer if damaged)
+        int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
+        for (int i = 0; i < cardsToDraw; i++) {
+            drawCard();
+        }
+
+        // Reset register state
+        setReadyRegister(false);
     }
 
     /**
@@ -256,11 +273,11 @@ public class Player {
      *                     If null or empty, clears the slot
      * @param registerSlot The index of the register slot to place the card (0-4)
      */
-    public void chooseCard(String cardName, int registerSlot) {
+    public void chooseCardToRegister(String cardName, int registerSlot) {
         if (!readyRegister) {
             if (registerSlot >= 0 && registerSlot < 5) {
                 if (cardName == null || cardName.isEmpty()) {
-                    removeCard(null, registerSlot);
+                    removeCardFromRegister(registerSlot);
                     return;
                 }
 
@@ -268,7 +285,7 @@ public class Player {
                 RegisterCard cardToPlay = CardFactory.findCardInHand(cardName, hand);
                 if (cardToPlay != null) {
                     register.set(registerSlot, cardToPlay);
-                    hand.remove(cardToPlay);
+                    removeFromHand(cardToPlay);
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID(), registerSlot, Boolean.TRUE)));
                     // Check whether all registers are filled
@@ -295,11 +312,14 @@ public class Player {
         }
     }
 
-    public void discardCard(RegisterCard card) {
+    /**
+     * Discards a card from the hand and adds it to the discard pile.
+     * **/
+    public void discardCardFromHand(RegisterCard card) {
         if (card != null) {
             if (hand.contains(card)) {
                 programmingDeck.discard(card);
-                hand.remove(card);
+                removeFromHand(card);
             } else {
                 connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
             }
@@ -316,21 +336,22 @@ public class Player {
      * <p>
      * After removing the card, the server is notified of this change.
      *
-     * @param cardName     The name of the card to remove (not used in the actual removal logic, but included for API consistency)
      * @param registerSlot The index of the register slot to clear (0-4)
      * @return true if a card was successfully removed, false otherwise
      */
-    public boolean removeCard(String cardName, int registerSlot) {
+    public boolean removeCardFromRegister(int registerSlot) {
         if (!readyRegister) {
             if (registerSlot >= 0 && registerSlot < 5) {
                 RegisterCard removedCard = register.get(registerSlot);
                 if (removedCard != null) {
                     // Remove the card from the register and return it to your hand.
                     register.set(registerSlot, null);
-                    hand.add(removedCard);
+                    addToHand(removedCard);
 
                     // Notify server that register slot has been cleared
-                    connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID(), registerSlot, Boolean.TRUE)));
+                    connection.broadcastMessage(new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyCardSelected(
+                                    connection.getMyID(), registerSlot, Boolean.FALSE)));
 
                     return true;
                 } else {
@@ -351,6 +372,11 @@ public class Player {
         }
     }
 
+    /**
+     * Draws a card from the programming deck. Adds the card to hand and updates clients.
+     *
+     * @return the card drawn and added to hand.
+     * **/
     public RegisterCard drawCard() {
         if (programmingDeck.isEmpty()) {
             programmingDeck.reset();
@@ -359,7 +385,7 @@ public class Player {
                     new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
             ));
         }
-        hand.add(programmingDeck.draw());
+        addToHand(programmingDeck.draw());
         return hand.getLast();
     }
 
@@ -413,9 +439,9 @@ public class Player {
     /**
      * Resets the hand by discarding the remaining cards to the discard pile.
      **/
-    public void resetHand() {
+    private void resetHand() {
         for (RegisterCard card : hand)
-            discardCard(card);
+            discardCardFromHand(card);
     }
 
     /**
@@ -423,9 +449,11 @@ public class Player {
      **/
     public void resetRegister() {
         // Move cards from registers to discard pile
-        for (RegisterCard card : register) {
+        for (int i = 0; i < register.size(); i++) {
+            RegisterCard card = register.get(i);
             if (card != null) {
-                programmingDeck.discard(card);
+                removeCardFromRegister(i);
+                discardCardFromHand(card);
             }
         }
 
