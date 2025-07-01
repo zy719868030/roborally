@@ -280,6 +280,7 @@ public class GameController {
         selectedPane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
 
         appendChatMessage("[INFO] Startposition gewählt bei (" + x + ", " + y + ")");
+        showInstructionDialog();
     }
 
 
@@ -1209,6 +1210,26 @@ public class GameController {
         dialog.showAndWait();
     }
 
+    public void showInstructionDialog() {
+        Label title = new Label("Nächster Schritt");
+        title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
+
+        Label info = new Label("Ziehe 5 Karten in die Registerfelder, um deinen Roboter zu programmieren.");
+        info.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        VBox content = new VBox(15, title, info);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: rgba(20,20,30,0.95); -fx-padding: 30; -fx-background-radius: 12;");
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Programmierphase");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.getDialogPane().lookupButton(ButtonType.OK).setStyle(
+                "-fx-background-color: #00ffd0; -fx-text-fill: black; -fx-font-weight: bold;");
+
+        dialog.showAndWait();
+    }
 
 }
 
