@@ -66,7 +66,6 @@ public class Game {
 //        mapSelectionPending = true;
 //        slowPlayers = new ArrayList<>();
         initializeProgrammingDeck();
-        initializeGame();
     }
 
     public static Game getInstance() {
@@ -87,8 +86,8 @@ public class Game {
     /**
      * Set Board references for all robots when initializing the game
      */
-    private void initializeGame() {
-        // TODO game.initializeGame(); (in Server) -> call in constructor reicht
+    public void initializeGame() {
+        // TODO game.initializeGame(); (in Server)
 
         for (Player player : players) {
             Robot robot = player.getRobot();
@@ -211,7 +210,104 @@ public class Game {
 
             appLogger.info("Finished setup phase. Moving to main loop.");
 
-            //TODO @Yu
+            startNewGameRound();
+        });
+
+        appLogger.info("Starting game main loop.");
+        mainLoop.start();
+    }
+
+    /**
+     * Starts a new round of the game.
+     * This method should be called when a round ends and a new one needs to begin,
+     * or at the start of the game after setup.
+     */
+    private void startNewGameRound() {
+        roundNumber++;
+        appLogger.info("Starting round {}.", roundNumber);
+        setPhase(GamePhase.PROGRAMMING);
+        handleProgrammingPhase();
+
+        // The game will automatically advance to the activation phase after receiving enough client messages.
+        // There is no need to wait or poll here.
+    }
+
+    /**
+     * Checks if all required inputs for the current programming phase are ready.
+     * If all players have completed their programming, advances to activation phase.
+     * This method should be called whenever a player submits programming choices.
+     *
+     * @return true if game phase was advanced, false otherwise
+     */
+    public boolean checkAndAdvanceFromProgrammingPhase() {
+        // Check if all players have completed programming
+        boolean allPlayersReady = true;
+        for (Player player : players) {
+            if (!player.isReadyRegister()) {
+                allPlayersReady = false;
+                break;
+            }
+        }
+
+        // If all players are ready and it is currently the programming phase, enter the activation phase.
+        if (allPlayersReady && currentPhase == GamePhase.PROGRAMMING) {
+            appLogger.info("All players have completed programming. Moving to activation phase.");
+            setPhase(GamePhase.ACTIVATION);
+            determinePlayerOrder();
+            handleActivationPhase();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if the current activation phase for the current register is complete.
+     * If completed, advances to the next register or ends the round.
+     * This method should be called after each player's robot movement is processed.
+     *
+     * @return true if game advanced to next register or round, false otherwise
+     */
+    public boolean checkAndAdvanceActivationPhase() {
+        if (currentPlayerTurn.isEmpty() && currentPhase == GamePhase.ACTIVATION) {
+            currentRegister++;
+
+            if (currentRegister < 5) {
+                appLogger.info("Register {} completed. Moving to register {}.", currentRegister-1, currentRegister);
+                determinePlayerOrder();
+                return true;
+            } else {
+                appLogger.info("All registers processed. Ending round {}.", roundNumber);
+                endRound();
+
+                // Check if the game has ended
+                if (checkGameEnd()) {
+                    appLogger.info("Game end condition met. Game over.");
+                } else {
+                    startNewGameRound();
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determines the winner of the game.
+     *
+     * @return the winning player, or null if no winner
+     */
+    private Player determineWinner() {
+        for (Player player : players) {
+            if (player.getReachedCheckpoints() >= board.getTotalCheckpoints()) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    //TODO @Yu
             // For implementing the "loop," I recommend not using an actual loop.
             // Instead, whenever the server receives input messages from clients,
             // update the relevant lists or flags in the game state. After that,
@@ -224,29 +320,29 @@ public class Game {
             // Instead, update lists/flags whenever the server receives messages from clients and then check if all inputs are ready for the current game phase.
 
             // Game continues until a player wins
-            do {
-                // Start a new round
-                roundNumber++;
-                appLogger.info("Starting round {}.", roundNumber);
-
-                // Programming phase
-                setPhase(GamePhase.PROGRAMMING);
-                handleProgrammingPhase();
-
-                // Activation phase
-                setPhase(GamePhase.ACTIVATION);
-                determinePlayerOrder();
-                handleActivationPhase();
-
-                // Check if the game has ended
-            } while (!checkGameEnd());
-
-        });
-
-        appLogger.info("Starting game main loop.");
-
-        mainLoop.start();
-    }
+//            do {
+//                // Start a new round
+//                roundNumber++;
+//                appLogger.info("Starting round {}.", roundNumber);
+//
+//                // Programming phase
+//                setPhase(GamePhase.PROGRAMMING);
+//                handleProgrammingPhase();
+//
+//                // Activation phase
+//                setPhase(GamePhase.ACTIVATION);
+//                determinePlayerOrder();
+//                handleActivationPhase();
+//
+//                // Check if the game has ended
+//            } while (!checkGameEnd());
+//
+//        });
+//
+//        appLogger.info("Starting game main loop.");
+//
+//        mainLoop.start();
+//    }
 
     public void playRound() {
         for (Player player : players) {
@@ -296,32 +392,51 @@ public class Game {
         );
     }
 
+    /**
+     * Checks if the game has ended and handles all logic when the game ends.
+     * Game end condition: any player reaches all checkpoints.
+     * When the game ends, this method will:
+     * 1. Determine the winner.
+     * 2. Broadcast the BodyGameFinished message.
+     * 3. Send a chat message that the game has ended.
+     *
+     * @return Returns true if the game has ended, otherwise returns false.
+     */
     private boolean checkGameEnd() {
+        Player winner = null;
+
         for (Player player : players) {
             // Check if any player has reached all checkpoints
             int checkpointsReached = player.getReachedCheckpoints();
             if (checkpointsReached >= board.getTotalCheckpoints()) {
-                // Broadcast game end message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyGameFinished(player.getRobot().getId())
-                        )
-                );
-
-                // TODO @lukas：Send final chat message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyReceivedChat(
-                                        "Game over! Player " + player.getName() +
-                                                " has won by reaching all checkpoints!",
-                                        0, false
-                                )
-                        )
-                );
-
-                return true;
+                winner = player;
+                break;
             }
         }
+
+        if (winner != null) {
+            appLogger.info("Game ended. Player {} has won by reaching all checkpoints.", winner.getName());
+
+            // TODO @lukas：Broadcast game end message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyGameFinished(winner.getRobot().getId())
+                    )
+            );
+
+            // TODO @lukas：Send final chat message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyReceivedChat(
+                                    "Game over! Player " + winner.getName() +
+                                            " has won by reaching all checkpoints!",
+                                    0, false
+                            )
+                    )
+            );
+            return true;
+        }
+
         return false;
     }
 
@@ -480,10 +595,21 @@ public class Game {
 
             // Handle robot lasers
             handleRobotLasers();
+
+            // Check if the game is over after each register
+            if (checkGameEnd()) {
+                appLogger.info("Game ended during activation of register {}", currentRegister + 1);
+                return;
+            }
         }
 
         // End of round processing
         endRound();
+
+        // Check if the game has ended. If the game has not ended, start a new round.
+        if (!checkGameEnd()) {
+            startNewGameRound();
+        }
     }
 
     /**
@@ -649,6 +775,15 @@ public class Game {
         ));
 
         return true;
+    }
+
+    /**
+     * Get the player order for the current round.
+     *
+     * @return The player stack for the current round.
+     */
+    public Stack<Player> getCurrentPlayerTurn() {
+        return currentPlayerTurn;
     }
 
     /**
@@ -1020,13 +1155,8 @@ public class Game {
                                         )
                                 );
 
-                                // TODO @lukas：Check for game win
                                 if (newCheckpoints >= board.getTotalCheckpoints()) {
-                                    Server.getInstance().broadcastMessage(
-                                            new MessageDefinitions.Message<>(
-                                                    new MessageDefinitions.BodyGameFinished(robot.getId())
-                                            )
-                                    );
+                                    checkGameEnd();
                                 }
                             }
                         }
@@ -1131,14 +1261,7 @@ public class Game {
      */
     private void handleRobotReboot(Robot robot) {
         // Find the player for this robot
-        Player player = null;
-        for (Player p : players) {
-            if (p.getRobot() == robot) {
-                player = p;
-                break;
-            }
-        }
-
+        Player player = getPlayerForRobot(robot);
         if (player == null) return;
 
         // Broadcast reboot message
@@ -1149,7 +1272,8 @@ public class Game {
         );
 
         // Robot takes damage and cancels programming
-        robot.takeDamage(2);
+        dealSpamDamage(robot);
+        dealSpamDamage(robot);
         robot.cancelProgramming();
 
         // Move to reboot position
@@ -1157,13 +1281,7 @@ public class Game {
         robot.setPosition(rebootPos);
         board.updateRobotPosition(robot, rebootPos);
 
-        // Wait for player to choose direction
-        // TODO:this would be async with client response
-        // For now, just default to north
-        Direction defaultDirection = Direction.NORTH;
-        robot.setDirection(defaultDirection);
-
-        // TODO @lukas：Broadcast movement to reboot position
+        // Broadcast movement to reboot position
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyMovement(
@@ -1174,15 +1292,87 @@ public class Game {
                 )
         );
 
-        // TODO @lukas：Broadcast direction
-        String directionStr = "top"; // Default direction
+        // Wait for player to choose direction
+        // TODO:this would be async with client response
+        Direction defaultDirection = Direction.NORTH;
+        if (player.getConnection() != null) {
+            player.getConnection().sendMessage(
+                    new MessageDefinitions.Message<>(
+                            // The special value “select” indicates that a selection is required.
+                            new MessageDefinitions.BodyRebootDirection("select")
+                    )
+            );
+        } else {
+            // If there is no connection (such as an AI player), use the default direction.
+            robot.setDirection(defaultDirection);
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyRebootDirection("top")  // Default direction
+                    )
+            );
+        }
+    }
+
+    /**
+     * Inflicts damage on a robot and broadcasts damage information.
+     * When the specific damage card type is depleted, allows player to choose alternative damage types.
+     *
+     * @param robot The robot that has been damaged.
+     * @param damageAmount The amount of damage to apply.
+     * @param damageType The type of damage ("Spam", "Virus", "Worm", "Trojan").
+     */
+    public void applyAndBroadcastDamage(Robot robot, int damageAmount, String damageType) {
+        if (damageAmount <= 0) return;
+        List<String> damageCards = new ArrayList<>();
+        DamageCard.DamageType type = DamageCard.DamageType.valueOf(damageType.toUpperCase());
+
+        // Check if there are enough damage cards of the specified type in the pool
+        DamageCardPool damagePool = DamageCardPool.getInstance();
+        int availableCount = damagePool.getAvailableCount(type);
+
+        // If there aren't enough damage cards of the specified type
+        // If there are other types of damage cards available, let the player choose
+        if (availableCount < damageAmount) {
+            List<String> availablePiles = new ArrayList<>();
+            for (DamageCard.DamageType damageCardType : DamageCard.DamageType.values()) {
+                if (damagePool.hasAvailable(damageCardType)) {
+                    availablePiles.add(damageCardType.name());
+                }
+            }
+
+            if (!availablePiles.isEmpty()) {
+                // Find the corresponding player
+                Player player = getPlayerForRobot(robot);
+                if (player != null) {
+                    // Request the player to select a damage card type
+                    player.getConnection().sendMessage(
+                            new MessageDefinitions.Message<>(
+                                    new MessageDefinitions.BodyPickDamage(
+                                            damageAmount, availablePiles
+                                    )
+                            )
+                    );
+                    return;
+                }
+            }
+
+            // If no damage cards are available or player can't be found, don't apply damage
+            appLogger.warn("No damage cards available for robot {}", robot.getId());
+            return;
+        }
+
+        // If there are enough damage cards of the specified type, apply and broadcast
+        for (int i = 0; i < damageAmount; i++) {
+            damageCards.add(damageType);
+            robot.addDamageCard(type);
+        }
+
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyRebootDirection(directionStr)
+                        new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
                 )
         );
     }
-
     /**
      * Retrieves a list of robots located within a specified range from a given central position.
      * This method is particularly used for actions involving VIRUS cards.

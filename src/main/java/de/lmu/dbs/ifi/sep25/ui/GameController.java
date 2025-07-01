@@ -302,7 +302,7 @@ public class GameController {
                     : color + "_conveyor_split_left";
         }
 
-        System.err.println("无法确定传送带类型，使用默认直线传送带");
+        System.err.println("Unable to determine conveyor type, using default straight conveyor");
         return color + "_conveyor_belt_straight";
     }
 
