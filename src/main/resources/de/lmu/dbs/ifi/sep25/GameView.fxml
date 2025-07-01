@@ -67,6 +67,26 @@
 
         <!-- Handkartenbereich -->
         <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>
+        <!-- Register-Bereich für 5 ausgewählte Karten -->
+        <HBox fx:id="registerBox"
+              spacing="10"
+              alignment="CENTER"
+              style="-fx-padding: 10;">
+            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
+            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
+            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
+            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
+            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
+        </HBox>
+
+        <!-- Bestätigungs-Button -->
+        <Button text="Bestätigen"
+                fx:id="confirmSelectionButton"
+                onAction="#handleConfirmSelection"
+                styleClass="senden-button"
+                prefWidth="180" prefHeight="50"/>
+
+
         <!-- Gespielte Karten -->
         <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
         <!-- 🔄 Ablagestapel / Discard Pile -->

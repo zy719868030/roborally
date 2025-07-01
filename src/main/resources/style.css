@@ -208,4 +208,11 @@
 
 
 }
+.sourcetext{
+    -fx-text-fill: orange;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
 
