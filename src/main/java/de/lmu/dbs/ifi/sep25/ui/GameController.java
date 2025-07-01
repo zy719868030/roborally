@@ -252,19 +252,29 @@ public class GameController {
     /**
      * Handles clicking a start point tile.
      */
-    private void handleStartPointClick(StackPane pane) {
-        Integer x = GridPane.getColumnIndex(pane);
-        Integer y = GridPane.getRowIndex(pane);
+    private void handleStartPointClick(StackPane selectedPane) {
+        Integer x = GridPane.getColumnIndex(selectedPane);
+        Integer y = GridPane.getRowIndex(selectedPane);
         if (x == null || y == null) return;
 
+        // Nachricht senden
         var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y, "up"));
         ClientSingleton.getInstance().sendMessage(msg);
-        System.out.printf("[DEBUG] Starting position selected at (%d, %d)%n", x, y);
 
-        pane.setOnMouseClicked(null);
-        pane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
-        appendChatMessage("[INFO] Starting position selected at (" + x + ", " + y + ")");
+        // Deaktiviere alle Startfelder (nur einmalige Auswahl zulassen)
+        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
+            if (node instanceof StackPane pane) {
+                pane.setOnMouseClicked(null);
+                pane.setStyle("-fx-border-color: transparent;"); // entferne ggf. gelbe Rahmen
+            }
+        }
+
+        // Nur den gewählten grün markieren
+        selectedPane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
+
+        appendChatMessage("[INFO] Startposition gewählt bei (" + x + ", " + y + ")");
     }
+
 
     /**
      * Determines which conveyor tile to use.
@@ -447,7 +457,10 @@ public class GameController {
     }
 
     public void updatePhase(String phaseName) {
-        boolean isSetupPhase = "Aufbauphase".equals(phaseName);
+        boolean isSetupPhase = "Aufbauphase".equalsIgnoreCase(phaseName);
+        boolean isProgrammingPhase = "Programmierung".equalsIgnoreCase(phaseName);
+        boolean isActivationPhase = "Aktivierungsphase".equalsIgnoreCase(phaseName);
+        boolean isGameOverPhase = "Spielende".equalsIgnoreCase(phaseName);
         // Label aktualisieren
         if (phaseLabel != null) {
             phaseLabel.setText("Phase: " + phaseName);
@@ -455,9 +468,8 @@ public class GameController {
 
         // Update availability of click start position depending on phase
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
-            if (node instanceof StackPane pane) {
-                // Update the availability of the starting position click based on the stage
-                if (pane.getOnMouseClicked() != null) {
+            // Update the availability of the starting position click based on the stage
+            if (node instanceof StackPane pane&& pane.getOnMouseClicked() != null) {
                     if (!isSetupPhase) {
                         // Disable clicks outside the setup phase.
                         pane.setOnMouseClicked(null);
@@ -465,9 +477,35 @@ public class GameController {
                     }
                 }
             }
-        }
-        // Info in Chat
-        appendChatMessage("[INFO] Current phase: " + phaseName);
+            // Handkarten nur in Programmierphase aktiv
+            handCardBox.setDisable(!isProgrammingPhase);
+
+            // DiscardPile nur in Aktivierungsphase sichtbar
+            discardPileBox.setVisible(isActivationPhase);
+            discardPileBox.setManaged(isActivationPhase);
+
+            // Timer nur in Programmierphase starten
+            if (isProgrammingPhase) {
+                startCountdown();
+            } else {
+                hideCountdown();
+            }
+
+            // Chat sperren, wenn Spiel vorbei ist
+            chatInput.setDisable(isGameOverPhase);
+            recipientBox.setDisable(isGameOverPhase);
+
+            // Beispiel: iconMenu (z. B. Buttons oder Aktionsleiste)
+            iconMenu.setDisable(isGameOverPhase || isSetupPhase);
+
+            // ChatBox bei Spielende ausblenden
+            if (isGameOverPhase) {
+                chatBox.setVisible(false);
+                chatBox.setManaged(false);
+            }
+
+            appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+
     }
 
     public void updateDiscardPile(List<String> discardedCards) {
