@@ -198,7 +198,7 @@ public class Client {
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
-        System.out.println("[SERVER] Connected using protocol: " + protocol);
+        appLogger.info("Connected using protocol: {} " + protocol);
 
         sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol)));
     }
@@ -233,7 +233,7 @@ public class Client {
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        System.out.println("[SERVER] Your client ID: " + getID());
+        clientLogger.info("Your client ID: {}" + getID());
         usernames.put(ID, "(me)");// identify the local player in user lists
     }
 
@@ -367,7 +367,7 @@ public class Client {
         List<String> availableMaps = message.messageBody().availableMaps();
 
         if (availableMaps == null || availableMaps.isEmpty()) {
-            System.err.println("[ERROR] Server hat keine Karten geschickt oder Body war leer.");
+            errorLogger.error("[SelectMap] Server hat keine Karten geschickt oder Body war leer.");
             return;
         }
 
@@ -376,7 +376,7 @@ public class Client {
             if (controller != null) {
                 controller.showMapSelection(availableMaps);
             } else {
-                System.err.println("[ERROR] LobbyController ist null in handleBodySelectMap");
+                errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
             }
         });
     }
@@ -394,7 +394,7 @@ public class Client {
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         String selectedMap = message.messageBody().map();
 
-        System.out.println("[SERVER] Map selected: " + selectedMap);
+        clientLogger.info("[MapSelected] Map selected: " + selectedMap);
 
     }
 
@@ -412,7 +412,7 @@ public class Client {
         // BoardMap vom Server holen
         List<List<List<Field>>> boardMap = body.gameMap();
         if (boardMap == null || boardMap.isEmpty()) {
-            System.err.println("[ERROR] Empfangenes boardMap ist null oder leer!");
+            errorLogger.error("[GameStarted] Empfangenes boardMap ist null oder leer!");
             return;
         }
 
@@ -440,6 +440,9 @@ public class Client {
 
                 controller.drawBoard(boardMap);
                 controller.setInitialPlayerStats(energy, checkpointsReached);
+                controller.showWelcomeDialog();
+
+
 
                 // Szene wechseln
                 Stage stage = ControllerRegistry.getPrimaryStage();
@@ -452,12 +455,12 @@ public class Client {
                     controller.setPlayersFromLobby(ControllerRegistry.getLobbyController().getPlayers());
 
                 } else {
-                    System.err.println("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
+                    errorLogger.error("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
                 }
 
 
             } catch (IOException e) {
-                System.err.println("[ERROR] Fehler beim Laden der GameView: " + e.getMessage());
+                errorLogger.error("[GameStarted] Fehler beim Laden der GameView: ", e);
                 e.printStackTrace();
             }
         });
@@ -522,7 +525,7 @@ public class Client {
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         String errorText = msg.messageBody().error();
-        System.err.println("Error: " + errorText);
+        errorLogger.error("[Error] Vom Server erhalten:{} ",errorText);
 
         if (errorText.contains("Figure already selected")) {
             javafx.application.Platform.runLater(() -> {
@@ -545,7 +548,7 @@ public class Client {
         String card = body.card();
         String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
         String logMessage = playerName + "hat Karte gespielt" + card;
-        System.out.println("[GAME]" + logMessage);
+        appLogger.info("[GAME] {}", logMessage);
 
         Platform.runLater(() -> {
             GameController gameCtrl = ControllerRegistry.getGameController();
@@ -553,7 +556,7 @@ public class Client {
                 gameCtrl.appendChatMessage("[GAME]" + logMessage);
                 gameCtrl.showPlayedCard(clientID, card);
             } else {
-                System.err.println("[WARN] GameController ist null in handleBodyCardPlayed");
+                appLogger.warn("[WARN] GameController ist null in handleBodyCardPlayed");
             }
         });
     }
@@ -597,7 +600,7 @@ public class Client {
             if (controller != null) {
                 controller.markCurrentPlayer(currentClientID);
             } else {
-                System.err.println("[WARN] GameController ist null nach Warten in handleBodyCurrentPlayer");
+                errorLogger.error("[WARN] GameController ist null nach Warten in handleBodyCurrentPlayer");
             }
         });
     }
@@ -647,7 +650,7 @@ public class Client {
             if (controller != null) {
                 controller.displayStartingPoint(x, y, clientID, direction);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyStartingPointTaken");
+                errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
             }
         });
     }
@@ -671,7 +674,7 @@ public class Client {
             if (controller != null) {
                 controller.displayHandCards(body.cardsInHand());
             } else {
-                System.err.println("[FEHLER] GameController ist null nach Warten in handleBodyYourCards");
+                errorLogger.error("[FEHLER] GameController ist null nach Warten in handleBodyYourCards");
             }
         });
     }
@@ -695,7 +698,7 @@ public class Client {
             if (controller != null) {
                 controller.displayHiddenCardsForPlayer(clientID, count);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyNotYourCards");
+                errorLogger.error("[WARN] GameController is null in handleBodyNotYourCards");
             }
         });
     }
@@ -712,7 +715,7 @@ public class Client {
             if (controller != null) {
                 controller.showShuffleAnimation(); // Optional UI effect
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyShuffleCoding");
+                errorLogger.error("[WARN] GameController is null in handleBodyShuffleCoding");
             }        //TODO fx display deck size | optional: animation Raneem
 
         });
@@ -736,7 +739,7 @@ public class Client {
             if (controller != null) {
                 controller.handleCardSelection(clientID, filled); // implement in GameController
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyCardSelected");
+                errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
             }
         });
     }
@@ -767,7 +770,7 @@ public class Client {
             if (controller != null) {
                 controller.markPlayerReady(body.clientID());
             } else {
-                System.err.println("[WARN] GameController is null in handleBodySelectionFinished");
+                errorLogger.error("[WARN] GameController is null in handleBodySelectionFinished");
             }
         });
     }
@@ -778,7 +781,7 @@ public class Client {
             if (controller != null) {
                 controller.startCountdown();
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyTimerStarted");
+                errorLogger.error("[WARN] GameController is null in handleBodyTimerStarted");
             }
         });
     }
@@ -800,7 +803,7 @@ public class Client {
             if (controller != null) {
                 controller.showTimerEnded(clientIDs);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyTimerEnded");
+                errorLogger.error("[WARN] GameController is null in handleBodyTimerEnded");
             }
         });
     }
@@ -822,7 +825,7 @@ public class Client {
             if (controller != null) {
                 controller.displayConfirmedCards(cards); //
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyCardsYouGotNow");
+                errorLogger.error("[WARN] GameController is null in handleBodyCardsYouGotNow");
             }
         });
     }
@@ -873,7 +876,7 @@ public class Client {
             if (controller != null) {
                 controller.replaceCardInRegister(clientID, register, newCard);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyReplaceCard");
+                errorLogger.error("[WARN] GameController is null in handleBodyReplaceCard");
             }
         });
     }
@@ -906,7 +909,7 @@ public class Client {
             if (controller != null) {
                 controller.moveRobotTo(clientID, x, y);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyMovement");
+                errorLogger.error("[WARN] GameController is null in handleBodyMovement");
             }
         });
 
@@ -933,10 +936,12 @@ public class Client {
             if (controller != null) {
                 controller.rotateRobot(clientID, rotation);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyPlayerTurning");
+                errorLogger.error("[WARN] GameController is null in handleBodyPlayerTurning");
             }
         });
     }
+
+
 
 
     /**
@@ -1004,7 +1009,7 @@ public class Client {
             if (controller != null) {
                 controller.playAnimation(type);  // Visual feedback in GUI
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyAnimation");
+                errorLogger.error("[WARN] GameController is null in handleBodyAnimation");
             }
         });
     }
@@ -1092,7 +1097,7 @@ public class Client {
             if (controller != null) {
                 controller.showEnergyChange(clientID, count, source);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyEnergy");
+                errorLogger.error("[WARN] GameController is null in handleBodyEnergy");
             }
             //TODO optional: play energy animation depending on: id -> source
         });
@@ -1117,7 +1122,7 @@ public class Client {
             if (controller != null) {
                 controller.showCheckpointReached(clientID, number);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyCheckPointReached");
+                errorLogger.error("[WARN] GameController is null in handleBodyCheckPointReached");
             }
         });
     }
@@ -1141,7 +1146,7 @@ public class Client {
             if (controller != null) {
                 controller.showGameResult(isWinner);
             } else {
-                System.err.println("[WARN] GameController is null in handleBodyGameFinished");
+                appLogger.error("[WARN] GameController is null in handleBodyGameFinished");
             }
         });
     }
@@ -1159,11 +1164,11 @@ public class Client {
      */
     public void sendMessage(String msg) {
         try {
-            System.out.println("[SENDING] " + msg);
+            appLogger.info("[SENDING] " + msg);
             writer.println(msg);
             writer.flush();
             if (writer.checkError())
-                System.err.println("[DEBUG] Error writing to server: " + msg);
+                errorLogger.error("[DEBUG] Error writing to server: " + msg);
         } catch (Exception e) {
             errorLogger.error("Failed to send message to client {}: {}", ID, e.getMessage());
         }
@@ -1261,6 +1266,19 @@ public class Client {
      */
     public List<BodyPlayerAdded> getPendingPlayers() {
         return pendingPlayers;
+    }
+
+    public String getMyName() {
+        return usernames.getByKeyOrDefault(ID, "Unbekannt");
+    }
+
+    public int getMyFigureFromLobby() {
+        for (BodyPlayerAdded player : pendingPlayers) {
+            if (player.clientID() == ID) {
+                return player.figure();
+            }
+        }
+        return -1; // Default/fallback
     }
 
 }
