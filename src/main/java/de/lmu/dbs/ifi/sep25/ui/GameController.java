@@ -1,16 +1,22 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -50,6 +56,7 @@ public class GameController {
 
     @FXML
     private HBox handCardBox;
+    @FXML private HBox registerBox;
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
@@ -655,13 +662,34 @@ public class GameController {
             return;
         }
 
-        // Beispiel-Container,  im FXML: <HBox fx:id="handCardBox" />
-        HBox handCardBox = (HBox) root.lookup("#handCardBox");
-        if (handCardBox == null) {
-            System.err.println("[FEHLER] Kein Container für Handkarten gefunden (fx:id=handCardBox).");
+        if (handCardBox == null || registerBox == null) {
+            System.err.println("[FEHLER] handCardBox oder registerBox ist null.");
             return;
         }
 
+        // Limpia visualmente los slots de registro antes de reconstruirlos
+        registerBox.getChildren().clear();
+
+        for (int i = 0; i < 5; i++) {
+            Label numberLabel = new Label(String.valueOf(i + 1));
+            numberLabel.setStyle("-fx-font-size: 18px; -fx-background-color: darkorange; -fx-text-fill: white; -fx-padding: 6px; -fx-background-radius: 30px;");
+            numberLabel.setMaxSize(30, 30);
+
+            StackPane slot = new StackPane();
+            slot.setPrefSize(60, 90);
+            slot.setStyle("-fx-border-color: gray; -fx-background-color: lightgray;");
+            setupRegisterSlot(slot);
+
+            Tooltip tooltip = new Tooltip("Bitte hier eine Programmierkarte ablegen");
+            Tooltip.install(slot, tooltip);
+
+            VBox slotWithLabel = new VBox(5, numberLabel, slot);
+            slotWithLabel.setAlignment(Pos.CENTER);
+
+            registerBox.getChildren().add(slotWithLabel);
+        }
+
+        // Mostrar las cartas de la mano
         handCardBox.getChildren().clear();
 
         for (String name : cardNames) {
@@ -675,14 +703,93 @@ public class GameController {
                 img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
             }
 
-            ImageView view = new ImageView(img);
-            view.setFitWidth(60);
-            view.setFitHeight(90);
-            view.setPreserveRatio(true);
-            view.setSmooth(true);
-
+            ImageView view = createDraggableCard(name);
             handCardBox.getChildren().add(view);
         }
+    }
+
+
+    //new
+    private ImageView createDraggableCard(String cardName) {
+        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+        Image img;
+        try {
+            img = new Image(getClass().getResourceAsStream(imagePath));
+        } catch (Exception e) {
+            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+        }
+
+        ImageView view = new ImageView(img);
+        view.setFitWidth(60);
+        view.setFitHeight(90);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        view.setUserData(cardName); // Name für später merken
+
+        view.setOnDragDetected(event -> {
+            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(cardName);
+            db.setContent(content);
+            event.consume();
+        });
+
+        return view;
+    }
+
+    private void setupRegisterSlot(StackPane pane) {
+        pane.setOnDragOver(event -> {
+            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
+                event.acceptTransferModes(TransferMode.MOVE);
+            }
+            event.consume();
+        });
+
+        pane.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            if (db.hasString()) {
+                String cardName = db.getString();
+                pane.getChildren().clear();
+                pane.getChildren().add(createDraggableCard(cardName));
+                event.setDropCompleted(true);
+            } else {
+                event.setDropCompleted(false);
+            }
+            event.consume();
+        });
+    }
+
+    @FXML
+    private void handleConfirmSelection() {
+        List<String> selectedCards = registerBox.getChildren().stream()
+                .filter(n -> n instanceof StackPane)
+                .map(n -> (StackPane) n)
+                .filter(p -> !p.getChildren().isEmpty())
+                .map(p -> {
+                    Node node = p.getChildren().get(0);
+                    if (node instanceof ImageView iv && iv.getUserData() != null) {
+                        return iv.getUserData().toString();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (selectedCards.size() != 5) {
+            appendChatMessage("[WARNUNG] Du musst genau 5 Karten ins Register ziehen.");
+            return;
+        }
+
+
+        int clientID = ClientSingleton.getInstance().getID();
+        for (int i = 0; i < 5; i++) {
+            var body = new MessageDefinitions.BodyCardSelected(clientID, i, true);
+            var msg = new MessageDefinitions.Message<>(body);
+            ClientSingleton.getInstance().sendMessage(msg);
+        }
+
+
+        appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
     }
 
     /**
@@ -1080,5 +1187,29 @@ public class GameController {
         alert.showAndWait();
     }
 
+
+    public void showWelcomeDialog() {
+        Label title = new Label("Willkommen!");
+        title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
+
+        Label info = new Label("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+        info.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        VBox content = new VBox(15, title, info);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: rgba(20,20,30,0.95); -fx-padding: 30; -fx-background-radius: 12;");
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Spielstart");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.getDialogPane().lookupButton(ButtonType.OK).setStyle(
+                "-fx-background-color: #00ffd0; -fx-text-fill: black; -fx-font-weight: bold;");
+
+        dialog.showAndWait();
+    }
+
+
 }
+
 
