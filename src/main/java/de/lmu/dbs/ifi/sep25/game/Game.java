@@ -66,6 +66,7 @@ public class Game {
 //        mapSelectionPending = true;
 //        slowPlayers = new ArrayList<>();
         initializeProgrammingDeck();
+        initializeGame();
     }
 
     public static Game getInstance() {
@@ -86,8 +87,8 @@ public class Game {
     /**
      * Set Board references for all robots when initializing the game
      */
-    public void initializeGame() {
-        // TODO game.initializeGame(); (in Server)
+    private void initializeGame() {
+        // TODO game.initializeGame(); (in Server) -> call in constructor reicht
 
         for (Player player : players) {
             Robot robot = player.getRobot();
