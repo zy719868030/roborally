@@ -19,7 +19,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class Game {
     // Constants
@@ -205,6 +204,9 @@ public class Game {
 
             // Setup phase
             setPhase(GamePhase.SETUP);
+
+            resetRound();
+
             determinePlayerOrder();
             handleSetupPhase();
 
@@ -223,6 +225,11 @@ public class Game {
      * or at the start of the game after setup.
      */
     private void startNewGameRound() {
+        // Reset
+        resetRound();
+
+        // Start new round
+
         roundNumber++;
         appLogger.info("Starting round {}.", roundNumber);
         setPhase(GamePhase.PROGRAMMING);
@@ -273,7 +280,7 @@ public class Game {
             currentRegister++;
 
             if (currentRegister < 5) {
-                appLogger.info("Register {} completed. Moving to register {}.", currentRegister-1, currentRegister);
+                appLogger.info("Register {} completed. Moving to register {}.", currentRegister - 1, currentRegister);
                 determinePlayerOrder();
                 return true;
             } else {
@@ -292,57 +299,6 @@ public class Game {
 
         return false;
     }
-
-    /**
-     * Determines the winner of the game.
-     *
-     * @return the winning player, or null if no winner
-     */
-    private Player determineWinner() {
-        for (Player player : players) {
-            if (player.getReachedCheckpoints() >= board.getTotalCheckpoints()) {
-                return player;
-            }
-        }
-        return null;
-    }
-
-    //TODO @Yu
-            // For implementing the "loop," I recommend not using an actual loop.
-            // Instead, whenever the server receives input messages from clients,
-            // update the relevant lists or flags in the game state. After that,
-            // always check if all required inputs for the current game phase are present.
-            // Using a loop here can cause issues with latches and waiting, making the system more complex and error-prone.
-            // This event-driven approach will be simpler to implement and easier to fix etc.
-            // .
-            // tldr;
-            // Avoid using a loop for the "loop" implementation.
-            // Instead, update lists/flags whenever the server receives messages from clients and then check if all inputs are ready for the current game phase.
-
-            // Game continues until a player wins
-//            do {
-//                // Start a new round
-//                roundNumber++;
-//                appLogger.info("Starting round {}.", roundNumber);
-//
-//                // Programming phase
-//                setPhase(GamePhase.PROGRAMMING);
-//                handleProgrammingPhase();
-//
-//                // Activation phase
-//                setPhase(GamePhase.ACTIVATION);
-//                determinePlayerOrder();
-//                handleActivationPhase();
-//
-//                // Check if the game has ended
-//            } while (!checkGameEnd());
-//
-//        });
-//
-//        appLogger.info("Starting game main loop.");
-//
-//        mainLoop.start();
-//    }
 
     public void playRound() {
         for (Player player : players) {
@@ -491,65 +447,46 @@ public class Game {
         appLogger.info("Set new phase and broadcasted: {}.", currentPhase);
 
         // TODO @Lukas broadcast current phase
-        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyActivePhase(currentPhase.getValue())));
+        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyActivePhase(currentPhase.getValue())));
     }
 
     /**
      * Handle the setup phase
      */
     private void handleSetupPhase() {
-
-        initPlacement();
-
-        // Wait for all players to choose starting positions
+        // Wait for all players to each choose starting positions
         // This logic is triggered by the client, server responds
+
+        while (!currentPlayerTurn.isEmpty()) {
+            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
+
+            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
+            currentPlayerConnection.setPlacementLatch(latch);
+
+            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
+            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
+            ));
+
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Interrupted while waiting for placements.");
+            }
+        }
+
     }
 
     /**
      * Handle the programming phase
      */
     private void handleProgrammingPhase() {
-        // Distribute programming cards to each player
+        // Deal cards to all players
         for (Player player : players) {
-            // Clear previous registers if necessary
-            for (int i = 0; i < 5; i++) {
-                if (player.getRegister().get(i) != null) {
-                    player.removeCard(null, i);
-                }
-            }
-
-            // Deal programming cards to the player
-            List<String> cardNames = new ArrayList<>();
-            List<RegisterCard> hand = player.getHand();
-
-            // Clear hand from previous round if needed
-            hand.clear();
-
-            // Draw cards (usually 9)
-            for (int i = 0; i < 9; i++) {
-                player.drawCard();
-                // Add card names to list for notification
-                if (i < hand.size()) {
-                    cardNames.add(CardFactory.getCardName(hand.get(i)));
-                }
-            }
-
-            // TODO @lukas:Notify player of their cards
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyYourCards(cardNames)
-            ));
-
-            // TODO @lukas:Notify other players of card count
-            for (Player otherPlayer : players) {
-                if (otherPlayer != player) {
-                    otherPlayer.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyNotYourCards(player.getRobot().getId(), hand.size())
-                    ));
-                }
-            }
-
-            // Reset player's ready state for programming
-            player.setReadyRegister(false);
+            // Deal new cards and send to server
+            player.dealProgrammingCards();
         }
 
         // TODO: The actual card selection is handled by client events through the Player.chooseCard method
@@ -609,76 +546,6 @@ public class Game {
         // Check if the game has ended. If the game has not ended, start a new round.
         if (!checkGameEnd()) {
             startNewGameRound();
-        }
-    }
-
-    /**
-     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
-     */
-    public void initPlacement() {
-        while (!currentPlayerTurn.isEmpty()) {
-            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
-
-            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
-            currentPlayerConnection.setPlacementLatch(latch);
-
-            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
-            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
-            ));
-
-            try {
-                boolean completed = latch.await(30, TimeUnit.SECONDS); // Wait until current player confirms placement
-                if (!completed) {
-                    errorLogger.error("Placement phase timed out for client {}, closing client and connection.", currentPlayerConnection.getMyID());
-                    currentPlayerConnection.closeAll();
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("Interrupted while waiting for placements.");
-            }
-        }
-    }
-
-    /**
-     * Start the programming phase for all players
-     */
-    public void startProgrammingPhase() {
-        setPhase(GamePhase.PROGRAMMING);
-
-        // Deal cards to all players
-        for (Player player : players) {
-            // Clear previous programming
-            player.endRound();
-
-            // Deal new cards
-            player.dealProgrammingCards();
-
-            // Send cards to player
-            List<String> cardNames = new ArrayList<>();
-            for (RegisterCard card : player.getHand()) {
-                cardNames.add(CardFactory.getCardName(card));
-            }
-
-            player.getConnection().sendMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyYourCards(cardNames)
-                    )
-            );
-
-            // Notify others
-            int cardCount = player.getHand().size();
-            for (Player otherPlayer : players) {
-                if (otherPlayer != player) {
-                    otherPlayer.getConnection().sendMessage(
-                            new MessageDefinitions.Message<>(
-                                    new MessageDefinitions.BodyNotYourCards(
-                                            player.getRobot().getId(), cardCount
-                                    )
-                            )
-                    );
-                }
-            }
         }
     }
 
@@ -934,6 +801,14 @@ public class Game {
         if (virusCard != null) {
             robot.addDamageCard(virusCard.getDamageType());
         }
+    }
+
+    /**
+     * Resets all the players for the round.
+     */
+    private void resetRound() {
+        for (Player player : players)
+            player.resetRound();
     }
 
     // 6. Board-related Methods
@@ -1317,9 +1192,9 @@ public class Game {
      * Inflicts damage on a robot and broadcasts damage information.
      * When the specific damage card type is depleted, allows player to choose alternative damage types.
      *
-     * @param robot The robot that has been damaged.
+     * @param robot        The robot that has been damaged.
      * @param damageAmount The amount of damage to apply.
-     * @param damageType The type of damage ("Spam", "Virus", "Worm", "Trojan").
+     * @param damageType   The type of damage ("Spam", "Virus", "Worm", "Trojan").
      */
     public void applyAndBroadcastDamage(Robot robot, int damageAmount, String damageType) {
         if (damageAmount <= 0) return;
@@ -1373,6 +1248,7 @@ public class Game {
                 )
         );
     }
+
     /**
      * Retrieves a list of robots located within a specified range from a given central position.
      * This method is particularly used for actions involving VIRUS cards.

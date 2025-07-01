@@ -367,34 +367,9 @@ public class ClientHandler implements Runnable {
             // Wenn gültig und Latch aktiv ist
             if (placementLatch != null) {
                 placementLatch.countDown();
-
-                // ✅ Karten austeilen (nur für diesen Spieler)
-                List<String> cardNames = new java.util.ArrayList<>();
-
-                // Hand leeren
-                player.getHand().clear();
-
-                // 9 Karten ziehen und Namen sammeln
-                for (int i = 0; i < 9; i++) {
-                    player.drawCard();
-                    if (i < player.getHand().size()) {
-                        cardNames.add(de.lmu.dbs.ifi.sep25.card.CardFactory.getCardName(player.getHand().get(i)));
-                    }
-                }
-
-                // Karten an aktuellen Spieler senden
-                sendMessage(new Message<>(new BodyYourCards(cardNames)));
-
-                // Andere Spieler informieren (nur Kartenzahl)
-                for (Player other : game.getPlayers()) {
-                    if (other != player) {
-                        other.getConnection().sendMessage(new Message<>(new BodyNotYourCards(
-                                player.getRobot().getId(),
-                                cardNames.size()
-                        )));
-                    }
-                }
-
+                //draw cards are called in game loop
+            } else {
+                throw new IllegalStateException("Latch is not set!");
             }
         }
     }

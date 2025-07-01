@@ -240,7 +240,7 @@ public class Robot {
                 .findFirst()
                 .orElse(null);
         if (player != null) {
-            player.clearRegister();
+            player.resetRegister();
         }
         System.out.println("Robot " + id + " programming has been cancelled for this round.");
     }
