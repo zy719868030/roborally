@@ -1,6 +1,5 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Belts;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
@@ -24,13 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 
 public class GameController {
     // 0. Logger
     private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
+    private static final Logger appLogger = LogManager.getLogger(GameController.class);
+
     @FXML
     private GridPane gameBoardPane;
     @FXML
@@ -45,9 +45,11 @@ public class GameController {
     private VBox chatBox;
     @FXML
     private HBox iconMenu;
-    @FXML private HBox playedCardsBox;
+    @FXML
+    private HBox playedCardsBox;
 
-    @FXML private  HBox handCardBox;
+    @FXML
+    private HBox handCardBox;
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
@@ -58,8 +60,10 @@ public class GameController {
     private Timeline countdownTimer;
     private int secondsLeft = 30;
     private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
-    @FXML private HBox discardPileBox;
-    @FXML private Label phaseLabel;
+    @FXML
+    private HBox discardPileBox;
+    @FXML
+    private Label phaseLabel;
 
 
     @FXML
@@ -148,360 +152,153 @@ public class GameController {
      **/
     private StackPane createTile(List<MessageDefinitions.Field> elements) {
         StackPane pane = new StackPane();
+        if (elements == null || elements.isEmpty()) return pane;
 
-        if (elements == null || elements.isEmpty()) {
-            return pane; // Skip when empty pane
-        }
-
-        ImageView background = new ImageView(tileImages.get("Floor"));
-        background.setFitWidth(TILE_SIZE);
-        background.setFitHeight(TILE_SIZE);
-        pane.getChildren().add(background);
-
+        addImage(pane, "Floor", 0);
 
         for (MessageDefinitions.Field element : elements) {
             switch (element.type()) {
-                case "Laser" -> {} //skip
+                case "Laser" -> {
+                } // skip
+
                 case "Wall" -> {
                     MessageDefinitions.FieldWall wall = (MessageDefinitions.FieldWall) element;
-                    List<String> directions = wall.orientations();
-
-                    // Alle Laser auf dem Feld sammeln
-                    List<MessageDefinitions.FieldLaser> laserFields = elements.stream()
+                    List<MessageDefinitions.FieldLaser> lasers = elements.stream()
                             .filter(e -> e instanceof MessageDefinitions.FieldLaser)
                             .map(e -> (MessageDefinitions.FieldLaser) e)
                             .toList();
 
-                    for (String dir : directions) {
-                        // Standardbild
+                    for (String dir : wall.orientations()) {
                         String imageKey = "wall_n";
-
-                        for (MessageDefinitions.FieldLaser laser : laserFields) {
-                            // Passt Richtung an
+                        for (MessageDefinitions.FieldLaser laser : lasers) {
                             if (laser.orientations().getFirst().equals(dir)) {
-                                int count = laser.count();
-                                boolean active = laser.isActive(); // Laser ist an oder aus
-                                imageKey = "wall_laser_" + count + "_" + (active ? "on" : "off");
+                                imageKey = "wall_laser_" + laser.count() + "_" + (laser.isActive() ? "on" : "off");
                                 break;
                             }
                         }
-
-                        ImageView wallImg = new ImageView(tileImages.get(imageKey));
-                        wallImg.setFitWidth(TILE_SIZE);
-                        wallImg.setFitHeight(TILE_SIZE);
-                        wallImg.setRotate(convertDirectionToRotation(dir));
-                        pane.getChildren().add(wallImg);
+                        addImage(pane, imageKey, convertDirectionToRotation(dir));
                     }
                 }
+
                 case "ConveyorBelt" -> {
                     MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
+                    String color = (conveyor.speed() == 2) ? "blue" : "green";
+                    List<String> dirs = conveyor.orientations();
+                    if (dirs == null || dirs.isEmpty()) break;
 
-                    int speed = conveyor.speed(); // 1 = green, 2 = blue
-                    List<String> orientations = conveyor.directions();
-
-                    if (orientations == null || orientations.size() < 1) break;
-
-                    Direction outDir = Direction.fromString(orientations.get(0));
-                    List<Direction> inDirs = orientations.subList(1, orientations.size()).stream()
-                            .map(Direction::fromString)
-                            .toList();
-
-                    String colorPrefix = (speed == 2) ? "blue" : "green";
-
-                    String tileName;
+                    Direction outDir = Direction.fromString(dirs.getFirst());
+                    List<Direction> inDirs = dirs.subList(1, dirs.size()).stream().map(Direction::fromString).toList();
+                    String tileName = determineConveyorTile(color, outDir, inDirs);
                     double rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
-
-                    if (inDirs.isEmpty()) {
-                        tileName = colorPrefix + "_conveyor_belt_straight";
-//                      rotation = convertDirectionToRotation(outDir.toString().toLowerCase());
-                    } else if (inDirs.size() == 1) {
-                        Direction inDir = inDirs.get(0);
-
-                        if (inDir.turnAround().equals(outDir)) {
-                            tileName = colorPrefix + "_conveyor_belt_straight";
-                        } else {
-                            // The input and output directions are not opposite, it is a corner conveyor belt,
-                            // determine whether it is left turn or right turn.
-                            int turn = getRelativeTurn(inDir, outDir);
-                            if (turn == 1) {
-                                tileName = colorPrefix + "_conveyor_corner_r";
-                            } else {
-                                tileName = colorPrefix + "_conveyor_corner_l";
-                            }
-                        }
-                    } else {
-                        boolean isMerge = true;
-                        // Check if there is any input direction that is not pointing in the direction of the output.
-                        for (Direction inDir : inDirs) {
-                            if (!inDir.turnAround().equals(outDir)) {
-                                isMerge = false;
-                                break;
-                            }
-                        }
-
-                        if (isMerge) {
-                            // All inputs are the reverse of the outputs, which is a merge conveyor belt.
-                            tileName = colorPrefix + "_conveyor_merge";
-                        } else {
-                            // There is an input that is not the reverse of the output.
-                            // This is a separate conveyor belt. Find the input direction that is not the reverse of the output.
-                            Direction nonOppositeInDir = null;
-                            for (Direction inDir : inDirs) {
-                                if (!inDir.turnAround().equals(outDir)) {
-                                    nonOppositeInDir = inDir;
-                                    break;
-                                }
-                            }
-
-                            // Determine the direction of separation
-                            if (nonOppositeInDir != null) {
-                                int turn = getRelativeTurn(outDir, nonOppositeInDir);
-                                if (turn == 1) {
-                                    tileName = colorPrefix + "_conveyor_split_right";
-                                } else {
-                                    tileName = colorPrefix + "_conveyor_split_left";
-                                }
-                            } else {
-                                // Safety measures: If no opposite input direction is found, use a straight conveyor belt.
-                                tileName = colorPrefix + "_conveyor_belt_straight";
-                                logger.warn("无法确定传送带类型，使用默认直线传送带");
-                            }
-                        }
+                    switch (tileName.substring(tileName.indexOf('_'))) {
+                        case "_conveyor_corner_l" -> rotation += 90;
+                        case "_conveyor_corner_r" -> rotation -= 90;
                     }
-
-                    ImageView beltImg = new ImageView(tileImages.get(tileName));
-                    beltImg.setFitWidth(TILE_SIZE);
-                    beltImg.setFitHeight(TILE_SIZE);
-                    beltImg.setRotate(rotation);
-
-                    pane.getChildren().add(beltImg);
+                    appLogger.info("Adding conveyor tile {} with rotation {}", tileName, rotation);
+                    addImage(pane, tileName, rotation);
                 }
-
-
-
-               /* case "ConveyorBelt" -> {
-                    MessageDefinitions.FieldConveyorBelt belt = (MessageDefinitions.FieldConveyorBelt) element;
-                    String color = belt.speed() == 2 ? "blue" : "green";
-
-
-                    // Parse Direction enum aus Strings
-                    Direction outDir = Direction.fromString(belt.directions().getFirst());
-                    List<Direction> inDirs = belt.directions().stream()
-                            .skip(1)
-                            .map(Direction::fromString)
-                            .toList();
-
-                    String imageKey;
-                    boolean isSplit = inDirs.stream()
-                            .filter(in -> !in.turnAround().equals(outDir))
-                            .count() >= 1;
-
-                    if (isSplit) {
-                        imageKey = color + "_" + getSplitImageSuffix(outDir, inDirs, color);
-                    } else {
-                        imageKey = color + "_conveyor_belt_straight";
-                    }
-
-
-                    Image image = tileImages.get(imageKey);
-                    ImageView imgView = new ImageView(image);
-                    imgView.setFitWidth(TILE_SIZE);
-                    imgView.setFitHeight(TILE_SIZE);
-                    imgView.setRotate(convertDirectionToRotation(outDir.toString().toLowerCase()));
-                    pane.getChildren().add(imgView);
-                }
-
-*/
-
 
                 case "PushPanel" -> {
                     MessageDefinitions.FieldPushPanel pushPanel = (MessageDefinitions.FieldPushPanel) element;
-                    String registerKey = pushPanel.registers().stream()
-                            .map(String::valueOf)
-                            .collect(Collectors.joining("_"));
+                    String key = "PushPanel_" + String.join("_", pushPanel.registers().stream().map(String::valueOf).toList());
+                    addImage(pane, key, convertDirectionToRotation(pushPanel.orientations().getFirst()));
+                }
 
-                    Image baseImage = tileImages.get("PushPanel_" + registerKey);
+                case "RestartPoint" -> addImage(pane, "reboot", convertDirectionToRotation(
+                        ((MessageDefinitions.FieldRestartPoint) element).orientations().getFirst()));
 
-                    if (baseImage == null) {
-                        System.err.println("Fehlendes Bild: PushPanel_" + registerKey);
-                        continue;
+                case "Antenna" -> addImage(pane, "antenna", convertDirectionToRotation(
+                        ((MessageDefinitions.FieldAntenna) element).orientations().getFirst()));
+
+                case "StartPoint" -> {
+                    addImage(pane, "black and white gears", 0);
+                    pane.setStyle("-fx-border-color: yellow; -fx-border-width: 2px;");
+                    if (pane.getOnMouseClicked() == null) {
+                        pane.setOnMouseClicked(_ -> handleStartPointClick(pane));
                     }
-
-                    ImageView ppImg = new ImageView(baseImage);
-                    ppImg.setFitWidth(TILE_SIZE);
-                    ppImg.setFitHeight(TILE_SIZE);
-
-                    ppImg.setRotate(convertDirectionToRotation(pushPanel.orientations().getFirst()));
-
-                    pane.getChildren().add(ppImg);
-                }
-
-                case "RestartPoint" -> {
-                    MessageDefinitions.FieldRestartPoint restartPoint = (MessageDefinitions.FieldRestartPoint) element;
-                    Image baseImage = tileImages.get("reboot");
-
-                    ImageView image = new ImageView(baseImage);
-                    image.setFitWidth(TILE_SIZE);
-                    image.setFitHeight(TILE_SIZE);
-
-                    image.setRotate(convertDirectionToRotation(restartPoint.orientations().getFirst()));
-
-                    pane.getChildren().add(image);
-                }
-
-                case "Antenna" -> {
-                    MessageDefinitions.FieldAntenna antenna = (MessageDefinitions.FieldAntenna) element;
-                    Image baseImage = tileImages.get("antenna");
-
-                    ImageView image = new ImageView(baseImage);
-                    image.setFitWidth(TILE_SIZE);
-                    image.setFitHeight(TILE_SIZE);
-
-                    image.setRotate(convertDirectionToRotation(antenna.orientations().getFirst()));
-
-                    pane.getChildren().add(image);
-
                 }
 
                 default -> {
                     String key = getTileKeyForElement(element);
                     if (tileImages.containsKey(key)) {
-                        ImageView overlay = new ImageView(tileImages.get(key));
-                        overlay.setFitWidth(TILE_SIZE);
-                        overlay.setFitHeight(TILE_SIZE);
-                        pane.getChildren().add(overlay);
+                        addImage(pane, key, 0);
                     } else {
                         System.err.println("Fehlendes Bild: " + key);
                     }
                 }
             }
-
-            }
-//startpoint
-        boolean isStartPoint = elements.stream().anyMatch(e -> e.type().equals("StartPoint"));
-
-            if (isStartPoint) {
-                pane.setOnMouseClicked(event -> {
-                    Integer x = GridPane.getColumnIndex(pane);
-                    Integer y = GridPane.getRowIndex(pane);
-
-                    if (x == null || y == null) return;
-
-                    String direction = "up"; //
-
-                    var message = new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodySetStartingPoint(x, y, direction)
-                    );
-
-                    ClientSingleton.getInstance().sendMessage(message);
-
-                    System.out.println("[DEBUG] sending StartingPointSelected: (" + x + ", " + y + ") Direction: " + direction + ")");
-
-                    // Disable clicks on the selected starting position
-                    pane.setOnMouseClicked(null);
-                    pane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
-
-                    appendChatMessage("[INFO] Starting position selected at (" + x + ", " + y + ")");
-                });
-
-                pane.setStyle("-fx-border-color: yellow; -fx-border-width: 2px;"); // visual
-            }
-
+        }
 
         pane.requestLayout();
-        pane.requestFocus();
-
         return pane;
     }
 
-
-    private int getCornerImageRotation(Direction inDir, Direction outDir) {
-        if (inDir == null || outDir == null) return 0;
-
-        return switch (inDir) {
-            case NORTH -> switch (outDir) {
-                case EAST -> 270;
-                case WEST -> 90;
-                default -> 0;
-            };
-            case EAST -> switch (outDir) {
-                case SOUTH -> 270;
-                case NORTH -> 90;
-                default -> 0;
-            };
-            case SOUTH -> switch (outDir) {
-                case WEST -> 270;
-                case EAST -> 90;
-                default -> 0;
-            };
-            case WEST -> switch (outDir) {
-                case NORTH -> 270;
-                case SOUTH -> 90;
-                default -> 0;
-            };
-        };
-    }
-
-
-    private boolean isOpposite(String a, String b) {
-        return (a.equals("top") && b.equals("bottom")) ||
-                (a.equals("bottom") && b.equals("top")) ||
-                (a.equals("left") && b.equals("right")) ||
-                (a.equals("right") && b.equals("left"));
-    }
-
-    private int getCornerRotation(String push, String pull) {
-        return switch (push + "_" + pull) {
-            case "top_right" -> 0;
-            case "right_bottom" -> 90;
-            case "bottom_left" -> 180;
-            case "left_top" -> 270;
-            case "right_top" -> 270;
-            case "bottom_right" -> 0;
-            case "left_bottom" -> 90;
-            case "top_left" -> 180;
-            default -> 0;
-        };
-    }
-
-    private String getSplitImageKeyForDirection(String pushDir) {
-        // Diese Methode gibt entweder "conveyor_split_left" oder "conveyor_split_right" zurück
-        return switch (pushDir) {
-            case "top" -> "conveyor_split_right";
-            case "right" -> "conveyor_split_left";
-            case "bottom" -> "conveyor_split_left";
-            case "left" -> "conveyor_split_right";
-            default -> "conveyor_split_left";
-        };
-    }
-
-    private String getSplitImageSuffix(Direction outDir, List<Direction> inDirs, String color) {
-        if (inDirs.size() < 2) return (color + "_conveyor_belt_straight");
-        // Standard-Gerade
-
-        // Split: welcher Eingang ist NICHT gegenüber vom Ausgang?
-        for (Direction inDir : inDirs) {
-            if (!inDir.turnAround().equals(outDir)) {
-                int relative = getRelativeTurn(outDir, inDir);
-                return (relative == 1) ? "conveyor_split_right" : "conveyor_split_left";
-            }
+    /**
+     * Helper to add an ImageView with rotation.
+     */
+    private void addImage(StackPane pane, String key, double rotation) {
+        Image img = tileImages.get(key);
+        if (img == null) {
+            System.err.println("Fehlendes Bild: " + key);
+            return;
         }
-        return "conveyor_belt_straight";
+        ImageView view = new ImageView(img);
+        view.setFitWidth(TILE_SIZE);
+        view.setFitHeight(TILE_SIZE);
+        view.setRotate(rotation);
+        pane.getChildren().add(view);
     }
 
-    // von @Lukas: @raneem ist schon in Direction enum integriert unter Direction.fromString(str)
+    /**
+     * Handles clicking a start point tile.
+     */
+    private void handleStartPointClick(StackPane pane) {
+        Integer x = GridPane.getColumnIndex(pane);
+        Integer y = GridPane.getRowIndex(pane);
+        if (x == null || y == null) return;
 
-//    private Direction parseProtocolDirection(String dirString) {
-//        return switch (dirString.toLowerCase()) {
-//            case "top" -> Direction.NORTH;
-//            case "bottom" -> Direction.SOUTH;
-//            case "left" -> Direction.WEST;
-//            case "right" -> Direction.EAST;
-//            default -> throw new IllegalArgumentException("Ungültige Richtung: " + dirString);
-//        };
-//    }
+        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y, "up"));
+        ClientSingleton.getInstance().sendMessage(msg);
+        System.out.printf("[DEBUG] Starting position selected at (%d, %d)%n", x, y);
 
+        pane.setOnMouseClicked(null);
+        pane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
+        appendChatMessage("[INFO] Starting position selected at (" + x + ", " + y + ")");
+    }
 
+    /**
+     * Determines which conveyor tile to use.
+     */
+    private String determineConveyorTile(String color, Direction out, List<Direction> in) {
+        if (in.isEmpty()) return color + "_conveyor_belt_straight";
+
+        if (in.size() == 1) {
+            Direction inDir = in.getFirst();
+            if (inDir.turnAround().equals(out)) return color + "_conveyor_belt_straight";
+
+            return switch (getRelativeTurn(inDir, out)) {
+                case 1 -> color + "_conveyor_corner_l";
+                default -> color + "_conveyor_corner_r";
+            };
+        }
+
+        boolean isMerge = in.stream().allMatch(d -> d.turnAround().equals(out));
+        if (isMerge) return color + "_conveyor_merge";
+
+        Direction nonOpposite = in.stream().filter(d -> !d.turnAround().equals(out)).findFirst().orElse(null);
+        if (nonOpposite != null) {
+            return getRelativeTurn(out, nonOpposite) == 1
+                    ? color + "_conveyor_split_right"
+                    : color + "_conveyor_split_left";
+        }
+
+        System.err.println("Unable to determine conveyor type, using default straight conveyor");
+        return color + "_conveyor_belt_straight";
+    }
+
+    /**
+     * Returns relative turn.
+     */
     private int getRelativeTurn(Direction from, Direction to) {
         int delta = (to.ordinal() - from.ordinal() + 4) % 4;
 
@@ -512,7 +309,7 @@ public class GameController {
         };
     }
 
-    /**dd
+    /**
      * Loads the tile images for various game elements and populates them into the `tileImages` map.
      * <p>
      * This method maps specific tile keys to corresponding image file paths stored in the assets folder.
@@ -594,11 +391,9 @@ public class GameController {
         switch (element.type()) {
             case "Empty":
                 return "Floor";
-            case "StartPoint":
-                return "black and white gears";
             case "Pit":
                 return "Pit";
-            case "Energy-Space" :
+            case "Energy-Space":
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
                 Integer count = es.getCount();
                 return count != null && count > 0 ? "energyspace_green" : "energyspace_red";
@@ -610,7 +405,6 @@ public class GameController {
                 return "Unknown type received: " + element.type();
         }
     }
-
 
     public void handleGameStarted(List<List<List<MessageDefinitions.Field>>> boardMap) {
         System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
@@ -675,6 +469,7 @@ public class GameController {
         // Info in Chat
         appendChatMessage("[INFO] Current phase: " + phaseName);
     }
+
     public void updateDiscardPile(List<String> discardedCards) {
         discardPileBox.getChildren().clear();
 
@@ -725,6 +520,7 @@ public class GameController {
             playedCardsBox.getChildren().remove(0);
         }
     }
+
     /**
      * Hebt den Spieler hervor, der aktuell am Zug ist.
      *
@@ -777,9 +573,9 @@ public class GameController {
             // Drehe Bild je nach Richtung
             switch (direction.toLowerCase()) {
                 case "right" -> robotView.setRotate(0);
-                case "down"  -> robotView.setRotate(90);
-                case "left"  -> robotView.setRotate(180);
-                case "up"    -> robotView.setRotate(270);
+                case "down" -> robotView.setRotate(90);
+                case "left" -> robotView.setRotate(180);
+                case "up" -> robotView.setRotate(270);
             }
 
             // Setze Roboter auf das Spielfeld (Grid)
@@ -850,6 +646,7 @@ public class GameController {
             handCardBox.getChildren().add(view);
         }
     }
+
     /**
      * Zeigt für einen anderen Spieler Kartenrückseiten an.
      *
@@ -873,6 +670,7 @@ public class GameController {
 
         appendChatMessage("Spieler #" + clientID + " hat " + count + " Karten erhalten.");
     }
+
     /**
      * Zeigt eine optionale Animation oder Nachricht an, dass das Deck gemischt wurde.
      */
@@ -885,7 +683,7 @@ public class GameController {
      * Wird aufgerufen, wenn ein Spieler eine Karte für sein Register ausgewählt hat.
      *
      * @param clientID Die ID des Spielers
-     * @param filled Ob das Register des Spielers vollständig ist
+     * @param filled   Ob das Register des Spielers vollständig ist
      */
     public void handleCardSelection(int clientID, boolean filled) {
         String message = filled
@@ -902,22 +700,24 @@ public class GameController {
     public void markPlayerReady(int clientID) {
         appendChatMessage("[INFO] Spieler " + clientID + " ist bereit.");
     }
-/**
- * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
- *
- * <p>Die Methode zeigt die verbleibende Zeit im `timerLabel` an und blendet das Label aus,
- * wenn der Countdown abgelaufen ist. Der Timer wird in 1-Sekunden-Intervallen aktualisiert.</p>
- *
- * <p>Funktionsweise:</p>
- * <ul>
- *   <li>Setzt die verbleibende Zeit (`secondsLeft`) auf 30 Sekunden.</li>
- *   <li>Zeigt das `timerLabel` an und aktualisiert es jede Sekunde.</li>
- *   <li>Stoppt einen eventuell laufenden Timer, bevor ein neuer gestartet wird.</li>
- *   <li>Blendet das `timerLabel` aus, wenn die Zeit abgelaufen ist.</li>
- * </ul>
- *
- * <p>Diese Methode wird verwendet, um zeitgesteuerte Aktionen in der Benutzeroberfläche zu ermöglichen.</p>
- */    public void startCountdown() {
+
+    /**
+     * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
+     *
+     * <p>Die Methode zeigt die verbleibende Zeit im `timerLabel` an und blendet das Label aus,
+     * wenn der Countdown abgelaufen ist. Der Timer wird in 1-Sekunden-Intervallen aktualisiert.</p>
+     *
+     * <p>Funktionsweise:</p>
+     * <ul>
+     *   <li>Setzt die verbleibende Zeit (`secondsLeft`) auf 30 Sekunden.</li>
+     *   <li>Zeigt das `timerLabel` an und aktualisiert es jede Sekunde.</li>
+     *   <li>Stoppt einen eventuell laufenden Timer, bevor ein neuer gestartet wird.</li>
+     *   <li>Blendet das `timerLabel` aus, wenn die Zeit abgelaufen ist.</li>
+     * </ul>
+     *
+     * <p>Diese Methode wird verwendet, um zeitgesteuerte Aktionen in der Benutzeroberfläche zu ermöglichen.</p>
+     */
+    public void startCountdown() {
         secondsLeft = 30;
         timerLabel.setText("Zeit: 30s");
         timerLabel.setVisible(true);// Zeige das Label beim Start
@@ -940,6 +740,7 @@ public class GameController {
         countdownTimer.setCycleCount(30);
         countdownTimer.play();
     }
+
     public void hideCountdown() {
         timerLabel.setVisible(false);
         timerLabel.setManaged(false);
@@ -947,21 +748,22 @@ public class GameController {
 
 
     /**
-    * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
-    *
-    * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
-    * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
-    *
-    * <p>Funktionsweise:</p>
-    * <ul>
-    *   <li>Zeigt eine Nachricht im Chat an, dass die Zeit abgelaufen ist.</li>
-    *   <li>Listet die IDs der Spieler auf, die zu langsam waren, falls vorhanden.</li>
-    *   <li>Markiert diese Spieler visuell in der Empfänger-ComboBox (z. B. durch ein "✖" vor ihrem Namen).</li>
-    *   <li>Setzt die Auswahl in der ComboBox zurück, falls ein markierter Spieler ausgewählt war.</li>
-    * </ul>
-    *
-    * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
-    */ public void showTimerEnded(List<Integer> slowPlayers) {
+     * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
+     *
+     * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
+     * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
+     *
+     * <p>Funktionsweise:</p>
+     * <ul>
+     *   <li>Zeigt eine Nachricht im Chat an, dass die Zeit abgelaufen ist.</li>
+     *   <li>Listet die IDs der Spieler auf, die zu langsam waren, falls vorhanden.</li>
+     *   <li>Markiert diese Spieler visuell in der Empfänger-ComboBox (z. B. durch ein "✖" vor ihrem Namen).</li>
+     *   <li>Setzt die Auswahl in der ComboBox zurück, falls ein markierter Spieler ausgewählt war.</li>
+     * </ul>
+     *
+     * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
+     */
+    public void showTimerEnded(List<Integer> slowPlayers) {
         hideCountdown();
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
@@ -1019,6 +821,7 @@ public class GameController {
         label.setStyle("-fx-font-size: 14px; -fx-text-fill: white;");
         handCardBox.getChildren().add(label);
     }
+
     /**
      * Basic placeholder animation for a robot action.
      *
@@ -1041,6 +844,7 @@ public class GameController {
             pause.play();
         }
     }
+
     /**
      * Holt die StackPane für ein Spielfeldfeld bei (x, y).
      *
@@ -1096,14 +900,14 @@ public class GameController {
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
 
-        // Bestehende Roboter entfernen (optional)
-        StackPane cell = getCellAt(x, y);
-        if (cell != null) {
-            cell.getChildren().removeIf(n -> n instanceof ImageView && ((ImageView) n).getImage().getUrl().contains("robot"));
-            cell.getChildren().add(robot);
-        }
+            // Bestehende Roboter entfernen (optional)
+            StackPane cell = getCellAt(x, y);
+            if (cell != null) {
+                cell.getChildren().removeIf(n -> n instanceof ImageView && ((ImageView) n).getImage().getUrl().contains("robot"));
+                cell.getChildren().add(robot);
+            }
 
-        appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
+            appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
             System.err.println("[FEHLER] Roboterbild konnte nicht geladen werden für Spieler " + clientID);
             e.printStackTrace();
@@ -1210,7 +1014,7 @@ public class GameController {
     /**
      * Zeigt an, dass ein Spieler einen Checkpoint erreicht hat.
      *
-     * @param clientID Die ID des Spielers
+     * @param clientID         Die ID des Spielers
      * @param checkpointNumber Die Nummer des erreichten Checkpoints
      */
     public void showCheckpointReached(int clientID, int checkpointNumber) {

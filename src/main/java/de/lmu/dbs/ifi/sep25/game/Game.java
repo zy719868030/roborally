@@ -201,31 +201,148 @@ public class Game {
      * Start the game main loop
      */
     public void startGameLoop() {
-        // Setup phase
-        setPhase(GamePhase.SETUP);
-        determinePlayerOrder();
-        handleSetupPhase();
+        final Thread mainLoop = new Thread(() -> {
 
-        appLogger.info("Finished setup phase. Moving to main loop.");
+            // Setup phase
+            setPhase(GamePhase.SETUP);
+            determinePlayerOrder();
+            handleSetupPhase();
 
-        // Game continues until a player wins
-        do {
-            // Start a new round
-            roundNumber++;
-            appLogger.info("Starting round {}.", roundNumber);
+            appLogger.info("Finished setup phase. Moving to main loop.");
 
-            // Programming phase
-            setPhase(GamePhase.PROGRAMMING);
-            handleProgrammingPhase();
+            startNewGameRound();
+        });
 
-            // Activation phase
+        appLogger.info("Starting game main loop.");
+        mainLoop.start();
+    }
+
+    /**
+     * Starts a new round of the game.
+     * This method should be called when a round ends and a new one needs to begin,
+     * or at the start of the game after setup.
+     */
+    private void startNewGameRound() {
+        roundNumber++;
+        appLogger.info("Starting round {}.", roundNumber);
+        setPhase(GamePhase.PROGRAMMING);
+        handleProgrammingPhase();
+
+        // The game will automatically advance to the activation phase after receiving enough client messages.
+        // There is no need to wait or poll here.
+    }
+
+    /**
+     * Checks if all required inputs for the current programming phase are ready.
+     * If all players have completed their programming, advances to activation phase.
+     * This method should be called whenever a player submits programming choices.
+     *
+     * @return true if game phase was advanced, false otherwise
+     */
+    public boolean checkAndAdvanceFromProgrammingPhase() {
+        // Check if all players have completed programming
+        boolean allPlayersReady = true;
+        for (Player player : players) {
+            if (!player.isReadyRegister()) {
+                allPlayersReady = false;
+                break;
+            }
+        }
+
+        // If all players are ready and it is currently the programming phase, enter the activation phase.
+        if (allPlayersReady && currentPhase == GamePhase.PROGRAMMING) {
+            appLogger.info("All players have completed programming. Moving to activation phase.");
             setPhase(GamePhase.ACTIVATION);
             determinePlayerOrder();
             handleActivationPhase();
+            return true;
+        }
 
-            // Check if the game has ended
-        } while (!checkGameEnd());
+        return false;
     }
+
+    /**
+     * Checks if the current activation phase for the current register is complete.
+     * If completed, advances to the next register or ends the round.
+     * This method should be called after each player's robot movement is processed.
+     *
+     * @return true if game advanced to next register or round, false otherwise
+     */
+    public boolean checkAndAdvanceActivationPhase() {
+        if (currentPlayerTurn.isEmpty() && currentPhase == GamePhase.ACTIVATION) {
+            currentRegister++;
+
+            if (currentRegister < 5) {
+                appLogger.info("Register {} completed. Moving to register {}.", currentRegister-1, currentRegister);
+                determinePlayerOrder();
+                return true;
+            } else {
+                appLogger.info("All registers processed. Ending round {}.", roundNumber);
+                endRound();
+
+                // Check if the game has ended
+                if (checkGameEnd()) {
+                    appLogger.info("Game end condition met. Game over.");
+                } else {
+                    startNewGameRound();
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determines the winner of the game.
+     *
+     * @return the winning player, or null if no winner
+     */
+    private Player determineWinner() {
+        for (Player player : players) {
+            if (player.getReachedCheckpoints() >= board.getTotalCheckpoints()) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    //TODO @Yu
+            // For implementing the "loop," I recommend not using an actual loop.
+            // Instead, whenever the server receives input messages from clients,
+            // update the relevant lists or flags in the game state. After that,
+            // always check if all required inputs for the current game phase are present.
+            // Using a loop here can cause issues with latches and waiting, making the system more complex and error-prone.
+            // This event-driven approach will be simpler to implement and easier to fix etc.
+            // .
+            // tldr;
+            // Avoid using a loop for the "loop" implementation.
+            // Instead, update lists/flags whenever the server receives messages from clients and then check if all inputs are ready for the current game phase.
+
+            // Game continues until a player wins
+//            do {
+//                // Start a new round
+//                roundNumber++;
+//                appLogger.info("Starting round {}.", roundNumber);
+//
+//                // Programming phase
+//                setPhase(GamePhase.PROGRAMMING);
+//                handleProgrammingPhase();
+//
+//                // Activation phase
+//                setPhase(GamePhase.ACTIVATION);
+//                determinePlayerOrder();
+//                handleActivationPhase();
+//
+//                // Check if the game has ended
+//            } while (!checkGameEnd());
+//
+//        });
+//
+//        appLogger.info("Starting game main loop.");
+//
+//        mainLoop.start();
+//    }
 
     public void playRound() {
         for (Player player : players) {
@@ -275,32 +392,51 @@ public class Game {
         );
     }
 
+    /**
+     * Checks if the game has ended and handles all logic when the game ends.
+     * Game end condition: any player reaches all checkpoints.
+     * When the game ends, this method will:
+     * 1. Determine the winner.
+     * 2. Broadcast the BodyGameFinished message.
+     * 3. Send a chat message that the game has ended.
+     *
+     * @return Returns true if the game has ended, otherwise returns false.
+     */
     private boolean checkGameEnd() {
+        Player winner = null;
+
         for (Player player : players) {
             // Check if any player has reached all checkpoints
             int checkpointsReached = player.getReachedCheckpoints();
             if (checkpointsReached >= board.getTotalCheckpoints()) {
-                // Broadcast game end message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyGameFinished(player.getRobot().getId())
-                        )
-                );
-
-                // TODO @lukas：Send final chat message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyReceivedChat(
-                                        "Game over! Player " + player.getName() +
-                                                " has won by reaching all checkpoints!",
-                                        0, false
-                                )
-                        )
-                );
-
-                return true;
+                winner = player;
+                break;
             }
         }
+
+        if (winner != null) {
+            appLogger.info("Game ended. Player {} has won by reaching all checkpoints.", winner.getName());
+
+            // TODO @lukas：Broadcast game end message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyGameFinished(winner.getRobot().getId())
+                    )
+            );
+
+            // TODO @lukas：Send final chat message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyReceivedChat(
+                                    "Game over! Player " + winner.getName() +
+                                            " has won by reaching all checkpoints!",
+                                    0, false
+                            )
+                    )
+            );
+            return true;
+        }
+
         return false;
     }
 

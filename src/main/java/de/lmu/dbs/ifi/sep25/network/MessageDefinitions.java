@@ -88,18 +88,18 @@ public class MessageDefinitions {
 
     public static class FieldConveyorBelt extends Field {
         private final Integer speed;
-        private final List<String> directions;
+        private final List<String> orientations;
 
         /**
-         * @param directions minimum of 2 directions: first directions is the push direction, rest are pull directions
+         * @param orientations minimum of 2 directions: first directions is the push direction, rest are pull directions
          * @param speed      1 == green | 2 == blue
          **/
-        public FieldConveyorBelt(String isOnBoard, Integer speed, List<String> directions) {
+        public FieldConveyorBelt(String isOnBoard, Integer speed, List<String> orientations) {
             super(isOnBoard);
-            if (directions.size() < 2)
+            if (orientations.size() < 2)
                 throw new IllegalArgumentException("Conveyor requires at least 2 orientations");
             this.speed = speed;
-            this.directions = directions;
+            this.orientations = orientations;
 
         }
 
@@ -107,8 +107,8 @@ public class MessageDefinitions {
             return speed;
         }
 
-        public List<String> directions() {
-            return directions;
+        public List<String> orientations() {
+            return orientations;
         }
     }
 

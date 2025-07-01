@@ -138,7 +138,8 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
-            e.printStackTrace();
+            appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
+//            e.printStackTrace(); DEBUG
             closeAll();
         }
     }

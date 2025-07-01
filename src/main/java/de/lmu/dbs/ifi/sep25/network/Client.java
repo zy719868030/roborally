@@ -127,7 +127,7 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                System.out.println("[DEBUG] JSON received: " + json); // Test
+                System.out.println("[RECEIVED] " + json); // Test
 
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
@@ -181,7 +181,8 @@ public class Client {
             }
         } catch (IOException e) {
             System.err.println("Disconnected from server.");
-            e.printStackTrace();
+            System.err.println("Message: " + e.getMessage());
+//            e.printStackTrace(); DEBUG
             closeAll();
         }
     }
@@ -210,12 +211,13 @@ public class Client {
      */
     private void handleBodyAlive(String json) {
         heartbeatLogger.info("Alive received from server: {}, {}", ID, JsonUtil.parseMessage(json, BodyAlive.class));
-        System.out.println("[DEBUG] handleBodyAlive called at " + System.currentTimeMillis());
-        System.out.println("[DEBUG] socket closed? " + socket.isClosed());
 
+//        System.out.println("[DEBUG] handleBodyAlive called at " + System.currentTimeMillis());
+        if (socket.isClosed())
+            System.out.println("[DEBUG] socket closed? " + socket.isClosed());
         sendMessage(new Message<>(new BodyAlive()));
+//        System.out.println("[DEBUG] handleBodyAlive finished. Alive message sent.");
 
-        System.out.println("[DEBUG] handleBodyAlive finished. Alive message sent.");
         heartbeatLogger.info("Client {} sent Alive response.", ID);
     }
 
@@ -1157,9 +1159,11 @@ public class Client {
      */
     public void sendMessage(String msg) {
         try {
+            System.out.println("[SENDING] " + msg);
             writer.println(msg);
             writer.flush();
-            System.out.println("[DEBUG] writer error: " + writer.checkError());
+            if (writer.checkError())
+                System.err.println("[DEBUG] Error writing to server: " + msg);
         } catch (Exception e) {
             errorLogger.error("Failed to send message to client {}: {}", ID, e.getMessage());
         }
@@ -1237,7 +1241,7 @@ public class Client {
             if (reader != null) reader.close();
             if (writer != null) writer.close();
             if (socket != null && !socket.isClosed()) socket.close();
-//            System.exit(0);
+            System.exit(0);
         } catch (IOException e) {
             errorLogger.error("Error closing client: {}", e.getMessage());
         }
