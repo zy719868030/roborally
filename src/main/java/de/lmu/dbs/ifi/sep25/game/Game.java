@@ -201,30 +201,50 @@ public class Game {
      * Start the game main loop
      */
     public void startGameLoop() {
-        // Setup phase
-        setPhase(GamePhase.SETUP);
-        determinePlayerOrder();
-        handleSetupPhase();
+        final Thread mainLoop = new Thread(() -> {
 
-        appLogger.info("Finished setup phase. Moving to main loop.");
-
-        // Game continues until a player wins
-        do {
-            // Start a new round
-            roundNumber++;
-            appLogger.info("Starting round {}.", roundNumber);
-
-            // Programming phase
-            setPhase(GamePhase.PROGRAMMING);
-            handleProgrammingPhase();
-
-            // Activation phase
-            setPhase(GamePhase.ACTIVATION);
+            // Setup phase
+            setPhase(GamePhase.SETUP);
             determinePlayerOrder();
-            handleActivationPhase();
+            handleSetupPhase();
 
-            // Check if the game has ended
-        } while (!checkGameEnd());
+            appLogger.info("Finished setup phase. Moving to main loop.");
+
+            //TODO @Yu
+            // For implementing the "loop," I recommend not using an actual loop.
+            // Instead, whenever the server receives input messages from clients,
+            // update the relevant lists or flags in the game state. After that,
+            // always check if all required inputs for the current game phase are present.
+            // Using a loop here can cause issues with latches and waiting, making the system more complex and error-prone.
+            // This event-driven approach will be simpler to implement and easier to fix etc.
+            // .
+            // tldr;
+            // Avoid using a loop for the "loop" implementation.
+            // Instead, update lists/flags whenever the server receives messages from clients and then check if all inputs are ready for the current game phase.
+
+            // Game continues until a player wins
+            do {
+                // Start a new round
+                roundNumber++;
+                appLogger.info("Starting round {}.", roundNumber);
+
+                // Programming phase
+                setPhase(GamePhase.PROGRAMMING);
+                handleProgrammingPhase();
+
+                // Activation phase
+                setPhase(GamePhase.ACTIVATION);
+                determinePlayerOrder();
+                handleActivationPhase();
+
+                // Check if the game has ended
+            } while (!checkGameEnd());
+
+        });
+
+        appLogger.info("Starting game main loop.");
+
+        mainLoop.start();
     }
 
     public void playRound() {

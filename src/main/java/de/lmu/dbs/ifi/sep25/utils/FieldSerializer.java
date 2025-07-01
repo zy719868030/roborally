@@ -23,7 +23,7 @@ public class FieldSerializer implements JsonSerializer<MessageDefinitions.Field>
             case "ConveyorBelt" -> {
                 MessageDefinitions.FieldConveyorBelt f = (MessageDefinitions.FieldConveyorBelt) src;
                 obj.addProperty("speed", f.speed());
-                obj.add("directions", context.serialize(f.directions()));
+                obj.add("orientations", context.serialize(f.orientations()));
             }
             case "PushPanel" -> {
                 MessageDefinitions.FieldPushPanel f = (MessageDefinitions.FieldPushPanel) src;

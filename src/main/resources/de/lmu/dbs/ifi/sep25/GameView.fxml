@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-
-<?import java.net.URL?>
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
@@ -36,9 +35,11 @@
 
         <!-- === Chat-Box === -->
         <VBox fx:id="chatBox" spacing="10" alignment="TOP_CENTER">
-            <TextArea fx:id="chatArea" styleClass="chat-area" editable="false" wrapText="true" prefHeight="200" prefWidth="300"/>
+            <TextArea fx:id="chatArea" styleClass="chat-area" editable="false" wrapText="true" prefHeight="200"
+                      prefWidth="300"/>
             <HBox spacing="10" alignment="CENTER">
-                <TextField fx:id="chatInput" styleClass="chat-input" promptText="Nachricht eingeben..." HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="chatInput" styleClass="chat-input" promptText="Nachricht eingeben..."
+                           HBox.hgrow="ALWAYS"/>
                 <ComboBox fx:id="recipientBox" promptText="An..." prefWidth="100" styleClass="combo-recipient"/>
                 <Button text="Senden" onAction="#handleSendChat" styleClass="senden-button"/>
             </HBox>
@@ -51,14 +52,14 @@
         <!--  PHASE-ANZEIGE -->
         <Label fx:id="phaseLabel"
                text="Phase: Vorbereitung"
-               styleClass="status-label" />
+               styleClass="status-label"/>
 
         <!--  TIMER LABEL -->
         <Label fx:id="timerLabel"
                text="Zeit: 30s"
                styleClass="status-label"
-               visible="false" />
-        managed="false"/> <!-- damit auch kein Platz reserviert wird -->
+               visible="false"
+               managed="false"/> <!-- damit auch kein Platz reserviert wird -->
         <!-- Spielfeld -->
         <ScrollPane fitToWidth="true" fitToHeight="true">
             <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
@@ -79,7 +80,9 @@
                     onAction="#toggleChatBox"
                     styleClass="neon-thumbnail"
                     prefWidth="240" prefHeight="60">
-                <tooltip><Tooltip text="Chat anzeigen"/></tooltip>
+                <tooltip>
+                    <Tooltip text="Chat anzeigen"/>
+                </tooltip>
                 <graphic>
                     <ImageView fitHeight="60" fitWidth="240" preserveRatio="true">
                         <image>
