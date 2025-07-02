@@ -179,7 +179,7 @@ public class GameController {
                         String imageKey = "wall_n";
                         for (MessageDefinitions.FieldLaser laser : lasers) {
                             if (laser.orientations().getFirst().equals(dir)) {
-                                imageKey = "wall_laser_" + laser.count() + "_" + (laser.isActive() ? "on" : "off");
+                                imageKey = "wall_laser_" + laser.count() + "_off";
                                 break;
                             }
                         }
@@ -429,10 +429,6 @@ public class GameController {
         }
     }
 
-    public void handleGameStarted(List<List<List<MessageDefinitions.Field>>> boardMap) {
-        System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
-        drawBoard(boardMap);
-    }
 
     public void setRoot(Parent root) {
         this.root = root;

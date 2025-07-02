@@ -202,7 +202,6 @@ public class MessageDefinitions {
     public static class FieldLaser extends Field {
         private final Integer count;
         private final List<String> orientations;
-        private final boolean active;
 
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
             this(isOnBoard, orientations, count, true); // default true
@@ -217,12 +216,9 @@ public class MessageDefinitions {
 
             this.orientations = orientations;
             this.count = count;
-            this.active = active;
+
         }
 
-        public boolean isActive() {
-            return active;
-        }
 
         public Integer count() {
             return count;

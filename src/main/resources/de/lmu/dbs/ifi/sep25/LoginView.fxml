@@ -18,7 +18,7 @@
 
     <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" styleClass="combo-recipient" />
 
-    <Button onAction="#handleLogin" text="Weiter zur Lobby" styleClass="senden-button">
+    <Button fx:id="loginButton" onAction="#handleLogin" text="Weiter zur Lobby" styleClass="senden-button">
         <font>
             <Font name="Berlin Sans FB Demi Bold" size="12.0" />
         </font></Button>
