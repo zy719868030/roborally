@@ -205,7 +205,7 @@ public class Game {
             // Setup phase
             setPhase(GamePhase.SETUP);
 
-            resetRound();
+            resetPlayersRound();
 
             determinePlayerOrder();
             handleSetupPhase();
@@ -226,7 +226,7 @@ public class Game {
      */
     private void startNewGameRound() {
         // Reset
-        resetRound();
+        resetPlayersRound();
 
         // Start new round
 
@@ -248,24 +248,28 @@ public class Game {
      */
     public boolean checkAndAdvanceFromProgrammingPhase() {
         // Check if all players have completed programming
-        boolean allPlayersReady = true;
-        for (Player player : players) {
-            if (!player.isReadyRegister()) {
-                allPlayersReady = false;
-                break;
-            }
-        }
-
         // If all players are ready and it is currently the programming phase, enter the activation phase.
-        if (allPlayersReady && currentPhase == GamePhase.PROGRAMMING) {
+        if (players.stream().allMatch(Player::isReadyRegister)) {
             appLogger.info("All players have completed programming. Moving to activation phase.");
-            setPhase(GamePhase.ACTIVATION);
-            determinePlayerOrder();
-            handleActivationPhase();
+            enterActivationPhase();
             return true;
         }
-
         return false;
+    }
+
+    /**
+     * Enters the activationPhase.
+     * **/
+    public void enterActivationPhase() {
+        if (currentPhase == GamePhase.PROGRAMMING) {
+            appLogger.info("Entering activation phase.");
+            setPhase(GamePhase.ACTIVATION);
+            resetPlayersHand();
+            determinePlayerOrder();
+            handleActivationPhase();
+        } else {
+            throw new IllegalStateException("Cannot enter activation phase when not coming from programming phase.");
+        }
     }
 
     /**
@@ -314,27 +318,8 @@ public class Game {
     }
 
     private void endRound() {
-        // Clear registers and move cards to discard pile
-        for (Player player : players) {
-            List<RegisterCard> register = player.getRegister();
-            for (RegisterCard card : register) {
-                if (card != null) {
-                    // Move card to discard pile (if it's not a damage card)
-                    // Damage cards should be handled differently
-                    if (!(card instanceof DamageCard)) {
-                        player.discardCardFromHand(card);
-                    }
-                }
-            }
-
-            // Clear the register for next round
-            for (int i = 0; i < register.size(); i++) {
-                player.removeCardFromRegister(i);
-            }
-
-            // Reset player's ready state for next round
-            player.setReadyRegister(false);
-        }
+        // Reset players
+        resetPlayersRound();
 
         // Reset the current register counter
         currentRegister = 0;
@@ -806,9 +791,17 @@ public class Game {
     /**
      * Resets all the players for the round.
      */
-    private void resetRound() {
+    private void resetPlayersRound() {
         for (Player player : players)
             player.resetRound();
+    }
+
+    /**
+     * Resets all the players hand.
+     * **/
+    private void resetPlayersHand() {
+        for (Player player: players)
+            player.resetHand();
     }
 
     // 6. Board-related Methods

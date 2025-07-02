@@ -203,7 +203,7 @@ public class Player {
 
     /**
      * Adds a card to the hand and sends the new hand to the clients.
-     * **/
+     **/
     public void addToHand(RegisterCard card) {
         hand.add(card);
         updateHand();
@@ -211,7 +211,7 @@ public class Player {
 
     /**
      * Removes a card from the hand and updates the clients.
-     * **/
+     **/
     public void removeFromHand(RegisterCard card) {
         hand.remove(card);
         updateHand();
@@ -219,7 +219,7 @@ public class Player {
 
     /**
      * Sends the current hand to the server.
-     * **/
+     **/
     public void updateHand() {
         // Send and broadcast cards
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
@@ -250,6 +250,37 @@ public class Player {
 
         // Reset register state
         setReadyRegister(false);
+    }
+
+    /**
+     * Draws a card from the programming deck. Adds the card to hand and updates clients.
+     *
+     * @return the card drawn and added to hand.
+     **/
+    public RegisterCard drawCard() {
+        if (programmingDeck.isEmpty()) {
+            programmingDeck.reset();
+            // Send ShuffleCoding message
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
+            ));
+        }
+        addToHand(programmingDeck.draw());
+        return hand.getLast();
+    }
+
+    /**
+     * Discards a card from the hand and adds it to the discard pile.
+     **/
+    public void discardCardFromHand(RegisterCard card) {
+        if (card != null) {
+            if (hand.contains(card)) {
+                programmingDeck.discard(card);
+                removeFromHand(card);
+            } else {
+                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
+            }
+        }
     }
 
     /**
@@ -284,10 +315,15 @@ public class Player {
                 // Use the factory to find the corresponding card in your hand.
                 RegisterCard cardToPlay = CardFactory.findCardInHand(cardName, hand);
                 if (cardToPlay != null) {
+                    if (register.get(registerSlot) != null) {
+                        removeCardFromRegister(registerSlot);
+                    }
                     register.set(registerSlot, cardToPlay);
                     removeFromHand(cardToPlay);
                     // Notify server that card has been selected
-                    connection.broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyCardSelected(connection.getMyID(), registerSlot, Boolean.TRUE)));
+                    connection.broadcastMessage(new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyCardSelected(
+                                    connection.getMyID(), registerSlot, Boolean.TRUE)));
                     // Check whether all registers are filled
                     if (register.stream().noneMatch(Objects::isNull)) {
                         setReadyRegister(true);
@@ -297,32 +333,16 @@ public class Player {
                             new MessageDefinitions.BodyError("Card " + cardName + " is not in your hand!")
                     ));
                 }
-
             } else {
                 connection.sendMessage(new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyError("Invalid registerSlot number: " + registerSlot
                                 + " (must be between 0 and 4)")
                 ));
             }
-
         } else {
             connection.sendMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyError("You already selected your registry cards!")
             ));
-        }
-    }
-
-    /**
-     * Discards a card from the hand and adds it to the discard pile.
-     * **/
-    public void discardCardFromHand(RegisterCard card) {
-        if (card != null) {
-            if (hand.contains(card)) {
-                programmingDeck.discard(card);
-                removeFromHand(card);
-            } else {
-                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
-            }
         }
     }
 
@@ -373,20 +393,26 @@ public class Player {
     }
 
     /**
-     * Draws a card from the programming deck. Adds the card to hand and updates clients.
-     *
-     * @return the card drawn and added to hand.
-     * **/
-    public RegisterCard drawCard() {
-        if (programmingDeck.isEmpty()) {
-            programmingDeck.reset();
-            // Send ShuffleCoding message
-            connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
-            ));
+     * Fills the remaining slots of the register with new cards.
+     **/
+    public void fillRemainingRegisterSlots() {
+        resetHand();
+        final List<String> cardsYouGotNow = new ArrayList<>();
+        for (int i = 0; i < register.size(); i++) {
+            if (register.get(i) == null) {
+                RegisterCard newCard = drawCard();
+                register.set(i, newCard);
+                cardsYouGotNow.add(CardFactory.getCardName(newCard));
+                connection.sendMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyCardSelected(connection.getMyID(), i, Boolean.TRUE)
+                ));
+            }
         }
-        addToHand(programmingDeck.draw());
-        return hand.getLast();
+        //FIXME depending on protocol, add the whole new register to cardsYouGotNow or only new ones
+
+        connection.sendMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyCardsYouGotNow(cardsYouGotNow))
+        );
     }
 
     public void addUpgrade(UpgradeCard upgrade) {
@@ -439,7 +465,7 @@ public class Player {
     /**
      * Resets the hand by discarding the remaining cards to the discard pile.
      **/
-    private void resetHand() {
+    public void resetHand() {
         for (RegisterCard card : hand)
             discardCardFromHand(card);
     }

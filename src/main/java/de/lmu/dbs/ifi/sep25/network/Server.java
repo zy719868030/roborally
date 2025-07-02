@@ -534,6 +534,7 @@ public class Server {
      */
     public void markReadyRegister(Integer clientID) {
         readyRegister.remove(clientID);
+        game.checkAndAdvanceFromProgrammingPhase();
     }
 
     /**

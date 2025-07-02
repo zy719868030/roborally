@@ -171,7 +171,6 @@ public class ClientHandler implements Runnable {
         heartbeatLogger.info("Client {} set alive to: {}", myID, alive);
     }
 
-
     /**
      * Handles the processing of a "HelloServer" message body. This method parses the incoming JSON,
      * validates the protocol against the server's protocol, and updates the AI status for the client
@@ -400,7 +399,11 @@ public class ClientHandler implements Runnable {
         scheduler.schedule(() -> {
             List<Integer> readyRegister = server.getReadyRegister();
             broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
-            //TODO @Lukas add code to call random selection for remaining players in readyRegister
+
+            for (Integer clientID : readyRegister)
+                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+
+            game.enterActivationPhase();
 
         }, 30, TimeUnit.SECONDS);
     }
