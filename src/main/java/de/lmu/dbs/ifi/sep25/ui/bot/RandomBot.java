@@ -34,10 +34,10 @@ public abstract class RandomBot {
         writer = new PrintWriter(socket.getOutputStream(), true);
         sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", true, "Version 0.1")));
         // Start listening immediately
-        String name = isBot ? BOT_NAMES[random.nextInt(BOT_NAMES.length)] : "Bot1";
+        String name = BOT_NAMES[random.nextInt(BOT_NAMES.length)];
         int figure = AVAILABLE_FIGURES[random.nextInt(AVAILABLE_FIGURES.length)];
         sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
-        System.out.println("[SimpleRandomBot] Selected name: " + name + ", figure: " + figure);
+        //System.out.println("[SimpleRandomBot] Selected name: " + name + ", figure: " + figure);
         System.out.println("[RandomBot] Sent message: PlayerValues (name=" + name + ", figure=" + figure + ")");
 
         new Thread(this::listenForMessages).start();
@@ -45,14 +45,6 @@ public abstract class RandomBot {
         System.out.println("[RandomBot] Started on " + host + ":" + port);
     }
 
-    /*protected void sendMessage(Message<?> message) {
-        if (writer != null) {
-            String json = gson.toJson(message);
-            writer.println(json);
-            writer.flush();
-            System.out.println("[RandomBot] Sent: " + json);
-        }
-    }*/
     protected void sendMessage(Message<?> message) {
         if (writer != null && !socket.isClosed()) {
             String json = gson.toJson(message);
@@ -74,6 +66,14 @@ public abstract class RandomBot {
                 details = "map=" + body.map();
             } else if (messageType.equals("Alive")) {
                 details = "response";
+            }else if (messageType.equals("SetStartingPoint")) {
+                BodySetStartingPoint body = (BodySetStartingPoint) message.messageBody();
+                details = "x=" + body.x() + ", y=" + body.y() + ", dir=" + body.direction();
+            } else if (messageType.equals("Cardelected")) {
+                BodyCardSelected body = (BodyCardSelected) message.messageBody();
+                details = "clientID=" + body.clientID() + ", register=" + body.register() + ", filled=" + body.filled();
+            } else if (messageType.equals("SelectionFinished")) {
+                details = "finished";
             }
             System.out.println("[RandomBot] Sent message: " + messageType + (details.isEmpty() ? "" : " (" + details + ")"));
         } else {
@@ -82,7 +82,7 @@ public abstract class RandomBot {
     }
 
     protected void sendMessage(String json) {
-        if (writer != null) {
+        if (writer != null && !socket.isClosed()) {
             writer.println(json);
             writer.flush();
             System.out.println("[RandomBot] Sent raw: " + json);
