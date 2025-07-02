@@ -301,54 +301,6 @@ public class SimpleRandomBot extends RandomBot {
         }
     }
 
-
-    // Game Setup Handlers
-    /*private void handleRandomGameStarted(String json) {
-        try{
-            Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
-            List<List<List<MessageDefinitions.Field>>> serverMap = message.messageBody().gameMap();
-            gameMap = new ArrayList<>();
-            for (List<List<MessageDefinitions.Field>> row : serverMap) {
-                List<List<Field>> newRow = new ArrayList<>();
-                for (List<MessageDefinitions.Field> cell : row) {
-                    List<Field> newCell = new ArrayList<>();
-                    for (MessageDefinitions.Field serverField : cell) {
-                        JsonObject fieldJson = gson.toJsonTree(serverField).getAsJsonObject();
-                        String isOnBoardStr = fieldJson.has("isOnBoard") ? fieldJson.get("isOnBoard").getAsString() : "true";
-                        boolean isOnBoard = "true".equalsIgnoreCase(isOnBoardStr);
-                        newCell.add(new Field(
-                                serverField.type(),
-                                isOnBoard,
-                                null, null, null //serverField.orientations(), serverField.count(), serverField.speed()
-                        ));
-                    }
-                    newRow.add(newCell);
-                }
-                gameMap.add(newRow);
-            }
-            energy.put(id, message.messageBody().energy());
-            checkpointsReached.put(id, 0);
-            System.out.println("[SimpleRandomBot] GameStarted: Energy=" + message.messageBody().energy());
-        } catch (Exception e) {
-            System.err.println("[SimpleRandomBot] Error parsing GameStarted (likely EnergySpace): " + e.getMessage());
-            // [Updated] Initialize a fallback 13x10 map (StartA: x=0–2, 5B: x=3–12, y=0–9)
-            gameMap = new ArrayList<>();
-            for (int x = 0; x < 13; x++) {
-                List<List<Field>> row = new ArrayList<>();
-                for (int y = 0; y < 10; y++) {
-                    // Mark StartA positions (x=0–2, y=0–9) as StartPoint, others as Empty
-                    String fieldType = (x <= 2 && START_A_POSITIONS.contains(new Position(x, y))) ? "StartPoint" : "Empty";
-                    row.add(List.of(new Field(fieldType, true, null, null, null)));
-                }
-                gameMap.add(row);
-            }
-            energy.put(id, 5); // Default energy
-            botPosition = START_A_POSITIONS.get(random.nextInt(START_A_POSITIONS.size()));
-            botDirection = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
-            System.out.println("[SimpleRandomBot] Initialized fallback gameMap (13x10, StartA + 5B), Position=" + botPosition + ", Direction=" + botDirection);
-        }
-    }*/
-
     private void handleBodyStartingPointTaken(String json) {
         try{
             Message<BodyStartingPointTaken> message = JsonUtil.parseMessage(json, BodyStartingPointTaken.class);
@@ -394,50 +346,6 @@ public class SimpleRandomBot extends RandomBot {
         }
     }
 
-    /*private void handleRandomSetStartingPoint(String json) {
-        try {
-            List<Position> startingPoints = new ArrayList<>();
-            if (gameMap != null && !gameMap.isEmpty()) {
-                Gson gson = new Gson();
-                JsonArray gameMapJson = gson.toJsonTree(gameMap).getAsJsonArray();
-                for (int x = 0; x < gameMapJson.size(); x++) {
-                    JsonArray row = gameMapJson.get(x).getAsJsonArray();
-                    for (int y = 0; y < row.size(); y++) {
-                        JsonArray fields = row.get(y).getAsJsonArray();
-                        for (JsonElement fieldElement : fields) {
-                            JsonObject field = fieldElement.getAsJsonObject();
-                            if (field.has("type") && field.get("type").getAsString().equals("StartPoint")) {
-                                startingPoints.add(new Position(x, y));
-                            }
-                        }
-                    }
-                }
-            }
-            if (startingPoints.isEmpty()) {
-                startingPoints.addAll(START_A_POSITIONS); // Fallback to StartA positions
-            }
-            if (!startingPoints.isEmpty() && startPointRetries < MAX_START_POINT_RETRIES) {
-                Position pos = startingPoints.get(random.nextInt(startingPoints.size()));
-                String direction = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
-                sendMessage(new Message<>(new BodySetStartingPoint(pos.x(), pos.y(), direction)));
-                botPosition = pos;
-                botDirection = direction;
-                System.out.println("[SimpleRandomBot] Starting point " + (startPointRetries + 1) + ":(" + pos.x() + ", " + pos.y() + "), Dir=" + direction);
-                startPointRetries++;
-            } else {
-                System.err.println("[SimpleRandomBot] No available starting points after " + MAX_START_POINT_RETRIES + " retries");
-                startPointRetries = 0; // Reset retries
-            }
-        }catch (Exception e) {
-                System.err.println("[SimpleRandomBot] Error handling SetStartingPoint: " + e.getMessage());
-                if (startPointRetries < MAX_START_POINT_RETRIES) {
-                    handleRandomSetStartingPoint(json); // Retry
-                } else {
-                    System.err.println("[SimpleRandomBot] Failed to set starting point after retries");
-                    startPointRetries = 0;
-                }
-        }
-    }*/
 
     // Gameplay Handlers
     private void handleRandomYourCards(String json) {
@@ -465,7 +373,7 @@ public class SimpleRandomBot extends RandomBot {
                 for (int register = 0; register < 5; register++) {
                     String card = hand.get(register);
                     selectedCards.set(register, card);
-                    sendMessage(new Message<>(new BodyCardSelected(id, register, true)));
+                    sendMessage(new Message<>(new BodySelectedCard(card, register)));
                     System.out.println("[SimpleRandomBot] Selected card " + card + " for register " + register);
                 }
                 sendMessage(new Message<>(new BodySelectionFinished(id)));
@@ -495,38 +403,29 @@ public class SimpleRandomBot extends RandomBot {
     }
 
     private void handleRandomSelectionFinished(String json) {
-        try{
-        Message<BodySelectionFinished> message = JsonUtil.parseMessage(json, BodySelectionFinished.class);
-        if (message.messageBody().clientID().equals(id)) {
-            System.out.println("[SimpleRandomBot] Selection finished by " + id);
-            if (firstReadyRegistry) {
+        try {
+            Message<BodySelectionFinished> message = JsonUtil.parseMessage(json, BodySelectionFinished.class);
+            if (message.messageBody().clientID().equals(id)) {
+                System.out.println("[SimpleRandomBot] Selection finished by " + id);
+                // Send BodyTimerStarted to prompt server
                 sendMessage(new Message<>(new BodyTimerStarted()));
+                System.out.println("[SimpleRandomBot] Sent BodyTimerStarted");
+                // Reset firstReadyRegistry to prevent multiple sends
                 firstReadyRegistry = false;
+                // Execute register 0 card immediately
+                if (selectedCards.size() > 0 && selectedCards.get(0) != null) {
+                    String cardName = selectedCards.get(0);
+                    System.out.println("[SimpleRandomBot] Executing card in register 0: " + cardName);
+                    executeCardAction(cardName); // Sends BodyPlayerTurning for TurnRight
+                } else {
+                    System.err.println("[SimpleRandomBot] No card in register 0 to execute");
+                }
             }
-            // Fallback to execute first register's card if CurrentCards is delayed
-            if (phase.equals("Aktivierungsphase") && currentRegister == 0) {
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(2000); // Wait 2s for CurrentCards
-                        if (currentRegister == 0 && phase.equals("Aktivierungsphase")) {
-                            System.out.println("[SimpleRandomBot] No CurrentCards received, executing first register card");
-                            if (!selectedCards.isEmpty() && selectedCards.get(0) != null) {
-                                executeCardAction(selectedCards.get(0));
-                            } else {
-                                System.err.println("[SimpleRandomBot] No card in register 1, performing random move");
-                                executeCardAction(CARD_TYPES[random.nextInt(CARD_TYPES.length)]);
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        System.err.println("[SimpleRandomBot] Timeout interrupted: " + e.getMessage());
-                    }
-                }).start();
-            }
+        } catch (Exception e) {
+            System.err.println("[SimpleRandomBot] Error handling SelectionFinished: " + e.getMessage());
         }
-    } catch (Exception e) {
-        System.err.println("[SimpleRandomBot] Error handling SelectionFinished: " + e.getMessage());
     }
-    }
+
 
     private void handleBodyTimerEnded(String json) {
         Message<BodyTimerEnded> message = JsonUtil.parseMessage(json, BodyTimerEnded.class);
@@ -538,93 +437,24 @@ public class SimpleRandomBot extends RandomBot {
         System.out.println("[SimpleRandomBot] Got cards: " + message.messageBody().cards());
     }
 
-    /*
-    private void handleBodyCurrentCards(String json) {
-        try {
-            Message<BodyCurrentCards> message = JsonUtil.parseMessage(json, BodyCurrentCards.class);
-            BodyCurrentCards body = message.messageBody();
-            for (ActiveCard activeCard : body.activeCards()) {
-                if (activeCard.clientID().equals(id)) {
-                    String cardName = activeCard.card(); // Use cardName for consistency
-                    System.out.println("[SimpleRandomBot] Playing card: " + cardName);
-                    executeCardAction(cardName); // Sends BodyMovement or BodyPlayerTurning
-                    return; // Exit after processing own card
-                }
-            }
-            System.out.println("[SimpleRandomBot] CurrentCards: No card found for clientID " + id);
-        } catch (Exception e) {
-            System.err.println("[SimpleRandomBot] Error parsing CurrentCards with JsonUtil: " + e.getMessage());
-            // Fallback to manual JSON parsing
-            try {
-                JsonObject fullMessage = gson.fromJson(json, JsonObject.class);
-                JsonObject messageBody = fullMessage.getAsJsonObject("messageBody");
-                JsonArray activeCards = messageBody.getAsJsonArray("activeCards");
-                for (JsonElement element : activeCards) {
-                    JsonObject card = element.getAsJsonObject();
-                    Integer clientID = card.has("clientID") ? card.get("clientID").getAsInt() : null;
-                    String cardName = card.has("card") ? card.get("card").getAsString() : null;
-                    if (clientID != null && clientID.equals(id) && cardName != null) {
-                        System.out.println("[SimpleRandomBot] Playing card: " + cardName + " (fallback parsing)");
-                        executeCardAction(cardName); // Sends BodyMovement or BodyPlayerTurning
-                        return; // Exit after processing own card
-                    }
-                }
-                System.out.println("[SimpleRandomBot] Fallback: No card found for clientID " + id);
-            } catch (Exception fallbackEx) {
-                System.err.println("[SimpleRandomBot] Fallback parsing failed for CurrentCards: " + fallbackEx.getMessage());
-            }
-        }
-    }
-    */
-
     private void handleBodyCurrentCards(String json) {
         System.out.println("[SimpleRandomBot] Received CurrentCards: " + json); // Log raw message
         try {
-            // Parse with JsonUtil using BodyCurrentCards
             Message<BodyCurrentCards> message = JsonUtil.parseMessage(json, BodyCurrentCards.class);
             BodyCurrentCards body = message.messageBody();
             for (ActiveCard activeCard : body.activeCards()) {
                 if (activeCard.clientID().equals(id)) {
                     String cardName = activeCard.card();
-                    // Skip special cards like Again for register 0
-                    if ("Again".equals(cardName) && selectedCards.indexOf(cardName) == 0) {
-                        System.out.println("[SimpleRandomBot] Skipping Again in register 0, using MoveI instead");
-                        cardName = "MoveI"; // Fallback to MoveI for milestone
-                    }
-                    System.out.println("[SimpleRandomBot] Playing card: " + cardName);
-                    executeCardAction(cardName); // Sends BodyMovement or BodyPlayerTurning
+                    System.out.println("[SimpleRandomBot] Playing card from server: " + cardName);
+                    executeCardAction(cardName);
                     return; // Exit after processing own card
                 }
             }
             System.out.println("[SimpleRandomBot] CurrentCards: No card found for clientID " + id);
         } catch (Exception e) {
             System.err.println("[SimpleRandomBot] Error parsing CurrentCards with JsonUtil: " + e.getMessage());
-            // Fallback to manual JSON parsing
-            try {
-                JsonObject fullMessage = gson.fromJson(json, JsonObject.class);
-                JsonObject messageBody = fullMessage.getAsJsonObject("messageBody");
-                JsonArray activeCards = messageBody.getAsJsonArray("activeCards");
-                for (JsonElement element : activeCards) {
-                    JsonObject card = element.getAsJsonObject();
-                    Integer clientID = card.has("clientID") ? card.get("clientID").getAsInt() : null;
-                    String cardName = card.has("card") ? card.get("card").getAsString() : null;
-                    if (clientID != null && clientID.equals(id) && cardName != null) {
-                        if ("Again".equals(cardName) && selectedCards.indexOf(cardName) == 0) {
-                            System.out.println("[SimpleRandomBot] Skipping Again in register 0, using MoveI instead (fallback)");
-                            cardName = "MoveI"; // Fallback to MoveI for milestone
-                        }
-                        System.out.println("[SimpleRandomBot] Playing card: " + cardName + " (fallback parsing)");
-                        executeCardAction(cardName); // Sends BodyMovement or BodyPlayerTurning
-                        return; // Exit after processing own card
-                    }
-                }
-                System.out.println("[SimpleRandomBot] Fallback: No card found for clientID " + id);
-            } catch (Exception fallbackEx) {
-                System.err.println("[SimpleRandomBot] Fallback parsing failed for CurrentCards: " + fallbackEx.getMessage());
-            }
         }
     }
-
 
     private void handleBodyReplaceCard(String json) {
         try {
@@ -661,19 +491,29 @@ public class SimpleRandomBot extends RandomBot {
     }
 
     private void handleBodyActivePhase(String json) {
+        try{
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         phase = switch (message.messageBody().phase()) {
             case 0 -> "Aufbauphase";
             case 1 -> "Upgradephase";
             case 2 -> "Programmierphase";
-            //case 3 -> "Aktivierungsphase";
-            case 3 -> {
-                currentRegister = 0;
-                yield "Aktivierungsphase";
-            }
+            case 3 -> "Aktivierungsphase";
+//            case 3 -> {
+//                currentRegister = 0;
+//                yield "Aktivierungsphase";
+//            }
             default -> "Unbekannt";
         };
         System.out.println("[SimpleRandomBot] Phase: " + phase);
+        // Execute register 0 card in Aktivierungsphase
+        if (phase.equals("Aktivierungsphase") && selectedCards.size() > 0 && selectedCards.get(0) != null) {
+            String cardName = selectedCards.get(0);
+            System.out.println("[SimpleRandomBot] Executing card in register 0: " + cardName);
+            executeCardAction(cardName); // Sends BodyMovement, BodyPlayerTurning, or random move for Again
+        }
+    } catch (Exception e) {
+        System.err.println("[SimpleRandomBot] Error handling ActivePhase: " + e.getMessage());
+    }
     }
 
     private void handleRandomReboot(String json) {
