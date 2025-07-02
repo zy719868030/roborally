@@ -44,9 +44,7 @@ public abstract class GameMap {
 
                         elements.add(new Antenna(antennaPosition, Direction.EAST, "StartA"));
 
-                        List.of(new Position(1, 1), new Position(0, 3), new Position(1, 4),
-                                new Position(1, 5), new Position(0, 6), new Position(1, 8)
-                        ).forEach(pos -> elements.add(new StartPoint(pos, Direction.EAST, "StartA")));
+                        List.of(new Position(1, 1), new Position(0, 3), new Position(1, 4), new Position(1, 5), new Position(0, 6), new Position(1, 8)).forEach(pos -> elements.add(new StartPoint(pos, Direction.EAST, "StartA")));
 
                         elements.add(new Belts(new Position(2, 9), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
                         elements.add(new Belts(new Position(2, 0), Direction.EAST, Direction.WEST, Belts.BeltSpeed.SLOW, "StartA"));
@@ -57,11 +55,14 @@ public abstract class GameMap {
             case WEST -> {
                 switch (boardId) {
                     case "StartA" -> {
-                        List.of(new Position(11, 1), new Position(12, 3), new Position(11, 4), new Position(11, 5), new Position(11, 8), new Position(12, 6)).forEach(pos -> elements.add(new StartPoint(pos, Direction.WEST, "StartA")));
                         elements.add(new Wall(new Position(11, 2), Direction.NORTH, "StartA"));
                         elements.add(new Wall(new Position(11, 7), Direction.SOUTH, "StartA"));
                         elements.add(new Wall(new Position(10, 4), Direction.WEST, "StartA"));
                         elements.add(new Wall(new Position(10, 5), Direction.WEST, "StartA"));
+
+                        elements.add(new Antenna(antennaPosition, Direction.WEST, "StartA"));
+
+                        List.of(new Position(11, 1), new Position(12, 3), new Position(11, 4), new Position(11, 5), new Position(11, 8), new Position(12, 6)).forEach(pos -> elements.add(new StartPoint(pos, Direction.WEST, "StartA")));
 
                         elements.add(new Belts(new Position(10, 9), Direction.WEST, Direction.EAST, Belts.BeltSpeed.SLOW, "StartA"));
                         elements.add(new Belts(new Position(10, 0), Direction.WEST, Direction.EAST, Belts.BeltSpeed.SLOW, "StartA"));
@@ -75,6 +76,7 @@ public abstract class GameMap {
     }
 
     abstract protected void initializeSubBoards();
+
     abstract protected void initializeElements();
 }
 

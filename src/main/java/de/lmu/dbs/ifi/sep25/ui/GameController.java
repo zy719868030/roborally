@@ -1,7 +1,6 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
@@ -56,7 +55,8 @@ public class GameController {
 
     @FXML
     private HBox handCardBox;
-    @FXML private HBox registerBox;
+    @FXML
+    private HBox registerBox;
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
@@ -201,7 +201,7 @@ public class GameController {
                         case "_conveyor_corner_l" -> rotation += 90;
                         case "_conveyor_corner_r" -> rotation -= 90;
                     }
-                    appLogger.info("Adding conveyor tile {} with rotation {}", tileName, rotation);
+//                    appLogger.info("Adding conveyor tile {} with rotation {}", tileName, rotation); DEBUG
                     addImage(pane, tileName, rotation);
                 }
 
@@ -265,7 +265,12 @@ public class GameController {
         if (x == null || y == null) return;
 
         // Nachricht senden
-        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y, "up"));
+        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y,
+                switch (ClientSingleton.getInstance().getSelectedMap()) {
+                    case "Heavy Merge Area", "Death Trap" -> "left";
+                    case "Pilgrimage", "Gear Stripper" -> "top";
+                    default -> "right";
+                }));
         ClientSingleton.getInstance().sendMessage(msg);
 
         // Deaktiviere alle Startfelder (nur einmalige Auswahl zulassen)
@@ -477,42 +482,42 @@ public class GameController {
         // Update availability of click start position depending on phase
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
             // Update the availability of the starting position click based on the stage
-            if (node instanceof StackPane pane&& pane.getOnMouseClicked() != null) {
-                    if (!isSetupPhase) {
-                        // Disable clicks outside the setup phase.
-                        pane.setOnMouseClicked(null);
-                        pane.setStyle("-fx-border-color: gray; -fx-border-width: 2px;");
-                    }
+            if (node instanceof StackPane pane && pane.getOnMouseClicked() != null) {
+                if (!isSetupPhase) {
+                    // Disable clicks outside the setup phase.
+                    pane.setOnMouseClicked(null);
+                    pane.setStyle("-fx-border-color: gray; -fx-border-width: 2px;");
                 }
             }
-            // Handkarten nur in Programmierphase aktiv
-            handCardBox.setDisable(!isProgrammingPhase);
+        }
+        // Handkarten nur in Programmierphase aktiv
+        handCardBox.setDisable(!isProgrammingPhase);
 
-            // DiscardPile nur in Aktivierungsphase sichtbar
-            discardPileBox.setVisible(isActivationPhase);
-            discardPileBox.setManaged(isActivationPhase);
+        // DiscardPile nur in Aktivierungsphase sichtbar
+        discardPileBox.setVisible(isActivationPhase);
+        discardPileBox.setManaged(isActivationPhase);
 
-            // Timer nur in Programmierphase starten
-            if (isProgrammingPhase) {
-                startCountdown();
-            } else {
-                hideCountdown();
-            }
+        // Timer nur in Programmierphase starten
+        if (isProgrammingPhase) {
+            startCountdown();
+        } else {
+            hideCountdown();
+        }
 
-            // Chat sperren, wenn Spiel vorbei ist
-            chatInput.setDisable(isGameOverPhase);
-            recipientBox.setDisable(isGameOverPhase);
+        // Chat sperren, wenn Spiel vorbei ist
+        chatInput.setDisable(isGameOverPhase);
+        recipientBox.setDisable(isGameOverPhase);
 
-            // Beispiel: iconMenu (z. B. Buttons oder Aktionsleiste)
-            iconMenu.setDisable(isGameOverPhase || isSetupPhase);
+        // Beispiel: iconMenu (z. B. Buttons oder Aktionsleiste)
+        iconMenu.setDisable(isGameOverPhase || isSetupPhase);
 
-            // ChatBox bei Spielende ausblenden
-            if (isGameOverPhase) {
-                chatBox.setVisible(false);
-                chatBox.setManaged(false);
-            }
+        // ChatBox bei Spielende ausblenden
+        if (isGameOverPhase) {
+            chatBox.setVisible(false);
+            chatBox.setManaged(false);
+        }
 
-            appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+        appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
 

@@ -13,7 +13,7 @@ public class Deck <Card>{
     public Deck() {
     }
 
-    public Deck(Card[] cards) {
+    public Deck(List<Card> cards) {
         this();
         for (Card card : cards) {
             this.stack.push(card);

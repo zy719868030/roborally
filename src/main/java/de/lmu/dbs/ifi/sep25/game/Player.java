@@ -5,7 +5,6 @@ import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.StartPoint;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class Player {
     private final ClientHandler connection;
@@ -26,7 +26,7 @@ public class Player {
     private final List<UpgradeCard> permanentUpgrades = new ArrayList<>();
     private final List<UpgradeCard> temporaryUpgrades = new ArrayList<>();
     private final List<RegisterCard> hand = new ArrayList<>();
-    private final Deck<RegisterCard> programmingDeck = new Deck<>();
+    private final Deck<RegisterCard> programmingDeck;
 
 
     // INITIALIZATION
@@ -35,9 +35,21 @@ public class Player {
         this.name = name;
         this.robot = new Robot(robotID);
         this.connection = connection;
-        for (int i = 0; i < 5; i++) {
-            register.add(null);
-        }
+        Collections.fill(register, null);
+
+        List<RegisterCard> defaultProgrammingCards = Stream.of(
+                "MoveI", "MoveI", // 2 Move 1 Space
+                "MoveII", "MoveII", // 2 Move 2 Spaces
+                "MoveIII", // 1 Move 3 Spaces
+                "BackUp", "BackUp", // 2 Back Up
+                "TurnLeft", "TurnLeft", // 2 Turn Left
+                "TurnRight", "TurnRight", // 2 Turn Right
+                "UTurn", "UTurn", // 2 U-Turn
+                "Again", "Again", // 2 Again
+                "PowerUp" // 1 Power Up
+        ).map(CardFactory::createCard).toList();
+
+        programmingDeck = new Deck<>(defaultProgrammingCards);
     }
 
     // GETTERS
@@ -119,36 +131,37 @@ public class Player {
 
     // SETTERS
 
-    public void setStartingPoint(int x, int y, String direction) {
-        if (Game.getInstance().getCurrentPhase() != 0) {
-            connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Not in setup phase")
-            ));
-            return;
-        }
-        Board board = Game.getInstance().getBoard();
-        Position pos = new Position(x, y);
-        if (board.isValidPosition(pos) && board.getElements(x, y).stream().anyMatch(e -> e instanceof StartPoint)) {
-            Direction dir = Direction.fromString(direction);
-            if (dir == null) {
-                connection.sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyError("Invalid direction: " + direction)
-                ));
-                return;
-            }
-            robot.setPosition(pos);
-            robot.setDirection(dir);
-            board.placeRobot(robot, x, y);
-            connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyStartingPointTaken(x, y, dir.toString(), robot.getId())
-            ));
-        } else {
-            connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Invalid starting position: (" + x + ", " + y + ")")
-            ));
-        }
-    }
+    ///
 
+//    public void setStartingPoint(int x, int y, String direction) {
+//        if (Game.getInstance().getCurrentPhase() != 0) {
+//            connection.sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyError("Not in setup phase")
+//            ));
+//            return;
+//        }
+//        Board board = Game.getInstance().getBoard();
+//        Position pos = new Position(x, y);
+//        if (board.isValidPosition(pos) && board.getElements(x, y).stream().anyMatch(e -> e instanceof StartPoint)) {
+//            Direction dir = Direction.fromString(direction);
+//            if (dir == null) {
+//                connection.sendMessage(new MessageDefinitions.Message<>(
+//                        new MessageDefinitions.BodyError("Invalid direction: " + direction)
+//                ));
+//                return;
+//            }
+//            robot.setPosition(pos);
+//            robot.setDirection(dir);
+//            board.placeRobot(robot, x, y);
+//            connection.broadcastMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyStartingPointTaken(x, y, dir.toString(), robot.getId())
+//            ));
+//        } else {
+//            connection.sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyError("Invalid starting position: (" + x + ", " + y + ")")
+//            ));
+//        }
+//    }
     public void setRebootDirection(String direction) {
         if (Game.getInstance().getCurrentPhase() != 3) {
             connection.sendMessage(new MessageDefinitions.Message<>(

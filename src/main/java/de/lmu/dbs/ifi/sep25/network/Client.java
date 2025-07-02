@@ -69,6 +69,8 @@ public class Client {
 
     private List<List<List<MessageDefinitions.Field>>> currentGameMap;
 
+    private String selectedMap;
+
     public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
         this.currentGameMap = map;
     }
@@ -127,14 +129,13 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-                System.out.println("[RECEIVED] " + json); // Test
+//                System.out.println("[RECEIVED] " + json); // DEBUG
 
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
                     if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
-
                         ThreadContext.put("clientId", ID.toString());
-                        clientLogger.info("Received " + messageType + ": " + gsonPretty.toJson(JsonUtil.parseUnknown(json)));
+                        clientLogger.info("[RECEIVED] {}: {}", messageType, gsonPretty.toJson(JsonUtil.parseUnknown(json)));
                         ThreadContext.clearAll();
                     }
                     switch (messageType) {
@@ -233,7 +234,7 @@ public class Client {
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        clientLogger.info("Your client ID: {}" + getID());
+        clientLogger.info("Your client ID: {}", getID());
         usernames.put(ID, "(me)");// identify the local player in user lists
     }
 
@@ -392,7 +393,7 @@ public class Client {
     private void handleBodyMapSelected(String json) {
         Message<MessageDefinitions.BodyMapSelected> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
-        String selectedMap = message.messageBody().map();
+        selectedMap = message.messageBody().map();
 
         clientLogger.info("[MapSelected] Map selected: " + selectedMap);
 
@@ -1164,7 +1165,9 @@ public class Client {
      */
     public void sendMessage(String msg) {
         try {
-            appLogger.info("[SENDING] " + msg);
+            if (!JsonUtil.parseUnknown(msg).messageType().equalsIgnoreCase("Alive"))
+                clientLogger.info("[SENDING] {}: {}", JsonUtil.parseUnknown(msg).messageType(), gsonPretty.toJson(JsonUtil.parseUnknown(msg)));
+
             writer.println(msg);
             writer.flush();
             if (writer.checkError())
@@ -1279,6 +1282,14 @@ public class Client {
             }
         }
         return -1; // Default/fallback
+    }
+
+    /**
+     * Returns the selected map variable, stored in handleMapSelected.
+     * @return selected map as string
+     * **/
+    public String getSelectedMap() {
+        return selectedMap;
     }
 
 }

@@ -3,7 +3,6 @@ package de.lmu.dbs.ifi.sep25.game;
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
-import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
@@ -42,7 +41,6 @@ public class Game {
     // Card decks
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
-    private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
 
     /* unnecessary globar variables
     private boolean mapSelectionPending;
@@ -60,11 +58,6 @@ public class Game {
         currentPhase = null;
         selectedMap = mapName;
         currentPlayerTurn = new Stack<>();
-
-        players.stream().forEach(p -> p.getRobot().setBoard(board));
-//        mapSelectionPending = true;
-//        slowPlayers = new ArrayList<>();
-        initializeProgrammingDeck();
     }
 
     public static Game getInstance() {
@@ -92,34 +85,6 @@ public class Game {
             Robot robot = player.getRobot();
             robot.setBoard(board);
         }
-    }
-
-    private void initializeProgrammingDeck() {
-        // List of card names with desired counts for Dizzy Highway
-        String[] cardNames = {
-                "MoveI", "MoveI", // 2 Move 1 Space
-                "MoveII", "MoveII", // 2 Move 2 Spaces
-                "MoveIII", // 1 Move 3 Spaces
-                "BackUp", "BackUp", // 2 Back Up
-                "TurnLeft", "TurnLeft", // 2 Turn Left
-                "TurnRight", "TurnRight", // 2 Turn Right
-                "UTurn", "UTurn", // 2 U-Turn
-                "Again", "Again", // 2 Again
-                "PowerUp", // 1 Power Up
-                "RepeatRoutine", // 1 Repeat Routine
-                "SpeedRoutine", // 1 Speed Routine
-                "EnergyRoutine", // 1 Energy Routine
-                "SpamFolder", // 1 SPAM Folder
-                "SandboxRoutine", // 1 Sandbox Routine
-                "WeaselRoutine" // 1 Weasel Routine
-        };
-        for (String cardName : cardNames) {
-            RegisterCard card = CardFactory.createCard(cardName);
-            if (card instanceof ProgrammingCard programmingCard) {
-                programmingDeck.addCard(programmingCard);
-            }
-        }
-        programmingDeck.shuffle();
     }
 
     private void initializeUpgradeCards() {
@@ -200,6 +165,8 @@ public class Game {
      * Start the game main loop
      */
     public void startGameLoop() {
+        players.forEach(p -> p.getRobot().setBoard(board));
+
         final Thread mainLoop = new Thread(() -> {
 
             // Setup phase
@@ -623,7 +590,7 @@ public class Game {
                     case "Heavy Merge Area", "Death Trap" -> "left";
                     case "Pilgrimage", "Gear Stripper" -> "top";
                     default -> "right";
-                }, robot.getId())
+                }, player.getConnection().getMyID())
         ));
 
         return true;
