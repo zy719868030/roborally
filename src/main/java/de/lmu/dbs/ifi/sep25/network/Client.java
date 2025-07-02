@@ -159,13 +159,15 @@ public class Client {
                         case "ShuffleCoding" -> handleBodyShuffleCoding(json);
                         case "CardSelected" -> handleBodyCardSelected(json);
                         case "SelectionFinished" -> handleBodySelectionFinished(json);
+                        case "TimerStarted" -> handleBodyTimerStarted();
                         case "TimerEnded" -> handleBodyTimerEnded(json);
-                        case "TimerStarted" -> handleBodyTimerStarted(json);
                         case "CardsYouGotNow" -> handleBodyCardsYouGotNow(json);
                         case "CurrentCards" -> handleBodyCurrentCards(json);
                         case "ReplaceCard" -> handleBodyReplaceCard(json);
                         case "Movement" -> handleBodyMovement(json);
                         case "PlayerTurning" -> handleBodyPlayerTurning(json);
+                        case "DrawDamage" -> handleBodyDrawDamage(json);
+                        case "PickDamage" -> handleBodyPickDamage(json);
                         case "Animation" -> handleBodyAnimation(json);
                         case "Reboot" -> handleBodyReboot(json);
                         case "RebootDirection" -> handleBodyRebootDirection(json);
@@ -187,7 +189,6 @@ public class Client {
             closeAll();
         }
     }
-
 
     /**
      * Handles the BodyHelloClient message received from the server.
@@ -467,7 +468,6 @@ public class Client {
         });
     }
 
-
     /**
      * Handles a "BodyReceivedChat" message from the server.
      *
@@ -562,7 +562,6 @@ public class Client {
         });
     }
 
-
     private GameController waitForGameController() {
         int maxRetries = 10;
         int delayMillis = 100;
@@ -583,7 +582,6 @@ public class Client {
 
         return null;
     }
-
 
     /**
      * Verarbeitet die Nachricht, welcher Spieler gerade am Zug ist.
@@ -655,7 +653,6 @@ public class Client {
             }
         });
     }
-
 
     /**
      * Handles the list of cards the player receives from the server.
@@ -754,17 +751,9 @@ public class Client {
      *
      * @param json the JSON string containing the serialized {@code BodyCardSelected} message
      */
-
     private void handleBodySelectionFinished(String json) {
         Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
         BodyCardSelected body = message.messageBody();
-
-        if (Objects.equals(body.clientID(), ID)) {
-            if (firstReadyRegistry) {
-                sendMessage(new Message<>(new BodyTimerStarted()));
-            }
-            firstReadyRegistry = false;
-        }
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
@@ -776,7 +765,7 @@ public class Client {
         });
     }
 
-    private void handleBodyTimerStarted(String json) {
+    private void handleBodyTimerStarted() {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
@@ -831,7 +820,6 @@ public class Client {
         });
     }
 
-
     /**
      * Handles the list of active cards for all players.
      * Displays the card names and triggers basic animations.
@@ -882,14 +870,6 @@ public class Client {
         });
     }
 
-    /**
-     * Handles the processing of body movement data received in a JSON string.
-     * Parses the JSON input to extract body movement details, updates the server's
-     * state accordingly, and manages robot positioning or movement animations.
-     *
-     * @param json The JSON string containing body movement information, including
-     *             client ID, coordinates, and other relevant data.
-     */
     /**
      * Handles the movement of a robot on the board.
      * Updates the UI with the new position of the robot.
@@ -942,7 +922,22 @@ public class Client {
         });
     }
 
+    private void handleBodyDrawDamage(String json) {
+        Message<BodyDrawDamage> message = JsonUtil.parseMessage(json, BodyDrawDamage.class);
+        BodyDrawDamage body = message.messageBody();
+        List<String> cards = body.cards();
 
+        // TODO display animation / inform player
+    }
+
+    private void handleBodyPickDamage(String json) {
+        Message<BodyPickDamage> message = JsonUtil.parseMessage(json, BodyPickDamage.class);
+        BodyPickDamage body = message.messageBody();
+        int count = body.count();
+        List<String> availablePiles = body.availablePiles();
+
+        // TODO select piles in ui
+    }
 
 
     /**
@@ -1076,7 +1071,6 @@ public class Client {
         // Optionally notify via animation message
         sendMessageSelf(new Message<>(new BodyAnimation("Reboot")));
     }
-
 
     /**
      * Handles a message indicating an energy change for a player.

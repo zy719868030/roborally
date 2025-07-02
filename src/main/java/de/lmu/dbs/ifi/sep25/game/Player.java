@@ -188,7 +188,9 @@ public class Player {
 
     public void setReadyRegister(boolean ready) {
         readyRegister = ready;
-        connection.setReadyRegister();
+        if (ready) {
+            connection.setReadyRegister();
+        }
     }
 
     // ENERGY

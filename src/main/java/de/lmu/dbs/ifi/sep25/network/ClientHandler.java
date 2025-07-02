@@ -131,7 +131,7 @@ public class ClientHandler implements Runnable {
                     case "PlayCard" -> handleBodyPlayCard(json);
                     case "SetStartingPoint" -> handleBodySetStartingPoint(json);
                     case "SelectedCard" -> handleBodySelectedCard(json);
-                    case "TimerStarted" -> handleBodyTimerStarted();
+                    case "SelectedDamage" -> handleBodySelectedDamage(json);
                     case "RebootDirection" -> handleBodyRebootDirection(json);
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
@@ -384,28 +384,9 @@ public class ClientHandler implements Runnable {
         player.chooseCardToRegister(body.card(), body.register());
     }
 
-    /**
-     * Handles the start of the body timer by scheduling a task to execute
-     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
-     * the list of ready players from the server and broadcasts a
-     * BodyTimerEnded message containing this list.
-     * <p>
-     * This method uses a single-threaded scheduled executor service to perform
-     * the delayed task execution. The task is responsible for broadcasting
-     * a message via the method `broadcastMessage`.
-     */
-    private void handleBodyTimerStarted() {
-        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.schedule(() -> {
-            List<Integer> readyRegister = server.getReadyRegister();
-            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
-
-            for (Integer clientID : readyRegister)
-                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
-
-            game.enterActivationPhase();
-
-        }, 30, TimeUnit.SECONDS);
+    /****/
+    private void handleBodySelectedDamage(String json) {
+        // TODO @yu hier die damage select hineintun
     }
 
     /**
@@ -450,6 +431,37 @@ public class ClientHandler implements Runnable {
     public void setReadyRegister() {
         server.markReadyRegister(myID);
         broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
+
+        if (server.getTimerStarted()) {
+            server.setTimerStarted(true);
+            startTimer();
+        }
+
+    }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    private void startTimer () {
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            List<Integer> readyRegister = server.getReadyRegister();
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+            server.setTimerStarted(false);
+
+            for (Integer clientID : readyRegister)
+                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+
+            game.enterActivationPhase();
+
+        }, 30, TimeUnit.SECONDS);
     }
 
     /**

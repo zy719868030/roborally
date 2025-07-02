@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,6 +39,7 @@ public class Server {
     private final Lobby lobby = new Lobby();
     //    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final List<ClientHandler> snapshotReadyOrder = Collections.synchronizedList(new ArrayList<>());
     private final List<String> availableMaps = List.of(
             "Dizzy Highway",
             "Extra Crispy",
@@ -53,6 +55,7 @@ public class Server {
     private volatile boolean running = true;
     private final int minPlayer;
     private volatile boolean mapSelectionOngoing = false;
+    private final AtomicBoolean timerStarted = new AtomicBoolean(false);
 
     // 5. Game logic
     private Game game;
@@ -453,6 +456,10 @@ public class Server {
         if (!iterator.hasNext()) {
             throw new IllegalStateException("No players are ready.");
         }
+        // update snapshot
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
+
         ClientHandler first = iterator.next();
         iterator.remove();
         return first;
@@ -465,6 +472,19 @@ public class Server {
      */
     public synchronized boolean readyIsEmpty() {
         return readyOrder.isEmpty();
+    }
+
+    /**
+     * Returns an immutable snapshot of the current ready order of clients.
+     * <p>
+     * This snapshot reflects the state of the ready order at the moment before the last
+     * {@code getFirstReadyClient()} call removed the first client from the queue.
+     * It preserves the insertion order and does not reflect later changes to the actual queue.
+     *
+     * @return an unmodifiable list representing the ready order of clients at snapshot time
+     */
+    public synchronized List<ClientHandler> getSnapshotReadyOrder() {
+        return List.copyOf(snapshotReadyOrder);
     }
 
     /**
@@ -591,5 +611,13 @@ public class Server {
 
     public synchronized void setMapSelectionOngoing(boolean mapSelectionOngoing) {
         this.mapSelectionOngoing = mapSelectionOngoing;
+    }
+
+    public boolean getTimerStarted() {
+        return timerStarted.get();
+    }
+
+    public void setTimerStarted(boolean timerStarted) {
+        this.timerStarted.set(timerStarted);
     }
 }

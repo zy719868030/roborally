@@ -226,7 +226,7 @@ public class Game {
 
     /**
      * Enters the activationPhase.
-     * **/
+     **/
     public void enterActivationPhase() {
         if (currentPhase == GamePhase.PROGRAMMING) {
             appLogger.info("Entering activation phase.");
@@ -614,9 +614,8 @@ public class Game {
         }
         currentPlayerTurn.clear();
         switch (currentPhase) {
-            case SETUP -> {
-                currentPlayerTurn.addAll(players.reversed());
-            }
+            case SETUP ->
+                    currentPlayerTurn.addAll(Server.getInstance().getSnapshotReadyOrder().stream().map(ClientHandler::getPlayer).toList());
             case ACTIVATION -> {
                 List<Player> sortedPlayers = new ArrayList<>(players);
 
@@ -765,9 +764,9 @@ public class Game {
 
     /**
      * Resets all the players hand.
-     * **/
+     **/
     private void resetPlayersHand() {
-        for (Player player: players)
+        for (Player player : players)
             player.resetHand();
     }
 
