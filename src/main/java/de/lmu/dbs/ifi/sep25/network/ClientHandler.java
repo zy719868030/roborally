@@ -131,7 +131,7 @@ public class ClientHandler implements Runnable {
                     case "PlayCard" -> handleBodyPlayCard(json);
                     case "SetStartingPoint" -> handleBodySetStartingPoint(json);
                     case "SelectedCard" -> handleBodySelectedCard(json);
-                    case "TimerStarted" -> handleBodyTimerStarted();
+                    case "SelectedDamage" -> handleBodySelectedDamage(json);
                     case "RebootDirection" -> handleBodyRebootDirection(json);
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
@@ -170,7 +170,6 @@ public class ClientHandler implements Runnable {
         alive.set(true);
         heartbeatLogger.info("Client {} set alive to: {}", myID, alive);
     }
-
 
     /**
      * Handles the processing of a "HelloServer" message body. This method parses the incoming JSON,
@@ -367,34 +366,9 @@ public class ClientHandler implements Runnable {
             // Wenn gültig und Latch aktiv ist
             if (placementLatch != null) {
                 placementLatch.countDown();
-
-                // ✅ Karten austeilen (nur für diesen Spieler)
-                List<String> cardNames = new java.util.ArrayList<>();
-
-                // Hand leeren
-                player.getHand().clear();
-
-                // 9 Karten ziehen und Namen sammeln
-                for (int i = 0; i < 9; i++) {
-                    player.drawCard();
-                    if (i < player.getHand().size()) {
-                        cardNames.add(de.lmu.dbs.ifi.sep25.card.CardFactory.getCardName(player.getHand().get(i)));
-                    }
-                }
-
-                // Karten an aktuellen Spieler senden
-                sendMessage(new Message<>(new BodyYourCards(cardNames)));
-
-                // Andere Spieler informieren (nur Kartenzahl)
-                for (Player other : game.getPlayers()) {
-                    if (other != player) {
-                        other.getConnection().sendMessage(new Message<>(new BodyNotYourCards(
-                                player.getRobot().getId(),
-                                cardNames.size()
-                        )));
-                    }
-                }
-
+                //draw cards are called in game loop
+            } else {
+                throw new IllegalStateException("Latch is not set!");
             }
         }
     }
@@ -407,27 +381,12 @@ public class ClientHandler implements Runnable {
     private void handleBodySelectedCard(String json) {
         BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
         //notify is in player class
-        player.chooseCard(body.card(), body.register());
+        player.chooseCardToRegister(body.card(), body.register());
     }
 
-    /**
-     * Handles the start of the body timer by scheduling a task to execute
-     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
-     * the list of ready players from the server and broadcasts a
-     * BodyTimerEnded message containing this list.
-     * <p>
-     * This method uses a single-threaded scheduled executor service to perform
-     * the delayed task execution. The task is responsible for broadcasting
-     * a message via the method `broadcastMessage`.
-     */
-    private void handleBodyTimerStarted() {
-        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.schedule(() -> {
-            List<Integer> readyRegister = server.getReadyRegister();
-            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
-            //TODO @Lukas add code to call random selection for remaining players in readyRegister
-
-        }, 30, TimeUnit.SECONDS);
+    /****/
+    private void handleBodySelectedDamage(String json) {
+        // TODO @yu hier die damage select hineintun
     }
 
     /**
@@ -472,6 +431,37 @@ public class ClientHandler implements Runnable {
     public void setReadyRegister() {
         server.markReadyRegister(myID);
         broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
+
+        if (server.getTimerStarted()) {
+            server.setTimerStarted(true);
+            startTimer();
+        }
+
+    }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    private void startTimer () {
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            List<Integer> readyRegister = server.getReadyRegister();
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+            server.setTimerStarted(false);
+
+            for (Integer clientID : readyRegister)
+                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+
+            game.enterActivationPhase();
+
+        }, 30, TimeUnit.SECONDS);
     }
 
     /**

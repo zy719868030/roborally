@@ -85,7 +85,6 @@ public class MessageDefinitions {
         }
     }
 
-
     public static class FieldConveyorBelt extends Field {
         private final Integer speed;
         private final List<String> orientations;
@@ -234,7 +233,6 @@ public class MessageDefinitions {
         }
     }
 
-
     public static class FieldAntenna extends Field {
         private final List<String> orientations;
 
@@ -296,7 +294,6 @@ public class MessageDefinitions {
 
     public record BodyError(String error) {
     }
-
     //1.0
     public record BodyConnectionUpdate(Integer clientID, Boolean isConnected, String action) {
     }
@@ -360,16 +357,13 @@ public class MessageDefinitions {
 
     public record BodyPlayerTurning(Integer clientID, String rotation) {
     }
-
     //1.0
     public record BodyDrawDamage(Integer clientID, List<String> cards) {
 
     }
-
     //1.0
     public record BodyPickDamage(Integer count, List<String> availablePiles) {
     }
-
     // 1.0
     public record BodySelectedDamage(List<String> cards) {
     }

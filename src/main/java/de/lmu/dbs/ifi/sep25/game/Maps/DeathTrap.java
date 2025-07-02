@@ -14,7 +14,6 @@ public class DeathTrap extends GameMap {
 
     public DeathTrap() {
         super(new Position(12, 5));
-        elements.add(new Antenna(antennaPosition, Direction.WEST, "StartA"));
 
         initializeSubBoards();
         initializeBoard("StartA", Direction.WEST);

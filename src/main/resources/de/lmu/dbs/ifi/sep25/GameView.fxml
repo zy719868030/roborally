@@ -72,11 +72,6 @@
               spacing="10"
               alignment="CENTER"
               style="-fx-padding: 10;">
-            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
-            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
-            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
-            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
-            <StackPane style="-fx-border-color: gray; -fx-background-color: lightgray;" prefWidth="60" prefHeight="90"/>
         </HBox>
 
         <!-- Bestätigungs-Button -->

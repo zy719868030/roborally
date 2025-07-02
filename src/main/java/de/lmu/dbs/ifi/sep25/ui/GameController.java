@@ -1,7 +1,7 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.network.Client;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,10 +26,7 @@ import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static java.util.Map.entry;
 
@@ -56,10 +54,12 @@ public class GameController {
 
     @FXML
     private HBox handCardBox;
-    @FXML private HBox registerBox;
+    @FXML
+    private HBox registerBox;
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
+    private final Map<Integer, Position> robotPositions = new HashMap<>();
     private Parent root;
     @FXML
     private Label timerLabel;
@@ -201,7 +201,7 @@ public class GameController {
                         case "_conveyor_corner_l" -> rotation += 90;
                         case "_conveyor_corner_r" -> rotation -= 90;
                     }
-                    appLogger.info("Adding conveyor tile {} with rotation {}", tileName, rotation);
+//                    appLogger.info("Adding conveyor tile {} with rotation {}", tileName, rotation); DEBUG
                     addImage(pane, tileName, rotation);
                 }
 
@@ -265,7 +265,12 @@ public class GameController {
         if (x == null || y == null) return;
 
         // Nachricht senden
-        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y, "up"));
+        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y,
+                switch (ClientSingleton.getInstance().getSelectedMap()) {
+                    case "Heavy Merge Area", "Death Trap" -> "left";
+                    case "Pilgrimage", "Gear Stripper" -> "top";
+                    default -> "right";
+                }));
         ClientSingleton.getInstance().sendMessage(msg);
 
         // Deaktiviere alle Startfelder (nur einmalige Auswahl zulassen)
@@ -477,42 +482,42 @@ public class GameController {
         // Update availability of click start position depending on phase
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
             // Update the availability of the starting position click based on the stage
-            if (node instanceof StackPane pane&& pane.getOnMouseClicked() != null) {
-                    if (!isSetupPhase) {
-                        // Disable clicks outside the setup phase.
-                        pane.setOnMouseClicked(null);
-                        pane.setStyle("-fx-border-color: gray; -fx-border-width: 2px;");
-                    }
+            if (node instanceof StackPane pane && pane.getOnMouseClicked() != null) {
+                if (!isSetupPhase) {
+                    // Disable clicks outside the setup phase.
+                    pane.setOnMouseClicked(null);
+                    pane.setStyle("-fx-border-color: gray; -fx-border-width: 2px;");
                 }
             }
-            // Handkarten nur in Programmierphase aktiv
-            handCardBox.setDisable(!isProgrammingPhase);
+        }
+        // Handkarten nur in Programmierphase aktiv
+        handCardBox.setDisable(!isProgrammingPhase);
 
-            // DiscardPile nur in Aktivierungsphase sichtbar
-            discardPileBox.setVisible(isActivationPhase);
-            discardPileBox.setManaged(isActivationPhase);
+        // DiscardPile nur in Aktivierungsphase sichtbar
+        discardPileBox.setVisible(isActivationPhase);
+        discardPileBox.setManaged(isActivationPhase);
 
-            // Timer nur in Programmierphase starten
-            if (isProgrammingPhase) {
-                startCountdown();
-            } else {
-                hideCountdown();
-            }
+        // Timer nur in Programmierphase starten
+        if (isProgrammingPhase) {
+            startCountdown();
+        } else {
+            hideCountdown();
+        }
 
-            // Chat sperren, wenn Spiel vorbei ist
-            chatInput.setDisable(isGameOverPhase);
-            recipientBox.setDisable(isGameOverPhase);
+        // Chat sperren, wenn Spiel vorbei ist
+        chatInput.setDisable(isGameOverPhase);
+        recipientBox.setDisable(isGameOverPhase);
 
-            // Beispiel: iconMenu (z. B. Buttons oder Aktionsleiste)
-            iconMenu.setDisable(isGameOverPhase || isSetupPhase);
+        // Beispiel: iconMenu (z. B. Buttons oder Aktionsleiste)
+        iconMenu.setDisable(isGameOverPhase || isSetupPhase);
 
-            // ChatBox bei Spielende ausblenden
-            if (isGameOverPhase) {
-                chatBox.setVisible(false);
-                chatBox.setManaged(false);
-            }
+        // ChatBox bei Spielende ausblenden
+        if (isGameOverPhase) {
+            chatBox.setVisible(false);
+            chatBox.setManaged(false);
+        }
 
-            appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+        appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
 
@@ -605,7 +610,7 @@ public class GameController {
      * @param x         X-Koordinate auf dem Spielfeld
      * @param y         Y-Koordinate auf dem Spielfeld
      * @param clientID  Die Client-ID des Spielers
-     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "up", "down")
+     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         try {
@@ -615,13 +620,14 @@ public class GameController {
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
+            robotView.setUserData("robot");//verbessern
 
             // Drehe Bild je nach Richtung
             switch (direction.toLowerCase()) {
                 case "right" -> robotView.setRotate(0);
-                case "down" -> robotView.setRotate(90);
+                case "bottom" -> robotView.setRotate(90);
                 case "left" -> robotView.setRotate(180);
-                case "up" -> robotView.setRotate(270);
+                case "top" -> robotView.setRotate(270);
             }
 
             // Setze Roboter auf das Spielfeld (Grid)
@@ -668,7 +674,7 @@ public class GameController {
             return;
         }
 
-        // Limpia visualmente los slots de registro antes de reconstruirlos
+
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {
@@ -690,7 +696,7 @@ public class GameController {
             registerBox.getChildren().add(slotWithLabel);
         }
 
-        // Mostrar las cartas de la mano
+        // Zeigt HandCard
         handCardBox.getChildren().clear();
 
         for (String name : cardNames) {
@@ -763,6 +769,8 @@ public class GameController {
     @FXML
     private void handleConfirmSelection() {
         List<String> selectedCards = registerBox.getChildren().stream()
+                .filter(n -> n instanceof VBox)
+                .map(n -> ((VBox) n).getChildren().get(1))
                 .filter(n -> n instanceof StackPane)
                 .map(n -> (StackPane) n)
                 .filter(p -> !p.getChildren().isEmpty())
@@ -775,6 +783,7 @@ public class GameController {
                 })
                 .filter(Objects::nonNull)
                 .toList();
+
 
         if (selectedCards.size() != 5) {
             appendChatMessage("[WARNUNG] Du musst genau 5 Karten ins Register ziehen.");
@@ -1039,7 +1048,7 @@ public class GameController {
         try {
             String imagePath = "/assets/robot_" + clientID + ".png";
             Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-            ImageView robot = new ImageView(new Image(getClass().getResourceAsStream("/assets/cover.png")));
+            ImageView robot = new ImageView(robotImg);
 
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
@@ -1049,9 +1058,12 @@ public class GameController {
             // Bestehende Roboter entfernen (optional)
             StackPane cell = getCellAt(x, y);
             if (cell != null) {
-                cell.getChildren().removeIf(n -> n instanceof ImageView && ((ImageView) n).getImage().getUrl().contains("robot"));
-                cell.getChildren().add(robot);
+                cell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                cell.getChildren().add(robotView);
             }
+
+            //Position
+            robotPositions.put(clientID, new Position(x, y));
 
             appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
@@ -1067,14 +1079,17 @@ public class GameController {
      * @param rotation "clockwise" oder "counterclockwise"
      */
     public void rotateRobot(int clientID, String rotation) {
-        // Beispiel: aktuelle Roboterposition (vereinfachtes Beispiel)
-        int x = 5; // TODO: echte Roboterposition verwenden
-        int y = 5;
+        Position pos = robotPositions.get(clientID);
+        if (pos == null) {
+            appendChatMessage("[FEHLER] Position für Spieler " + clientID + " nicht gefunden.");
+            return;
+        }
 
-        StackPane cell = getCellAt(x, y);
+        StackPane cell = getCellAt(pos.x(), pos.y());
         if (cell != null) {
             for (javafx.scene.Node node : cell.getChildren()) {
-                if (node instanceof ImageView img && img.getImage().getUrl().contains("robot")) {
+                if (node instanceof ImageView img && img.getImage().getUrl() != null &&
+                        img.getImage().getUrl().contains("robot_" + clientID)) {
                     double currentRotation = img.getRotate();
                     img.setRotate(rotation.equals("clockwise") ? currentRotation + 90 : currentRotation - 90);
                     appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
@@ -1083,6 +1098,7 @@ public class GameController {
             }
         }
     }
+
 
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.
@@ -1123,8 +1139,8 @@ public class GameController {
 
         // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
         Label arrow = new Label(switch (direction.toLowerCase()) {
-            case "up" -> "↑";
-            case "down" -> "↓";
+            case "top" -> "↑";
+            case "bottom" -> "↓";
             case "left" -> "←";
             case "right" -> "→";
             default -> "?";
@@ -1230,7 +1246,86 @@ public class GameController {
 
         dialog.showAndWait();
     }
+//DAMAGE CARDS
+    /**
+     * Zeigt dem Spieler die gezogenen Schadenskarten an.
+     *
+     * <p>Diese Methode wird aufgerufen, wenn der Server dem Spieler automatisch Schadenskarten zuweist.
+     * Sie zeigt die entsprechenden Kartengrafiken im Handkartenbereich an.</p>
+     *
+     * @param cards Liste der Schadenskarten (z. B. ["spam", "worm", "trojan_horse"])
+     */
+    public void showDrawnDamageCards(List<String> cards) {
+        handCardBox.getChildren().clear();
 
+        for (String card : cards) {
+            String path = "/assets/cards/damage_cards/" + card.toLowerCase() + ".png";
+            Image img;
+            try {
+                img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+            } catch (Exception e) {
+                System.err.println("[WARN] Fehlendes Schadensbild: " + card);
+                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
+
+            ImageView view = new ImageView(img);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            view.setSmooth(true);
+
+            handCardBox.getChildren().add(view);
+        }
+
+        appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten erhalten.");
+    }
+
+    public void promptDamageCardSelection(int count, List<String> options, java.util.function.Consumer<List<String>> callback) {
+        handCardBox.getChildren().clear();
+        registerBox.getChildren().clear();
+
+        List<String> selected = new ArrayList<>();
+
+        for (String name : options) {
+            String path = "/assets/cards/damage_cards/" + name.toLowerCase() + ".png";
+            Image img;
+            try {
+                img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+            } catch (Exception e) {
+                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
+
+            ImageView view = new ImageView(img);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            view.setSmooth(true);
+
+            view.setOnMouseClicked(event -> {
+                if (selected.contains(name)) {
+                    selected.remove(name);
+                    view.setStyle("");
+                } else if (selected.size() < count) {
+                    selected.add(name);
+                    view.setStyle("-fx-effect: dropshadow(gaussian, red, 12, 0.5, 0, 0);");
+                }
+
+                if (selected.size() == count) {
+                    // Desactiva más clics
+                    handCardBox.getChildren().forEach(n -> n.setOnMouseClicked(null));
+
+                    PauseTransition wait = new PauseTransition(Duration.millis(500));
+                    wait.setOnFinished(e -> callback.accept(selected));
+                    wait.play();
+                }
+            });
+
+            handCardBox.getChildren().add(view);
+        }
+
+        appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
+    }
 }
+
 
 

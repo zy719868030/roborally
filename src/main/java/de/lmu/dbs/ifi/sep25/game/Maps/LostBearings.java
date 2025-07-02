@@ -14,7 +14,6 @@ public class LostBearings extends GameMap {
 
     public LostBearings() {
         super(new Position(0, 0));
-        elements.add(new Antenna(antennaPosition, Direction.EAST, "StartA"));
 
         initializeSubBoards();
         initializeBoard("StartA", Direction.EAST);
