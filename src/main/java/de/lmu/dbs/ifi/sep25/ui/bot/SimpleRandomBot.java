@@ -50,6 +50,7 @@ public class SimpleRandomBot extends RandomBot {
 
     @Override
     protected void handleMessage(String json, String messageType) {
+        try{
         switch (messageType) {
             case "HelloClient" -> handleBodyHelloClient(json);
             case "Alive" -> handleBodyAlive(json);
@@ -86,6 +87,9 @@ public class SimpleRandomBot extends RandomBot {
             case "GameFinished" -> handleBodyGameFinished(json);
             case "PickDamage" -> handleRandomPickDamage(json);
             default -> System.out.println("[SimpleRandomBot] Ignored: " + messageType);
+        }
+        } catch (Exception e) {
+            System.err.println("[SimpleRandomBot] Error handling message: " + e.getMessage());
         }
     }
 
@@ -131,12 +135,12 @@ public class SimpleRandomBot extends RandomBot {
             Message<BodyError> message = JsonUtil.parseMessage(json, BodyError.class);
             String error = message.messageBody().error();
             System.out.println("[SimpleRandomBot] Error: " + error);
-            if (error.contains("Figure already selected") && figureRetryCount < MAX_RETRIES) {
+
+            if (error.contains("Figure already taken") && figureRetryCount < MAX_RETRIES) {
                 // Try another figure
                 List<Integer> remainingFigures = Arrays.stream(AVAILABLE_FIGURES).boxed().collect(Collectors.toCollection(ArrayList::new));
                 for (int i = 0; i < figureRetryCount && !remainingFigures.isEmpty(); i++) {
-                    //if (!remainingFigures.isEmpty()) {
-                        remainingFigures.remove(random.nextInt(remainingFigures.size()));
+                    remainingFigures.remove(random.nextInt(remainingFigures.size()));
                 }
                 if (!remainingFigures.isEmpty()) {
                     String name = BOT_NAMES[random.nextInt(BOT_NAMES.length)];
@@ -144,35 +148,51 @@ public class SimpleRandomBot extends RandomBot {
                     sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
                     System.out.println("[SimpleRandomBot] Retried PlayerValues: " + name + ", Figure: " + figure);
                     figureRetryCount++;
-                    //System.out.println("[RandomBot] Sent message: PlayerValues (name=" + name + ", figure=" + figure + ")");
                     sendMessage(new Message<>(new BodySetStatus(true)));
-                    System.out.println("[RandomBot] Sent message: SetStatus (ready=true)");
+                    System.out.println("[SimpleRandomBot] Sent message: SetStatus (ready=true)");
                     isReady = true;
                 } else {
-                    System.err.println("[SimpleRandomBot] Error: No figures available" + MAX_RETRIES + " retries");
+                    System.err.println("[SimpleRandomBot] Error: No figures available after " + MAX_RETRIES + " retries");
                 }
-            }else if (error.contains("Player not initialized")) {
-                    String name = isBot ? BOT_NAMES[random.nextInt(BOT_NAMES.length)] : "Bot1";
-                    int figure = AVAILABLE_FIGURES[random.nextInt(AVAILABLE_FIGURES.length)];
-                    sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
-                    System.out.println("[SimpleRandomBot] Retried PlayerValues: " + name + ", Figure: " + figure);
-                    //System.out.println("[RandomBot] Sent message: PlayerValues (name=" + name + ", figure=" + figure + ")");
-                    sendMessage(new Message<>(new BodySetStatus(true)));
-                    System.out.println("[RandomBot] Sent message: SetStatus (ready=true)");
-                    isReady = true;
+            } else if (error.contains("Player not initialized")) {
+                String name = isBot ? BOT_NAMES[random.nextInt(BOT_NAMES.length)] : "Bot1";
+                int figure = AVAILABLE_FIGURES[random.nextInt(AVAILABLE_FIGURES.length)];
+                sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+                System.out.println("[SimpleRandomBot] Retried PlayerValues: " + name + ", Figure: " + figure);
+                sendMessage(new Message<>(new BodySetStatus(true)));
+                System.out.println("[SimpleRandomBot] Sent message: SetStatus (ready=true)");
+                isReady = true;
             } else if (error.toLowerCase().contains("ready")) {
+                sendMessage(new Message<>(new BodySetStatus(true)));
+                System.out.println("[SimpleRandomBot] Sent message: SetStatus (ready=true) on ready error");
+                isReady = true;
+            } else if (error.equals("Starting point already taken!") && "Aufbauphase".equals(phase) && startPointRetries < MAX_START_POINT_RETRIES) {
+                // Retry with a new start point
+                List<Position> availableStartPoints = new ArrayList<>(START_A_POSITIONS);
+                if (availableStartPoints.isEmpty()) {
+                    availableStartPoints.addAll(Arrays.asList(
+                            new Position(0, 3), new Position(0, 6), new Position(1, 1),
+                            new Position(1, 4), new Position(1, 8)
+                    ));
+                }
+                if (!availableStartPoints.isEmpty()) {
+                    Position position = availableStartPoints.remove(random.nextInt(availableStartPoints.size()));
+                    String direction = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
+                    sendMessage(new Message<>(new BodySetStartingPoint(position.x(), position.y(), direction)));
+                    System.out.println("[SimpleRandomBot] Starting point retry: (" + position.x() + ", " + position.y() + "), Dir=" + direction);
+                    startPointRetries++;
+                } else {
+                    System.err.println("[SimpleRandomBot] Error: No available start points for retry");
                     sendMessage(new Message<>(new BodySetStatus(true)));
-                    System.out.println("[RandomBot] Sent message: SetStatus (ready=true) on ready error");
-                    isReady = true;
-            }else if (error.contains("Starting point already taken") && startPointRetries < MAX_START_POINT_RETRIES) {
-                System.out.println("[SimpleRandomBot] Starting point rejected, retrying...");
-                botPosition = null;
-                handleRandomSetStartingPoint("{\"messageType\":\"SetStartingPoint\",\"messageBody\":{}}");
-            }else {
-                System.err.println("[SimpleRandomBot] Error: " + error);
+                    System.out.println("[SimpleRandomBot] Sent SetStatus on no start points");
+                }
+            } else if (error.equals("Game has already started.")) {
+                System.out.println("[SimpleRandomBot] Ignoring SetStatus as game started");
+            } else {
+                System.err.println("[SimpleRandomBot] Unhandled error: " + error);
             }
-        } catch (Exception e){
-            System.err.println("[SimpleRandomBot] Error handling Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("[SimpleRandomBot] Error handling Error message: " + e.getMessage());
         }
     }
 
@@ -370,8 +390,23 @@ public class SimpleRandomBot extends RandomBot {
             System.out.println("[SimpleRandomBot] Cards: " + hand);
             if (id != null && hand.size() >= 5) {
                 Collections.shuffle(hand, random);
-                for (int register = 0; register < 5; register++) {
-                    String card = hand.get(register);
+                // Ensure register 0 does not get "Again"
+                List<String> validCards = new ArrayList<>(hand);
+                validCards.remove("Again"); // Exclude Again for register 0
+                if (validCards.isEmpty()) {
+                    System.err.println("[SimpleRandomBot] Error: No valid cards for register 0 (all are Again)");
+                    return;
+                }
+                String card0 = validCards.get(random.nextInt(validCards.size()));
+                selectedCards.set(0, card0);
+                sendMessage(new Message<>(new BodySelectedCard(card0, 0)));
+                System.out.println("[SimpleRandomBot] Selected card " + card0 + " for register 0");
+                // Select registers 1-4 from full hand
+                List<String> remainingCards = new ArrayList<>(hand);
+                remainingCards.remove(card0);
+                Collections.shuffle(remainingCards, random);
+                for (int register = 1; register < 5 && !remainingCards.isEmpty(); register++) {
+                    String card = remainingCards.remove(0);
                     selectedCards.set(register, card);
                     sendMessage(new Message<>(new BodySelectedCard(card, register)));
                     System.out.println("[SimpleRandomBot] Selected card " + card + " for register " + register);
@@ -477,12 +512,25 @@ public class SimpleRandomBot extends RandomBot {
             Message<BodyCurrentPlayer> message = JsonUtil.parseMessage(json, BodyCurrentPlayer.class);
             if (message.messageBody().clientID().equals(id)) {
                 System.out.println("[SimpleRandomBot] My turn, phase: " + phase);
-                if (phase.equals("Aufbauphase" )) {
-                     //&& botPosition == null
-                    botPosition = null;
-
-                    handleRandomSetStartingPoint("{\"messageType\":\"SetStartingPoint\",\"messageBody\":{}}");
-                    lastCurrentPlayerTime = System.currentTimeMillis();
+                if ("Aufbauphase".equals(phase)) {
+                    // List of valid start points from Start A board
+                    List<Position> availableStartPoints = new ArrayList<>(START_A_POSITIONS);
+                    if (availableStartPoints.isEmpty()) {
+                        availableStartPoints.addAll(Arrays.asList(
+                                new Position(0, 3), new Position(0, 6), new Position(1, 1),
+                                new Position(1, 4), new Position(1, 8)
+                        ));
+                    }
+                    if (!availableStartPoints.isEmpty()) {
+                        Position position = availableStartPoints.remove(random.nextInt(availableStartPoints.size()));
+                        String direction = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
+                        sendMessage(new Message<>(new BodySetStartingPoint(position.x(), position.y(), direction)));
+                        System.out.println("[SimpleRandomBot] Starting point attempt: (" + position.x() + ", " + position.y() + "), Dir=" + direction);
+                    } else {
+                        System.err.println("[SimpleRandomBot] Error: No available start points");
+                        sendMessage(new Message<>(new BodySetStatus(true)));
+                        System.out.println("[SimpleRandomBot] Sent SetStatus on no start points");
+                    }
                 }
             }
         } catch (Exception e) {
@@ -572,7 +620,13 @@ public class SimpleRandomBot extends RandomBot {
                 botDirection = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
                 System.out.println("[SimpleRandomBot] Initialized default position=" + botPosition + ", direction=" + botDirection);
             }
-
+            sendMessage(new Message<>(new BodyPlayCard(cardName)));
+            System.out.println("[SimpleRandomBot] Played card: " + cardName);
+        } catch (Exception e) {
+            System.err.println("[SimpleRandomBot] Error executing card action: " + e.getMessage());
+        }
+    }
+    /*
             switch (cardName) {
                 case "Move1":
                     moveBot(1);
@@ -613,8 +667,8 @@ public class SimpleRandomBot extends RandomBot {
             System.err.println("[SimpleRandomBot] Error executing card action: " + e.getMessage());
         }
     }
-
-    private void moveBot(int steps) {
+    */
+    /*private void moveBot(int steps) {
         int newX = botPosition.x();
         int newY = botPosition.y();
 
@@ -663,6 +717,7 @@ public class SimpleRandomBot extends RandomBot {
         sendMessage(new Message<>(new BodyPlayerTurning(id, rotation)));
         System.out.println("[SimpleRandomBot] Turned to direction: " + newDirection);
     }
+    */
 
     private record Field(String type, boolean isOnBoard, List<String> orientations, Integer count, Integer speed) {}
 
