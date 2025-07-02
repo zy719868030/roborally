@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Player {
     private final ClientHandler connection;
@@ -27,6 +29,7 @@ public class Player {
     private final List<UpgradeCard> temporaryUpgrades = new ArrayList<>();
     private final List<RegisterCard> hand = new ArrayList<>();
     private final Deck<RegisterCard> programmingDeck;
+    private static final Logger appLogger = LogManager.getLogger(Player.class);
 
 
     // INITIALIZATION
@@ -238,6 +241,7 @@ public class Player {
     public void updateHand() {
         // Send and broadcast cards
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
+        appLogger.info("Update player {}'s hand: {}", robot.getId(), handWithNames);
 
         connection.sendMessage(new MessageDefinitions.Message<>(
                 new MessageDefinitions.BodyYourCards(
@@ -248,23 +252,28 @@ public class Player {
                 new MessageDefinitions.BodyNotYourCards(
                         connection.getMyID(), handWithNames.size()
                 )), connection);
+        appLogger.info("Hand information sent");
     }
 
     /**
      * Deal cards to player at the start of a programming phase
      */
     public void dealProgrammingCards() {
+        appLogger.info("Deal cards to players {}", robot.getId());
         // Clear hand
         resetHand();
 
         // Draw 9 cards (or fewer if damaged)
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
+        System.out.println("[DEBUG] Player " + robot.getId() + " draws " + cardsToDraw + " cards");
         for (int i = 0; i < cardsToDraw; i++) {
             drawCard();
         }
 
         // Reset register state
         setReadyRegister(false);
+        updateHand();
+        appLogger.info("Player {}'s hand has been updated and sent.", robot.getId());
     }
 
     /**

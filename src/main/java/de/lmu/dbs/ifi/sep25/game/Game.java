@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class Game {
     // Constants
@@ -200,6 +201,7 @@ public class Game {
         roundNumber++;
         appLogger.info("Starting round {}.", roundNumber);
         setPhase(GamePhase.PROGRAMMING);
+        appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
         handleProgrammingPhase();
 
         // The game will automatically advance to the activation phase after receiving enough client messages.
@@ -409,38 +411,61 @@ public class Game {
     private void handleSetupPhase() {
         // Wait for all players to each choose starting positions
         // This logic is triggered by the client, server responds
-
-        while (!currentPlayerTurn.isEmpty()) {
-            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
-
-            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
-            currentPlayerConnection.setPlacementLatch(latch);
-
-            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
+        appLogger.info("Processing setup phase, waiting for all players to select starting positions");
+        for (Player player : new ArrayList<>(currentPlayerTurn)) {
+            ClientHandler currentPlayerConnection = player.getConnection();
             currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
             ));
 
+            final CountDownLatch latch = new CountDownLatch(1);
+            currentPlayerConnection.setPlacementLatch(latch);
+
             try {
-                latch.await();
+                boolean success = latch.await(30, TimeUnit.SECONDS);
+                if (!success) {
+                    appLogger.warn("Player {} selected starting position timeout", player.getRobot().getId());
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                System.err.println("Interrupted while waiting for placements.");
+                appLogger.error("Interrupted while waiting for placements: {}", e.getMessage());
             }
+            currentPlayerTurn.remove(player);
         }
-
+//        while (!currentPlayerTurn.isEmpty()) {
+//            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
+//
+//            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
+//            currentPlayerConnection.setPlacementLatch(latch);
+//
+//            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
+//            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
+//            ));
+//
+//            try {
+//                latch.await();
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//                System.err.println("Interrupted while waiting for placements.");
+//            }
+//        }
+        appLogger.info("All players have chosen their starting positions. Enter the programming phase.");
     }
 
     /**
      * Handle the programming phase
      */
     private void handleProgrammingPhase() {
+        appLogger.info("During the dealing phase, begin dealing cards to all players.");
         // Deal cards to all players
         for (Player player : players) {
             // Deal new cards and send to server
+            appLogger.info("Deal cards to players {}", player.getRobot().getId());
             player.dealProgrammingCards();
         }
 
+        appLogger.info("All players have been dealt their cards and are waiting for players to select cards.");
         // TODO: The actual card selection is handled by client events through the Player.chooseCard method
         // Server will wait for all players to finish programming
     }
