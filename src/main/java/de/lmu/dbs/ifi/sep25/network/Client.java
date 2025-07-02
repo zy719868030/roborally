@@ -44,7 +44,7 @@ public class Client {
             .setPrettyPrinting()
             .create();
 
-    private final String protocol = "Version 0.1";
+    private final String protocol = "Version 1.0";
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
     // 2. Main identity/data

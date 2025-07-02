@@ -26,9 +26,10 @@ public class Server {
     // 0. Singleton instance and Loggers
     private static Server instance;
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
+    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Server.class);
 
     // 1. Constants / configuration
-    private final String protocol = "Version 0.1";
+    private final String protocol = "Version 1.0";
 
     // 2. Core data / state
     private final AtomicInteger clientIDCounter = new AtomicInteger(1);
@@ -429,6 +430,11 @@ public class Server {
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler);
+        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());
+
+//        appLogger.info("Snapshot of ready order: {}", readyOrder);
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
 
         if (lobby.allReady() && game != null) {
             startGame();
@@ -442,6 +448,11 @@ public class Server {
      */
     public synchronized void unmarkReady(ClientHandler handler) {
         readyOrder.remove(handler);
+        appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+
+//        appLogger.info("Snapshot of ready order: {}", readyOrder);
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
     }
 
     /**
@@ -457,6 +468,7 @@ public class Server {
             throw new IllegalStateException("No players are ready.");
         }
         // update snapshot
+//        appLogger.info("Snapshot of ready order: {}", readyOrder);
         snapshotReadyOrder.clear();
         snapshotReadyOrder.addAll(readyOrder);
 
@@ -484,6 +496,7 @@ public class Server {
      * @return an unmodifiable list representing the ready order of clients at snapshot time
      */
     public synchronized List<ClientHandler> getSnapshotReadyOrder() {
+        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList());
         return List.copyOf(snapshotReadyOrder);
     }
 
