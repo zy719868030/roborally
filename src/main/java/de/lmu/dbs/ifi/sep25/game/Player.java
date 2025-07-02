@@ -267,13 +267,26 @@ public class Player {
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
         System.out.println("[DEBUG] Player " + robot.getId() + " draws " + cardsToDraw + " cards");
         for (int i = 0; i < cardsToDraw; i++) {
-            drawCard();
+            drawCardSilently();
         }
 
         // Reset register state
         setReadyRegister(false);
         updateHand();
         appLogger.info("Player {}'s hand has been updated and sent.", robot.getId());
+    }
+
+    // Methode zum Ziehen von Karten ohne Nachrichtenversand, ShuffleCoding-Nachrichten werden nur bei Bedarf versendet.
+    private RegisterCard drawCardSilently() {
+        if (programmingDeck.isEmpty()) {
+            programmingDeck.reset();
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
+            ));
+        }
+        RegisterCard card = programmingDeck.draw();
+        hand.add(card);
+        return card;
     }
 
     /**

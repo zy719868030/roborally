@@ -602,7 +602,11 @@ public class Game {
         startPoint.occupy(robot.getId());
 
         // Set robot position and orientation
+//        robot.setPosition(targetPos);
+        Board tempBoard = robot.getBoard();
+        robot.setBoard(null);
         robot.setPosition(targetPos);
+        robot.setBoard(tempBoard);
         robot.setDirection(startPoint.getRobotDirection());
 
         // Update robot position on board
