@@ -1,6 +1,7 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
@@ -60,6 +61,7 @@ public class GameController {
     private static final int TILE_SIZE = 60;
 
     private final Map<String, Image> tileImages = new HashMap<>();
+    private final Map<Integer, Position> robotPositions = new HashMap<>();
     private Parent root;
     @FXML
     private Label timerLabel;
@@ -620,6 +622,7 @@ public class GameController {
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
+            robotView.setUserData("robot");//verbessern
 
             // Drehe Bild je nach Richtung
             switch (direction.toLowerCase()) {
@@ -1044,7 +1047,7 @@ public class GameController {
         try {
             String imagePath = "/assets/robot_" + clientID + ".png";
             Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-            ImageView robot = new ImageView(new Image(getClass().getResourceAsStream("/assets/cover.png")));
+            ImageView robot = new ImageView(robotImg);
 
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
@@ -1054,9 +1057,12 @@ public class GameController {
             // Bestehende Roboter entfernen (optional)
             StackPane cell = getCellAt(x, y);
             if (cell != null) {
-                cell.getChildren().removeIf(n -> n instanceof ImageView && ((ImageView) n).getImage().getUrl().contains("robot"));
-                cell.getChildren().add(robot);
+                cell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                cell.getChildren().add(robotView);
             }
+
+            //Position
+            robotPositions.put(clientID, new Position(x, y));
 
             appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
@@ -1072,14 +1078,17 @@ public class GameController {
      * @param rotation "clockwise" oder "counterclockwise"
      */
     public void rotateRobot(int clientID, String rotation) {
-        // Beispiel: aktuelle Roboterposition (vereinfachtes Beispiel)
-        int x = 5; // TODO: echte Roboterposition verwenden
-        int y = 5;
+        Position pos = robotPositions.get(clientID);
+        if (pos == null) {
+            appendChatMessage("[FEHLER] Position für Spieler " + clientID + " nicht gefunden.");
+            return;
+        }
 
-        StackPane cell = getCellAt(x, y);
+        StackPane cell = getCellAt(pos.x(), pos.y());
         if (cell != null) {
             for (javafx.scene.Node node : cell.getChildren()) {
-                if (node instanceof ImageView img && img.getImage().getUrl().contains("robot")) {
+                if (node instanceof ImageView img && img.getImage().getUrl() != null &&
+                        img.getImage().getUrl().contains("robot_" + clientID)) {
                     double currentRotation = img.getRotate();
                     img.setRotate(rotation.equals("clockwise") ? currentRotation + 90 : currentRotation - 90);
                     appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
@@ -1088,6 +1097,7 @@ public class GameController {
             }
         }
     }
+
 
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.
