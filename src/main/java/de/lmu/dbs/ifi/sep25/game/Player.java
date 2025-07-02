@@ -408,7 +408,6 @@ public class Player {
                 ));
             }
         }
-        //FIXME depending on protocol, add the whole new register to cardsYouGotNow or only new ones
 
         connection.sendMessage(new MessageDefinitions.Message<>(
                 new MessageDefinitions.BodyCardsYouGotNow(cardsYouGotNow))
