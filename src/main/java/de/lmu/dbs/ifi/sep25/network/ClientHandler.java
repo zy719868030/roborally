@@ -94,7 +94,6 @@ public class ClientHandler implements Runnable {
     }
 
 
-
     /**
      * Executes the main logic for handling incoming messages from a client.
      * This method reads JSON-formatted messages from the client's input stream,
@@ -359,50 +358,24 @@ public class ClientHandler implements Runnable {
      *             parsed into a {@code BodySetStartingPoint} object which provides the coordinates (x, y).
      */
     private void handleBodySetStartingPoint(String json) {
-//        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
         Message<BodySetStartingPoint> message = JsonUtil.parseMessage(json, BodySetStartingPoint.class);
         BodySetStartingPoint body = message.messageBody();
 
-        int x = body.x();
-        int y = body.y();
         if (game == null) {
             sendMessage(new Message<>(new BodyError("Game not initialized")));
             return;
         }
 
-        boolean success = game.setPlayerStartingPosition(player, x, y);
-        if (success) {
-            broadcastMessage(new Message<>(new BodyMovement(player.getRobot().getId(), x, y)));
-            String direction = "right";
-            broadcastMessage(new Message<>(
-                    new BodyStartingPointTaken(x, y, direction, player.getRobot().getId())
-            ));
-        }
-
-        if (placementLatch != null) {
+        // Broadcasts are handled in setPlayerStartingPosition
+        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
+            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
+        } else if (placementLatch != null) {
             placementLatch.countDown();
-            placementLatch = null;
         } else {
             appLogger.error("Placement latch was not set for player {} (ID: {})", player.getName(), myID);
+            throw new IllegalStateException("Latch is not set! Probable cause for this error: Player selected staring position although not their turn.");
         }
-        // Versuche die Startposition zu setzen
-//        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
-//            // Ungültige Position – evtl. eine Nachricht an Client schicken
-//            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
-//        } else {
-//            // Wenn gültig und Latch aktiv ist
-//            if (placementLatch != null) {
-//                placementLatch.countDown();
-//                //draw cards are called in game loop
-//            } else {
-////                throw new IllegalStateException("Latch is not set!");
-//                appLogger.error("Placement latch was not set for player {} (ID: {})",
-//                        player.getName(), myID);
-//                CountDownLatch newLatch = new CountDownLatch(1);
-//                this.placementLatch = newLatch;
-//                this.placementLatch.countDown();
-//            }
-        }
+    }
 
     /**
      * Handles the processing of a body-selected card event. Calls chooseCard in player.
@@ -512,7 +485,7 @@ public class ClientHandler implements Runnable {
      * the delayed task execution. The task is responsible for broadcasting
      * a message via the method `broadcastMessage`.
      */
-    private void startTimer () {
+    private void startTimer() {
         final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.schedule(() -> {
             List<Integer> readyRegister = server.getReadyRegister();
