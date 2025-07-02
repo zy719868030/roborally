@@ -179,7 +179,7 @@ public class GameController {
                         String imageKey = "wall_n";
                         for (MessageDefinitions.FieldLaser laser : lasers) {
                             if (laser.orientations().getFirst().equals(dir)) {
-                                imageKey = "wall_laser_" + laser.count() + "_" + (laser.isActive() ? "on" : "off");
+                                imageKey = "wall_laser_" + laser.count() + "_off";
                                 break;
                             }
                         }
