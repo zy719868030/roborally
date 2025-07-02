@@ -452,6 +452,7 @@ public class SimpleRandomBot extends RandomBot {
                     String cardName = selectedCards.get(0);
                     System.out.println("[SimpleRandomBot] Executing card in register 0: " + cardName);
                     executeCardAction(cardName); // Sends BodyPlayerTurning for TurnRight
+                    currentRegister++;
                 } else {
                     System.err.println("[SimpleRandomBot] No card in register 0 to execute");
                 }
@@ -482,6 +483,7 @@ public class SimpleRandomBot extends RandomBot {
                     String cardName = activeCard.card();
                     System.out.println("[SimpleRandomBot] Playing card from server: " + cardName);
                     executeCardAction(cardName);
+                    currentRegister++;
                     return; // Exit after processing own card
                 }
             }
@@ -546,18 +548,15 @@ public class SimpleRandomBot extends RandomBot {
             case 1 -> "Upgradephase";
             case 2 -> "Programmierphase";
             case 3 -> "Aktivierungsphase";
-//            case 3 -> {
-//                currentRegister = 0;
-//                yield "Aktivierungsphase";
-//            }
             default -> "Unbekannt";
         };
         System.out.println("[SimpleRandomBot] Phase: " + phase);
         // Execute register 0 card in Aktivierungsphase
-        if (phase.equals("Aktivierungsphase") && selectedCards.size() > 0 && selectedCards.get(0) != null) {
+        if (phase.equals("Aktivierungsphase") && currentRegister == 0 && selectedCards.size() > 0 && selectedCards.get(0) != null) {
             String cardName = selectedCards.get(0);
             System.out.println("[SimpleRandomBot] Executing card in register 0: " + cardName);
             executeCardAction(cardName); // Sends BodyMovement, BodyPlayerTurning, or random move for Again
+            currentRegister++;
         }
     } catch (Exception e) {
         System.err.println("[SimpleRandomBot] Error handling ActivePhase: " + e.getMessage());
@@ -626,98 +625,6 @@ public class SimpleRandomBot extends RandomBot {
             System.err.println("[SimpleRandomBot] Error executing card action: " + e.getMessage());
         }
     }
-    /*
-            switch (cardName) {
-                case "Move1":
-                    moveBot(1);
-                    break;
-                case "Move2":
-                    moveBot(2);
-                    break;
-                case "Move3":
-                    moveBot(3);
-                    break;
-                case "TurnLeft":
-                    turnBot("counterclockwise");
-                    break;
-                case "TurnRight":
-                    turnBot("clockwise");
-                    break;
-                case "UTurn":
-                    turnBot("u-turn");
-                    break;
-                case "BackUp":
-                    moveBot(-1);
-                    break;
-                case "PowerUp":
-                    energy.put(id, energy.getOrDefault(id, 5) + 1);
-                    System.out.println("[SimpleRandomBot] PowerUp: Energy increased to " + energy.get(id));
-                    break;
-                case "Again":
-                    // [Updated] Replay a random move for simplicity
-                    moveBot(random.nextInt(3) + 1);
-                    break;
-                default:
-                    // [Updated] Fallback to random move for unknown cards
-                    System.out.println("[SimpleRandomBot] Unknown card: " + cardName + ", performing random move");
-                    moveBot(random.nextInt(3) + 1);
-                    break;
-            }
-        } catch (Exception e) {
-            System.err.println("[SimpleRandomBot] Error executing card action: " + e.getMessage());
-        }
-    }
-    */
-    /*private void moveBot(int steps) {
-        int newX = botPosition.x();
-        int newY = botPosition.y();
-
-        switch (botDirection) {
-            case "top":
-                newY -= steps;
-                break;
-            case "bottom":
-                newY += steps;
-                break;
-            case "left":
-                newX -= steps;
-                break;
-            case "right":
-                newX += steps;
-                break;
-        }
-        if (gameMap != null && newX >= 0 && newX < 13 && newY >= 0 && newY < 10) {
-            botPosition = new Position(newX, newY);
-            sendMessage(new Message<>(new BodyMovement(id, newX, newY)));
-            System.out.println("[SimpleRandomBot] Moved to (" + newX + ", " + newY + ") with card steps=" + steps);
-        } else {
-            System.out.println("[SimpleRandomBot] Invalid move to (" + newX + ", " + newY + "), staying at (" + botPosition.x() + ", " + botPosition.y() + ")");
-        }
-    }
-    private void turnBot(String rotation) {
-        String newDirection = botDirection;
-        if (rotation.equals("u-turn")) {
-            newDirection = switch (botDirection) {
-                case "top" -> "bottom";
-                case "bottom" -> "top";
-                case "left" -> "right";
-                case "right" -> "left";
-                default -> botDirection;
-            };
-        } else {
-            newDirection = switch (botDirection) {
-                case "top" -> rotation.equals("clockwise") ? "right" : "left";
-                case "right" -> rotation.equals("clockwise") ? "bottom" : "top";
-                case "bottom" -> rotation.equals("clockwise") ? "left" : "right";
-                case "left" -> rotation.equals("clockwise") ? "top" : "bottom";
-                default -> botDirection;
-            };
-        }
-        botDirection = newDirection;
-        sendMessage(new Message<>(new BodyPlayerTurning(id, rotation)));
-        System.out.println("[SimpleRandomBot] Turned to direction: " + newDirection);
-    }
-    */
 
     private record Field(String type, boolean isOnBoard, List<String> orientations, Integer count, Integer speed) {}
 
