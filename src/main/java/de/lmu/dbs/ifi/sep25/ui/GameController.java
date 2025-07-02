@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,10 +26,7 @@ import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static java.util.Map.entry;
 
@@ -612,7 +610,7 @@ public class GameController {
      * @param x         X-Koordinate auf dem Spielfeld
      * @param y         Y-Koordinate auf dem Spielfeld
      * @param clientID  Die Client-ID des Spielers
-     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "up", "down")
+     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         try {
@@ -627,9 +625,9 @@ public class GameController {
             // Drehe Bild je nach Richtung
             switch (direction.toLowerCase()) {
                 case "right" -> robotView.setRotate(0);
-                case "down" -> robotView.setRotate(90);
+                case "bottom" -> robotView.setRotate(90);
                 case "left" -> robotView.setRotate(180);
-                case "up" -> robotView.setRotate(270);
+                case "top" -> robotView.setRotate(270);
             }
 
             // Setze Roboter auf das Spielfeld (Grid)
@@ -676,7 +674,7 @@ public class GameController {
             return;
         }
 
-        // Limpia visualmente los slots de registro antes de reconstruirlos
+
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {
@@ -698,7 +696,7 @@ public class GameController {
             registerBox.getChildren().add(slotWithLabel);
         }
 
-        // Mostrar las cartas de la mano
+        // Zeigt HandCard
         handCardBox.getChildren().clear();
 
         for (String name : cardNames) {
@@ -771,6 +769,8 @@ public class GameController {
     @FXML
     private void handleConfirmSelection() {
         List<String> selectedCards = registerBox.getChildren().stream()
+                .filter(n -> n instanceof VBox)
+                .map(n -> ((VBox) n).getChildren().get(1))
                 .filter(n -> n instanceof StackPane)
                 .map(n -> (StackPane) n)
                 .filter(p -> !p.getChildren().isEmpty())
@@ -783,6 +783,7 @@ public class GameController {
                 })
                 .filter(Objects::nonNull)
                 .toList();
+
 
         if (selectedCards.size() != 5) {
             appendChatMessage("[WARNUNG] Du musst genau 5 Karten ins Register ziehen.");
@@ -1138,8 +1139,8 @@ public class GameController {
 
         // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
         Label arrow = new Label(switch (direction.toLowerCase()) {
-            case "up" -> "↑";
-            case "down" -> "↓";
+            case "top" -> "↑";
+            case "bottom" -> "↓";
             case "left" -> "←";
             case "right" -> "→";
             default -> "?";
@@ -1245,7 +1246,86 @@ public class GameController {
 
         dialog.showAndWait();
     }
+//DAMAGE CARDS
+    /**
+     * Zeigt dem Spieler die gezogenen Schadenskarten an.
+     *
+     * <p>Diese Methode wird aufgerufen, wenn der Server dem Spieler automatisch Schadenskarten zuweist.
+     * Sie zeigt die entsprechenden Kartengrafiken im Handkartenbereich an.</p>
+     *
+     * @param cards Liste der Schadenskarten (z. B. ["spam", "worm", "trojan_horse"])
+     */
+    public void showDrawnDamageCards(List<String> cards) {
+        handCardBox.getChildren().clear();
 
+        for (String card : cards) {
+            String path = "/assets/cards/damage_cards/" + card.toLowerCase() + ".png";
+            Image img;
+            try {
+                img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+            } catch (Exception e) {
+                System.err.println("[WARN] Fehlendes Schadensbild: " + card);
+                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
+
+            ImageView view = new ImageView(img);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            view.setSmooth(true);
+
+            handCardBox.getChildren().add(view);
+        }
+
+        appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten erhalten.");
+    }
+
+    public void promptDamageCardSelection(int count, List<String> options, java.util.function.Consumer<List<String>> callback) {
+        handCardBox.getChildren().clear();
+        registerBox.getChildren().clear();
+
+        List<String> selected = new ArrayList<>();
+
+        for (String name : options) {
+            String path = "/assets/cards/damage_cards/" + name.toLowerCase() + ".png";
+            Image img;
+            try {
+                img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+            } catch (Exception e) {
+                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
+
+            ImageView view = new ImageView(img);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            view.setSmooth(true);
+
+            view.setOnMouseClicked(event -> {
+                if (selected.contains(name)) {
+                    selected.remove(name);
+                    view.setStyle("");
+                } else if (selected.size() < count) {
+                    selected.add(name);
+                    view.setStyle("-fx-effect: dropshadow(gaussian, red, 12, 0.5, 0, 0);");
+                }
+
+                if (selected.size() == count) {
+                    // Desactiva más clics
+                    handCardBox.getChildren().forEach(n -> n.setOnMouseClicked(null));
+
+                    PauseTransition wait = new PauseTransition(Duration.millis(500));
+                    wait.setOnFinished(e -> callback.accept(selected));
+                    wait.play();
+                }
+            });
+
+            handCardBox.getChildren().add(view);
+        }
+
+        appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
+    }
 }
+
 
 

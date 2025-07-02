@@ -927,7 +927,15 @@ public class Client {
         BodyDrawDamage body = message.messageBody();
         List<String> cards = body.cards();
 
-        // TODO display animation / inform player
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.showDrawnDamageCards(cards);
+                controller.appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten gezogen.");
+            } else {
+                errorLogger.error("[WARN] GameController ist null in handleBodyDrawDamage");
+            }
+        });
     }
 
     private void handleBodyPickDamage(String json) {
@@ -936,8 +944,26 @@ public class Client {
         int count = body.count();
         List<String> availablePiles = body.availablePiles();
 
-        // TODO select piles in ui
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.promptDamageCardSelection(count, availablePiles, selectedCards -> {
+                    // Callback cuando el usuario haya elegido
+                    if (selectedCards != null && !selectedCards.isEmpty()) {
+                        sendMessage(new Message<>(new MessageDefinitions.BodySelectedDamage(selectedCards)));
+                        controller.appendChatMessage("[INFO] Du hast folgende Schadenskarten gewählt: " + selectedCards);
+                    } else {
+                        controller.appendChatMessage("[WARNUNG] Keine Schadenskarten ausgewählt.");
+                    }
+                });
+            } else {
+                errorLogger.error("[WARN] GameController ist null in handleBodyPickDamage");
+            }
+        });
     }
+
+
+
 
 
     /**
