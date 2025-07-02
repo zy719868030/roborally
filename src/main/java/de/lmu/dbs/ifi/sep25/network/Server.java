@@ -436,7 +436,7 @@ public class Server {
         snapshotReadyOrder.clear();
         snapshotReadyOrder.addAll(readyOrder);
 
-        if (lobby.allReady() && game != null) {
+        if (lobby.size() >= minPlayer && lobby.allReady() && game != null) {
             startGame();
         }
     }
@@ -447,8 +447,12 @@ public class Server {
      * @param handler the client handler to unmark as ready
      */
     public synchronized void unmarkReady(ClientHandler handler) {
-        readyOrder.remove(handler);
-        appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+        if (readyOrder.contains(handler)) {
+            readyOrder.remove(handler);
+            appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+        } else {
+            appLogger.info("Client {} was not in ready order.", handler.getMyID());
+        }
 
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
         snapshotReadyOrder.clear();
@@ -465,7 +469,8 @@ public class Server {
     public synchronized ClientHandler getFirstReadyClient() {
         Iterator<ClientHandler> iterator = readyOrder.iterator();
         if (!iterator.hasNext()) {
-            throw new IllegalStateException("No players are ready.");
+            appLogger.error("No clients marked as ready. Cannot get first ready client. Returned null.");
+            return null;
         }
         // update snapshot
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
@@ -482,7 +487,7 @@ public class Server {
      *
      * @return {@code true} if no clients are ready; {@code false} otherwise
      */
-    public synchronized boolean readyIsEmpty() {
+    public synchronized boolean readyOrderIsEmpty() {
         return readyOrder.isEmpty();
     }
 

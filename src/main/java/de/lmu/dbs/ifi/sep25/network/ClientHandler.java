@@ -258,14 +258,27 @@ public class ClientHandler implements Runnable {
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
             if (ready) {
-                if (server.readyIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
+                if (server.readyOrderIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
                     server.setMapSelectionOngoing(true);
                     setMapSelecting(true);
                     sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
                 }
                 server.markReady(this);
-            } else
+            } else{
+                if (isMapSelecting()) {
+                    server.setMapSelectionOngoing(false);
+                    setMapSelecting(false);
+                    final ClientHandler nextClient;
+                    if ((nextClient = server.getFirstReadyClient()) != null) {
+                        server.setMapSelectionOngoing(true);
+                        nextClient.setMapSelecting(true);
+                        nextClient.sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                    } else {
+                        appLogger.info("No other player ready: is ready order empty? {} -> no map selection ongoing.", server.readyOrderIsEmpty());
+                    }
+                }
                 server.unmarkReady(this);
+            }
         }
     }
 
