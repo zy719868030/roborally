@@ -85,21 +85,20 @@ public class MessageDefinitions {
         }
     }
 
-
     public static class FieldConveyorBelt extends Field {
         private final Integer speed;
-        private final List<String> directions;
+        private final List<String> orientations;
 
         /**
-         * @param directions minimum of 2 directions: first directions is the push direction, rest are pull directions
+         * @param orientations minimum of 2 directions: first directions is the push direction, rest are pull directions
          * @param speed      1 == green | 2 == blue
          **/
-        public FieldConveyorBelt(String isOnBoard, Integer speed, List<String> directions) {
+        public FieldConveyorBelt(String isOnBoard, Integer speed, List<String> orientations) {
             super(isOnBoard);
-            if (directions.size() < 2)
+            if (orientations.size() < 2)
                 throw new IllegalArgumentException("Conveyor requires at least 2 orientations");
             this.speed = speed;
-            this.directions = directions;
+            this.orientations = orientations;
 
         }
 
@@ -107,8 +106,8 @@ public class MessageDefinitions {
             return speed;
         }
 
-        public List<String> directions() {
-            return directions;
+        public List<String> orientations() {
+            return orientations;
         }
     }
 
@@ -203,7 +202,6 @@ public class MessageDefinitions {
     public static class FieldLaser extends Field {
         private final Integer count;
         private final List<String> orientations;
-        private final boolean active;
 
         public FieldLaser(String isOnBoard, List<String> orientations, Integer count) {
             this(isOnBoard, orientations, count, true); // default true
@@ -218,12 +216,9 @@ public class MessageDefinitions {
 
             this.orientations = orientations;
             this.count = count;
-            this.active = active;
+
         }
 
-        public boolean isActive() {
-            return active;
-        }
 
         public Integer count() {
             return count;
@@ -233,7 +228,6 @@ public class MessageDefinitions {
             return orientations;
         }
     }
-
 
     public static class FieldAntenna extends Field {
         private final List<String> orientations;
@@ -296,7 +290,6 @@ public class MessageDefinitions {
 
     public record BodyError(String error) {
     }
-
     //1.0
     public record BodyConnectionUpdate(Integer clientID, Boolean isConnected, String action) {
     }
@@ -360,16 +353,13 @@ public class MessageDefinitions {
 
     public record BodyPlayerTurning(Integer clientID, String rotation) {
     }
-
     //1.0
     public record BodyDrawDamage(Integer clientID, List<String> cards) {
 
     }
-
     //1.0
     public record BodyPickDamage(Integer count, List<String> availablePiles) {
     }
-
     // 1.0
     public record BodySelectedDamage(List<String> cards) {
     }

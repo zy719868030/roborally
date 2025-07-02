@@ -178,41 +178,41 @@ public class Board {
         }
     }
 
-    // Sets initial robot position based on map type and player choice (0-4)
-    public void setStartPosition(Robot robot, int playerChoice) {
-        // Define 5 possible starting positions per map
-        Position[] startPositions = {
-                new Position(8, 1), new Position(6, 0), new Position(5, 1),
-                new Position(4, 1), new Position(3, 0), new Position(1, 1)
-        };
-
-        // Validate player choice (0-4)
-        int choice = Math.min(Math.max(playerChoice, 0), startPositions.length - 1);
-        Position startPos = startPositions[choice];
-        // If position is occupied, try next available
-        int originalChoice = choice;
-        while (getRobotAt(startPos) != null && choice < startPositions.length - 1) {
-            choice++;
-            startPos = startPositions[choice];
-        }
-        // If all positions are taken, use fallback
-        if (getRobotAt(startPos) != null) {
-            startPos = startPositions[originalChoice];
-            System.out.println("Warning: Start position for Robot " + robot.getId() + " may overlap.");
-        }
-        robot.setPosition(startPos);
-        robot.setDirection(Direction.EAST);
-        updateRobotPosition(robot, startPos);
-        Player player = Game.getInstance().getPlayers().stream()
-                .filter(p -> p.getRobot() == robot)
-                .findFirst()
-                .orElse(null);
-        if (player != null) {
-            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyStartingPointTaken(startPos.x(), startPos.y(), Direction.EAST.toString(), robot.getId())
-            ));
-        }
-    }
+//    // Sets initial robot position based on map type and player choice (0-4)
+//    public void setStartPosition(Robot robot, int playerChoice) {
+//        // Define 5 possible starting positions per map
+//        Position[] startPositions = {
+//                new Position(8, 1), new Position(6, 0), new Position(5, 1),
+//                new Position(4, 1), new Position(3, 0), new Position(1, 1)
+//        };
+//
+//        // Validate player choice (0-4)
+//        int choice = Math.min(Math.max(playerChoice, 0), startPositions.length - 1);
+//        Position startPos = startPositions[choice];
+//        // If position is occupied, try next available
+//        int originalChoice = choice;
+//        while (getRobotAt(startPos) != null && choice < startPositions.length - 1) {
+//            choice++;
+//            startPos = startPositions[choice];
+//        }
+//        // If all positions are taken, use fallback
+//        if (getRobotAt(startPos) != null) {
+//            startPos = startPositions[originalChoice];
+//            System.out.println("Warning: Start position for Robot " + robot.getId() + " may overlap.");
+//        }
+//        robot.setPosition(startPos);
+//        robot.setDirection(Direction.EAST);
+//        updateRobotPosition(robot, startPos);
+//        Player player = Game.getInstance().getPlayers().stream()
+//                .filter(p -> p.getRobot() == robot)
+//                .findFirst()
+//                .orElse(null);
+//        if (player != null) {
+//            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyStartingPointTaken(startPos.x(), startPos.y(), Direction.EAST.toString(), robot.getId())
+//            ));
+//        }
+//    }
 
     public List<BoardElement> getElements() {
         List<BoardElement> elements = new ArrayList<>();

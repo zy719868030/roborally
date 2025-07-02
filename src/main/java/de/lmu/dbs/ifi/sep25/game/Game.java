@@ -3,7 +3,6 @@ package de.lmu.dbs.ifi.sep25.game;
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
-import de.lmu.dbs.ifi.sep25.card.ProgrammingCard.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.*;
@@ -43,7 +42,6 @@ public class Game {
     // Card decks
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
-    private final Deck<ProgrammingCard> programmingDeck = new Deck<>();
 
     /* unnecessary globar variables
     private boolean mapSelectionPending;
@@ -61,11 +59,6 @@ public class Game {
         currentPhase = null;
         selectedMap = mapName;
         currentPlayerTurn = new Stack<>();
-
-        players.stream().forEach(p -> p.getRobot().setBoard(board));
-//        mapSelectionPending = true;
-//        slowPlayers = new ArrayList<>();
-        initializeProgrammingDeck();
     }
 
     public static Game getInstance() {
@@ -93,34 +86,6 @@ public class Game {
             Robot robot = player.getRobot();
             robot.setBoard(board);
         }
-    }
-
-    private void initializeProgrammingDeck() {
-        // List of card names with desired counts for Dizzy Highway
-        String[] cardNames = {
-                "MoveI", "MoveI", // 2 Move 1 Space
-                "MoveII", "MoveII", // 2 Move 2 Spaces
-                "MoveIII", // 1 Move 3 Spaces
-                "BackUp", "BackUp", // 2 Back Up
-                "TurnLeft", "TurnLeft", // 2 Turn Left
-                "TurnRight", "TurnRight", // 2 Turn Right
-                "UTurn", "UTurn", // 2 U-Turn
-                "Again", "Again", // 2 Again
-                "PowerUp", // 1 Power Up
-                "RepeatRoutine", // 1 Repeat Routine
-                "SpeedRoutine", // 1 Speed Routine
-                "EnergyRoutine", // 1 Energy Routine
-                "SpamFolder", // 1 SPAM Folder
-                "SandboxRoutine", // 1 Sandbox Routine
-                "WeaselRoutine" // 1 Weasel Routine
-        };
-        for (String cardName : cardNames) {
-            RegisterCard card = CardFactory.createCard(cardName);
-            if (card instanceof ProgrammingCard programmingCard) {
-                programmingDeck.addCard(programmingCard);
-            }
-        }
-        programmingDeck.shuffle();
     }
 
     private void initializeUpgradeCards() {
@@ -201,30 +166,111 @@ public class Game {
      * Start the game main loop
      */
     public void startGameLoop() {
-        // Setup phase
-        setPhase(GamePhase.SETUP);
-        determinePlayerOrder();
-        handleSetupPhase();
+        players.forEach(p -> p.getRobot().setBoard(board));
 
-        appLogger.info("Finished setup phase. Moving to main loop.");
+        final Thread mainLoop = new Thread(() -> {
 
-        // Game continues until a player wins
-        do {
-            // Start a new round
-            roundNumber++;
-            appLogger.info("Starting round {}.", roundNumber);
+            // Setup phase
+            setPhase(GamePhase.SETUP);
 
-            // Programming phase
-            setPhase(GamePhase.PROGRAMMING);
-            handleProgrammingPhase();
+            resetPlayersRound();
 
-            // Activation phase
+            determinePlayerOrder();
+            handleSetupPhase();
+
+            appLogger.info("Finished setup phase. Moving to main loop.");
+
+            startNewGameRound();
+        });
+
+        appLogger.info("Starting game main loop.");
+        mainLoop.start();
+    }
+
+    /**
+     * Starts a new round of the game.
+     * This method should be called when a round ends and a new one needs to begin,
+     * or at the start of the game after setup.
+     */
+    private void startNewGameRound() {
+        // Reset
+        resetPlayersRound();
+
+        // Start new round
+
+        roundNumber++;
+        appLogger.info("Starting round {}.", roundNumber);
+        setPhase(GamePhase.PROGRAMMING);
+        appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
+        handleProgrammingPhase();
+
+        // The game will automatically advance to the activation phase after receiving enough client messages.
+        // There is no need to wait or poll here.
+    }
+
+    /**
+     * Checks if all required inputs for the current programming phase are ready.
+     * If all players have completed their programming, advances to activation phase.
+     * This method should be called whenever a player submits programming choices.
+     *
+     * @return true if game phase was advanced, false otherwise
+     */
+    public boolean checkAndAdvanceFromProgrammingPhase() {
+        // Check if all players have completed programming
+        // If all players are ready and it is currently the programming phase, enter the activation phase.
+        if (players.stream().allMatch(Player::isReadyRegister)) {
+            appLogger.info("All players have completed programming. Moving to activation phase.");
+            enterActivationPhase();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Enters the activationPhase.
+     **/
+    public void enterActivationPhase() {
+        if (currentPhase == GamePhase.PROGRAMMING) {
+            appLogger.info("Entering activation phase.");
             setPhase(GamePhase.ACTIVATION);
+            resetPlayersHand();
             determinePlayerOrder();
             handleActivationPhase();
+        } else {
+            throw new IllegalStateException("Cannot enter activation phase when not coming from programming phase.");
+        }
+    }
 
-            // Check if the game has ended
-        } while (!checkGameEnd());
+    /**
+     * Checks if the current activation phase for the current register is complete.
+     * If completed, advances to the next register or ends the round.
+     * This method should be called after each player's robot movement is processed.
+     *
+     * @return true if game advanced to next register or round, false otherwise
+     */
+    public boolean checkAndAdvanceActivationPhase() {
+        if (currentPlayerTurn.isEmpty() && currentPhase == GamePhase.ACTIVATION) {
+            currentRegister++;
+
+            if (currentRegister < 5) {
+                appLogger.info("Register {} completed. Moving to register {}.", currentRegister - 1, currentRegister);
+                determinePlayerOrder();
+                return true;
+            } else {
+                appLogger.info("All registers processed. Ending round {}.", roundNumber);
+                endRound();
+
+                // Check if the game has ended
+                if (checkGameEnd()) {
+                    appLogger.info("Game end condition met. Game over.");
+                } else {
+                    startNewGameRound();
+                }
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void playRound() {
@@ -241,27 +287,8 @@ public class Game {
     }
 
     private void endRound() {
-        // Clear registers and move cards to discard pile
-        for (Player player : players) {
-            List<RegisterCard> register = player.getRegister();
-            for (RegisterCard card : register) {
-                if (card != null) {
-                    // Move card to discard pile (if it's not a damage card)
-                    // Damage cards should be handled differently
-                    if (!(card instanceof DamageCard)) {
-                        player.discardCard(card);
-                    }
-                }
-            }
-
-            // Clear the register for next round
-            for (int i = 0; i < register.size(); i++) {
-                player.removeCard(null, i);
-            }
-
-            // Reset player's ready state for next round
-            player.setReadyRegister(false);
-        }
+        // Reset players
+        resetPlayersRound();
 
         // Reset the current register counter
         currentRegister = 0;
@@ -275,32 +302,51 @@ public class Game {
         );
     }
 
+    /**
+     * Checks if the game has ended and handles all logic when the game ends.
+     * Game end condition: any player reaches all checkpoints.
+     * When the game ends, this method will:
+     * 1. Determine the winner.
+     * 2. Broadcast the BodyGameFinished message.
+     * 3. Send a chat message that the game has ended.
+     *
+     * @return Returns true if the game has ended, otherwise returns false.
+     */
     private boolean checkGameEnd() {
+        Player winner = null;
+
         for (Player player : players) {
             // Check if any player has reached all checkpoints
             int checkpointsReached = player.getReachedCheckpoints();
             if (checkpointsReached >= board.getTotalCheckpoints()) {
-                // Broadcast game end message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyGameFinished(player.getRobot().getId())
-                        )
-                );
-
-                // TODO @lukas：Send final chat message
-                Server.getInstance().broadcastMessage(
-                        new MessageDefinitions.Message<>(
-                                new MessageDefinitions.BodyReceivedChat(
-                                        "Game over! Player " + player.getName() +
-                                                " has won by reaching all checkpoints!",
-                                        0, false
-                                )
-                        )
-                );
-
-                return true;
+                winner = player;
+                break;
             }
         }
+
+        if (winner != null) {
+            appLogger.info("Game ended. Player {} has won by reaching all checkpoints.", winner.getName());
+
+            // TODO @lukas：Broadcast game end message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyGameFinished(winner.getRobot().getId())
+                    )
+            );
+
+            // TODO @lukas：Send final chat message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyReceivedChat(
+                                    "Game over! Player " + winner.getName() +
+                                            " has won by reaching all checkpoints!",
+                                    0, false
+                            )
+                    )
+            );
+            return true;
+        }
+
         return false;
     }
 
@@ -355,67 +401,71 @@ public class Game {
         appLogger.info("Set new phase and broadcasted: {}.", currentPhase);
 
         // TODO @Lukas broadcast current phase
-        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyActivePhase(currentPhase.getValue())));
+        Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyActivePhase(currentPhase.getValue())));
     }
 
     /**
      * Handle the setup phase
      */
     private void handleSetupPhase() {
-
-        initPlacement();
-
-        // Wait for all players to choose starting positions
+        // Wait for all players to each choose starting positions
         // This logic is triggered by the client, server responds
+        appLogger.info("Processing setup phase, waiting for all players to select starting positions");
+        for (Player player : new ArrayList<>(currentPlayerTurn)) {
+            ClientHandler currentPlayerConnection = player.getConnection();
+            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
+            ));
+
+            final CountDownLatch latch = new CountDownLatch(1);
+            currentPlayerConnection.setPlacementLatch(latch);
+
+            try {
+                boolean success = latch.await(30, TimeUnit.SECONDS);
+                if (!success) {
+                    appLogger.warn("Player {} selected starting position timeout", player.getRobot().getId());
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                appLogger.error("Interrupted while waiting for placements: {}", e.getMessage());
+            }
+            currentPlayerTurn.remove(player);
+        }
+//        while (!currentPlayerTurn.isEmpty()) {
+//            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
+//
+//            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
+//            currentPlayerConnection.setPlacementLatch(latch);
+//
+//            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
+//            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
+//            ));
+//
+//            try {
+//                latch.await();
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//                System.err.println("Interrupted while waiting for placements.");
+//            }
+//        }
+        appLogger.info("All players have chosen their starting positions. Enter the programming phase.");
     }
 
     /**
      * Handle the programming phase
      */
     private void handleProgrammingPhase() {
-        // Distribute programming cards to each player
+        appLogger.info("During the dealing phase, begin dealing cards to all players.");
+        // Deal cards to all players
         for (Player player : players) {
-            // Clear previous registers if necessary
-            for (int i = 0; i < 5; i++) {
-                if (player.getRegister().get(i) != null) {
-                    player.removeCard(null, i);
-                }
-            }
-
-            // Deal programming cards to the player
-            List<String> cardNames = new ArrayList<>();
-            List<RegisterCard> hand = player.getHand();
-
-            // Clear hand from previous round if needed
-            hand.clear();
-
-            // Draw cards (usually 9)
-            for (int i = 0; i < 9; i++) {
-                player.drawCard();
-                // Add card names to list for notification
-                if (i < hand.size()) {
-                    cardNames.add(CardFactory.getCardName(hand.get(i)));
-                }
-            }
-
-            // TODO @lukas:Notify player of their cards
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyYourCards(cardNames)
-            ));
-
-            // TODO @lukas:Notify other players of card count
-            for (Player otherPlayer : players) {
-                if (otherPlayer != player) {
-                    otherPlayer.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyNotYourCards(player.getRobot().getId(), hand.size())
-                    ));
-                }
-            }
-
-            // Reset player's ready state for programming
-            player.setReadyRegister(false);
+            // Deal new cards and send to server
+            appLogger.info("Deal cards to players {}", player.getRobot().getId());
+            player.dealProgrammingCards();
         }
 
+        appLogger.info("All players have been dealt their cards and are waiting for players to select cards.");
         // TODO: The actual card selection is handled by client events through the Player.chooseCard method
         // Server will wait for all players to finish programming
     }
@@ -459,79 +509,20 @@ public class Game {
 
             // Handle robot lasers
             handleRobotLasers();
+
+            // Check if the game is over after each register
+            if (checkGameEnd()) {
+                appLogger.info("Game ended during activation of register {}", currentRegister + 1);
+                return;
+            }
         }
 
         // End of round processing
         endRound();
-    }
 
-    /**
-     * Handle the initial placement phase, allowing players to select their starting positions in order of connection
-     */
-    public void initPlacement() {
-        while (!currentPlayerTurn.isEmpty()) {
-            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
-
-            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
-            currentPlayerConnection.setPlacementLatch(latch);
-
-            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
-            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
-            ));
-
-            try {
-                boolean completed = latch.await(30, TimeUnit.SECONDS); // Wait until current player confirms placement
-                if (!completed) {
-                    errorLogger.error("Placement phase timed out for client {}, closing client and connection.", currentPlayerConnection.getMyID());
-                    currentPlayerConnection.closeAll();
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("Interrupted while waiting for placements.");
-            }
-        }
-    }
-
-    /**
-     * Start the programming phase for all players
-     */
-    public void startProgrammingPhase() {
-        setPhase(GamePhase.PROGRAMMING);
-
-        // Deal cards to all players
-        for (Player player : players) {
-            // Clear previous programming
-            player.endRound();
-
-            // Deal new cards
-            player.dealProgrammingCards();
-
-            // Send cards to player
-            List<String> cardNames = new ArrayList<>();
-            for (RegisterCard card : player.getHand()) {
-                cardNames.add(CardFactory.getCardName(card));
-            }
-
-            player.getConnection().sendMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyYourCards(cardNames)
-                    )
-            );
-
-            // Notify others
-            int cardCount = player.getHand().size();
-            for (Player otherPlayer : players) {
-                if (otherPlayer != player) {
-                    otherPlayer.getConnection().sendMessage(
-                            new MessageDefinitions.Message<>(
-                                    new MessageDefinitions.BodyNotYourCards(
-                                            player.getRobot().getId(), cardCount
-                                    )
-                            )
-                    );
-                }
-            }
+        // Check if the game has ended. If the game has not ended, start a new round.
+        if (!checkGameEnd()) {
+            startNewGameRound();
         }
     }
 
@@ -624,10 +615,19 @@ public class Game {
                     case "Heavy Merge Area", "Death Trap" -> "left";
                     case "Pilgrimage", "Gear Stripper" -> "top";
                     default -> "right";
-                }, robot.getId())
+                }, player.getConnection().getMyID())
         ));
 
         return true;
+    }
+
+    /**
+     * Get the player order for the current round.
+     *
+     * @return The player stack for the current round.
+     */
+    public Stack<Player> getCurrentPlayerTurn() {
+        return currentPlayerTurn;
     }
 
     /**
@@ -639,9 +639,8 @@ public class Game {
         }
         currentPlayerTurn.clear();
         switch (currentPhase) {
-            case SETUP -> {
-                currentPlayerTurn.addAll(players.reversed());
-            }
+            case SETUP ->
+                    currentPlayerTurn.addAll(Server.getInstance().getSnapshotReadyOrder().stream().map(ClientHandler::getPlayer).toList());
             case ACTIVATION -> {
                 List<Player> sortedPlayers = new ArrayList<>(players);
 
@@ -780,6 +779,22 @@ public class Game {
         }
     }
 
+    /**
+     * Resets all the players for the round.
+     */
+    private void resetPlayersRound() {
+        for (Player player : players)
+            player.resetRound();
+    }
+
+    /**
+     * Resets all the players hand.
+     **/
+    private void resetPlayersHand() {
+        for (Player player : players)
+            player.resetHand();
+    }
+
     // 6. Board-related Methods
 
     /**
@@ -913,11 +928,11 @@ public class Game {
                                 }
 
                                 //TODO @lukas:MessageDefinitions.BodyDrawDamage
-//                                Server.getInstance().broadcastMessage(
-//                                        new MessageDefinitions.Message<>(
-//                                                MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
-//                                        )
-//                                );
+                                Server.getInstance().broadcastMessage(
+                                        new MessageDefinitions.Message<>(
+                                                new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
+                                        )
+                                );
                             }
                         }
                     }
@@ -999,13 +1014,8 @@ public class Game {
                                         )
                                 );
 
-                                // TODO @lukas：Check for game win
                                 if (newCheckpoints >= board.getTotalCheckpoints()) {
-                                    Server.getInstance().broadcastMessage(
-                                            new MessageDefinitions.Message<>(
-                                                    new MessageDefinitions.BodyGameFinished(robot.getId())
-                                            )
-                                    );
+                                    checkGameEnd();
                                 }
                             }
                         }
@@ -1110,14 +1120,7 @@ public class Game {
      */
     private void handleRobotReboot(Robot robot) {
         // Find the player for this robot
-        Player player = null;
-        for (Player p : players) {
-            if (p.getRobot() == robot) {
-                player = p;
-                break;
-            }
-        }
-
+        Player player = getPlayerForRobot(robot);
         if (player == null) return;
 
         // Broadcast reboot message
@@ -1128,7 +1131,8 @@ public class Game {
         );
 
         // Robot takes damage and cancels programming
-        robot.takeDamage(2);
+        dealSpamDamage(robot);
+        dealSpamDamage(robot);
         robot.cancelProgramming();
 
         // Move to reboot position
@@ -1136,13 +1140,7 @@ public class Game {
         robot.setPosition(rebootPos);
         board.updateRobotPosition(robot, rebootPos);
 
-        // Wait for player to choose direction
-        // TODO:this would be async with client response
-        // For now, just default to north
-        Direction defaultDirection = Direction.NORTH;
-        robot.setDirection(defaultDirection);
-
-        // TODO @lukas：Broadcast movement to reboot position
+        // Broadcast movement to reboot position
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyMovement(
@@ -1153,11 +1151,84 @@ public class Game {
                 )
         );
 
-        // TODO @lukas：Broadcast direction
-        String directionStr = "top"; // Default direction
+        // Wait for player to choose direction
+        // TODO:this would be async with client response
+        Direction defaultDirection = Direction.NORTH;
+        if (player.getConnection() != null) {
+            player.getConnection().sendMessage(
+                    new MessageDefinitions.Message<>(
+                            // The special value “select” indicates that a selection is required.
+                            new MessageDefinitions.BodyRebootDirection("select")
+                    )
+            );
+        } else {
+            // If there is no connection (such as an AI player), use the default direction.
+            robot.setDirection(defaultDirection);
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyRebootDirection("top")  // Default direction
+                    )
+            );
+        }
+    }
+
+    /**
+     * Inflicts damage on a robot and broadcasts damage information.
+     * When the specific damage card type is depleted, allows player to choose alternative damage types.
+     *
+     * @param robot        The robot that has been damaged.
+     * @param damageAmount The amount of damage to apply.
+     * @param damageType   The type of damage ("Spam", "Virus", "Worm", "Trojan").
+     */
+    public void applyAndBroadcastDamage(Robot robot, int damageAmount, String damageType) {
+        if (damageAmount <= 0) return;
+        List<String> damageCards = new ArrayList<>();
+        DamageCard.DamageType type = DamageCard.DamageType.valueOf(damageType.toUpperCase());
+
+        // Check if there are enough damage cards of the specified type in the pool
+        DamageCardPool damagePool = DamageCardPool.getInstance();
+        int availableCount = damagePool.getAvailableCount(type);
+
+        // If there aren't enough damage cards of the specified type
+        // If there are other types of damage cards available, let the player choose
+        if (availableCount < damageAmount) {
+            List<String> availablePiles = new ArrayList<>();
+            for (DamageCard.DamageType damageCardType : DamageCard.DamageType.values()) {
+                if (damagePool.hasAvailable(damageCardType)) {
+                    availablePiles.add(damageCardType.name());
+                }
+            }
+
+            if (!availablePiles.isEmpty()) {
+                // Find the corresponding player
+                Player player = getPlayerForRobot(robot);
+                if (player != null) {
+                    // Request the player to select a damage card type
+                    player.getConnection().sendMessage(
+                            new MessageDefinitions.Message<>(
+                                    new MessageDefinitions.BodyPickDamage(
+                                            damageAmount, availablePiles
+                                    )
+                            )
+                    );
+                    return;
+                }
+            }
+
+            // If no damage cards are available or player can't be found, don't apply damage
+            appLogger.warn("No damage cards available for robot {}", robot.getId());
+            return;
+        }
+
+        // If there are enough damage cards of the specified type, apply and broadcast
+        for (int i = 0; i < damageAmount; i++) {
+            damageCards.add(damageType);
+            robot.addDamageCard(type);
+        }
+
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyRebootDirection(directionStr)
+                        new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
                 )
         );
     }

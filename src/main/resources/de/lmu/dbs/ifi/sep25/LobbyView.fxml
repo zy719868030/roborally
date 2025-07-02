@@ -78,8 +78,8 @@
     </VBox>
     <!-- === Rechte Seite: Spielfeld + Map-Vorschau === -->
     <VBox spacing="10" alignment="TOP_CENTER">
-        <Label text="Spielfeld" style="-fx-font-size: 16px;" />
-        <Label fx:id="mapLabel" text="Noch keine Karte gewählt." />
+        <Label text="Spielfeld" styleClass="status-label" />
+        <Label fx:id="mapLabel" text="Noch keine Karte gewählt." styleClass="sourcetext"/>
         <StackPane fx:id="mapPreviewContainer" prefWidth="300" prefHeight="300" maxWidth="Infinity" maxHeight="Infinity">
             <ImageView fx:id="mapPreviewImage"
                        preserveRatio="true"

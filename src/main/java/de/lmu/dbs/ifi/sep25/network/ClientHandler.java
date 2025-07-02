@@ -2,9 +2,12 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
+import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Player;
+import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
@@ -131,14 +134,15 @@ public class ClientHandler implements Runnable {
                     case "PlayCard" -> handleBodyPlayCard(json);
                     case "SetStartingPoint" -> handleBodySetStartingPoint(json);
                     case "SelectedCard" -> handleBodySelectedCard(json);
-                    case "TimerStarted" -> handleBodyTimerStarted();
+                    case "SelectedDamage" -> handleBodySelectedDamage(json);
                     case "RebootDirection" -> handleBodyRebootDirection(json);
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
             }
         } catch (IOException e) {
             sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
-            e.printStackTrace();
+            appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
+//            e.printStackTrace(); DEBUG
             closeAll();
         }
     }
@@ -169,7 +173,6 @@ public class ClientHandler implements Runnable {
         alive.set(true);
         heartbeatLogger.info("Client {} set alive to: {}", myID, alive);
     }
-
 
     /**
      * Handles the processing of a "HelloServer" message body. This method parses the incoming JSON,
@@ -356,14 +359,50 @@ public class ClientHandler implements Runnable {
      *             parsed into a {@code BodySetStartingPoint} object which provides the coordinates (x, y).
      */
     private void handleBodySetStartingPoint(String json) {
-        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
+//        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
+        Message<BodySetStartingPoint> message = JsonUtil.parseMessage(json, BodySetStartingPoint.class);
+        BodySetStartingPoint body = message.messageBody();
 
-        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
-            //TODO maybe send a message for reselection
-        } else if (placementLatch != null) {
-            placementLatch.countDown();
+        int x = body.x();
+        int y = body.y();
+        if (game == null) {
+            sendMessage(new Message<>(new BodyError("Game not initialized")));
+            return;
         }
-    }
+
+        boolean success = game.setPlayerStartingPosition(player, x, y);
+        if (success) {
+            broadcastMessage(new Message<>(new BodyMovement(player.getRobot().getId(), x, y)));
+            String direction = "right";
+            broadcastMessage(new Message<>(
+                    new BodyStartingPointTaken(x, y, direction, player.getRobot().getId())
+            ));
+        }
+
+        if (placementLatch != null) {
+            placementLatch.countDown();
+            placementLatch = null;
+        } else {
+            appLogger.error("Placement latch was not set for player {} (ID: {})", player.getName(), myID);
+        }
+        // Versuche die Startposition zu setzen
+//        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
+//            // Ungültige Position – evtl. eine Nachricht an Client schicken
+//            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
+//        } else {
+//            // Wenn gültig und Latch aktiv ist
+//            if (placementLatch != null) {
+//                placementLatch.countDown();
+//                //draw cards are called in game loop
+//            } else {
+////                throw new IllegalStateException("Latch is not set!");
+//                appLogger.error("Placement latch was not set for player {} (ID: {})",
+//                        player.getName(), myID);
+//                CountDownLatch newLatch = new CountDownLatch(1);
+//                this.placementLatch = newLatch;
+//                this.placementLatch.countDown();
+//            }
+        }
 
     /**
      * Handles the processing of a body-selected card event. Calls chooseCard in player.
@@ -373,28 +412,45 @@ public class ClientHandler implements Runnable {
     private void handleBodySelectedCard(String json) {
         BodySelectedCard body = JsonUtil.parseMessage(json, BodySelectedCard.class).messageBody();
         //notify is in player class
-        player.chooseCard(body.card(), body.register());
+        player.chooseCardToRegister(body.card(), body.register());
     }
 
     /**
-     * Handles the start of the body timer by scheduling a task to execute
-     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
-     * the list of ready players from the server and broadcasts a
-     * BodyTimerEnded message containing this list.
-     * <p>
-     * This method uses a single-threaded scheduled executor service to perform
-     * the delayed task execution. The task is responsible for broadcasting
-     * a message via the method `broadcastMessage`.
+     * Handle the response to the damage card selection sent by the client.
+     * When there are not enough damage cards of the specified type, the player will select an alternative damage type.
+     *
+     * @param json JSON string containing information about the selected damage card
      */
-    private void handleBodyTimerStarted() {
-        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.schedule(() -> {
-            List<Integer> readyRegister = server.getReadyRegister();
-            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
-            //TODO @Lukas add code to call random selection for remaining players in readyRegister
+    private void handleBodySelectedDamage(String json) {
+        Message<BodySelectedDamage> message = JsonUtil.parseMessage(json, BodySelectedDamage.class);
+        BodySelectedDamage body = message.messageBody();
+        List<String> selectedCards = body.cards();
 
-        }, 30, TimeUnit.SECONDS);
+        Robot robot = player.getRobot();
+
+        if (robot != null && selectedCards != null && !selectedCards.isEmpty()) {
+            for (String cardName : selectedCards) {
+                try {
+                    DamageCard.DamageType type = DamageCard.DamageType.valueOf(cardName.toUpperCase());
+                    DamageCardPool damagePool = DamageCardPool.getInstance();
+                    if (damagePool.hasAvailable(type)) {
+                        robot.addDamageCard(type);
+                    } else {
+                        appLogger.warn("Damage card of type {} is not available", type.name());
+                    }
+                } catch (IllegalArgumentException e) {
+                    appLogger.error("Invalid damage card type: {}", cardName, e);
+                }
+            }
+
+            Server.getInstance().broadcastMessage(
+                    new Message<>(
+                            new BodyDrawDamage(robot.getId(), selectedCards)
+                    )
+            );
+        }
     }
+
 
     /**
      * Handles the body reboot direction specified in the given JSON message.
@@ -438,6 +494,37 @@ public class ClientHandler implements Runnable {
     public void setReadyRegister() {
         server.markReadyRegister(myID);
         broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
+
+        if (server.getTimerStarted()) {
+            server.setTimerStarted(true);
+            startTimer();
+        }
+
+    }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    private void startTimer () {
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            List<Integer> readyRegister = server.getReadyRegister();
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+            server.setTimerStarted(false);
+
+            for (Integer clientID : readyRegister)
+                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+
+            game.enterActivationPhase();
+
+        }, 30, TimeUnit.SECONDS);
     }
 
     /**

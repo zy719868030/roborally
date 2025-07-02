@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -25,9 +26,10 @@ public class Server {
     // 0. Singleton instance and Loggers
     private static Server instance;
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
+    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Server.class);
 
     // 1. Constants / configuration
-    private final String protocol = "Version 0.1";
+    private final String protocol = "Version 1.0";
 
     // 2. Core data / state
     private final AtomicInteger clientIDCounter = new AtomicInteger(1);
@@ -38,6 +40,7 @@ public class Server {
     private final Lobby lobby = new Lobby();
     //    private final List<Message<BodyPlayerAdded>> connectedPlayerHistory = new CopyOnWriteArrayList<>(); TODO @sebas bitte integrieren/nutzen
     private final Set<ClientHandler> readyOrder = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final List<ClientHandler> snapshotReadyOrder = Collections.synchronizedList(new ArrayList<>());
     private final List<String> availableMaps = List.of(
             "Dizzy Highway",
             "Extra Crispy",
@@ -53,6 +56,7 @@ public class Server {
     private volatile boolean running = true;
     private final int minPlayer;
     private volatile boolean mapSelectionOngoing = false;
+    private final AtomicBoolean timerStarted = new AtomicBoolean(false);
 
     // 5. Game logic
     private Game game;
@@ -426,6 +430,11 @@ public class Server {
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler);
+        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());
+
+//        appLogger.info("Snapshot of ready order: {}", readyOrder);
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
 
         if (lobby.allReady() && game != null) {
             startGame();
@@ -439,6 +448,11 @@ public class Server {
      */
     public synchronized void unmarkReady(ClientHandler handler) {
         readyOrder.remove(handler);
+        appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+
+//        appLogger.info("Snapshot of ready order: {}", readyOrder);
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
     }
 
     /**
@@ -453,6 +467,11 @@ public class Server {
         if (!iterator.hasNext()) {
             throw new IllegalStateException("No players are ready.");
         }
+        // update snapshot
+//        appLogger.info("Snapshot of ready order: {}", readyOrder);
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
+
         ClientHandler first = iterator.next();
         iterator.remove();
         return first;
@@ -465,6 +484,20 @@ public class Server {
      */
     public synchronized boolean readyIsEmpty() {
         return readyOrder.isEmpty();
+    }
+
+    /**
+     * Returns an immutable snapshot of the current ready order of clients.
+     * <p>
+     * This snapshot reflects the state of the ready order at the moment before the last
+     * {@code getFirstReadyClient()} call removed the first client from the queue.
+     * It preserves the insertion order and does not reflect later changes to the actual queue.
+     *
+     * @return an unmodifiable list representing the ready order of clients at snapshot time
+     */
+    public synchronized List<ClientHandler> getSnapshotReadyOrder() {
+        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList());
+        return List.copyOf(snapshotReadyOrder);
     }
 
     /**
@@ -534,6 +567,7 @@ public class Server {
      */
     public void markReadyRegister(Integer clientID) {
         readyRegister.remove(clientID);
+        game.checkAndAdvanceFromProgrammingPhase();
     }
 
     /**
@@ -590,5 +624,13 @@ public class Server {
 
     public synchronized void setMapSelectionOngoing(boolean mapSelectionOngoing) {
         this.mapSelectionOngoing = mapSelectionOngoing;
+    }
+
+    public boolean getTimerStarted() {
+        return timerStarted.get();
+    }
+
+    public void setTimerStarted(boolean timerStarted) {
+        this.timerStarted.set(timerStarted);
     }
 }

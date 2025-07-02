@@ -14,7 +14,6 @@ public class ExtraCrispy extends GameMap {
 
     public ExtraCrispy() {
         super(new Position(0, 4));
-        elements.add(new Antenna(antennaPosition, Direction.EAST, "StartA"));
 
         initializeSubBoards();
         initializeBoard("StartA", Direction.EAST);

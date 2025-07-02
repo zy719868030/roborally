@@ -14,7 +14,6 @@ public class DizzyHighway extends GameMap {
 
     public DizzyHighway() {
         super(new Position(0, 4));
-        elements.add(new Antenna(antennaPosition, Direction.EAST, "StartA"));
 
         initializeSubBoards();
         initializeBoard("StartA", Direction.EAST);
@@ -49,7 +48,7 @@ public class DizzyHighway extends GameMap {
         }
 
         // Row 8 belts
-        for (int x = 3; x <= 12; x++)
+        for (int x = 3; x <= 11; x++)
             switch (x) {
                 case 4 -> {
                 }

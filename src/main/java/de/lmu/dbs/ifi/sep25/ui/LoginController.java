@@ -20,6 +20,8 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Controller für die Login-Oberfläche.
@@ -28,6 +30,7 @@ import java.util.Random;
  * sendet Login-Nachrichten an den Server und wechselt bei Erfolg zur Lobby-Ansicht.
  */
 public class LoginController {
+    private static final Logger logger = LogManager.getLogger(LoginController.class);
     @FXML
     private TextField hostField;
 
@@ -45,6 +48,9 @@ public class LoginController {
      */
     @FXML
     private ComboBox<Integer> figureBox;
+    @FXML
+    private javafx.scene.control.Button loginButton;
+
 
     /**
      * Property zur Bindung des Spielernamens.
@@ -56,6 +62,7 @@ public class LoginController {
      */
     private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
     private Stage stage;
+    private boolean figureTakenWarningShown = false;
     /**
      * Initialisiert die Login-Oberfläche:
      * - registriert den Controller
@@ -82,11 +89,15 @@ public class LoginController {
      */
     @FXML
     private void handleLogin(ActionEvent event) {
+
+        // Deaktiviere Login-Button, damit man nicht mehrfach klickt
+        ((javafx.scene.Node) event.getSource()).setDisable(true);
         String name = nameField.getText();
         Integer figure = figureBox.getValue();
         // Falls Host oder Port leer → Standardwerte nutzen
         String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
         String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+        logger.info("Login-Versuch mit Name '{}' und Figur {}", name, figure);
 
 
         if (name == null || name.isBlank() || figure == null) {
@@ -101,18 +112,22 @@ public class LoginController {
             showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
             return;
         }
-
         try {
-            Client client = new Client();
-            client.start(host, port);
-            ClientSingleton.setInstance(client);
+            //  Client nur erzeugen, wenn es noch keinen gibt
+            Client client = ClientSingleton.getInstance();
+            if (client == null) {
+                client = new Client();
+                client.start(host, port); // sendet HelloServer intern
+                ClientSingleton.setInstance(client);
+            }
+
+            //  Nur PlayerValues erneut senden
+            Message<BodyPlayerValues> msg = new Message<>(new BodyPlayerValues(name, figure));
+            client.sendMessage(msg);
+
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
-            return;
         }
-
-        Message<BodyPlayerValues> msg = new Message<>(new BodyPlayerValues(name, figure));
-        ClientSingleton.getInstance().sendMessage(msg);
     }
     /**
      * Wird aufgerufen, wenn der Nutzer auf "KI beitreten" klickt.
@@ -204,15 +219,25 @@ public class LoginController {
      * Zeigt einen Warnhinweis an und reaktiviert die Eingabe.
      */
     public void displayFigureAlreadyTaken() {
+        logger.warn("Spielfigur bereits vergeben. Zeige Warnfenster an.");
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Figur vergeben");
         alert.setHeaderText("Diese Spielfigur wurde bereits gewählt");
         alert.setContentText("Bitte wähle eine andere Figur aus.");
         alert.showAndWait();
-
         // Auswahlfelder wieder aktivieren
         nameField.setDisable(false);
         figureBox.setDisable(false);
+        loginButton.setDisable(false);
+        figureTakenWarningShown = false;
+
+    }
+    public boolean isFigureTakenWarningShown() {
+        return figureTakenWarningShown;
+    }
+
+    public void setFigureTakenWarningShown(boolean shown) {
+        this.figureTakenWarningShown = shown;
     }
 
     /**

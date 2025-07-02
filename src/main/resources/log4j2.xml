@@ -39,7 +39,7 @@
         <!-- Per-client routing appender -->
         <Routing name="ClientRouting">
             <Routes pattern="$${ctx:clientId}">
-                <Route>
+                <Route key="*">
                     <File name="PerClientFile" fileName="logs/client-${ctx:clientId}.log" append="false">
                         <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
                     </File>
@@ -55,7 +55,7 @@
         </Logger>
 
         <!-- Logger for per-client routing -->
-        <Logger name="PerClientLogger" level="info" additivity="false">
+        <Logger name="PerClientLogger" level="info">
             <AppenderRef ref="ClientRouting"/>
         </Logger>
 
