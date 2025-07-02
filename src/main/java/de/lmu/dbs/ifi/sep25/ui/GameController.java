@@ -429,10 +429,6 @@ public class GameController {
         }
     }
 
-    public void handleGameStarted(List<List<List<MessageDefinitions.Field>>> boardMap) {
-        System.out.println("[DEBUG] Game gestartet – Board wird gezeichnet.");
-        drawBoard(boardMap);
-    }
 
     public void setRoot(Parent root) {
         this.root = root;

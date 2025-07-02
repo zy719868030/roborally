@@ -529,13 +529,14 @@ public class Client {
         errorLogger.error("[Error] Vom Server erhalten:{} ",errorText);
 
         if (errorText.contains("Figure already selected")) {
-            javafx.application.Platform.runLater(() -> {
+            Platform.runLater(() -> {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
-                if (loginCtrl != null) {
+                if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
+                    loginCtrl.setFigureTakenWarningShown(true);
                     loginCtrl.displayFigureAlreadyTaken();
                 }
             });
-            return; // nicht schließen!
+            return;
         }
 
         closeAll(); // bei anderen Fehlern
