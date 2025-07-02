@@ -371,7 +371,12 @@ public class ClientHandler implements Runnable {
                 placementLatch.countDown();
                 //draw cards are called in game loop
             } else {
-                throw new IllegalStateException("Latch is not set!");
+//                throw new IllegalStateException("Latch is not set!");
+                appLogger.error("Placement latch was not set for player {} (ID: {})",
+                        player.getName(), myID);
+                CountDownLatch newLatch = new CountDownLatch(1);
+                this.placementLatch = newLatch;
+                this.placementLatch.countDown();
             }
         }
     }
