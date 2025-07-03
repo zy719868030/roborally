@@ -232,11 +232,20 @@ public class Client {
      */
     private void handleBodyWelcome(String json) {
         Message<BodyWelcome> msg = JsonUtil.parseMessage(json, BodyWelcome.class);
+        clientLogger.info("[RECEIVED] Welcome: {}", gsonPretty.toJson(msg)); // 👈 Añadir esto
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
         clientLogger.info("Your client ID: {}", getID());
-        usernames.put(ID, "(me)");// identify the local player in user lists
+        usernames.put(ID, "(me)");
+
+        //  PlayerValues only after Welcome
+        LoginController loginCtrl = ControllerRegistry.getLoginController();
+        if (loginCtrl != null && loginCtrl.cachedName != null) {
+            String name = loginCtrl.cachedName;
+            int figure = loginCtrl.cachedFigure;
+            sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+        }
     }
 
     /**
@@ -618,16 +627,21 @@ public class Client {
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
-            String phaseName = switch (phaseID) {
-                case 0 -> "Aufbauphase";
-                case 1 -> "Upgradephase";
-                case 2 -> "Programmierphase";
-                case 3 -> "Aktivierungsphase";
-                default -> "Unbekannt";
-            };
-            controller.updatePhase(phaseName);
+            if (controller != null) {
+                controller.setCurrentPhaseID(phaseID);
+
+                String phaseName = switch (phaseID) {
+                    case 0 -> "Aufbauphase";
+                    case 1 -> "Upgradephase";
+                    case 2 -> "Programmierphase";
+                    case 3 -> "Aktivierungsphase";
+                    default -> "Unbekannt";
+                };
+                controller.updatePhase(phaseName);
+            }
         });
     }
+
 
     /**
      * Handles the "StartingPointTaken" message from the server, indicating that a player

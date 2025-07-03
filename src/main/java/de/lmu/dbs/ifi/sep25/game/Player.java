@@ -239,21 +239,27 @@ public class Player {
      * Sends the current hand to the server.
      **/
     public void updateHand() {
-        // Send and broadcast cards
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
         appLogger.info("Update player {}'s hand: {}", robot.getId(), handWithNames);
 
+        // Always send real cards to the player
         connection.sendMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyYourCards(
-                        handWithNames
-                )));
+                new MessageDefinitions.BodyYourCards(handWithNames)
+        ));
 
-        connection.broadcastMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyNotYourCards(
-                        connection.getMyID(), handWithNames.size()
-                )), connection);
-        appLogger.info("Hand information sent");
+        // In der Programmierphase sehen alle Spieler ihre echten Karten zur gleichzeitigen Auswahl.
+        if (Game.getInstance().getCurrentPhase() == Game.GamePhase.ACTIVATION.getValue()) {
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyNotYourCards(
+                            connection.getMyID(), handWithNames.size()
+                    )
+            ), connection);
+        }
+
+        appLogger.info("Hand information sent.");
     }
+
+
 
     /**
      * Deal cards to player at the start of a programming phase
@@ -267,26 +273,13 @@ public class Player {
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
         System.out.println("[DEBUG] Player " + robot.getId() + " draws " + cardsToDraw + " cards");
         for (int i = 0; i < cardsToDraw; i++) {
-            drawCardSilently();
+            drawCard();
         }
 
         // Reset register state
         setReadyRegister(false);
         updateHand();
         appLogger.info("Player {}'s hand has been updated and sent.", robot.getId());
-    }
-
-    // Methode zum Ziehen von Karten ohne Nachrichtenversand, ShuffleCoding-Nachrichten werden nur bei Bedarf versendet.
-    private RegisterCard drawCardSilently() {
-        if (programmingDeck.isEmpty()) {
-            programmingDeck.reset();
-            connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
-            ));
-        }
-        RegisterCard card = programmingDeck.draw();
-        hand.add(card);
-        return card;
     }
 
     /**

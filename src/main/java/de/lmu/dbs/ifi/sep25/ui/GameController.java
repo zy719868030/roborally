@@ -1,12 +1,14 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -25,6 +27,9 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.paint.Color;
+
 
 import java.util.*;
 
@@ -271,6 +276,7 @@ public class GameController {
                     case "Pilgrimage", "Gear Stripper" -> "top";
                     default -> "right";
                 }));
+        messageLogger.info("→ Sende StartPosition: ({}, {})", x, y);
         ClientSingleton.getInstance().sendMessage(msg);
 
         // Deaktiviere alle Startfelder (nur einmalige Auswahl zulassen)
@@ -446,8 +452,7 @@ public class GameController {
         PlayerEntry selected = recipientBox.getSelectionModel().getSelectedItem();
         int recipientID = (selected == null || selected.getClientID() == -1) ? -1 : selected.getClientID();
 
-        System.out.println("[DEBUG] Sende Chatnachricht an " + (recipientID == -1 ? "ALLE" : recipientID) + ": " + msg);
-
+        messageLogger.info("→ Chat gesendet an {}: {}", (recipientID == -1 ? "ALLE" : recipientID), msg);
         var client = ClientSingleton.getInstance();
         if (client != null) {
             client.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySendChat(msg, recipientID)));
@@ -574,30 +579,25 @@ public class GameController {
      * @param clientID Die Client-ID des Spielers
      */
     public void markCurrentPlayer(int clientID) {
-        System.out.println("[INFO] Aktueller Spieler ist: " + clientID);
+        if (getCurrentPhaseID() != 3) return; // 3 = Aktivierungsphase
 
-        // Spielername herausfinden (aus der ComboBox)
+        appLogger.info("Aktueller Spieler ist: {}", clientID);
+
         for (PlayerEntry entry : recipientBox.getItems()) {
             if (entry.getClientID() == clientID) {
                 String playerName = entry.getName();
-
-                // Nachricht im Chat anzeigen
                 appendChatMessage("[INFO] " + playerName + " ist am Zug.");
-
-                // Status-Label oben aktualisieren
                 statusLabel.setText(playerName + " ist am Zug.");
-
-                // Optional: Spieler in ComboBox markieren
                 recipientBox.getSelectionModel().select(entry);
-
                 return;
             }
         }
 
-        // Falls der Spieler nicht gefunden wurde
         appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
         statusLabel.setText("Spieler " + clientID + " ist am Zug.");
     }
+
+
 
 
     /**
@@ -659,6 +659,7 @@ public class GameController {
      *
      * @param cardNames Liste der Kartennamen (z. B. "MoveI", "TurnLeft", ...)
      */
+
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
             System.err.println("[INFO] Spieler hat keine Karten erhalten.");
@@ -712,33 +713,6 @@ public class GameController {
     }
 
 
-    //new
-    private ImageView createDraggableCard(String cardName) {
-        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
-        Image img;
-        try {
-            img = new Image(getClass().getResourceAsStream(imagePath));
-        } catch (Exception e) {
-            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-        }
-
-        ImageView view = new ImageView(img);
-        view.setFitWidth(60);
-        view.setFitHeight(90);
-        view.setPreserveRatio(true);
-        view.setSmooth(true);
-        view.setUserData(cardName); // Name für später merken
-
-        view.setOnDragDetected(event -> {
-            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
-            content.putString(cardName);
-            db.setContent(content);
-            event.consume();
-        });
-
-        return view;
-    }
 
     private void setupRegisterSlot(StackPane pane) {
         pane.setOnDragOver(event -> {
@@ -788,11 +762,14 @@ public class GameController {
 
 
         int clientID = ClientSingleton.getInstance().getID();
-        for (int i = 0; i < 5; i++) {
-            var body = new MessageDefinitions.BodyCardSelected(clientID, i, true);
+        for (int i = 0; i < selectedCards.size(); i++) {
+            String cardName = selectedCards.get(i);
+            var body = new MessageDefinitions.BodySelectedCard(cardName, i);
             var msg = new MessageDefinitions.Message<>(body);
+            messageLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
             ClientSingleton.getInstance().sendMessage(msg);
         }
+
 
 
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
@@ -1321,6 +1298,83 @@ public class GameController {
 
         appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
     }
+    private ImageView createDraggableCard(String cardName) {
+        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+        Image img;
+        try {
+            img = new Image(getClass().getResourceAsStream(imagePath));
+        } catch (Exception e) {
+            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+        }
+
+        ImageView view = new ImageView(img);
+        view.setFitWidth(60);
+        view.setFitHeight(90);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        view.setUserData(cardName);
+
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(10);
+        shadow.setColor(javafx.scene.paint.Color.ORANGE);
+
+        view.setOnMouseEntered(e -> {
+            view.setScaleX(1.1);
+            view.setScaleY(1.1);
+            view.setEffect(shadow);
+        });
+
+        view.setOnMouseExited(e -> {
+            view.setScaleX(1.0);
+            view.setScaleY(1.0);
+            view.setEffect(null);
+        });
+
+        // --- 🖱️ Clic para insertar automáticamente en el siguiente espacio vacío
+        view.setOnMouseClicked(e -> addCardToNextEmptyRegister(cardName));
+
+        // --- 🖱️ Drag and Drop (arrastrar la carta manualmente)
+        view.setOnDragDetected(event -> {
+            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(cardName);
+            db.setContent(content);
+            event.consume();
+        });
+
+        return view;
+    }
+    private void addCardToNextEmptyRegister(String cardName) {
+        for (Node node : registerBox.getChildren()) {
+            if (node instanceof VBox vbox && vbox.getChildren().size() == 2) {
+                Node pane = vbox.getChildren().get(1); // el StackPane
+                if (pane instanceof StackPane stack && stack.getChildren().isEmpty()) {
+                    stack.getChildren().add(createDraggableCard(cardName));
+
+                    // 🔁 Animación al insertar
+                    TranslateTransition shake = new TranslateTransition(Duration.millis(100), stack);
+                    shake.setFromX(-4);
+                    shake.setToX(4);
+                    shake.setCycleCount(4);
+                    shake.setAutoReverse(true);
+                    shake.play();
+
+                    return;
+                }
+            }
+        }
+    }
+
+    private int currentPhaseID = -1;
+
+    public void setCurrentPhaseID(int phaseID) {
+        this.currentPhaseID = phaseID;
+    }
+
+    public int getCurrentPhaseID() {
+        return currentPhaseID;
+    }
+
 }
 
 
