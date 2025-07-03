@@ -385,21 +385,28 @@ public class Client {
         Platform.runLater(() -> {
             LobbyController controller = ControllerRegistry.getLobbyController();
             if (controller != null) {
-                controller.showMapSelection(availableMaps);
+                int selectorID = message.messageBody().selectorID();
+                int myID = ClientSingleton.getInstance().getID();
+                if (selectorID == myID) {
+                    controller.showMapSelection(message.messageBody().availableMaps());
+                } else {
+                    controller.hideMapSelection(); // sicherheitshalber
+                }
             } else {
                 errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
             }
         });
     }
 
-    /**
-     * Handles the selected body map event provided in JSON format.
-     * Parses the JSON message, retrieves the selected map,
-     * and updates the LobbyController with the corresponding map information.
-     *
-     * @param json a JSON string representing the selected body map event,
-     *             expected to contain the necessary data to identify the selected map.
-     */
+
+        /**
+         * Handles the selected body map event provided in JSON format.
+         * Parses the JSON message, retrieves the selected map,
+         * and updates the LobbyController with the corresponding map information.
+         *
+         * @param json a JSON string representing the selected body map event,
+         *             expected to contain the necessary data to identify the selected map.
+         */
     private void handleBodyMapSelected(String json) {
         Message<MessageDefinitions.BodyMapSelected> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);

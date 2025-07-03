@@ -267,10 +267,11 @@ public class ClientHandler implements Runnable {
                 if (server.readyOrderIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
                     server.setMapSelectionOngoing(true);
                     setMapSelecting(true);
-                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps(), myID)));
                 }
                 server.markReady(this);
             } else {
+                server.unmarkReady(this);
                 if (isMapSelecting()) {
                     server.setMapSelectionOngoing(false);
                     setMapSelecting(false);
@@ -278,7 +279,7 @@ public class ClientHandler implements Runnable {
                     if ((nextClient = server.getFirstReadyClient()) != null) {
                         server.setMapSelectionOngoing(true);
                         nextClient.setMapSelecting(true);
-                        nextClient.sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                        nextClient.sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps(), nextClient.getMyID())));
                     } else {
                         appLogger.info("No other player ready: is ready order empty? {} -> no map selection ongoing.", server.readyOrderIsEmpty());
                     }

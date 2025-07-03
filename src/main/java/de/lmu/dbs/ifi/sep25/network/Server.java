@@ -242,8 +242,14 @@ public class Server {
         unmarkReady(clientHandler);
         if (clientHandler.isMapSelecting()) {
             setMapSelectionOngoing(false);
-            getFirstReadyClient().sendMessage(new Message<>(new BodySelectMap(availableMaps)));
+            ClientHandler next = getFirstReadyClient();
+            if (next != null) {
+                setMapSelectionOngoing(true);
+                next.setMapSelecting(true);
+                next.sendMessage(new Message<>(new BodySelectMap(availableMaps, next.getMyID())));
+            }
         }
+
         broadcastMessage(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false)));
         System.out.println("Client disconnected.");
     }
