@@ -1,14 +1,12 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
-import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -27,9 +25,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import javafx.animation.TranslateTransition;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.paint.Color;
-
 
 import java.util.*;
 
@@ -276,7 +273,6 @@ public class GameController {
                     case "Pilgrimage", "Gear Stripper" -> "top";
                     default -> "right";
                 }));
-        messageLogger.info("→ Sende StartPosition: ({}, {})", x, y);
         ClientSingleton.getInstance().sendMessage(msg);
 
         // Deaktiviere alle Startfelder (nur einmalige Auswahl zulassen)
@@ -471,10 +467,11 @@ public class GameController {
     }
 
     public void updatePhase(String phaseName) {
-        boolean isSetupPhase = "Aufbauphase".equalsIgnoreCase(phaseName);
-        boolean isProgrammingPhase = "Programmierung".equalsIgnoreCase(phaseName);
-        boolean isActivationPhase = "Aktivierungsphase".equalsIgnoreCase(phaseName);
-        boolean isGameOverPhase = "Spielende".equalsIgnoreCase(phaseName);
+        boolean isSetupPhase = phaseName.toLowerCase().contains("aufbau");
+        boolean isProgrammingPhase = phaseName.toLowerCase().contains("programm");
+        boolean isActivationPhase = phaseName.toLowerCase().contains("aktivierung");
+        boolean isGameOverPhase = phaseName.toLowerCase().contains("ende") || phaseName.toLowerCase().contains("spielende");
+        logger.info("Update game stage: {}, isProgrammingPhase={}", phaseName, isProgrammingPhase);
         // Label aktualisieren
         if (phaseLabel != null) {
             phaseLabel.setText("Phase: " + phaseName);
@@ -493,6 +490,41 @@ public class GameController {
         }
         // Handkarten nur in Programmierphase aktiv
         handCardBox.setDisable(!isProgrammingPhase);
+        logger.info(isProgrammingPhase ? "Enable hand card area" : "No-touch zone");
+
+        if (isProgrammingPhase) {
+            handCardBox.setDisable(false);
+            handCardBox.setVisible(true);
+            handCardBox.setManaged(true);
+            logger.info("Hand card area enabled");
+
+            for (Node node : handCardBox.getChildren()) {
+                if (node instanceof ImageView view) {
+                    String cardName = (String)view.getUserData();
+                    logger.info("Check the cards {}", cardName);
+
+                    view.setOnMouseClicked(event -> {
+                        logger.info("Clicked on the card: {}", cardName);
+                        int nextEmptySlot = findNextEmptyRegisterSlot();
+                        if (nextEmptySlot != -1) {
+                            logger.info("Place card {} into slot {}", cardName, nextEmptySlot);
+                            placeCardInRegisterSlot(cardName, nextEmptySlot);
+
+                            var body = new MessageDefinitions.BodySelectedCard(cardName, nextEmptySlot);
+                            var msg = new MessageDefinitions.Message<>(body);
+                            ClientSingleton.getInstance().sendMessage(msg);
+                            logger.info("Card selection message sent");
+                        } else {
+                            appendChatMessage("[Warning] All storage slots are full.");
+                            logger.warn("No available storage slots");
+                        }
+                    });
+                }
+            }
+        } else {
+            handCardBox.setDisable(true);
+            logger.info("No handball zone");
+        }
 
         // DiscardPile nur in Aktivierungsphase sichtbar
         discardPileBox.setVisible(isActivationPhase);
@@ -593,6 +625,7 @@ public class GameController {
             }
         }
 
+        // Falls der Spieler nicht gefunden wurde
         appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
         statusLabel.setText("Spieler " + clientID + " ist am Zug.");
     }
@@ -654,14 +687,66 @@ public class GameController {
         return fallback;
     }
 
-    /**
-     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
-     *
-     * @param cardNames Liste der Kartennamen (z. B. "MoveI", "TurnLeft", ...)
-     */
+//    /**
+//     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
+//     *
+//     * @param cardNames Liste der Kartennamen (z. B. "MoveI", "TurnLeft", ...)
+//     */
+//    public void displayHandCards(List<String> cardNames) {
+//        if (cardNames == null || cardNames.isEmpty()) {
+//            System.err.println("[INFO] Spieler hat keine Karten erhalten.");
+//            return;
+//        }
+//
+//        if (handCardBox == null || registerBox == null) {
+//            System.err.println("[FEHLER] handCardBox oder registerBox ist null.");
+//            return;
+//        }
+//
+//
+//        registerBox.getChildren().clear();
+//
+//        for (int i = 0; i < 5; i++) {
+//            Label numberLabel = new Label(String.valueOf(i + 1));
+//            numberLabel.setStyle("-fx-font-size: 18px; -fx-background-color: darkorange; -fx-text-fill: white; -fx-padding: 6px; -fx-background-radius: 30px;");
+//            numberLabel.setMaxSize(30, 30);
+//
+//            StackPane slot = new StackPane();
+//            slot.setPrefSize(60, 90);
+//            slot.setStyle("-fx-border-color: gray; -fx-background-color: lightgray;");
+//            setupRegisterSlot(slot);
+//
+//            Tooltip tooltip = new Tooltip("Bitte hier eine Programmierkarte ablegen");
+//            Tooltip.install(slot, tooltip);
+//
+//            VBox slotWithLabel = new VBox(5, numberLabel, slot);
+//            slotWithLabel.setAlignment(Pos.CENTER);
+//
+//            registerBox.getChildren().add(slotWithLabel);
+//        }
+//
+//        // Zeigt HandCard
+//        handCardBox.getChildren().clear();
+//
+//        for (String name : cardNames) {
+//            String imagePath = "/assets/cards/" + name.toLowerCase() + ".png";
+//
+//            Image img;
+//            try {
+//                img = new Image(getClass().getResourceAsStream(imagePath));
+//            } catch (Exception e) {
+//                System.err.println("[WARNUNG] Bild nicht gefunden für Karte: " + name + " → verwende Platzhalter.");
+//                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+//            }
+//
+//            ImageView view = createClickableCard(name);
+//            handCardBox.getChildren().add(view);
+//        }
+//    }
 
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
+            logger.error("The player has no cards.");
             System.err.println("[INFO] Spieler hat keine Karten erhalten.");
             return;
         }
@@ -671,7 +756,7 @@ public class GameController {
             return;
         }
 
-
+        logger.info("Show player's hand: {}", cardNames);
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {
@@ -697,44 +782,184 @@ public class GameController {
         handCardBox.getChildren().clear();
 
         for (String name : cardNames) {
-            String imagePath = "/assets/cards/" + name.toLowerCase() + ".png";
+            ImageView view = createClickableCard(name);
+            handCardBox.getChildren().add(view);
+        }
+        appendChatMessage("[INFO] " + cardNames.size() + " cards have been loaded. Please click on the cards to program them.");
+    }
 
-            Image img;
-            try {
-                img = new Image(getClass().getResourceAsStream(imagePath));
-            } catch (Exception e) {
-                System.err.println("[WARNUNG] Bild nicht gefunden für Karte: " + name + " → verwende Platzhalter.");
+
+    private ImageView createClickableCard(String cardName) {
+        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+        logger.info("Try loading card images: {}", imagePath);
+        Image img;
+        try {
+            img = new Image(getClass().getResourceAsStream(imagePath));
+            if (img.isError()) {
+                logger.error("Error loading card image: {}", imagePath);
                 img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
             }
+        } catch (Exception e) {
+            logger.error("Abnormal loading of card images: {}", e.getMessage());
+            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+        }
 
-            ImageView view = createDraggableCard(name);
-            handCardBox.getChildren().add(view);
+        ImageView view = new ImageView(img);
+        view.setFitWidth(60);
+        view.setFitHeight(90);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        view.setUserData(cardName);
+        view.setStyle("-fx-cursor: hand;");
+        view.setOnMouseEntered(e -> view.setEffect(new javafx.scene.effect.DropShadow()));
+        view.setOnMouseExited(e -> view.setEffect(null));
+
+        view.setOnMouseClicked(event -> {
+            logger.info("Card clicked: {}", cardName);
+            int nextEmptySlot = findNextEmptyRegisterSlot();
+            if (nextEmptySlot != -1) {
+                logger.info("Place the card {} into the storage slot {}.", cardName, nextEmptySlot);
+                placeCardInRegisterSlot(cardName, nextEmptySlot);
+
+                var body = new MessageDefinitions.BodySelectedCard(cardName, nextEmptySlot);
+                var msg = new MessageDefinitions.Message<>(body);
+                ClientSingleton.getInstance().sendMessage(msg);
+                logger.info("Card selection message sent");
+                appendChatMessage("[INFO] Card:" + cardName + " as been selected for slot  " + (nextEmptySlot + 1));
+            } else {
+                appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
+                logger.warn("No available storage slots");
+            }
+        });
+
+        return view;
+    }
+
+    private int findNextEmptyRegisterSlot() {
+        for (int i = 0; i < registerBox.getChildren().size(); i++) {
+            Node node = registerBox.getChildren().get(i);
+            if (node instanceof VBox vbox) {
+                Node slotNode = vbox.getChildren().get(1);
+                if (slotNode instanceof StackPane pane && pane.getChildren().isEmpty()) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private void placeCardInRegisterSlot(String cardName, int slotIndex) {
+        if (slotIndex >= 0 && slotIndex < registerBox.getChildren().size()) {
+            Node node = registerBox.getChildren().get(slotIndex);
+            if (node instanceof VBox vbox) {
+                Node slotNode = vbox.getChildren().get(1);
+                if (slotNode instanceof StackPane pane) {
+                    pane.getChildren().clear();
+
+                    String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+                    Image img;
+                    try {
+                        img = new Image(getClass().getResourceAsStream(imagePath));
+                    } catch (Exception e) {
+                        img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+                    }
+
+                    ImageView cardView = new ImageView(img);
+                    cardView.setFitWidth(60);
+                    cardView.setFitHeight(90);
+                    cardView.setPreserveRatio(true);
+                    cardView.setSmooth(true);
+                    cardView.setUserData(cardName);
+                    cardView.setOpacity(0.7);
+
+                    pane.getChildren().add(cardView);
+                }
+            }
         }
     }
 
-
-
     private void setupRegisterSlot(StackPane pane) {
-        pane.setOnDragOver(event -> {
-            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.MOVE);
-            }
-            event.consume();
-        });
+        pane.setOnDragOver(null);
+        pane.setOnDragDropped(null);
+        pane.setOnMouseClicked(event -> {
+            if (!pane.getChildren().isEmpty()) {
+                Node node = pane.getChildren().get(0);
+                if (node instanceof ImageView) {
+                    int slotIndex = -1;
+                    for (int i = 0; i < registerBox.getChildren().size(); i++) {
+                        Node boxNode = registerBox.getChildren().get(i);
+                        if (boxNode instanceof VBox vbox) {
+                            Node slotNode = vbox.getChildren().get(1);
+                            if (slotNode == pane) {
+                                slotIndex = i;
+                                break;
+                            }
+                        }
+                    }
 
-        pane.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            if (db.hasString()) {
-                String cardName = db.getString();
-                pane.getChildren().clear();
-                pane.getChildren().add(createDraggableCard(cardName));
-                event.setDropCompleted(true);
-            } else {
-                event.setDropCompleted(false);
+                    if (slotIndex != -1) {
+                        pane.getChildren().clear();
+                        var body = new MessageDefinitions.BodySelectedCard("", slotIndex);
+                        var msg = new MessageDefinitions.Message<>(body);
+                        ClientSingleton.getInstance().sendMessage(msg);
+
+                        appendChatMessage("[INFO] Karte aus Register " + (slotIndex + 1) + " entfernt.");
+                    }
+                }
             }
             event.consume();
         });
     }
+
+    //new
+//    private ImageView createDraggableCard(String cardName) {
+//        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+//        Image img;
+//        try {
+//            img = new Image(getClass().getResourceAsStream(imagePath));
+//        } catch (Exception e) {
+//            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+//        }
+//
+//        ImageView view = new ImageView(img);
+//        view.setFitWidth(60);
+//        view.setFitHeight(90);
+//        view.setPreserveRatio(true);
+//        view.setSmooth(true);
+//        view.setUserData(cardName); // Name für später merken
+//
+//        view.setOnDragDetected(event -> {
+//            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
+//            ClipboardContent content = new ClipboardContent();
+//            content.putString(cardName);
+//            db.setContent(content);
+//            event.consume();
+//        });
+//
+//        return view;
+//    }
+
+//    private void setupRegisterSlot(StackPane pane) {
+//        pane.setOnDragOver(event -> {
+//            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
+//                event.acceptTransferModes(TransferMode.MOVE);
+//            }
+//            event.consume();
+//        });
+//
+//        pane.setOnDragDropped(event -> {
+//            Dragboard db = event.getDragboard();
+//            if (db.hasString()) {
+//                String cardName = db.getString();
+//                pane.getChildren().clear();
+//                pane.getChildren().add(createClickableCard(cardName));
+//                event.setDropCompleted(true);
+//            } else {
+//                event.setDropCompleted(false);
+//            }
+//            event.consume();
+//        });
+//    }
 
     @FXML
     private void handleConfirmSelection() {
