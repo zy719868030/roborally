@@ -113,22 +113,22 @@ public class LoginController {
             return;
         }
         try {
-            //  Client nur erzeugen, wenn es noch keinen gibt
             Client client = ClientSingleton.getInstance();
             if (client == null) {
                 client = new Client();
-                client.start(host, port); // sendet HelloServer intern
+                client.start(host, port); // HelloServer wird automatisch nach HelloClient gesendet
                 ClientSingleton.setInstance(client);
             }
 
-            //  Nur PlayerValues erneut senden
-            Message<BodyPlayerValues> msg = new Message<>(new BodyPlayerValues(name, figure));
-            client.sendMessage(msg);
+            // GUARDAR para enviar más tarde (después de Welcome)
+            cachedName = name;
+            cachedFigure = figure;
 
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
         }
     }
+
     /**
      * Wird aufgerufen, wenn der Nutzer auf "KI beitreten" klickt.
      * Stellt eine Verbindung zum Server her und meldet einen Bot-Spieler automatisch an.
@@ -254,4 +254,7 @@ public class LoginController {
     public void setStage(Stage stage) {
         this.stage = stage;
     }
+
+    public String cachedName;
+    public int cachedFigure;
 }

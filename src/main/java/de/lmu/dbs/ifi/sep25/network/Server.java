@@ -128,7 +128,7 @@ public class Server {
                 handler.sendMessage(new Message<>(new BodyHelloClient(protocol)));
 
                 int newClientID = clientIDCounter.getAndIncrement();
-                broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
+                // broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
             }
         } catch (IOException e) {
@@ -436,7 +436,7 @@ public class Server {
         snapshotReadyOrder.clear();
         snapshotReadyOrder.addAll(readyOrder);
 
-        if (lobby.size() >= minPlayer && lobby.allReady() && game != null) {
+        if (lobby.allReady() && game != null) {
             startGame();
         }
     }
@@ -447,12 +447,8 @@ public class Server {
      * @param handler the client handler to unmark as ready
      */
     public synchronized void unmarkReady(ClientHandler handler) {
-        if (readyOrder.contains(handler)) {
-            readyOrder.remove(handler);
-            appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
-        } else {
-            appLogger.info("Client {} was not in ready order.", handler.getMyID());
-        }
+        readyOrder.remove(handler);
+        appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
 
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
         snapshotReadyOrder.clear();
@@ -469,8 +465,7 @@ public class Server {
     public synchronized ClientHandler getFirstReadyClient() {
         Iterator<ClientHandler> iterator = readyOrder.iterator();
         if (!iterator.hasNext()) {
-            appLogger.error("No clients marked as ready. Cannot get first ready client. Returned null.");
-            return null;
+            throw new IllegalStateException("No players are ready.");
         }
         // update snapshot
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
@@ -487,7 +482,7 @@ public class Server {
      *
      * @return {@code true} if no clients are ready; {@code false} otherwise
      */
-    public synchronized boolean readyOrderIsEmpty() {
+    public synchronized boolean readyIsEmpty() {
         return readyOrder.isEmpty();
     }
 
