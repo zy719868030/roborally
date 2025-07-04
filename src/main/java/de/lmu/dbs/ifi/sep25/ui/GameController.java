@@ -7,13 +7,14 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
@@ -730,7 +731,7 @@ public class GameController {
             return;
         }
 
-        logger.info("Show player's hand: {}", cardNames);
+//        logger.info("Show player's hand: {}", cardNames); DEBUG
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {

@@ -436,7 +436,7 @@ public class Server {
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler);
-        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());
+//        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());  DEBUG
 
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
         snapshotReadyOrder.clear();
@@ -464,6 +464,7 @@ public class Server {
         snapshotReadyOrder.clear();
         snapshotReadyOrder.addAll(readyOrder);
     }
+
     /**
      * Retrieves the first client that is marked as ready from the ready order
      * set and removes it from the set.
@@ -472,9 +473,10 @@ public class Server {
      * @throws IllegalStateException if no clients are marked as ready
      */
     public synchronized ClientHandler getFirstReadyClient() {
-            Iterator<ClientHandler> iterator = readyOrder.iterator();
-            if (!iterator.hasNext()) {
-                appLogger.error("No clients marked as ready. Cannot get first ready client. Returned null.");
+        Iterator<ClientHandler> iterator = readyOrder.iterator();
+        if (!iterator.hasNext()) {
+            appLogger.error("No clients marked as ready. Cannot get first ready client. Returned null.");
+            return null;
         }
         // update snapshot
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
@@ -505,7 +507,7 @@ public class Server {
      * @return an unmodifiable list representing the ready order of clients at snapshot time
      */
     public synchronized List<ClientHandler> getSnapshotReadyOrder() {
-        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList());
+//        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList()); DEBUG
         return List.copyOf(snapshotReadyOrder);
     }
 
@@ -534,7 +536,7 @@ public class Server {
      * @param mapName the name of the map to use for the new game
      */
     public void newGame(String mapName) {
-        System.out.println("Creating new game with map " + mapName + "...");
+        appLogger.info("Creating new game with map {} ...", mapName);
         this.game = Game.getInstance(mapName);
         for (ClientHandler client : clients.keySet()) {
             client.setGame(this.game); // Set the game instance for each client handler to avoid crashes

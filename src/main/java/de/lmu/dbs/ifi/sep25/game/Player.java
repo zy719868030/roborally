@@ -7,14 +7,13 @@ import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class Player {
     private final ClientHandler connection;
@@ -38,7 +37,10 @@ public class Player {
         this.name = name;
         this.robot = new Robot(robotID);
         this.connection = connection;
-        Collections.fill(register, null);
+
+        for (int i = 0; i < 5; i++) {
+            register.add(null);
+        }
 
         List<RegisterCard> defaultProgrammingCards = Stream.of(
                 "MoveI", "MoveI", // 2 Move 1 Space
@@ -513,7 +515,8 @@ public class Player {
         }
 
         // Fill register with null and set flag
-        Collections.fill(register, null);
+        for (int i = 0; i < 5; i++)
+            register.set(i, null);
         setReadyRegister(false);
     }
 

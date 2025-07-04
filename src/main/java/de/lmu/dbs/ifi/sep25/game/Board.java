@@ -156,12 +156,12 @@ public class Board {
 
         logger.info("Added elements to board.");
 
-        logger.info("Board elements:");
-        logger.info(getElements(1, 1).toString());
-        logger.info(getElements(antennaPosition.x(), antennaPosition.y()).toString());
-
-        logger.info("Checkpoint: " + getElements(12, 3).toString());
-        logger.info("Checkpoint: " + getElements(12, 3).getFirst().toString());
+//        logger.info("Board elements:");
+//        logger.info(getElements(1, 1).toString());
+//        logger.info(getElements(antennaPosition.x(), antennaPosition.y()).toString());
+//
+//        logger.info("Checkpoint: " + getElements(12, 3).toString());
+//        logger.info("Checkpoint: " + getElements(12, 3).getFirst().toString());
     }
 
     /**

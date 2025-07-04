@@ -509,6 +509,9 @@ public class ClientHandler implements Runnable {
      */
     private void startTimer () {
         final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        //TODO add gamecontroller sync
+
         scheduler.schedule(() -> {
             List<Integer> readyRegister = server.getReadyRegister();
             broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));

@@ -18,7 +18,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class Game {
     // Constants
@@ -422,10 +421,7 @@ public class Game {
             currentPlayerConnection.setPlacementLatch(latch);
 
             try {
-                boolean success = latch.await(30, TimeUnit.SECONDS);
-                if (!success) {
-                    appLogger.warn("Player {} selected starting position timeout", player.getRobot().getId());
-                }
+                latch.await();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 appLogger.error("Interrupted while waiting for placements: {}", e.getMessage());
@@ -518,12 +514,10 @@ public class Game {
         }
 
         // End of round processing
-        endRound();
-
         // Check if the game has ended. If the game has not ended, start a new round.
-        if (!checkGameEnd()) {
-            startNewGameRound();
-        }
+        // Handled in this method.
+        checkAndAdvanceActivationPhase();
+
     }
 
     // 4. Player Management Methods
