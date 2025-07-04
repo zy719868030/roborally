@@ -232,7 +232,7 @@ public class Client {
      */
     private void handleBodyWelcome(String json) {
         Message<BodyWelcome> msg = JsonUtil.parseMessage(json, BodyWelcome.class);
-        clientLogger.info("[RECEIVED] Welcome: {}", gsonPretty.toJson(msg)); // 👈 Añadir esto
+        clientLogger.info("[RECEIVED] Welcome: {}", gsonPretty.toJson(msg));
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
@@ -458,7 +458,6 @@ public class Client {
 
                 controller.drawBoard(boardMap);
                 controller.setInitialPlayerStats(energy, checkpointsReached);
-                controller.showWelcomeDialog();
 
 
 
@@ -614,20 +613,24 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = waitForGameController();
             if (controller != null) {
+                int phase = controller.getCurrentPhaseID();
+
+                if (phase == 2) {
+                    appLogger.warn(" not markCurrentPlayer in Programmierphase (Phase 2)");
+                    return;
+                }
+
                 controller.markCurrentPlayer(currentClientID);
-            } else {
-                errorLogger.error("[WARN] GameController ist null nach Warten in handleBodyCurrentPlayer");
             }
         });
     }
-
-    /**
-     * Handles the "BodyActivePhase" message received from the server.
-     * This method processes a JSON string representing a {@code BodyActivePhase} message,
-     * extracts the phase information from the message body, and updates the client's internal state.
-     *
-     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
-     */
+        /**
+         * Handles the "BodyActivePhase" message received from the server.
+         * This method processes a JSON string representing a {@code BodyActivePhase} message,
+         * extracts the phase information from the message body, and updates the client's internal state.
+         *
+         * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+         */
     private void handleBodyActivePhase(String json) {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();

@@ -8,6 +8,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -16,16 +17,11 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import javafx.animation.TranslateTransition;
 import javafx.scene.effect.DropShadow;
 
 import java.util.*;
@@ -73,6 +69,10 @@ public class GameController {
     private HBox discardPileBox;
     @FXML
     private Label phaseLabel;
+
+    private int currentPlayerID = -1;
+
+
 
 
     @FXML
@@ -232,7 +232,8 @@ public class GameController {
                     if (tileImages.containsKey(key)) {
                         addImage(pane, key, 0);
                     } else {
-                        System.err.println("Fehlendes Bild: " + key);
+                        appLogger.warn("Fehlendes Bild: {}", key);
+
                     }
                 }
             }
@@ -248,7 +249,7 @@ public class GameController {
     private void addImage(StackPane pane, String key, double rotation) {
         Image img = tileImages.get(key);
         if (img == null) {
-            System.err.println("Fehlendes Bild: " + key);
+            appLogger.warn("Fehlendes Bild: {}", key);
             return;
         }
         ImageView view = new ImageView(img);
@@ -453,7 +454,7 @@ public class GameController {
         if (client != null) {
             client.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySendChat(msg, recipientID)));
         } else {
-            System.err.println("[ERROR] ClientSingleton is null in handleSendChat");
+            messageLogger.error("ClientSingleton is null in handleSendChat");
         }
 
 
@@ -550,7 +551,7 @@ public class GameController {
             chatBox.setManaged(false);
         }
 
-        appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+        //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
 
@@ -564,7 +565,10 @@ public class GameController {
             discardPileBox.getChildren().add(cardImage);
         }
     }
-
+    /**
+     * Zeigt oder versteckt das Chat-Fenster.
+     * Blendet das Icon-Menü entsprechend ein oder aus.
+     */
     @FXML
     private void toggleChatBox() {
         boolean currentlyVisible = chatBox.isVisible();
@@ -611,26 +615,41 @@ public class GameController {
      * @param clientID Die Client-ID des Spielers
      */
     public void markCurrentPlayer(int clientID) {
-        if (getCurrentPhaseID() != 3) return; // 3 = Aktivierungsphase
+        int phaseID = getCurrentPhaseID();
+        appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
+
+        // Keine Spielerzüge in der Programmierphase (Phase 2)
+        if (phaseID == 2) return;
 
         appLogger.info("Aktueller Spieler ist: {}", clientID);
 
         for (PlayerEntry entry : recipientBox.getItems()) {
             if (entry.getClientID() == clientID) {
                 String playerName = entry.getName();
-                appendChatMessage("[INFO] " + playerName + " ist am Zug.");
+
+                // Es ist dein eigener Zug
+                if (clientID == ClientSingleton.getInstance().getID()) {
+                    appendChatMessage("[INFO] Du bist am Zug!");
+                } else {
+                    appendChatMessage("[INFO] " + playerName + " ist am Zug.");
+                }
+
+                if (currentPhaseID == 0) {
+                    appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+                }
+
                 statusLabel.setText(playerName + " ist am Zug.");
                 recipientBox.getSelectionModel().select(entry);
+
+                this.currentPlayerID = clientID;
                 return;
             }
         }
 
-        // Falls der Spieler nicht gefunden wurde
+    // Falls der Spieler nicht gefunden wurde
         appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
         statusLabel.setText("Spieler " + clientID + " ist am Zug.");
     }
-
-
 
 
     /**
@@ -664,7 +683,7 @@ public class GameController {
             tile.getChildren().add(robotView);
 
         } catch (Exception e) {
-            System.err.println("[FEHLER] Roboter konnte nicht angezeigt werden an (" + x + "," + y + ")");
+            appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
             e.printStackTrace();
         }
     }
@@ -687,72 +706,27 @@ public class GameController {
         return fallback;
     }
 
-//    /**
-//     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
-//     *
-//     * @param cardNames Liste der Kartennamen (z. B. "MoveI", "TurnLeft", ...)
-//     */
-//    public void displayHandCards(List<String> cardNames) {
-//        if (cardNames == null || cardNames.isEmpty()) {
-//            System.err.println("[INFO] Spieler hat keine Karten erhalten.");
-//            return;
-//        }
-//
-//        if (handCardBox == null || registerBox == null) {
-//            System.err.println("[FEHLER] handCardBox oder registerBox ist null.");
-//            return;
-//        }
-//
-//
-//        registerBox.getChildren().clear();
-//
-//        for (int i = 0; i < 5; i++) {
-//            Label numberLabel = new Label(String.valueOf(i + 1));
-//            numberLabel.setStyle("-fx-font-size: 18px; -fx-background-color: darkorange; -fx-text-fill: white; -fx-padding: 6px; -fx-background-radius: 30px;");
-//            numberLabel.setMaxSize(30, 30);
-//
-//            StackPane slot = new StackPane();
-//            slot.setPrefSize(60, 90);
-//            slot.setStyle("-fx-border-color: gray; -fx-background-color: lightgray;");
-//            setupRegisterSlot(slot);
-//
-//            Tooltip tooltip = new Tooltip("Bitte hier eine Programmierkarte ablegen");
-//            Tooltip.install(slot, tooltip);
-//
-//            VBox slotWithLabel = new VBox(5, numberLabel, slot);
-//            slotWithLabel.setAlignment(Pos.CENTER);
-//
-//            registerBox.getChildren().add(slotWithLabel);
-//        }
-//
-//        // Zeigt HandCard
-//        handCardBox.getChildren().clear();
-//
-//        for (String name : cardNames) {
-//            String imagePath = "/assets/cards/" + name.toLowerCase() + ".png";
-//
-//            Image img;
-//            try {
-//                img = new Image(getClass().getResourceAsStream(imagePath));
-//            } catch (Exception e) {
-//                System.err.println("[WARNUNG] Bild nicht gefunden für Karte: " + name + " → verwende Platzhalter.");
-//                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-//            }
-//
-//            ImageView view = createClickableCard(name);
-//            handCardBox.getChildren().add(view);
-//        }
-//    }
+
+    /**
+     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
+     *
+     * <p>Diese Methode:
+     * <ul>
+     *   <li>Prüft, ob Karten vorhanden sind.</li>
+     *   <li>Leert und initialisiert die Registerfelder (Slots 1–5).</li>
+     *   <li>Zeigt die Karten in der Handkarten-Box an.</li>
+     *   <li>Fügt jeder Karte ein Klick-Ereignis hinzu, um sie ins Register zu verschieben.</li>
+     */
 
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
-            logger.error("The player has no cards.");
-            System.err.println("[INFO] Spieler hat keine Karten erhalten.");
+            logger.error("Spieler hat keine Karten erhalten..");
+
             return;
         }
 
         if (handCardBox == null || registerBox == null) {
-            System.err.println("[FEHLER] handCardBox oder registerBox ist null.");
+            appLogger.error("handCardBox oder registerBox ist null.");
             return;
         }
 
@@ -785,7 +759,7 @@ public class GameController {
             ImageView view = createClickableCard(name);
             handCardBox.getChildren().add(view);
         }
-        appendChatMessage("[INFO] " + cardNames.size() + " cards have been loaded. Please click on the cards to program them.");
+        //appendChatMessage("[INFO] " + cardNames.size() + " cards have been loaded. Please click on the cards to program them.");
     }
 
 
@@ -820,6 +794,7 @@ public class GameController {
             if (nextEmptySlot != -1) {
                 logger.info("Place the card {} into the storage slot {}.", cardName, nextEmptySlot);
                 placeCardInRegisterSlot(cardName, nextEmptySlot);
+                handCardBox.getChildren().remove(view);
 
                 var body = new MessageDefinitions.BodySelectedCard(cardName, nextEmptySlot);
                 var msg = new MessageDefinitions.Message<>(body);
@@ -911,56 +886,9 @@ public class GameController {
         });
     }
 
-    //new
-//    private ImageView createDraggableCard(String cardName) {
-//        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
-//        Image img;
-//        try {
-//            img = new Image(getClass().getResourceAsStream(imagePath));
-//        } catch (Exception e) {
-//            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-//        }
-//
-//        ImageView view = new ImageView(img);
-//        view.setFitWidth(60);
-//        view.setFitHeight(90);
-//        view.setPreserveRatio(true);
-//        view.setSmooth(true);
-//        view.setUserData(cardName); // Name für später merken
-//
-//        view.setOnDragDetected(event -> {
-//            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
-//            ClipboardContent content = new ClipboardContent();
-//            content.putString(cardName);
-//            db.setContent(content);
-//            event.consume();
-//        });
-//
-//        return view;
-//    }
-
-//    private void setupRegisterSlot(StackPane pane) {
-//        pane.setOnDragOver(event -> {
-//            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
-//                event.acceptTransferModes(TransferMode.MOVE);
-//            }
-//            event.consume();
-//        });
-//
-//        pane.setOnDragDropped(event -> {
-//            Dragboard db = event.getDragboard();
-//            if (db.hasString()) {
-//                String cardName = db.getString();
-//                pane.getChildren().clear();
-//                pane.getChildren().add(createClickableCard(cardName));
-//                event.setDropCompleted(true);
-//            } else {
-//                event.setDropCompleted(false);
-//            }
-//            event.consume();
-//        });
-//    }
-
+    /**
+     * Bestätigt die ausgewählten Karten und sendet sie an den Server.
+     */
     @FXML
     private void handleConfirmSelection() {
         List<String> selectedCards = registerBox.getChildren().stream()
@@ -1105,16 +1033,6 @@ public class GameController {
      *
      * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
      * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
-     *
-     * <p>Funktionsweise:</p>
-     * <ul>
-     *   <li>Zeigt eine Nachricht im Chat an, dass die Zeit abgelaufen ist.</li>
-     *   <li>Listet die IDs der Spieler auf, die zu langsam waren, falls vorhanden.</li>
-     *   <li>Markiert diese Spieler visuell in der Empfänger-ComboBox (z. B. durch ein "✖" vor ihrem Namen).</li>
-     *   <li>Setzt die Auswahl in der ComboBox zurück, falls ein markierter Spieler ausgewählt war.</li>
-     * </ul>
-     *
-     * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
         hideCountdown();
@@ -1265,7 +1183,7 @@ public class GameController {
 
             appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
-            System.err.println("[FEHLER] Roboterbild konnte nicht geladen werden für Spieler " + clientID);
+            appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
         }
     }
@@ -1403,27 +1321,6 @@ public class GameController {
     }
 
 
-    public void showWelcomeDialog() {
-        Label title = new Label("Willkommen!");
-        title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
-
-        Label info = new Label("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
-        info.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
-
-        VBox content = new VBox(15, title, info);
-        content.setAlignment(Pos.CENTER);
-        content.setStyle("-fx-background-color: rgba(20,20,30,0.95); -fx-padding: 30; -fx-background-radius: 12;");
-
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Spielstart");
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-        dialog.getDialogPane().lookupButton(ButtonType.OK).setStyle(
-                "-fx-background-color: #00ffd0; -fx-text-fill: black; -fx-font-weight: bold;");
-
-        dialog.showAndWait();
-    }
-
     public void showInstructionDialog() {
         Label title = new Label("Nächster Schritt");
         title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
@@ -1462,7 +1359,7 @@ public class GameController {
             try {
                 img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
             } catch (Exception e) {
-                System.err.println("[WARN] Fehlendes Schadensbild: " + card);
+                appLogger.warn("Fehlendes Schadensbild: {}", card);
                 img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
             }
 
@@ -1523,6 +1420,13 @@ public class GameController {
 
         appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
     }
+    /**
+     * Erstellt eine Karte, die per Klick ins nächste freie Registerfeld gelegt wird.
+     * Drag-and-drop ist deaktiviert.
+     *
+     * @param cardName Name der Karte
+     * @return ImageView mit der Karte
+     */
     private ImageView createDraggableCard(String cardName) {
         String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
         Image img;
@@ -1530,6 +1434,7 @@ public class GameController {
             img = new Image(getClass().getResourceAsStream(imagePath));
         } catch (Exception e) {
             img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            logger.warn("Bild für Karte '{}' nicht gefunden, Platzhalter wird verwendet.", cardName);
         }
 
         ImageView view = new ImageView(img);
@@ -1539,6 +1444,7 @@ public class GameController {
         view.setSmooth(true);
         view.setUserData(cardName);
 
+        // 🟠 Hover-Effekt
         DropShadow shadow = new DropShadow();
         shadow.setRadius(10);
         shadow.setColor(javafx.scene.paint.Color.ORANGE);
@@ -1555,40 +1461,18 @@ public class GameController {
             view.setEffect(null);
         });
 
-        // --- 🖱️ Clic para insertar automáticamente en el siguiente espacio vacío
-        view.setOnMouseClicked(e -> addCardToNextEmptyRegister(cardName));
-
-        // --- 🖱️ Drag and Drop (arrastrar la carta manualmente)
-        view.setOnDragDetected(event -> {
-            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
-            content.putString(cardName);
-            db.setContent(content);
-            event.consume();
+        // 🖱️ Klick-Ereignis → fügt Karte ins nächste freie Registerfeld ein
+        view.setOnMouseClicked(e -> {
+            logger.info("Karte '{}' wurde angeklickt.", cardName);
+            addCardToNextEmptyRegister(cardName);
         });
 
         return view;
     }
+
     private void addCardToNextEmptyRegister(String cardName) {
-        for (Node node : registerBox.getChildren()) {
-            if (node instanceof VBox vbox && vbox.getChildren().size() == 2) {
-                Node pane = vbox.getChildren().get(1); // el StackPane
-                if (pane instanceof StackPane stack && stack.getChildren().isEmpty()) {
-                    stack.getChildren().add(createDraggableCard(cardName));
-
-                    // 🔁 Animación al insertar
-                    TranslateTransition shake = new TranslateTransition(Duration.millis(100), stack);
-                    shake.setFromX(-4);
-                    shake.setToX(4);
-                    shake.setCycleCount(4);
-                    shake.setAutoReverse(true);
-                    shake.play();
-
-                    return;
-                }
-            }
-        }
     }
+
 
     private int currentPhaseID = -1;
 
