@@ -227,19 +227,22 @@ public class LobbyController {
         sendReadyStatus(true);
         statusLabel.setText("Du bist bereit.");
         updateReadyButtons(true);
+        int myID = ClientSingleton.getInstance().getID();
+        updatePlayerStatus(myID, true);  // <<< Status in der PlayerList setzen
+
         if (!lobbyBox.getStyleClass().contains("lobby-box-ready")) {
             lobbyBox.getStyleClass().add("lobby-box-ready");
         }
 
     }
-    public boolean amIMapSelector() {
+    /* public boolean amIMapSelector() {
         if (readyOrder.isEmpty()) return false;
 
         Client client = ClientSingleton.getInstance();
         int myID = client.getID();
 
         return readyOrder.get(0) == myID;
-    }
+    } */
 
 
     @FXML
@@ -247,6 +250,9 @@ public class LobbyController {
         sendReadyStatus(false);
         statusLabel.setText("Du bist nicht bereit.");
         updateReadyButtons(false);
+        int myID = ClientSingleton.getInstance().getID();
+        updatePlayerStatus(myID, false);  // <<< Unready setzen
+
         lobbyBox.getStyleClass().remove("lobby-box-ready");
 
         // Prüfe: Bin ich gerade der Map-Wähler?
@@ -389,6 +395,7 @@ public class LobbyController {
             } else {
                 hideMapSelection(); // falls ich es vorher war
             }
+            playerList.refresh();
         }
     }
 
