@@ -489,12 +489,16 @@ public class ClientHandler implements Runnable {
     public void setReadyRegister() {
         server.markReadyRegister(myID);
         broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
-
-        if (server.getTimerStarted()) {
+        //  Wenn der Timer noch NICHT läuft, jetzt starten!
+        if (!server.getTimerStarted()) {
             server.setTimerStarted(true);
-            startTimer();
-        }
 
+            //  Nachricht an Clients schicken, dass Timer beginnt
+            broadcastMessage(new Message<>(new BodyTimerStarted()));
+
+            startTimer();
+
+        }
     }
 
     /**

@@ -4,10 +4,11 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.Group?>
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
-      spacing="30" styleClass="root-background">
+      spacing="30" styleClass="root-background" prefWidth="Infinity" prefHeight="Infinity">
 
 
     <!-- === Linke Seitenleiste: Spielerstatus + Chat === -->
@@ -47,7 +48,7 @@
     </VBox>
 
     <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->
-    <VBox spacing="10" alignment="TOP_CENTER">
+    <VBox spacing="10" alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
 
         <!--  PHASE-ANZEIGE -->
         <Label fx:id="phaseLabel"
@@ -61,9 +62,14 @@
                visible="false"
                managed="false"/> <!-- damit auch kein Platz reserviert wird -->
         <!-- Spielfeld -->
-        <ScrollPane fitToWidth="true" fitToHeight="true">
-            <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
+        <ScrollPane fx:id="scrollPane" fitToWidth="true" fitToHeight="true">
+            <StackPane>
+                <Group>
+                    <GridPane fx:id="gameBoardPane" />
+                </Group>
+            </StackPane>
         </ScrollPane>
+
 
         <!-- Handkartenbereich -->
         <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>

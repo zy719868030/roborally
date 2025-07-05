@@ -18,6 +18,7 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
@@ -72,13 +73,19 @@ public class GameController {
     private Label phaseLabel;
 
     private int currentPlayerID = -1;
+    private StackPane rootZoomContainer;
 
-
+    private double scaleValue = 1.0;
+    private final double zoomIntensity = 0.05;
+    @FXML private ScrollPane scrollPane;
 
 
     @FXML
     public void initialize() {
         loadTileImages();
+        gameBoardPane.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
+        gameBoardPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
 
         // Initialisiere EmpfängerBox
         PlayerEntry alleOption = new PlayerEntry(-1, "Alle", -1, false);
@@ -101,6 +108,21 @@ public class GameController {
         });
 
         chatInput.setOnAction(e -> handleSendChat());
+        scrollPane.setPannable(true); // Maus verschieben erlaubt
+
+        scrollPane.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (event.isControlDown()) {
+                if (event.getDeltaY() > 0) {
+                    scaleValue += zoomIntensity;
+                } else {
+                    scaleValue -= zoomIntensity;
+                    if (scaleValue < 0.2) scaleValue = 0.2;
+                }
+                gameBoardPane.setScaleX(scaleValue);
+                gameBoardPane.setScaleY(scaleValue);
+                event.consume();
+            }
+        });
     }
 
 
@@ -496,10 +518,12 @@ public class GameController {
 
         if (isProgrammingPhase) {
             handCardBox.setDisable(false);
+            handCardBox.setOpacity(1.0);  // Wieder normal sichtbar
             handCardBox.setVisible(true);
             handCardBox.setManaged(true);
             logger.info("Hand card area enabled");
 
+            // Aktiviere Karten-Click-Handler erneut
             for (Node node : handCardBox.getChildren()) {
                 if (node instanceof ImageView view) {
                     String cardName = (String)view.getUserData();
@@ -532,13 +556,10 @@ public class GameController {
         discardPileBox.setVisible(isActivationPhase);
         discardPileBox.setManaged(isActivationPhase);
 
-        // Timer nur in Programmierphase starten
-        if (isProgrammingPhase) {
-            startCountdown();
-        } else {
+        // Timer wird NICHT automatisch gestartet! Nur der Server sendet explizit "TimerStarted".
+        if (!isProgrammingPhase) {
             hideCountdown();
         }
-
         // Chat sperren, wenn Spiel vorbei ist
         chatInput.setDisable(isGameOverPhase);
         recipientBox.setDisable(isGameOverPhase);
@@ -647,7 +668,7 @@ public class GameController {
             }
         }
 
-    // Falls der Spieler nicht gefunden wurde
+        // Falls der Spieler nicht gefunden wurde
         appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
         statusLabel.setText("Spieler " + clientID + " ist am Zug.");
     }
@@ -1037,6 +1058,8 @@ public class GameController {
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
         hideCountdown();
+        handCardBox.setDisable(true);
+        handCardBox.setOpacity(0.4);
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
