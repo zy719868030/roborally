@@ -9,6 +9,7 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class Robot {
     private Position position;
@@ -125,7 +126,8 @@ public class Robot {
                 pushRobot(board, opposite);
             }
         } else {
-            board.handleFall(this);
+            Logger logger = Logger.getLogger(this.getClass().getName());
+            logger.info("Robot " + id + " attempted to move backward off the board at position " + position + ". Movement prevented.");
         }
     }
 
