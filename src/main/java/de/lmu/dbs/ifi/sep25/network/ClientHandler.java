@@ -440,7 +440,7 @@ public class ClientHandler implements Runnable {
 
             Server.getInstance().broadcastMessage(
                     new Message<>(
-                            new BodyDrawDamage(robot.getId(), selectedCards)
+                            new BodyDrawDamage(robot.getRobotID(), selectedCards)
                     )
             );
         }

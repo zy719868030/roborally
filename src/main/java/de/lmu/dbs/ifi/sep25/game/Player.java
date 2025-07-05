@@ -19,6 +19,7 @@ public class Player {
     private final ClientHandler connection;
     private final String name;
     private final Robot robot;
+    private final Integer clientID;
     private int energy = 5;
     private boolean ready = false;
     private boolean readyRegister = false;
@@ -35,7 +36,8 @@ public class Player {
 
     public Player(String name, int robotID, ClientHandler connection) {
         this.name = name;
-        this.robot = new Robot(robotID);
+        this.clientID = connection.getMyID();
+        this.robot = new Robot(robotID, clientID);
         this.connection = connection;
 
         for (int i = 0; i < 5; i++) {
@@ -70,6 +72,10 @@ public class Player {
 
     public Robot getRobot() {
         return robot;
+    }
+
+    public Integer getClientID() {
+        return clientID;
     }
 
     public List<RegisterCard> getRegister() {
@@ -124,7 +130,7 @@ public class Player {
                     if (element instanceof CheckPoints) {
                         CheckPoints checkpoint = (CheckPoints) element;
                         // Get the highest checkpoint reached by this robot
-                        return checkpoint.getRobotHighestCheckpoint(this.robot.getId());
+                        return checkpoint.getRobotHighestCheckpoint(this.robot.getRobotID());
                     }
                 }
             }
@@ -204,7 +210,7 @@ public class Player {
 
         this.energy += amount;
         connection.broadcastMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyEnergy(robot.getId(), energy, source)
+                new MessageDefinitions.BodyEnergy(robot.getRobotID(), energy, source)
         ));
     }
 
@@ -212,7 +218,7 @@ public class Player {
         if (energy >= cost) {
             energy -= cost;
             connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyEnergy(robot.getId(), energy, "Consumption")
+                    new MessageDefinitions.BodyEnergy(robot.getRobotID(), energy, "Consumption")
             ));
             return true;
         }
@@ -242,7 +248,7 @@ public class Player {
      **/
     public void updateHand() {
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
-        appLogger.info("Update player {}'s hand: {}", robot.getId(), handWithNames);
+        appLogger.info("Update player {}'s hand: {}", robot.getRobotID(), handWithNames);
 
         // Always send real cards to the player
         connection.sendMessage(new MessageDefinitions.Message<>(
@@ -253,7 +259,7 @@ public class Player {
         if (Game.getInstance().getCurrentPhase() == Game.GamePhase.ACTIVATION.getValue()) {
             connection.broadcastMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyNotYourCards(
-                            connection.getMyID(), handWithNames.size()
+                            clientID, handWithNames.size()
                     )
             ), connection);
         }
@@ -261,19 +267,17 @@ public class Player {
         appLogger.info("Hand information sent.");
     }
 
-
-
     /**
      * Deal cards to player at the start of a programming phase
      */
     public void dealProgrammingCards() {
-        appLogger.info("Deal cards to players {}", robot.getId());
+        appLogger.info("Deal cards to players {}", robot.getRobotID());
         // Clear hand
         resetHand();
 
         // Draw 9 cards (or fewer if damaged)
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
-        System.out.println("[DEBUG] Player " + robot.getId() + " draws " + cardsToDraw + " cards");
+        System.out.println("[DEBUG] Player " + robot.getRobotID() + " draws " + cardsToDraw + " cards");
         for (int i = 0; i < cardsToDraw; i++) {
             drawCard();
         }
@@ -281,7 +285,7 @@ public class Player {
         // Reset register state
         setReadyRegister(false);
         updateHand();
-        appLogger.info("Player {}'s hand has been updated and sent.", robot.getId());
+        appLogger.info("Player {}'s hand has been updated and sent.", robot.getRobotID());
     }
 
     /**
@@ -294,7 +298,7 @@ public class Player {
             programmingDeck.reset();
             // Send ShuffleCoding message
             connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getId())
+                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getRobotID())
             ));
         }
         addToHand(programmingDeck.draw());
@@ -355,7 +359,7 @@ public class Player {
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
-                                    connection.getMyID(), registerSlot, Boolean.TRUE)));
+                                    clientID, registerSlot, Boolean.TRUE)));
                     // Check whether all registers are filled
                     if (register.stream().noneMatch(Objects::isNull)) {
                         setReadyRegister(true);
@@ -373,7 +377,7 @@ public class Player {
             }
         } else {
             connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("You already selected your registry cards!")
+                    new MessageDefinitions.BodyError("You already selected your registry cards! Called in chooseCardToRegister() method in Player.java")
             ));
         }
     }
@@ -403,7 +407,7 @@ public class Player {
                     // Notify server that register slot has been cleared
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
-                                    connection.getMyID(), registerSlot, Boolean.FALSE)));
+                                    clientID, registerSlot, Boolean.FALSE)));
 
                     return true;
                 } else {
@@ -418,7 +422,7 @@ public class Player {
             }
         } else {
             connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("You already selected your registry cards!")
+                    new MessageDefinitions.BodyError("You already selected your registry cards! Called in removeCardFromRegister() method in Player.java")
             ));
             return false;
         }
@@ -436,7 +440,7 @@ public class Player {
                 register.set(i, newCard);
                 cardsYouGotNow.add(CardFactory.getCardName(newCard));
                 connection.sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyCardSelected(connection.getMyID(), i, Boolean.TRUE)
+                        new MessageDefinitions.BodyCardSelected(clientID, i, Boolean.TRUE)
                 ));
             }
         }
@@ -474,7 +478,7 @@ public class Player {
         register.set(registerSlot, newCard);
         String cardName = CardFactory.getCardName(newCard);
         connection.broadcastMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyReplaceCard(registerSlot, cardName, robot.getId())
+                new MessageDefinitions.BodyReplaceCard(registerSlot, cardName, robot.getRobotID())
         ));
 
         //register.set(registerSlot, programmingDeck.draw());
@@ -525,7 +529,7 @@ public class Player {
 
     public String toString() {
         return "Player{" +
-                "id=" + robot.getId() +
+                "id=" + clientID +
                 ", name='" + name + '\'' +
                 ", robot=" + robot +
                 ", register=" + register +

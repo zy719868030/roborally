@@ -47,7 +47,6 @@ public class MessageDefinitions {
 
     public record BodySelectMap(List<String> availableMaps, int selectorID) {}
 
-
     public record BodyMapSelected(String map) {
     }
 

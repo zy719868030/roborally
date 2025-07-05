@@ -108,7 +108,7 @@ public class Reboot extends BoardElement {
             // Reset robot programming (cancel remaining registers for current round)
             robot.cancelProgramming();
 
-            System.out.println("Robot " + robot.getId() + " has been rebooted at " + rebootPosition);
+            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
         } else {
             System.err.println("Error: No reboot position found on the board!");
         }

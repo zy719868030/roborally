@@ -70,12 +70,12 @@ public class GameController {
     private Label phaseLabel;
 
     private int currentPlayerID = -1;
+    private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
 
     /**
      * Keeps track of the current register cards (null = empty)
      **/
     private final String[] registerState = new String[5];
-    private List<String> latestHandFromServer = new ArrayList<>();
 
 
     @FXML
@@ -126,7 +126,10 @@ public class GameController {
     }
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
-        if (ClientSingleton.getInstance().getID() == clientID) return; // Sich selbst nicht hinzufügen
+        clientToRobotID.put(clientID, figure);
+
+        if (ClientSingleton.getInstance().getID() == clientID)
+            return; // Sich selbst nicht hinzufügen
 
         boolean exists = recipientBox.getItems().stream()
                 .anyMatch(p -> p.getClientID() == clientID);
@@ -641,8 +644,9 @@ public class GameController {
      * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
+        int robotID = clientToRobotID.get(clientID);
         try {
-            String imagePath = "/assets/robot_" + clientID + ".png";
+            String imagePath = "/assets/robot_0" + robotID + ".png";
             Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
@@ -661,6 +665,8 @@ public class GameController {
             // Setze Roboter auf das Spielfeld (Grid)
             StackPane tile = getTileAt(x, y);
             tile.getChildren().add(robotView);
+
+            robotPositions.put(clientID, new Position(x, y));
 
         } catch (Exception e) {
             appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
@@ -707,8 +713,6 @@ public class GameController {
             appLogger.error("handCardBox oder registerBox ist null.");
             return;
         }
-
-        this.latestHandFromServer = new ArrayList<>(cardNames);
 
         // 1. Rebuild register UI (DO keep this)
         registerBox.getChildren().clear();
@@ -1027,7 +1031,6 @@ public class GameController {
         timerLabel.setManaged(false);
     }
 
-
     /**
      * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
      *
@@ -1146,13 +1149,6 @@ public class GameController {
         // TODO (optional): Animation oder visuelles Update für Register-Karte
     }
 
-/**
- * Aktualisiert die Position eines Roboters auf dem Spielfeld.
- *
- * @param clientID ID des Spielers/Roboters
- * @param x        Neue X-Position
- * @param y        Neue Y-Position
- */
     /**
      * Bewegt den Roboter eines Spielers auf das Feld (x, y).
      *
@@ -1162,23 +1158,36 @@ public class GameController {
      */
     public void moveRobotTo(int clientID, int x, int y) {
         try {
-            String imagePath = "/assets/robot_" + clientID + ".png";
-            Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-            ImageView robot = new ImageView(robotImg);
+            Integer robotID = clientToRobotID.get(clientID);
+            appLogger.info("looking up for clientID {}", clientID);
+            appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
+            appLogger.info("Robot {} moved to ({}, {})", robotID, x, y);
 
+            final String imagePath = "/assets/robot_0" + robotID + ".png";
+            final Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
+            robotView.setUserData("robot");
 
-            // Bestehende Roboter entfernen (optional)
-            StackPane cell = getCellAt(x, y);
-            if (cell != null) {
-                cell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
-                cell.getChildren().add(robotView);
+            // REMOVE old robot image at previous position (if any)
+            Position oldPos = robotPositions.get(clientID);
+            if (oldPos != null) {
+                StackPane oldCell = getCellAt(oldPos.x(), oldPos.y());
+                if (oldCell != null) {
+                    oldCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                }
             }
 
-            //Position
+            // REMOVE robot image at new position to avoid stacking
+            StackPane newCell = getCellAt(x, y);
+            if (newCell != null) {
+                newCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                newCell.getChildren().add(robotView);
+            }
+
+            // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
 
             appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
@@ -1214,7 +1223,6 @@ public class GameController {
             }
         }
     }
-
 
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.

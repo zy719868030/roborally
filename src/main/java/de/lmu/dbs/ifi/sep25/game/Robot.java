@@ -14,7 +14,8 @@ public class Robot {
     private Position position;
     private Direction direction;
     private int damage;
-    private final int id;
+    private final int robotID;
+    private final int clientID;
     private boolean programmingCancelled;
 //    private int energy; //Moved to player class; can be deleted
     private List<RegisterCard> programming = new ArrayList<>();
@@ -22,12 +23,10 @@ public class Robot {
     private Board currentBoard;  //
     private Deck<Card> personalDeck;
 
-    public Robot(int id) {
-//        this.position = startPosition;
-//        this.direction = direction; //TODO move to setPosition
-        this.id = id;
+    public Robot(int robotID, int clientID) {
+        this.robotID = robotID;
+        this.clientID = clientID;
         this.damage = 0;
-//        this.energy = 5; // Starting energy for upgrades
         this.isPoweredDown = false;
         this.personalDeck = new Deck<>();
     }
@@ -42,14 +41,14 @@ public class Robot {
     }
 
     // Method for obtaining robot ID
-    public int getId() {
-        return this.id;
+    public int getRobotID() {
+        return this.robotID;
     }
 
     // Method for damaging robots
     public void takeDamage(int damageAmount) {
         this.damage += damageAmount;
-        System.out.println("Robot " + id + " takes " + damageAmount + " damage. Total damage: " + this.damage);
+        System.out.println("Robot " + robotID + " takes " + damageAmount + " damage. Total damage: " + this.damage);
 
     }
 
@@ -209,7 +208,7 @@ public class Robot {
                     .orElse(null);
             if (player != null) {
                 player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyMovement(id, position.x(), position.y())
+                        new MessageDefinitions.BodyMovement(clientID, position.x(), position.y())
                 ));
             }
         }
@@ -223,7 +222,7 @@ public class Robot {
                     .orElse(null);
             if (player != null) {
                 player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyPlayerTurning(id, rotation)
+                        new MessageDefinitions.BodyPlayerTurning(robotID, rotation)
                 ));
             }
         }
@@ -242,7 +241,7 @@ public class Robot {
         if (player != null) {
             player.resetRegister();
         }
-        System.out.println("Robot " + id + " programming has been cancelled for this round.");
+        System.out.println("Robot " + robotID + " programming has been cancelled for this round.");
     }
 
     /**
@@ -290,7 +289,7 @@ public class Robot {
                     .orElse(null);
             if (player != null) {
                 player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReboot(id)
+                        new MessageDefinitions.BodyReboot(robotID)
                 ));
             }
             setDirection(Direction.NORTH);
@@ -310,7 +309,7 @@ public class Robot {
         if (damageCard != null) {
             // Add to personal discard pile or hand
             this.personalDeck.discard(damageCard);
-            System.out.println("Robot " + id + " receives damage card: " + damageCard.getDamageType());
+            System.out.println("Robot " + robotID + " receives damage card: " + damageCard.getDamageType());
             if (type == DamageCard.DamageType.SPAM && Game.getInstance().getCurrentPhase() == 3) {
                 Player player = Game.getInstance().getPlayers().stream()
                         .filter(p -> p.getRobot() == this)
@@ -326,7 +325,7 @@ public class Robot {
     // Replace damage cards. Currently simplified;
     // TODO in actual gameplay, new cards need to be drawn from the deck.
     public void replaceDamageCard() {
-        System.out.println("Robot " + id + " replaces damage card with programming card");
+        System.out.println("Robot " + robotID + " replaces damage card with programming card");
     }
 
     /**
@@ -335,7 +334,7 @@ public class Robot {
      * @return String representation of robot object with id and position/direction
      * **/
     public String toString() {
-        return position == null ? "Robot " + id + " (no position or direction)" : "Robot " + id + " (" + position.x() + ", " + position.y() + ") " + direction;
+        return position == null ? "Robot " + robotID + " (no position or direction)" : "Robot " + robotID + " (" + position.x() + ", " + position.y() + ") " + direction;
     }
 
 

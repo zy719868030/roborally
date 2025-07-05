@@ -28,12 +28,12 @@ public class SpecialPro extends ProgrammingCard {
                 break;
             case "energy routine":
                 player.addEnergy(1, "Power Up");
-                System.out.println("Robot " + robot.getId() + " executes Energy Routine - gained 1 energy");
+                System.out.println("Robot " + robot.getRobotID() + " executes Energy Routine - gained 1 energy");
                 break;
             case "speed routine":
                 if (board != null) {
                     robot.applyMove(board, 3);
-                    System.out.println("Robot " + robot.getId() + " executes Speed Routine - moved 3 spaces");
+                    System.out.println("Robot " + robot.getRobotID() + " executes Speed Routine - moved 3 spaces");
                 }
                 break;
             case "repeat routine":
@@ -46,10 +46,10 @@ public class SpecialPro extends ProgrammingCard {
                 executeWeaselChoice(robot);
                 break;
             case "spam folder":
-                System.out.println("Robot " + robot.getId() + " executes SPAM Folder - removes SPAM damage");
+                System.out.println("Robot " + robot.getRobotID() + " executes SPAM Folder - removes SPAM damage");
                 break;
             default:
-                System.out.println("Robot " + robot.getId() + " executes unknown special effect: " + specialEffect);
+                System.out.println("Robot " + robot.getRobotID() + " executes unknown special effect: " + specialEffect);
         }
     }
 
@@ -57,7 +57,7 @@ public class SpecialPro extends ProgrammingCard {
     private void executeAgain(Robot robot, Board board) {
         // TODO Here, we need to retrieve the card from the previous register and re-execute it.
         // Simplified implementation: Assume that the Robot class has a getPreviousCard() method.
-        System.out.println("Robot " + robot.getId() + " executes Again - repeating previous action");
+        System.out.println("Robot " + robot.getRobotID() + " executes Again - repeating previous action");
         // TODO: Actual need to access the programming history of the robot
         // Card previousCard = robot.getPreviousCard();
         // if (previousCard != null) {
@@ -69,7 +69,7 @@ public class SpecialPro extends ProgrammingCard {
     private void executeSandboxChoice(Robot robot, Board board) {
         // TODO In the actual game, players should be allowed to choose actions here.
         // Simplified implementation: randomly select a basic action.
-        System.out.println("Robot " + robot.getId() + " executes Sandbox Routine");
+        System.out.println("Robot " + robot.getRobotID() + " executes Sandbox Routine");
         // Move 1 can be executed by default here
         // TODO UI interaction may be required to allow the player to choose.
         robot.applyMove(board, 1);
@@ -79,7 +79,7 @@ public class SpecialPro extends ProgrammingCard {
     private void executeWeaselChoice(Robot robot) {
         // TODO In the actual game, players should be allowed to choose which direction to turn.
         // Simplified implementation: default left turn.
-        System.out.println("Robot " + robot.getId() + " executes Weasel Routine");
+        System.out.println("Robot " + robot.getRobotID() + " executes Weasel Routine");
         robot.turnLeft();
     }
 
