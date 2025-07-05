@@ -1058,6 +1058,7 @@ public class GameController {
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
         hideCountdown();
+
         handCardBox.setDisable(true);
         handCardBox.setOpacity(0.4);
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
