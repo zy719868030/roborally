@@ -352,6 +352,15 @@ public class Player {
                     return;
                 }
 
+                // Check if the “Again” card is trying to be placed in the first register.
+                if ("Again".equals(cardName) && registerSlot == 0) {
+                    appLogger.warn("Player {} attempted to place Again card in first register", connection.getMyID());
+                    connection.sendMessage(new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyError("Again card cannot be played in the first register!")
+                    ));
+                    return;
+                }
+
                 // Use the factory to find the corresponding card in your hand.
                 RegisterCard cardToPlay = CardFactory.findCardInHand(cardName, hand);
                 if (cardToPlay != null) {
