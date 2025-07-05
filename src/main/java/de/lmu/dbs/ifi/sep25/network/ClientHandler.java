@@ -513,15 +513,18 @@ public class ClientHandler implements Runnable {
         broadcastMessage(new Message<>(new BodyTimerStarted()));
 
         scheduler.schedule(() -> {
-            List<Integer> readyRegister = server.getReadyRegister();
+            List<Integer> readyRegister = server.getWaitingForProgramming();
             broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
             server.setTimerStarted(false);
 
             for (Integer clientID : readyRegister)
                 server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
 
-            game.enterActivationPhase();
-
+            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
+                game.enterActivationPhase();
+            } else {
+                appLogger.warn("Timer expired but game is already in phase: {}", game.getCurrentPhase());
+            }
         }, 30, TimeUnit.SECONDS);
     }
 

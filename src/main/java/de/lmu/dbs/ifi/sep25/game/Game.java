@@ -42,13 +42,6 @@ public class Game {
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
 
-    /* unnecessary globar variables
-    private boolean mapSelectionPending;
-    private Player firstReadyPlayer;
-    private Timer programmingTimer; // For 30-second timer
-    private List<Integer> slowPlayers; // Track slow players
-    */
-
 
     // 1. Initialization and Setup Methods
 
@@ -194,7 +187,7 @@ public class Game {
     private void startNewGameRound() {
         // Reset
         resetPlayersRound();
-
+        Server.getInstance().resetReadyRegister();
         // Start new round
 
         roundNumber++;
@@ -202,9 +195,6 @@ public class Game {
         setPhase(GamePhase.PROGRAMMING);
         appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
         handleProgrammingPhase();
-
-        // The game will automatically advance to the activation phase after receiving enough client messages.
-        // There is no need to wait or poll here.
     }
 
     /**
@@ -228,16 +218,17 @@ public class Game {
     /**
      * Enters the activationPhase.
      **/
-    public void enterActivationPhase() {
-        if (currentPhase == GamePhase.PROGRAMMING) {
-            appLogger.info("Entering activation phase.");
-            setPhase(GamePhase.ACTIVATION);
-            resetPlayersHand();
-            determinePlayerOrder();
-            handleActivationPhase();
-        } else {
-            throw new IllegalStateException("Cannot enter activation phase when not coming from programming phase.");
+    public synchronized void enterActivationPhase() {
+        if (currentPhase != GamePhase.PROGRAMMING) {
+            appLogger.warn("enterActivationPhase() called while phase is {}", currentPhase);
+            return;
         }
+
+        appLogger.info("Entering activation phase.");
+        setPhase(GamePhase.ACTIVATION);
+        resetPlayersHand();
+        determinePlayerOrder();
+        handleActivationPhase();
     }
 
     /**
@@ -270,19 +261,6 @@ public class Game {
         }
 
         return false;
-    }
-
-    public void playRound() {
-        for (Player player : players) {
-            List<RegisterCard> register = player.getRegister();
-            for (int phase = 0; phase < 5; phase++) {
-                if (phase < register.size() && register.get(phase) != null) {
-                    register.get(phase).execute(player.getRobot(), player);
-                }
-            }
-            Position pos = player.getRobot().getPosition();
-            board.applyEffects(player.getRobot(), pos.x(), pos.y());
-        }
     }
 
     private void endRound() {
@@ -467,58 +445,74 @@ public class Game {
     }
 
     /**
-     * Handle the activation phase
+     * Handle the activation phase using per-register logic and correct player order updates.
      */
     private void handleActivationPhase() {
-        // Activate all five registers
-        for (currentRegister = 0; currentRegister < 5; currentRegister++) {
-            System.out.println("Activating register " + (currentRegister + 1));
+        while (!checkGameEnd() && currentRegister < 5) {
+            handleCurrentRegister();
 
-            // Sort players by priority
-            List<Player> sortedPlayers = new ArrayList<>(currentPlayerTurn);
-
-            // Collect all cards from players in the current register
-            List<MessageDefinitions.ActiveCard> activeCards = new ArrayList<>();
-            for (Player player : sortedPlayers) {
-                List<RegisterCard> playerRegister = player.getRegister();
-                if (currentRegister < playerRegister.size() && playerRegister.get(currentRegister) != null) {
-                    RegisterCard card = playerRegister.get(currentRegister);
-                    String cardName = CardFactory.getCardName(card);
-                    activeCards.add(new MessageDefinitions.ActiveCard(player.getRobot().getId(), cardName));
-                }
+            // Advance to next register or round
+            if (!checkAndAdvanceActivationPhase()) {
+                break;
             }
+        }
+    }
 
-            // TODO @lukas:Broadcast CurrentCards message
-            Server.getInstance().broadcastMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyCurrentCards(activeCards)
-                    )
-            );
+    /**
+     * Executes one register's worth of actions in the activation phase:
+     * - broadcasts active cards
+     * - executes cards in current register
+     * - activates board elements and lasers
+     */
+    private void handleCurrentRegister() {
+        appLogger.info("Activating register {}", currentRegister + 1);
 
-            // Activate player cards in order
-            for (Player player : sortedPlayers) {
-                activatePlayerCard(player, currentRegister);
-            }
-
-            // Activate board elements
-            activateBoardElements();
-
-            // Handle robot lasers
-            handleRobotLasers();
-
-            // Check if the game is over after each register
-            if (checkGameEnd()) {
-                appLogger.info("Game ended during activation of register {}", currentRegister + 1);
-                return;
+        // Collect active cards to broadcast
+        List<MessageDefinitions.ActiveCard> activeCards = new ArrayList<>();
+        for (Player player : currentPlayerTurn) {
+            RegisterCard card = player.getRegisterCard(currentRegister);
+            if (card != null) {
+                String cardName = CardFactory.getCardName(card);
+                activeCards.add(new MessageDefinitions.ActiveCard(player.getRobot().getId(), cardName));
             }
         }
 
-        // End of round processing
-        // Check if the game has ended. If the game has not ended, start a new round.
-        // Handled in this method.
-        checkAndAdvanceActivationPhase();
+        // Broadcast card information
+        Server.getInstance().broadcastMessage(
+                new MessageDefinitions.Message<>(new MessageDefinitions.BodyCurrentCards(activeCards))
+        );
 
+        // Execute player cards in correct order
+        while (!currentPlayerTurn.isEmpty()) {
+            Player player = currentPlayerTurn.pop();
+
+            RegisterCard card = player.getRegisterCard(currentRegister);
+            if (card != null) {
+                appLogger.info("Player {} plays {} from register {}",
+                        player.getConnection().getMyID(),
+                        CardFactory.getCardName(card),
+                        currentRegister);
+            } else {
+                appLogger.info("Player {} has no card for register {}",
+                        player.getConnection().getMyID(),
+                        currentRegister);
+            }
+
+            activatePlayerCard(player, currentRegister);
+        }
+
+        // Activate board elements (e.g., belts, gears)
+        activateBoardElements();
+
+        // Fire robot lasers
+        handleRobotLasers();
+
+        // Check if game ends during this register
+        if (checkGameEnd()) {
+            appLogger.info("Game ended during activation of register {}", currentRegister + 1);
+        }
     }
+
 
     // 4. Player Management Methods
 
@@ -620,66 +614,49 @@ public class Game {
     }
 
     /**
-     * Get the player order for the current round.
-     *
-     * @return The player stack for the current round.
-     */
-    public Stack<Player> getCurrentPlayerTurn() {
-        return currentPlayerTurn;
-    }
-
-    /**
      * Determine player order based on priority
      */
     private void determinePlayerOrder() {
-        if (!currentPlayerTurn.isEmpty()) {
-            appLogger.info("Current player order not empty, repopulating.");
-        }
         currentPlayerTurn.clear();
+
         switch (currentPhase) {
-            case SETUP ->
-                    currentPlayerTurn.addAll(Server.getInstance().getSnapshotReadyOrder().stream().map(ClientHandler::getPlayer).toList());
+            case SETUP -> {
+                List<Player> setupOrder = Server.getInstance()
+                        .getSnapshotReadyOrder().stream()
+                        .map(ClientHandler::getPlayer)
+                        .toList();
+
+                // Push in order: first ready client should act first
+                for (Player player : setupOrder) {
+                    currentPlayerTurn.push(player);
+                }
+
+                appLogger.info("SETUP player order: {}", setupOrder.stream().map(p -> "Player " + p.getConnection().getMyID()).toList());
+            }
             case ACTIVATION -> {
                 List<Player> sortedPlayers = new ArrayList<>(players);
-
-                // Determine priority based on the antenna on the board
                 Position antennaPosition = board.getAntennaPosition();
 
                 if (antennaPosition == null) {
-                    // If there is no antenna position, return the default order.
                     errorLogger.error("No antenna position found. currentPlayerTurn unmodified.");
-                    break;
+                    return;
                 }
 
-                // First sort by distance to the antenna, but only for robots with valid positions
+                // Sort players by distance to antenna
                 sortedPlayers.sort(Comparator.comparingInt(p -> {
-                    Robot robot = p.getRobot();
-                    Position robotPos = robot.getPosition();
-                    // Add null check
-                    if (robotPos == null) {
-                        return Integer.MAX_VALUE; // Robots without positions are ranked last.
-                    }
-                    return robotPos.distanceTo(antennaPosition);
+                    Position robotPos = p.getRobot().getPosition();
+                    return (robotPos != null) ? robotPos.distanceTo(antennaPosition) : Integer.MAX_VALUE;
                 }));
 
-                // If players have the same distance, handle according to rules
-                // TODO:Simplified here, actual implementation should be more complex
-
-
-                // TODO @lukas:Broadcast current player order
-                for (Player player : sortedPlayers) {
-                    MessageDefinitions.Message<MessageDefinitions.BodyCurrentPlayer> message = new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyCurrentPlayer(player.getRobot().getId()));
-                    Server.getInstance().broadcastMessage(message);
+                for (int i = sortedPlayers.size() - 1; i >= 0; i--) {
+                    currentPlayerTurn.push(sortedPlayers.get(i));
                 }
 
-                currentPlayerTurn.addAll(sortedPlayers.reversed());
+                appLogger.info("Current player order set: {}", sortedPlayers.stream().map(Player::toString).toList());
             }
             default ->
-                    throw new IllegalAccessError("determinePlayerOrder shot not be called in phase: " + currentPhase);
+                    throw new IllegalAccessError("determinePlayerOrder should not be called in phase: " + currentPhase);
         }
-
-        appLogger.info("Current player order set: {}", currentPlayerTurn.stream().map(Player::toString).toList());
     }
 
     // 5. Card and Action Methods
@@ -693,7 +670,6 @@ public class Game {
         if (register < playerRegister.size() && playerRegister.get(register) != null) {
             RegisterCard card = playerRegister.get(register);
 
-            // TODO @lukas:Broadcast card before execution
             String cardName = CardFactory.getCardName(card);
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
@@ -781,6 +757,7 @@ public class Game {
      * Resets all the players for the round.
      */
     private void resetPlayersRound() {
+        appLogger.info("Resetting round for all players.");
         for (Player player : players)
             player.resetRound();
     }
@@ -1311,195 +1288,6 @@ public class Game {
     public List<Player> getPlayers() {
         return new ArrayList<>(players);
     }
-
-
-    // Handle player readiness and map selection
-//    public void setPlayerReady(Player player, boolean ready) {
-//        player.setReady(ready);
-//        // Broadcast PlayerStatus
-//        for (Player p : players) {
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyPlayerStatus(player.getRobot().getId(), ready)
-//            ));
-//        }
-//
-//        // Send SelectMap to first ready player
-//        if (ready && firstReadyPlayer == null && mapSelectionPending) {
-//            firstReadyPlayer = player;
-//            List<String> availableMaps = new ArrayList<>();
-//            availableMaps.add("Dizzy Highway");
-//            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodySelectMap(availableMaps)
-//            ));
-//        } else if (!ready && firstReadyPlayer == player) {
-//            // Handle unready player
-//            firstReadyPlayer = null;
-//            for (Player p : players) {
-//                if (p.isReady()) {
-//                    firstReadyPlayer = p;
-//                    List<String> availableMaps = new ArrayList<>();
-//                    availableMaps.add("Dizzy Highway");
-//                    p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                            new MessageDefinitions.BodySelectMap(availableMaps)
-//                    ));
-//                    break;
-//                }
-//            }
-//        }
-//    }
-
-    // Process map selection
-//    public void selectMap(Player player, String mapName) {
-//        // Validate player and map
-//        if (player != null && (player != firstReadyPlayer || !mapSelectionPending)) {
-//            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyError("Not authorized to select map")
-//            ));
-//            return;
-//        }
-//
-//        MapType mapType = MapType.fromString(mapName);
-//        if (mapType == null) {
-//            if (player != null) {
-//                player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                        new MessageDefinitions.BodyError("Invalid map: " + mapName)
-//                ));
-//            }
-//            return;
-//        }
-//
-//
-//        // Set map and initialize board
-//        selectedMap = mapName;
-//        mapSelectionPending = false;
-//
-//        board = new Board(MapType.fromString(mapName));
-//        initializeGame();
-//
-//        // Broadcast MapSelected and GameStarted
-//        for (Player p : players) {
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyMapSelected(mapName)
-//            ));
-//            //Use convertToBoardElementMap for BodyGameStarted
-//            p.getConnection().sendMessage(board.getSerializedBoardAsMessage());
-//        }
-//        startGameLoop();
-//    }
-
-//    // Convert map to List<Object> for BodyGameStarted
-//    private List<Object> convertToObjectList(List<List<List<BoardElement>>> map) {
-//        List<Object> result = new ArrayList<>();
-//        for (List<List<BoardElement>> col : map) {
-//            List<Object> colList = new ArrayList<>();
-//            for (List<BoardElement> row : col) {
-//                colList.add(row == null ? null : new ArrayList<>(row));
-//            }
-//            result.add(colList);
-//        }
-//        return result;
-//    }
-
-    // Helper method to convert serialized map to List<List<List<BoardElement>>> if needed
-//    private List<List<List<BoardElement>>> convertToBoardElementMap() {
-//        List<List<List<BoardElement>>> result = new ArrayList<>();
-//        Tile[][] grid = board.getGrid();// Assuming getGrid returns BoardElement[][][]
-//
-//        for (int x = 0; x < board.getWidth(); x++) {
-//            List<List<BoardElement>> col = new ArrayList<>();
-//            for (int y = 0; y < board.getHeight(); y++) {
-//                List<BoardElement> elements = grid[x][y].toSerializableList();
-//                col.add(elements);
-//            }
-//            result.add(col);
-//        }
-//        return result;
-//    }
-
-//    // Added: Stub for AI-only map selection
-//    public void selectMapForAI() {
-//        if (mapSelectionPending && players.stream().allMatch(p -> p.getConnection() == null)) {
-//            String[] availableMaps = {"Dizzy Highway", "Extra Crispy", "Lost Bearings", "Death Trap"};
-//            String selectedMap = availableMaps[new Random().nextInt(availableMaps.length)];
-//
-//            selectMap(null, selectedMap);
-//        }
-//    }
-
-    /**
-     * Starts the game by setting up the initial game phase
-     * Called after map selection and board initialization
-     */
-//    private void startGame() {
-//        if (!mapSelectionPending && players.size() >= 2) {
-//            // Set up the initial stage
-//            setPhase(GamePhase.SETUP);
-//            // Send current player information
-//            setCurrentPlayer();
-//            // Start the game main loop (if necessary)
-////            new Thread(this::startGameLoop).start();
-////            System.out.println("Game started with map: " + selectedMap);
-//        }
-//    }
-
-//    private void startTimer() {
-//        programmingTimer = new Timer();
-//        // Timer and TimerTask classes in java.util
-//        programmingTimer.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                handleTimerEnded();
-//            }
-//        }, 30_000);
-//
-//        for (Player p : players) {
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyTimerStarted()
-//            ));
-//        }
-//    }
-
-//    private void handleTimerEnded() {
-//        for (Player p : players) {
-//            if (!p.isReadyRegister()) {
-//                slowPlayers.add(p.getRobot().getId());
-//                fillRemainingRegisters(p);
-//            }
-//        }
-//
-//        for (Player p : players) {
-//            p.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyTimerEnded(slowPlayers)
-//            ));
-//        }
-//        setPhase(GamePhase.ACTIVATION);
-//    }
-
-//    private void fillRemainingRegisters(Player player) {
-//        List<RegisterCard> hand = player.getHand();
-//        int index = 0;
-//        for (int i = 0; i < 5; i++) {
-//            if (player.getRegister().get(i) == null && index < hand.size()) {
-//                RegisterCard card = hand.get(index);
-//                String cardName = CardFactory.getCardName(card);
-//                player.chooseCard(((Card) hand.get(index)).getDescription(), i);
-//                index++;
-//            }
-//        }
-//
-//        List<String> newCards = player.getRegister().stream()
-//                .filter(Objects::nonNull)
-//                .map(card -> ((Card) card).getDescription())
-//                .collect(Collectors.toList());
-//        player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-//                new MessageDefinitions.BodyCardsYouGotNow(newCards)
-//        ));
-//    }
-
-    //    // Getter for map selection state
-//    public boolean isMapSelectionPending() {
-//        return mapSelectionPending;
-//    }
 
 }
 

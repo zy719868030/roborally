@@ -77,6 +77,16 @@ public class Player {
     }
 
     /**
+     * Retrieves the card located in the specified register slot.
+     *
+     * @param registerSlot the index of the register slot to retrieve the card from
+     * @return the {@code RegisterCard} at the specified register slot, or {@code null} if the slot is empty
+     */
+    public RegisterCard getRegisterCard(int registerSlot) {
+        return register.get(registerSlot);
+    }
+
+    /**
      * Returns a copy of the player hand.
      *
      * @return List of RegisterCard objects, representing a copy of the players actual hand
@@ -260,8 +270,6 @@ public class Player {
 
         appLogger.info("Hand information sent.");
     }
-
-
 
     /**
      * Deal cards to player at the start of a programming phase
