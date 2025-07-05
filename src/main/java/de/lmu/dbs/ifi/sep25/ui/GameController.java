@@ -7,9 +7,7 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
-import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -17,13 +15,13 @@ import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.TransferMode;
-import javafx.scene.layout.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import javafx.scene.effect.DropShadow;
 
 import java.util.*;
 
@@ -73,7 +71,8 @@ public class GameController {
 
     private int currentPlayerID = -1;
 
-
+    /** Keeps track of the current register cards (null = empty) **/
+    private final String[] registerState = new String[5];
 
 
     @FXML
@@ -502,7 +501,7 @@ public class GameController {
 
             for (Node node : handCardBox.getChildren()) {
                 if (node instanceof ImageView view) {
-                    String cardName = (String)view.getUserData();
+                    String cardName = (String) view.getUserData();
                     logger.info("Check the cards {}", cardName);
 
                     view.setOnMouseClicked(event -> {
@@ -566,6 +565,7 @@ public class GameController {
             discardPileBox.getChildren().add(cardImage);
         }
     }
+
     /**
      * Zeigt oder versteckt das Chat-Fenster.
      * Blendet das Icon-Menü entsprechend ein oder aus.
@@ -647,7 +647,7 @@ public class GameController {
             }
         }
 
-    // Falls der Spieler nicht gefunden wurde
+        // Falls der Spieler nicht gefunden wurde
         appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
         statusLabel.setText("Spieler " + clientID + " ist am Zug.");
     }
@@ -751,10 +751,15 @@ public class GameController {
             slotWithLabel.setAlignment(Pos.CENTER);
 
             registerBox.getChildren().add(slotWithLabel);
+            if (registerState[i] != null) {
+                placeCardInRegisterSlot(registerState[i], i);
+            }
         }
 
         // Zeigt HandCard
         handCardBox.getChildren().clear();
+
+        cardNames = cardNames.stream().filter(n -> Arrays.stream(registerState).noneMatch(n::equals)).toList();
 
         for (String name : cardNames) {
             ImageView view = createClickableCard(name);
@@ -793,32 +798,43 @@ public class GameController {
             logger.info("Card clicked: {}", cardName);
             int nextEmptySlot = findNextEmptyRegisterSlot();
             if (nextEmptySlot != -1) {
-                logger.info("Place the card {} into the storage slot {}.", cardName, nextEmptySlot);
+                appLogger.info("Place the card {} into the storage slot {}.", cardName, nextEmptySlot);
                 placeCardInRegisterSlot(cardName, nextEmptySlot);
                 handCardBox.getChildren().remove(view);
 
                 var body = new MessageDefinitions.BodySelectedCard(cardName, nextEmptySlot);
                 var msg = new MessageDefinitions.Message<>(body);
                 ClientSingleton.getInstance().sendMessage(msg);
-                logger.info("Card selection message sent");
+                appLogger.info("Card selection message sent");
                 appendChatMessage("[INFO] Card:" + cardName + " as been selected for slot  " + (nextEmptySlot + 1));
             } else {
                 appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
-                logger.warn("No available storage slots");
+                appLogger.warn("No available storage slots");
             }
         });
 
         return view;
     }
 
+//    private int findNextEmptyRegisterSlot() {
+//        for (int i = 0; i < registerBox.getChildren().size(); i++) {
+//            Node node = registerBox.getChildren().get(i);
+//            if (node instanceof VBox vbox) {
+//                Node slotNode = vbox.getChildren().get(1);
+//                if (slotNode instanceof StackPane pane && pane.getChildren().isEmpty()) {
+//                    appLogger.info("Found empty register slot at index {}", i);
+//                    return i;
+//                }
+//            }
+//        }
+//        return -1;
+//    }
+
     private int findNextEmptyRegisterSlot() {
-        for (int i = 0; i < registerBox.getChildren().size(); i++) {
-            Node node = registerBox.getChildren().get(i);
-            if (node instanceof VBox vbox) {
-                Node slotNode = vbox.getChildren().get(1);
-                if (slotNode instanceof StackPane pane && pane.getChildren().isEmpty()) {
-                    return i;
-                }
+        for (int i = 0; i < registerState.length; i++) {
+            if (registerState[i] == null) {
+                appLogger.info("Found empty register slot at index {}", i);
+                return i;
             }
         }
         return -1;
@@ -849,6 +865,9 @@ public class GameController {
                     cardView.setOpacity(0.7);
 
                     pane.getChildren().add(cardView);
+                    // remember what card is in slot
+                    registerState[slotIndex] = cardName;
+                    appLogger.info("Card {} placed in register slot {}", cardName, slotIndex);
                 }
             }
         }
@@ -875,6 +894,7 @@ public class GameController {
 
                     if (slotIndex != -1) {
                         pane.getChildren().clear();
+                        registerState[slotIndex] = null;
                         var body = new MessageDefinitions.BodySelectedCard("", slotIndex);
                         var msg = new MessageDefinitions.Message<>(body);
                         ClientSingleton.getInstance().sendMessage(msg);
@@ -923,7 +943,6 @@ public class GameController {
             messageLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
             ClientSingleton.getInstance().sendMessage(msg);
         }
-
 
 
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
@@ -1343,6 +1362,7 @@ public class GameController {
         dialog.showAndWait();
     }
 //DAMAGE CARDS
+
     /**
      * Zeigt dem Spieler die gezogenen Schadenskarten an.
      *
@@ -1421,6 +1441,7 @@ public class GameController {
 
         appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
     }
+
     /**
      * Erstellt eine Karte, die per Klick ins nächste freie Registerfeld gelegt wird.
      * Drag-and-drop ist deaktiviert.
