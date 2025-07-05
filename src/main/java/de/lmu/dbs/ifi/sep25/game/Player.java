@@ -497,7 +497,8 @@ public class Player {
      * Resets the hand by discarding the remaining cards to the discard pile.
      **/
     public void resetHand() {
-        for (RegisterCard card : hand)
+        List<RegisterCard> cardsToDiscard = new ArrayList<>(hand);
+        for (RegisterCard card : cardsToDiscard)
             discardCardFromHand(card);
     }
 

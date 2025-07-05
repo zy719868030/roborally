@@ -71,8 +71,11 @@ public class GameController {
 
     private int currentPlayerID = -1;
 
-    /** Keeps track of the current register cards (null = empty) **/
+    /**
+     * Keeps track of the current register cards (null = empty)
+     **/
     private final String[] registerState = new String[5];
+    private List<String> latestHandFromServer = new ArrayList<>();
 
 
     @FXML
@@ -498,30 +501,6 @@ public class GameController {
             handCardBox.setVisible(true);
             handCardBox.setManaged(true);
             logger.info("Hand card area enabled");
-
-            for (Node node : handCardBox.getChildren()) {
-                if (node instanceof ImageView view) {
-                    String cardName = (String) view.getUserData();
-                    logger.info("Check the cards {}", cardName);
-
-                    view.setOnMouseClicked(event -> {
-                        logger.info("Clicked on the card: {}", cardName);
-                        int nextEmptySlot = findNextEmptyRegisterSlot();
-                        if (nextEmptySlot != -1) {
-                            logger.info("Place card {} into slot {}", cardName, nextEmptySlot);
-                            placeCardInRegisterSlot(cardName, nextEmptySlot);
-
-                            var body = new MessageDefinitions.BodySelectedCard(cardName, nextEmptySlot);
-                            var msg = new MessageDefinitions.Message<>(body);
-                            ClientSingleton.getInstance().sendMessage(msg);
-                            logger.info("Card selection message sent");
-                        } else {
-                            appendChatMessage("[Warning] All storage slots are full.");
-                            logger.warn("No available storage slots");
-                        }
-                    });
-                }
-            }
         } else {
             handCardBox.setDisable(true);
             logger.info("No handball zone");
@@ -718,11 +697,9 @@ public class GameController {
      *   <li>Zeigt die Karten in der Handkarten-Box an.</li>
      *   <li>Fügt jeder Karte ein Klick-Ereignis hinzu, um sie ins Register zu verschieben.</li>
      */
-
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
             logger.error("Spieler hat keine Karten erhalten..");
-
             return;
         }
 
@@ -731,7 +708,9 @@ public class GameController {
             return;
         }
 
-//        logger.info("Show player's hand: {}", cardNames); DEBUG
+        this.latestHandFromServer = new ArrayList<>(cardNames);
+
+        // 1. Rebuild register UI (DO keep this)
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {
@@ -749,29 +728,36 @@ public class GameController {
 
             VBox slotWithLabel = new VBox(5, numberLabel, slot);
             slotWithLabel.setAlignment(Pos.CENTER);
-
             registerBox.getChildren().add(slotWithLabel);
+
             if (registerState[i] != null) {
                 placeCardInRegisterSlot(registerState[i], i);
             }
         }
 
-        // Zeigt HandCard
+        // 2. Filter used cards
+        List<String> adjustedHand = new ArrayList<>();
+        Map<String, Integer> cardInstanceCounter = new HashMap<>();
+
+        for (String card : cardNames) {
+            int instance = cardInstanceCounter.getOrDefault(card, 0);
+            cardInstanceCounter.put(card, instance + 1);
+            adjustedHand.add(card + "#" + instance);
+        }
+
+        // 3. Show remaining hand cards
         handCardBox.getChildren().clear();
 
-        cardNames = cardNames.stream().filter(n -> Arrays.stream(registerState).noneMatch(n::equals)).toList();
-
-        for (String name : cardNames) {
-            ImageView view = createClickableCard(name);
+        for (String tagged : adjustedHand) {
+            String base = tagged.split("#")[0];       // e.g. "MoveII#1" → "MoveII"
+            ImageView view = createClickableCard(base);
+            view.setUserData(tagged);                 // userData = "MoveII#1"
             handCardBox.getChildren().add(view);
         }
-        //appendChatMessage("[INFO] " + cardNames.size() + " cards have been loaded. Please click on the cards to program them.");
     }
-
 
     private ImageView createClickableCard(String cardName) {
         String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
-        logger.info("Try loading card images: {}", imagePath);
         Image img;
         try {
             img = new Image(getClass().getResourceAsStream(imagePath));
@@ -789,24 +775,32 @@ public class GameController {
         view.setFitHeight(90);
         view.setPreserveRatio(true);
         view.setSmooth(true);
-        view.setUserData(cardName);
+
         view.setStyle("-fx-cursor: hand;");
-        view.setOnMouseEntered(e -> view.setEffect(new javafx.scene.effect.DropShadow()));
+        view.setOnMouseEntered(e -> view.setEffect(new DropShadow()));
         view.setOnMouseExited(e -> view.setEffect(null));
 
         view.setOnMouseClicked(event -> {
-            logger.info("Card clicked: {}", cardName);
+            String raw = view.getUserData().toString(); // e.g. "TurnRight#1"
+            String actualCardName = raw.contains("#") ? raw.split("#")[0] : raw;
+
+            logger.info("Card clicked: {}", actualCardName);
+
             int nextEmptySlot = findNextEmptyRegisterSlot();
             if (nextEmptySlot != -1) {
-                appLogger.info("Place the card {} into the storage slot {}.", cardName, nextEmptySlot);
-                placeCardInRegisterSlot(cardName, nextEmptySlot);
-                handCardBox.getChildren().remove(view);
+                appLogger.info("Place the card {} into the storage slot {}.", actualCardName, nextEmptySlot);
 
-                var body = new MessageDefinitions.BodySelectedCard(cardName, nextEmptySlot);
+                // Only update logical state
+                registerState[nextEmptySlot] = actualCardName;
+
+                // Let server & displayHandCards() handle UI
+
+                var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
                 var msg = new MessageDefinitions.Message<>(body);
                 ClientSingleton.getInstance().sendMessage(msg);
+
                 appLogger.info("Card selection message sent");
-                appendChatMessage("[INFO] Card:" + cardName + " as been selected for slot  " + (nextEmptySlot + 1));
+                appendChatMessage("[INFO] Card: " + actualCardName + " has been selected for slot " + (nextEmptySlot + 1));
             } else {
                 appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
                 appLogger.warn("No available storage slots");
@@ -815,20 +809,6 @@ public class GameController {
 
         return view;
     }
-
-//    private int findNextEmptyRegisterSlot() {
-//        for (int i = 0; i < registerBox.getChildren().size(); i++) {
-//            Node node = registerBox.getChildren().get(i);
-//            if (node instanceof VBox vbox) {
-//                Node slotNode = vbox.getChildren().get(1);
-//                if (slotNode instanceof StackPane pane && pane.getChildren().isEmpty()) {
-//                    appLogger.info("Found empty register slot at index {}", i);
-//                    return i;
-//                }
-//            }
-//        }
-//        return -1;
-//    }
 
     private int findNextEmptyRegisterSlot() {
         for (int i = 0; i < registerState.length; i++) {
@@ -878,7 +858,7 @@ public class GameController {
         pane.setOnDragDropped(null);
         pane.setOnMouseClicked(event -> {
             if (!pane.getChildren().isEmpty()) {
-                Node node = pane.getChildren().get(0);
+                Node node = pane.getChildren().getFirst();
                 if (node instanceof ImageView) {
                     int slotIndex = -1;
                     for (int i = 0; i < registerBox.getChildren().size(); i++) {
