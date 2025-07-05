@@ -490,7 +490,7 @@ public class ClientHandler implements Runnable {
         server.markReadyRegister(myID);
         broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
 
-        if (server.getTimerStarted()) {
+        if (!server.getTimerStarted()) {
             server.setTimerStarted(true);
             startTimer();
         }
@@ -510,7 +510,7 @@ public class ClientHandler implements Runnable {
     private void startTimer () {
         final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-        //TODO add gamecontroller sync
+        broadcastMessage(new Message<>(new BodyTimerStarted()));
 
         scheduler.schedule(() -> {
             List<Integer> readyRegister = server.getReadyRegister();

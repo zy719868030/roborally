@@ -510,12 +510,12 @@ public class GameController {
         discardPileBox.setVisible(isActivationPhase);
         discardPileBox.setManaged(isActivationPhase);
 
-        // Timer nur in Programmierphase starten
-        if (isProgrammingPhase) {
-            startCountdown();
-        } else {
-            hideCountdown();
-        }
+//        // Timer nur in Programmierphase starten
+//        if (isProgrammingPhase) {
+//            startCountdown();
+//        } else {
+//            hideCountdown();
+//        }
 
         // Chat sperren, wenn Spiel vorbei ist
         chatInput.setDisable(isGameOverPhase);

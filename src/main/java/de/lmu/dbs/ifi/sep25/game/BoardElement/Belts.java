@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,8 @@ import java.util.stream.Stream;
  * Conveyor belts can also be rotating, which will rotate robots as they move.
  */
 public class Belts extends BoardElement {
+    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Belts.class);
+
 
     // Conveyor belt speed: Green conveyor belt moves one square; blue conveyor belt moves two squares.
     public enum BeltSpeed {
@@ -49,74 +52,19 @@ public class Belts extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-//    public Belts(String boardId) {
-//        super(boardId);
-//        this.speed = BeltSpeed.SLOW;
-//        this.color = BeltColor.GREEN;
-//        this.outDirections = new ArrayList<>();
-//        this.outDirections.add(Direction.NORTH);
-//        this.inDirections = new ArrayList<>();
-//        this.isRotating = false;
-//        this.isOnBoard = false;
-//        this.boardId = boardId; // Set boardId to boardName
-//    }
-//
-//    public Belts(Position position, String boardId) {
-//        super(position, boardId);
-//        this.speed = BeltSpeed.SLOW;
-//        this.color = BeltColor.GREEN;
-//        this.outDirections = new ArrayList<>();
-//        this.outDirections.add(Direction.NORTH);
-//        this.inDirections = new ArrayList<>();
-//        this.isRotating = false;
-//        this.isOnBoard = false;
-//        this.boardId = boardId;
-//    }
-//
-//
-//    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardID) {
-//        super(position, outDirection, boardID);
-//        this.speed = speed;
-//        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-//        this.outDirections = new ArrayList<>();
-//        this.outDirections.add(outDirection);
-//        this.inDirections = new ArrayList<>();
-//        this.isRotating = false;
-//        this.isOnBoard = false;
-//        this.boardId = boardID;
-//        this.setBoardId(boardId); // Updates isOnBoard
-//
-//    }
-    /*
-    public Belts(Position position, Direction outDirection, BeltSpeed speed, String boardName) {
-        super(position, !outDirections.isEmpty() ? outDirections.get(0) : null, boardName);
-        this.speed = speed;
-        this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
-        this.outDirections = new ArrayList<>();
-        this.outDirections.add(outDirection);
-        this.inDirections = new ArrayList<>();
-        //this.isRotating = false;
-        //this.setBoardId(boardId);
-
-        this.boardId = boardName; // Added: Set boardId to boardName
-        this.setBoardName(boardName);
-    }
-
-     */
 
     public Belts(Position position, Direction outDirection, Direction inDirection, BeltSpeed speed, String boardId) {
         this(position, outDirection, List.of(inDirection), speed, boardId);
     }
 
-
     /**
      * Constructs a new Belts instance representing a conveyor belt with the specified properties.
      *
-     * @param position the position of the conveyor belt on the board, cannot be null.
+     * @param position     the position of the conveyor belt on the board, cannot be null.
      * @param outDirection the primary direction where the conveyor belt exits, cannot be null.
      * @param inDirections a list of directions where the conveyor belt receives input, cannot be null.
-     * @param speed the speed of the belt, determining how many tiles the robot moves (SLOW or FAST), cannot be null.
-     * @param boardId the identifier of the board to which this belt belongs.
+     * @param speed        the speed of the belt, determining how many tiles the robot moves (SLOW or FAST), cannot be null.
+     * @param boardId      the identifier of the board to which this belt belongs.
      * @throws IllegalArgumentException if any of the required parameters (position, outDirection, inDirections, or speed) are null.
      */
     public Belts(Position position, Direction outDirection, List<Direction> inDirections, BeltSpeed speed, String boardId) {
@@ -156,106 +104,6 @@ public class Belts extends BoardElement {
             outDirections.add(direction);
         }
     }
-
-//    /**
-//     * Convert the Direction enumeration to the direction string required by the protocol.
-//     * @param direction Direction enumeration value.
-//     * @return Direction string used by the protocol: “top”, “bottom”, ‘right’, “left”.
-//     */
-//    private String directionToString(Direction direction) {
-//        return switch (direction) {
-//            case NORTH -> "top";
-//            case SOUTH -> "bottom";
-//            case EAST -> "right";
-//            case WEST -> "left";
-//        };
-//    }
-
-//    /**
-//     * Convert the direction string in the protocol to a Direction enumeration.
-//     * @param dirString Direction string in the protocol: “top”, “bottom”, ‘right’, “left”
-//     * @return Corresponding Direction enumeration value.
-//     */
-//    private Direction stringToDirection(String dirString) {
-//        return switch (dirString) {
-//            case "top" -> Direction.NORTH;
-//            case "bottom" -> Direction.SOUTH;
-//            case "right" -> Direction.EAST;
-//            case "left" -> Direction.WEST;
-//            default -> throw new IllegalArgumentException("Invalid direction string: " + dirString);
-//        };
-//    }
-
-//    /**
-//     * Get the list of directions for serialization, in a format that complies with the protocol requirements.
-//     * The first direction is the outbound direction, followed by the inbound direction.
-//     * @return List of direction strings.
-//     */
-//    public List<String> getOrientationsForProtocol() {
-//        List<String> orientations = new ArrayList<>();
-//        if (!outDirections.isEmpty()) {
-//            orientations.add(directionToString(outDirections.get(0)));
-//        }
-//
-//        for (Direction inDir : inDirections) {
-//            orientations.add(directionToString(inDir));
-//        }
-//
-//        return orientations;
-//    }
-
-//    /**
-//     * Create a conveyor belt instance from the protocol representation.
-//     * @param position Position.
-//     * @param orientations List of orientations, with the first being the outflow direction and the rest being the inflow directions.
-//     * @param speed Speed (1 = green belt, 2 = blue belt).
-//     * @param boardId Board ID.
-//     */
-//    public Belts(Position position, List<String> orientations, int speed, String boardId) {
-//        super(position, boardId);
-//
-//        this.speed = speed == 1 ? BeltSpeed.SLOW : BeltSpeed.FAST;
-//        this.color = speed == 1 ? BeltColor.GREEN : BeltColor.BLUE;
-//
-//        this.outDirections = new ArrayList<>();
-//        this.inDirections = new ArrayList<>();
-//
-//        if (!orientations.isEmpty()) {
-//            this.outDirections.add(stringToDirection(orientations.get(0)));
-//
-//            for (int i = 1; i < orientations.size(); i++) {
-//                this.inDirections.add(stringToDirection(orientations.get(i)));
-//            }
-//        }
-//
-//        // Determine whether it is a rotating conveyor belt
-//        this.isRotating = !outDirections.isEmpty() && !inDirections.isEmpty() &&
-//                !outDirections.get(0).equals(inDirections.get(0).turnAround());
-//
-//        this.isOnBoard = true;
-//        this.boardId = boardId;
-//    }
-
-//    /**
-//     * Get the serialized representation of the conveyor belt.
-//     * @return Serialized Map representation.
-//     */
-//    public Map<String, Object> serialize() {
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("type", "ConveyorBelt");
-//        result.put("isOnBoard", boardId);
-//        result.put("speed", getSpeedForProtocol());
-//        result.put("orientations", getOrientationsForProtocol());
-//        return result;
-//    }
-//
-//    /**
-//     * Get the speed value used for the protocol.
-//     * @return 1 for green belt, 2 for blue belt.
-//     */
-//    public int getSpeedForProtocol() {
-//        return speed.getValue();
-//    }
 
     public List<Direction> getOutDirections() {
         return new ArrayList<>(outDirections);
@@ -343,7 +191,7 @@ public class Belts extends BoardElement {
             rotateRobot(robot);
         }
         // Move the robot according to the speed of the conveyor belt.
-        moveRobotOnBelt(robot, board, speed.ordinal() + 1);
+        moveRobotOnBelt(robot, board, speed.getValue());
     }
 
     /**
@@ -360,25 +208,15 @@ public class Belts extends BoardElement {
         }
 
         // If the robot enters from the entrance direction, adjust the direction to match the exit direction.
-        Direction outDir = outDirections.get(0);
+        Direction outDir = outDirections.getFirst();
         for (Direction inDir : inDirections) {
-            if (robotDirection == inDir.turnAround()) {
+            if (robotDirection == inDir.turnAround() && !robotDirection.equals(outDir)) {
                 robot.setDirection(outDir);
-                System.out.println("Robot " + robot.getId() + " rotated from " +
-                        robotDirection.getName() + " to " + outDir.getName() +
-                        " on rotating conveyor belt.");
+                appLogger.info("Robot {} rotated from {} to {} on rotating conveyor belt.", robot.getId(), robot.getDirection().getName(), outDir.getName());
                 return;
             }
         }
     }
-
-    /**
-     * Calculate the number of right turns required to rotate from one direction to another.
-     *
-     * @param from Starting direction
-     * @param to Target direction
-     * @return Number of right turns required (0-3)
-     */
 
     /**
      * Move the robot on the conveyor belt
@@ -440,11 +278,10 @@ public class Belts extends BoardElement {
         }
     }
 
-
     /**
      * Search for a conveyor belt at a specified location.
      *
-     * @param board Game board.
+     * @param board    Game board.
      * @param position Location to search.
      * @return Found conveyor belt. If none found, return null.
      */
@@ -461,17 +298,13 @@ public class Belts extends BoardElement {
      * Check whether the conveyor belt movement is valid.
      * The condition for valid movement is: the exit direction matches the entrance direction of the next conveyor belt.
      *
-     * @param outDir The exit direction of the current conveyor belt.
+     * @param outDir   The exit direction of the current conveyor belt.
      * @param nextBelt The next conveyor belt.
      * @return Returns true if the movement is valid, otherwise returns false.
      */
     private boolean isValidBeltMovement(Direction outDir, Belts nextBelt) {
-        for (Direction inDir : nextBelt.getInDirections()) {
-            if (outDir.equals(inDir)) {
-                return true;
-            }
-        }
-        return nextBelt.getInDirections().isEmpty();
+        Direction moveFrom = outDir.turnAround();
+        return nextBelt.getInDirections().contains(moveFrom);
     }
 
     /**
@@ -532,7 +365,7 @@ public class Belts extends BoardElement {
      * Converts the conveyor belt instance into a FieldConveyorBelt representation.
      *
      * @return A {@code MessageDefinitions.FieldConveyorBelt} object containing the conveyor belt's board ID, speed,
-     *         and the concatenated list of exit and entry direction strings.
+     * and the concatenated list of exit and entry direction strings.
      */
     @Override
     public MessageDefinitions.FieldConveyorBelt toField() {
