@@ -60,7 +60,7 @@ public class Server {
 
     // 5. Game logic
     private Game game;
-    private final List<Integer> readyRegister = new ArrayList<>();
+    private final List<Integer> waitingForProgramming = new ArrayList<>();
 
 
     /**
@@ -564,9 +564,9 @@ public class Server {
      * The method retrieves all clients from the lobby, maps them to their respective identifiers,
      * and adds these identifiers to the ready register.
      */
-    private void resetReadyRegister() {
-        readyRegister.clear();
-        readyRegister.addAll(getLobby().getClients().stream().map(clients::getByKey).toList());
+    public void resetReadyRegister() {
+        waitingForProgramming.clear();
+        waitingForProgramming.addAll(getLobby().getClients().stream().map(clients::getByKey).toList());
     }
 
     /**
@@ -577,8 +577,11 @@ public class Server {
      * @param clientID the unique identifier of the client to be removed from the ready register
      */
     public void markReadyRegister(Integer clientID) {
-        readyRegister.remove(clientID);
-        game.checkAndAdvanceFromProgrammingPhase();
+        waitingForProgramming.remove(clientID);
+        if (waitingForProgramming.isEmpty()) {
+            game.checkAndAdvanceFromProgrammingPhase();
+            resetReadyRegister();
+        }
     }
 
     /**
@@ -586,8 +589,8 @@ public class Server {
      *
      * @return a copy of the current ready register containing client IDs marked as ready
      */
-    public List<Integer> getReadyRegister() {
-        List<Integer> copy = new ArrayList<>(readyRegister);
+    public List<Integer> getWaitingForProgramming() {
+        List<Integer> copy = new ArrayList<>(waitingForProgramming);
         resetReadyRegister();
         return copy;
     }
