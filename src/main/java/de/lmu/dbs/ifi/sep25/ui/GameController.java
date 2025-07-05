@@ -18,7 +18,6 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
@@ -523,7 +522,6 @@ public class GameController {
             handCardBox.setManaged(true);
             logger.info("Hand card area enabled");
 
-            // Aktiviere Karten-Click-Handler erneut
             for (Node node : handCardBox.getChildren()) {
                 if (node instanceof ImageView view) {
                     String cardName = (String)view.getUserData();
@@ -668,7 +666,7 @@ public class GameController {
             }
         }
 
-        // Falls der Spieler nicht gefunden wurde
+    // Falls der Spieler nicht gefunden wurde
         appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
         statusLabel.setText("Spieler " + clientID + " ist am Zug.");
     }
