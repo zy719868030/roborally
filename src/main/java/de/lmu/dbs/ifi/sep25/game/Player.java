@@ -7,6 +7,7 @@ import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.CheckPoints;
 import de.lmu.dbs.ifi.sep25.network.ClientHandler;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.network.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -208,10 +209,14 @@ public class Player {
     }
 
     public void setReadyRegister(boolean ready) {
-        readyRegister = ready;
+        this.readyRegister = ready;
         if (ready) {
-            connection.setReadyRegister();
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodySelectionFinished(clientID)
+            ));
+            Server.getInstance().markReadyRegister(clientID);
         }
+        appLogger.info("Player {} readyRegister set to: {}", clientID, ready);
     }
 
     // ENERGY
@@ -320,12 +325,21 @@ public class Player {
      **/
     public void discardCardFromHand(RegisterCard card) {
         if (card != null) {
-            if (hand.contains(card)) {
-                programmingDeck.discard(card);
-                removeFromHand(card);
-            } else {
-                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
+            // Only check your hand for this card during the non-active phase.
+            if (Game.getInstance().getCurrentPhase() != Game.GamePhase.ACTIVATION.getValue()) {
+                if (!hand.contains(card)) {
+                    connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
+                    return;
+                }
             }
+            programmingDeck.discard(card);
+            removeFromHand(card);
+//            if (hand.contains(card)) {
+//                programmingDeck.discard(card);
+//                removeFromHand(card);
+//            } else {
+//                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
+//            }
         }
     }
 
@@ -430,7 +444,9 @@ public class Player {
 
                     return true;
                 } else {
-                    // No cards to remove
+                    connection.sendMessage(new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyError("Invalid register slot: " + registerSlot + " (Must be between 0 and 4)")
+                    ));
                     return false;
                 }
             } else {
@@ -441,7 +457,8 @@ public class Player {
             }
         } else {
             connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("You already selected your registry cards! Called in removeCardFromRegister() method in Player.java")
+                    new MessageDefinitions.BodyError("Unable to modify the register: You have completed your card " +
+                            "selection for this round. Please wait for the next round to begin.")
             ));
             return false;
         }
@@ -533,14 +550,15 @@ public class Player {
         for (int i = 0; i < register.size(); i++) {
             RegisterCard card = register.get(i);
             if (card != null) {
-                removeCardFromRegister(i);
                 discardCardFromHand(card);
+                register.set(i, null);
             }
         }
 
         // Fill register with null and set flag
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++) {
             register.set(i, null);
+        }
         setReadyRegister(false);
     }
 

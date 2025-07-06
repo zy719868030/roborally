@@ -920,6 +920,15 @@ public class Client {
                 return;
             }
 
+            if (newX < 0 || newY < 0 ||
+                    (currentGameMap != null && (newX >= currentGameMap.size() ||
+                            (currentGameMap.get(0) != null && newY >= currentGameMap.get(0).size())))) {
+                clientLogger.info("Robot {} fell off the board to point ({}, {})", clientID, newX, newY);
+                controller.handleRobotFellOffBoard(clientID);
+                return;
+            }
+
+
             Position oldPos = controller.getRobotPosition(clientID);
             if (oldPos == null) {
                 errorLogger.warn("[WARN] Keine alte Roboterposition bekannt für Client {}", clientID);
@@ -938,6 +947,13 @@ public class Client {
 
             if (moveDir == null) {
                 errorLogger.warn("[WARN] Ungültige Bewegungsrichtung von ({},{}) nach ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                return;
+            }
+
+            // Check if the current map range is valid
+            if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.get(0).size() ||
+                    oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.get(0).size()) {
+                errorLogger.warn("[WARN] Ungültige Kartenkoordinaten: alt ({},{}) neu ({},{})", oldPos.x(), oldPos.y(), newX, newY);
                 return;
             }
 

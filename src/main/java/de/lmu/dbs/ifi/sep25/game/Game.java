@@ -190,6 +190,10 @@ public class Game {
         Server.getInstance().resetReadyRegister();
         // Start new round
 
+        for (Player player : players) {
+            player.resetRegister();
+        }
+
         roundNumber++;
         appLogger.info("Starting round {}.", roundNumber);
         setPhase(GamePhase.PROGRAMMING);
@@ -416,6 +420,10 @@ public class Game {
         }
 
         appLogger.info("All registers processed. Entering the end of round phase.");
+
+        for (Player player : players) {
+            player.resetRegister();
+        }
 
         try {
             Thread.sleep(1000); // 10-second pause before starting next round
@@ -652,28 +660,29 @@ public class Game {
             );
 
             // Handle DamageCard effects explicitly
-            if (card instanceof DamageCard damageCard) {
-                handleDamageCardEffect(damageCard, player);
-            } else {
-                // Execute card effect
-                card.execute(player.getRobot(), player);
+            try {
+                if (card instanceof DamageCard damageCard) {
+                    handleDamageCardEffect(damageCard, player);
+                } else {
+                    card.execute(player.getRobot(), player);
+                }
+                Position robotPosition = player.getRobot().getPosition();
+                Server.getInstance().broadcastMessage(
+                        new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodyMovement(
+                                        player.getClientID(),
+                                        robotPosition.x(),
+                                        robotPosition.y()
+                                )
+                        )
+                );
+
+                board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
+            } catch (Exception e) {
+                appLogger.error("Error executing card: " + e.getMessage(), e);
             }
-            // Broadcast robot movement if position changed
-            Position robotPosition = player.getRobot().getPosition();
-            Server.getInstance().broadcastMessage(
-                    new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyMovement(
-                                    player.getClientID(),
-                                    robotPosition.x(),
-                                    robotPosition.y()
-                            )
-                    )
-            );
-            // Apply board effects after card execution
-            board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
         }
     }
-
     /**
      * Handles the effects of a DamageCard on a player's robot based on the card's damage type.
      *

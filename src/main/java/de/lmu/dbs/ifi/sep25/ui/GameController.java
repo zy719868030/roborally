@@ -1549,6 +1549,30 @@ public class GameController {
     private void addCardToNextEmptyRegister(String cardName) {
     }
 
+    /**
+     * Handle the situation where a robot falls off the board.
+     *
+     * @param clientID The client ID corresponding to the robot that fell off the board.
+     */
+    public void handleRobotFellOffBoard(int clientID) {
+        Integer robotID = clientToRobotID.getOrDefault(clientID, -1);
+        appLogger.info("Robot {} (clientID {}) fell off the board", robotID, clientID);
+
+        Position oldPos = robotPositions.get(clientID);
+        if (oldPos != null) {
+            StackPane oldCell = getCellAt(oldPos.x(), oldPos.y());
+            if (oldCell != null) {
+                oldCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+            }
+        }
+
+        robotPositions.put(clientID, new Position(-1, -1));
+
+        String playerName = getPlayerNameById(clientID);
+        appendChatMessage("[INFO] " + playerName + " fell off the chessboard!");
+
+    }
+
 
     private int currentPhaseID = -1;
 
