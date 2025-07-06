@@ -783,6 +783,8 @@ public class GameController {
             view.setUserData(tagged);                 // userData = "MoveII#1"
             handCardBox.getChildren().add(view);
         }
+
+        updateConfirmButtonVisibility();
     }
 
     private ImageView createClickableCard(String cardName) {
@@ -833,10 +835,10 @@ public class GameController {
             } else {
                 appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
                 appLogger.warn("No available storage slots");
-
+            }
                 updateConfirmButtonVisibility();
 
-            }
+
         });
 
         return view;
