@@ -57,6 +57,8 @@ public class Server {
     private final int minPlayer;
     private volatile boolean mapSelectionOngoing = false;
     private final AtomicBoolean timerStarted = new AtomicBoolean(false);
+    private final ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> activeTimer = null;
 
     // 5. Game logic
     private Game game;
@@ -587,19 +589,33 @@ public class Server {
      * @param clientID the unique identifier of the client to be removed from the ready register
      */
     public void markReadyRegister(Integer clientID) {
+        if (game.getCurrentPhase() != Game.GamePhase.PROGRAMMING.getValue()) {
+            appLogger.warn("Ignored markReadyRegister outside of programming phase for clientID {}", clientID);
+            return;
+        }
+
         appLogger.info("Marking client {} as ready.", clientID);
+
         if (!waitingForProgramming.contains(clientID)) {
             appLogger.warn("Client {} was not in the ready register, already removed.", clientID);
             appLogger.info("waitingForProgramming: {}", waitingForProgramming);
             return;
         }
+
+        // Start timer when first player becomes ready
+        if (waitingForProgramming.size() == getLobby().getClients().size() && !getTimerStarted()) {
+            startTimer();
+        }
+
         waitingForProgramming.remove(clientID);
         appLogger.info("waitingForProgramming: {}", waitingForProgramming);
+
         if (waitingForProgramming.isEmpty()) {
+            cancelTimer();
             game.checkAndAdvanceFromProgrammingPhase();
-            resetReadyRegister();
         }
     }
+
 
     /**
      * Retrieves a copy of the list of ready client IDs and resets the ready register for the next round.
@@ -607,10 +623,8 @@ public class Server {
      * @return a copy of the current ready register containing client IDs marked as ready
      */
     public List<Integer> getWaitingForProgramming() {
-        List<Integer> copy = new ArrayList<>(waitingForProgramming);
         appLogger.info("Returning and resetting waitingForProgramming: {}", waitingForProgramming);
-        resetReadyRegister();
-        return copy;
+        return new ArrayList<>(waitingForProgramming);
     }
 
     /**
@@ -665,4 +679,80 @@ public class Server {
     public void setTimerStarted(boolean timerStarted) {
         this.timerStarted.set(timerStarted);
     }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    public void startTimer() {
+        if (getTimerStarted()) {
+            appLogger.warn("Timer already started.");
+            return;
+        }
+
+        if (waitingForProgramming.isEmpty()) {
+            appLogger.warn("All clients are already ready. Timer not started.");
+            setTimerStarted(false);
+            return;
+        }
+
+        appLogger.info("Starting timer...");
+
+        setTimerStarted(true);
+        broadcastMessage(new Message<>(new BodyTimerStarted()));
+
+        activeTimer = timerScheduler.schedule(() -> {
+            List<Integer> readyRegister = getWaitingForProgramming();
+            setTimerStarted(false);
+
+            if (readyRegister.isEmpty()) {
+                appLogger.info("Timer expired but no clients are late. Timer closed silently. (No TimerEnded sent)");
+                return;
+            }
+
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+
+            for (Integer clientID : readyRegister)
+                getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+
+            resetReadyRegister();
+
+            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
+                game.enterActivationPhase();
+            } else {
+                appLogger.warn("Timer expired but game is already in phase: {}", game.getCurrentPhase());
+            }
+        }, 30, TimeUnit.SECONDS);
+    }
+
+    public void cancelTimer() {
+        if (activeTimer != null && !activeTimer.isDone()) {
+            activeTimer.cancel(false);
+            setTimerStarted(false);
+            appLogger.info("Timer cancelled.");
+
+            List<Integer> remaining = new ArrayList<>(waitingForProgramming);
+            broadcastMessage(new Message<>(new BodyTimerEnded(remaining)));
+
+            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
+                for (Integer clientID : remaining) {
+                    getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+                }
+                game.enterActivationPhase();
+            } else {
+                appLogger.warn("Timer cancelled but game is already in phase: {}", game.getCurrentPhase());
+            }
+
+            resetReadyRegister();
+        } else {
+            appLogger.warn("No active timer to cancel.");
+        }
+    }
+
 }

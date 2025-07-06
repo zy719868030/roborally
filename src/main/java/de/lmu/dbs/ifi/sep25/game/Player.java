@@ -209,15 +209,34 @@ public class Player {
         this.ready = ready;
     }
 
-    public void setReadyRegister(boolean ready) {
-        this.readyRegister = ready;
+    public synchronized void setReadyRegister(boolean ready) {
+        Game game = Server.getInstance().getGame();
+
         if (ready) {
+            if (this.readyRegister) {
+                appLogger.warn("Ignored duplicate setReadyRegister(true) for clientID {}", clientID);
+                return;
+            }
+
+            if (game.getCurrentPhase() != Game.GamePhase.PROGRAMMING.getValue()) {
+                appLogger.warn("Blocked setReadyRegister(true) outside PROGRAMMING for clientID {}", clientID);
+                return;
+            }
+
+            this.readyRegister = true;
+
+            appLogger.info("Player {} readyRegister set to: true", (robot != null ? robot.getRobotID() : "null"));
             connection.broadcastMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodySelectionFinished(clientID)
             ));
-            Server.getInstance().markReadyRegister(clientID);
+
+            // ✅ DON'T call markReadyRegister() again
+            // let whoever called setReadyRegister(true) be responsible for that
+
+        } else {
+            this.readyRegister = false;
+            appLogger.info("Player {} readyRegister set to: false", (robot != null ? robot.getRobotID() : "null"));
         }
-        appLogger.info("Player {} readyRegister set to: {}", clientID, ready);
     }
 
     // ENERGY
@@ -287,7 +306,7 @@ public class Player {
      * Deal cards to player at the start of a programming phase
      */
     public void dealProgrammingCards() {
-        appLogger.info("Deal cards to players {}", robot.getRobotID());
+        appLogger.info("Deal cards to play-ers {}", robot.getRobotID());
         // Clear hand
         resetHand();
 
@@ -299,6 +318,7 @@ public class Player {
         }
 
         // Reset register state
+        appLogger.info("Calling setReadyRegister(false) in dealProgrammingCards() method in Player.java. CALLED IN dealProgrammingCards. Current register: {}", registerToString());
         setReadyRegister(false);
         updateHand();
         appLogger.info("Player {}'s hand has been updated and sent.", robot.getRobotID());
@@ -476,7 +496,9 @@ public class Player {
                     discardCardFromHand(newCard);
                     newCard = drawCard();
                 }
-                chooseCardToRegister(CardFactory.getCardName(newCard), i);
+                register.set(i, newCard);
+                removeFromHand(newCard);
+                appLogger.info("Filled missing slot {} with {} (fallback by server)", i, CardFactory.getCardName(newCard));
                 cardsYouGotNow.add(CardFactory.getCardName(newCard));
             }
         }
@@ -485,7 +507,8 @@ public class Player {
                 new MessageDefinitions.BodyCardsYouGotNow(cardsYouGotNow))
         );
         // setReadyRegister(true) call needed to simulate push of the ready button
-        setReadyRegister(true);
+        appLogger.info("Calling setReadyRegister(false) in fillRemainingRegisterSlots() method in Player.java. CALLED IN fillRemainingRegisterSlots. Current register: {}", registerToString());
+        setReadyRegister(false);
     }
 
     public void addUpgrade(UpgradeCard upgrade) {
@@ -577,7 +600,7 @@ public class Player {
      * the {@code CardFactory} class.
      *
      * @return a string representation of the player's register, where each entry maps
-     *         register indices to the corresponding card names
+     * register indices to the corresponding card names
      */
     public String registerToString() {
         try {
@@ -600,7 +623,7 @@ public class Player {
      * about the player's attributes including client ID, robot details, name, and register contents.
      *
      * @return a formatted string representing the Player object with its client ID, robot ID,
-     *         name, robot state, and the string representation of the register.
+     * name, robot state, and the string representation of the register.
      */
     public String toString() {
         return "Player{" +

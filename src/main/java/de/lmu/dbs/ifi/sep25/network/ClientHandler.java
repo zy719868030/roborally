@@ -19,12 +19,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -479,6 +475,7 @@ public class ClientHandler implements Runnable {
 
     // -------------
 
+
     /**
      * Sets the placement latch to the specified CountDownLatch instance.
      *
@@ -503,50 +500,16 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
+        appLogger.info("Calling setReadyRegister in setReadyRegister (clientID: {})", myID);
         player.setReadyRegister(true);
+        server.markReadyRegister(myID);
 
-        if (!server.getTimerStarted()) {
-            server.setTimerStarted(true);
-            startTimer();
-        }
-
+        // Remove this unconditional timer start
+        // if (!server.getTimerStarted()) {
+        //     server.startTimer();
+        // }
     }
 
-    /**
-     * Handles the start of the body timer by scheduling a task to execute
-     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
-     * the list of ready players from the server and broadcasts a
-     * BodyTimerEnded message containing this list.
-     * <p>
-     * This method uses a single-threaded scheduled executor service to perform
-     * the delayed task execution. The task is responsible for broadcasting
-     * a message via the method `broadcastMessage`.
-     */
-    private void startTimer () {
-        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        broadcastMessage(new Message<>(new BodyTimerStarted()));
-
-        scheduler.schedule(() -> {
-            List<Integer> readyRegister = server.getWaitingForProgramming();
-            //DEBUG
-            appLogger.info("Timer ended. Ready register: {}", readyRegister);
-            appLogger.info("ready register set to empty list for testing purposes.");
-            readyRegister = new ArrayList<>();
-            //
-            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
-            server.setTimerStarted(false);
-
-            for (Integer clientID : readyRegister)
-                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
-
-            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
-                game.enterActivationPhase();
-            } else {
-                appLogger.warn("Timer expired but game is already in phase: {}", game.getCurrentPhase());
-            }
-        }, 30, TimeUnit.SECONDS);
-    }
 
     /**
      * Validates the liveness state of the client connection and sends a "BodyAlive" message
