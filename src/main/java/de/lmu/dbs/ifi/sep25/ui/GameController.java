@@ -1539,8 +1539,7 @@ public class GameController {
             appendChatMessage("[SPIELENDE] " + message);
 
             int robotId = clientToRobotID.getOrDefault(winnerClientId, 1);
-            String direction = robotDirections.getOrDefault(winnerClientId, "top");
-            String imagePath = "/assets/robots/robot_0" + robotId + "_" + direction + ".png";
+            String imagePath = "/assets/robots/robot_0" + robotId + "_right.png";
 
             ImageView robotImage = new ImageView();
             try {
