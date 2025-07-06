@@ -520,8 +520,10 @@ public class GameController {
         discardPileBox.setManaged(isActivationPhase);
 
         if (confirmSelectionButton != null) {
-            confirmSelectionButton.setVisible(isProgrammingPhase);
-            confirmSelectionButton.setManaged(isProgrammingPhase);
+            updateConfirmButtonVisibility();
+
+            //confirmSelectionButton.setVisible(isProgrammingPhase);
+            // confirmSelectionButton.setManaged(isProgrammingPhase);
         }
 
 
@@ -831,6 +833,9 @@ public class GameController {
             } else {
                 appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
                 appLogger.warn("No available storage slots");
+
+                updateConfirmButtonVisibility();
+
             }
         });
 
@@ -934,12 +939,10 @@ public class GameController {
                 .filter(Objects::nonNull)
                 .toList();
 
-
         if (selectedCards.size() != 5) {
             appendChatMessage("[WARNUNG] Du musst genau 5 Karten ins Register ziehen.");
             return;
         }
-
 
         int clientID = ClientSingleton.getInstance().getID();
         for (int i = 0; i < selectedCards.size(); i++) {
@@ -950,6 +953,7 @@ public class GameController {
             ClientSingleton.getInstance().sendMessage(msg);
         }
 
+        // Sende "fertig" Nachricht an Server
         var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
         var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
         ClientSingleton.getInstance().sendMessage(finishedMsg);
@@ -1657,6 +1661,20 @@ public class GameController {
     public int getCurrentPhaseID() {
         return currentPhaseID;
     }
+
+    private void updateConfirmButtonVisibility() {
+        long filledSlots = registerBox.getChildren().stream()
+                .filter(n -> n instanceof VBox)
+                .map(n -> ((VBox) n).getChildren().get(1)) // StackPane
+                .filter(n -> n instanceof StackPane)
+                .map(n -> (StackPane) n)
+                .filter(p -> !p.getChildren().isEmpty())
+                .count();
+
+        confirmSelectionButton.setVisible(filledSlots == 5);
+        confirmSelectionButton.setManaged(filledSlots == 5);
+    }
+
 
 }
 
