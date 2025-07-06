@@ -7,6 +7,7 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -1604,6 +1605,48 @@ public class GameController {
 
     }
 
+    /**
+     * Display an error message dialog box.
+     *
+     * @param title Dialog box title.
+     * @param message Error message.
+     */
+    public void displayErrorAlert(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    /**
+     * Highlight the register slot to indicate an error.
+     *
+     * @param registerSlot The index of the register slot to be highlighted (0-4).
+     */
+    public void highlightRegisterSlot(int registerSlot) {
+        if (registerSlot < 0 || registerSlot >= 5 || registerBox == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            if (registerBox.getChildren().size() > registerSlot) {
+                Node node = registerBox.getChildren().get(registerSlot);
+                if (node instanceof VBox vbox && vbox.getChildren().size() > 1) {
+                    Node slotNode = vbox.getChildren().get(1);
+                    if (slotNode instanceof StackPane pane) {
+                        String originalStyle = pane.getStyle();
+                        pane.setStyle(originalStyle + "; -fx-border-color: red; -fx-border-width: 3px; -fx-effect: dropshadow(gaussian, #ff0000, 10, 0.5, 0, 0);");
+                        PauseTransition pause = new PauseTransition(Duration.seconds(2));
+                        pause.setOnFinished(e -> pane.setStyle(originalStyle));
+                        pause.play();
+                    }
+                }
+            }
+        });
+    }
 
     private int currentPhaseID = -1;
 
