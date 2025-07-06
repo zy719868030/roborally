@@ -940,6 +940,8 @@ public class GameController {
      */
     @FXML
     private void handleConfirmSelection() {
+        appLogger.info("Sending SelectionFinished manually for clientID {}", ClientSingleton.getInstance().getID());
+
         List<String> selectedCards = registerBox.getChildren().stream()
                 .filter(n -> n instanceof VBox)
                 .map(n -> ((VBox) n).getChildren().get(1))
