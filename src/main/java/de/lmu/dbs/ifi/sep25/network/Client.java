@@ -556,6 +556,37 @@ public class Client {
             return;
         }
 
+        // Handle the error of placing the Again card in the first register.
+        if (errorText.contains("Again card cannot be played in the first register")) {
+            Platform.runLater(() -> {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Card placement error",
+                            "The card Again cannot be placed in the first register position!\n" +
+                                    "Please select the 2nd to 5th register positions.");
+                    gameCtrl.highlightRegisterSlot(0);
+                } else {
+                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
+                }
+            });
+            return;
+        }
+
+        // Handle other game rule-related errors to prevent the client from closing.
+        if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
+            Platform.runLater(() -> {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Card operation error", errorText);
+                } else {
+                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
+                }
+            });
+            return;
+        }
+
         closeAll(); // bei anderen Fehlern
     }
 
