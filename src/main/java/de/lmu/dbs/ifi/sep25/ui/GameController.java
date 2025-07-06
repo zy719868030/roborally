@@ -1268,6 +1268,9 @@ public class GameController {
             }
         }
     }
+    public Position getRobotPosition(int clientID) {
+        return robotPositions.get(clientID);
+    }
 
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.

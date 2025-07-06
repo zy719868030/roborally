@@ -2,6 +2,8 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.GameController;
@@ -906,25 +908,69 @@ public class Client {
     public void handleBodyMovement(String json) {
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
         BodyMovement body = message.messageBody();
-        // Server server = Server.getInstance();
 
         int clientID = body.clientID();
-        int x = body.x();
-        int y = body.y();
+        int newX = body.x();
+        int newY = body.y();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.moveRobotTo(clientID, x, y);
-            } else {
+            if (controller == null) {
                 errorLogger.error("[WARN] GameController is null in handleBodyMovement");
+                return;
             }
-        });
 
-        //TODO display:
-        // maybe clear board of robot, set robot at new position?
-        // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Movement"))
+            Position oldPos = controller.getRobotPosition(clientID);
+            if (oldPos == null) {
+                errorLogger.warn("[WARN] Keine alte Roboterposition bekannt für Client {}", clientID);
+                return;
+            }
+
+            int dx = newX - oldPos.x();
+            int dy = newY - oldPos.y();
+            Direction moveDir = null;
+
+            if (dx == 1) moveDir = Direction.EAST;
+            else if (dx == -1) moveDir = Direction.WEST;
+            else if (dy == 1) moveDir = Direction.SOUTH;
+            else if (dy == -1) moveDir = Direction.NORTH;
+
+
+            if (moveDir == null) {
+                errorLogger.warn("[WARN] Ungültige Bewegungsrichtung von ({},{}) nach ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                return;
+            }
+
+            List<MessageDefinitions.Field> sourceFields = currentGameMap.get(oldPos.x()).get(oldPos.y());
+            List<MessageDefinitions.Field> targetFields = currentGameMap.get(newX).get(newY);
+
+            boolean blocked = false;
+
+            for (MessageDefinitions.Field f : sourceFields) {
+                if (f instanceof MessageDefinitions.FieldWall wall &&
+                        wall.orientations().contains(moveDir.toString().toLowerCase())) {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            for (MessageDefinitions.Field f : targetFields) {
+                if (f instanceof MessageDefinitions.FieldWall wall &&
+                        wall.orientations().contains(moveDir.turnAround().toString().toLowerCase())) {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            if (blocked) {
+                controller.appendChatMessage("[BLOCKIERT] Bewegung durch Wand verhindert.");
+                return;
+            }
+
+            controller.moveRobotTo(clientID, newX, newY);
+        });
     }
+
 
 
     /**
