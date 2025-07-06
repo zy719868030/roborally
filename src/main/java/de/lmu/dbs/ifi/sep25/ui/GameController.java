@@ -77,6 +77,10 @@ public class GameController {
 
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
+    /**
+     * Stores the direction of the robot of each clientID as a lowercase string.
+     **/
+    private final Map<Integer, String> robotDirections = new HashMap<>();
 
     /**
      * Keeps track of the current register cards (null = empty)
@@ -528,7 +532,6 @@ public class GameController {
         }
 
 
-
 //        // Timer nur in Programmierphase starten
 //        if (isProgrammingPhase) {
 //            startCountdown();
@@ -661,32 +664,25 @@ public class GameController {
         }
     }
 
-        /**
-         * Zeigt die Startposition eines Roboters im Spielfeld an.
-         *
-         * @param x         X-Koordinate auf dem Spielfeld
-         * @param y         Y-Koordinate auf dem Spielfeld
-         * @param clientID  Die Client-ID des Spielers
-         * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
-         */
+    /**
+     * Zeigt die Startposition eines Roboters im Spielfeld an.
+     *
+     * @param x         X-Koordinate auf dem Spielfeld
+     * @param y         Y-Koordinate auf dem Spielfeld
+     * @param clientID  Die Client-ID des Spielers
+     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
+     */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         int robotID = clientToRobotID.get(clientID);
         try {
-            String imagePath = "/assets/robot_0" + robotID + ".png";
+            robotDirections.put(clientID, direction);
+            String imagePath = "/assets/robots/robot_0" + robotID + "_" + direction.toLowerCase() + ".png";
             Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
             robotView.setUserData("robot");//verbessern
-
-            // Drehe Bild je nach Richtung
-            switch (direction.toLowerCase()) {
-                case "right" -> robotView.setRotate(0);
-                case "bottom" -> robotView.setRotate(90);
-                case "left" -> robotView.setRotate(180);
-                case "top" -> robotView.setRotate(270);
-            }
 
             // Setze Roboter auf das Spielfeld (Grid)
             StackPane tile = getTileAt(x, y);
@@ -828,9 +824,9 @@ public class GameController {
 
                 // Let server & displayHandCards() handle UI
 
-               var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
-               var msg = new MessageDefinitions.Message<>(body);
-               ClientSingleton.getInstance().sendMessage(msg);
+                var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
+                var msg = new MessageDefinitions.Message<>(body);
+                ClientSingleton.getInstance().sendMessage(msg);
 
                 appLogger.info("Card selection message sent");
                 appendChatMessage("[INFO] Card: " + actualCardName + " has been selected for slot " + (nextEmptySlot + 1));
@@ -838,7 +834,7 @@ public class GameController {
                 appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
                 appLogger.warn("No available storage slots");
             }
-                updateConfirmButtonVisibility();
+            updateConfirmButtonVisibility();
 
 
         });
@@ -1002,7 +998,7 @@ public class GameController {
      * @param clientID Die ID des Spielers
      * @param filled   Ob das Register des Spielers vollständig ist
      */
-    public void handleCardSelection(int clientID,int register, boolean filled) {
+    public void handleCardSelection(int clientID, int register, boolean filled) {
         final boolean isSelf = clientID == ClientSingleton.getInstance().getID();
         final String playerName = getPlayerNameById(clientID);
 
@@ -1226,7 +1222,6 @@ public class GameController {
     }
 
 
-
     /**
      * Ersetzt eine Karte in einem bestimmten Register (z. B. durch Schaden).
      *
@@ -1251,7 +1246,6 @@ public class GameController {
     public void moveRobotTo(int clientID, int x, int y) {
         messageLogger.info("clientToRobotID = {}", clientToRobotID);
         messageLogger.info("clientID = {}", clientID);
-       // System.out.println("robotID = " + robotID);
 
         try {
             Integer robotID = clientToRobotID.get(clientID);
@@ -1259,7 +1253,10 @@ public class GameController {
             appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
             appLogger.info("Robot {} moved to ({}, {})", robotID, x, y);
 
-            final String imagePath = "/assets/robot_0" + robotID + ".png";
+            final String direction = robotDirections.get(clientID);
+            if (direction == null)
+                throw new IllegalStateException("Direction for clientID " + clientID + " not found in robotDirections map.");
+            final String imagePath = "/assets/robots/robot_0" + robotID + "_" + direction + ".png";
             final Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
@@ -1310,14 +1307,37 @@ public class GameController {
         if (cell != null) {
             for (Node node : cell.getChildren()) {
                 if (node instanceof ImageView img && "robot".equals(img.getUserData())) {
-                    double currentRotation = img.getRotate();
-                    double newRotation = switch (rotation.toLowerCase()) {
-                        case "clockwise" -> currentRotation + 90;
-                        case "counterclockwise" -> currentRotation - 90;
-                        case "uturn" -> currentRotation + 180;
-                        default -> currentRotation;
+                    final String currentDirection = robotDirections.get(clientID);
+                    if (currentDirection == null)
+                        throw new IllegalStateException("Direction for clientID " + clientID + " not found in robotDirections map. (called in rotateRobot)");
+
+                    final String newDirection = switch (rotation.toLowerCase()) {
+                        case "clockwise" -> rotateClockwise(currentDirection);
+                        case "counterclockwise" -> rotateCounterClockwise(currentDirection);
+                        case "uturn" -> rotateClockwise(rotateClockwise(currentDirection));
+                        default -> throw new IllegalArgumentException("Invalid rotation: " + rotation);
                     };
-                    img.setRotate(newRotation % 360);  // für saubere Rotation (z. B. 450° -> 90°)
+
+                    robotDirections.put(clientID, newDirection);
+
+                    Integer robotID = clientToRobotID.get(clientID);
+                    if (robotID == null)
+                        throw new IllegalStateException("Robot ID for clientID " + clientID + " not found in clientToRobotID map.");
+
+                    final String imagePath = "/assets/robots/robot_0" + robotID + "_" + newDirection + ".png";
+
+                    // Remove old image
+                    cell.getChildren().remove(node);
+
+                    // Add new image
+                    Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+                    ImageView newRobot = new ImageView(robotImg);
+                    newRobot.setFitWidth(40);
+                    newRobot.setFitHeight(40);
+                    newRobot.setPreserveRatio(true);
+                    newRobot.setUserData("robot");
+                    cell.getChildren().add(newRobot);
+
                     appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
                     break;
                 }
@@ -1327,6 +1347,25 @@ public class GameController {
         }
     }
 
+    private String rotateClockwise(String dir) {
+        return switch (dir) {
+            case "top" -> "right";
+            case "right" -> "bottom";
+            case "bottom" -> "left";
+            case "left" -> "top";
+            default -> dir;
+        };
+    }
+
+    private String rotateCounterClockwise(String dir) {
+        return switch (dir) {
+            case "top" -> "left";
+            case "left" -> "bottom";
+            case "bottom" -> "right";
+            case "right" -> "top";
+            default -> dir;
+        };
+    }
 
     public void setRobotPosition(int clientID, Position position) {
         robotPositions.put(clientID, position);
@@ -1394,6 +1433,7 @@ public class GameController {
             pause.play();
         }
     }
+
     public void askRebootDirection(Consumer<String> callback) {
         // Öffne ein einfaches Dialog-Fenster mit 4 Buttons oder ChoiceBox
         List<String> directions = List.of("top", "right", "bottom", "left");
@@ -1640,7 +1680,7 @@ public class GameController {
     /**
      * Display an error message dialog box.
      *
-     * @param title Dialog box title.
+     * @param title   Dialog box title.
      * @param message Error message.
      */
     public void displayErrorAlert(String title, String message) {
