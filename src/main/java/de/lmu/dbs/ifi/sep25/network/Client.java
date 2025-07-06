@@ -1072,17 +1072,9 @@ public class Client {
     public void handleBodyReboot(String json) {
         Message<BodyReboot> message = JsonUtil.parseMessage(json, BodyReboot.class);
         BodyReboot body = message.messageBody();
-        rebootingInProgress = body.clientID(); // mark that a reboot is pending
+        rebootingInProgress = body.clientID(); // Mark that a reboot is pending
 
-        // If it's this client's reboot, send the direction back
-        if (body.clientID().equals(ID)) {
-            String rebootDirection = "top"; // Placeholder direction (can be improved via GUI selection later)
-
-            // Send reboot direction back to server
-            sendMessage(new Message<>(new BodyRebootDirection(rebootDirection)));
-        }
-
-        // Optional: display something in the GUI
+        // Zeige Reboot-Animation/Info im Spiel
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
@@ -1090,11 +1082,22 @@ public class Client {
             }
         });
 
-        //TODO reboot direction selection
-        // display rotation, best directly in/during selection
-        // Sollte die Nachricht zur Ausrichtung nicht bis zum Ende der aktuellen Runde
-        // angekommen sein, wird die Standardausrichtung verwendet.
+        // Wenn der eigene Roboter rebooted wird → Richtung auswählen lassen
+        if (body.clientID().equals(ID)) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.askRebootDirection(direction -> {
+                        sendMessage(new Message<>(new BodyRebootDirection(direction)));
+                    });
+                } else {
+                    // Fallback falls kein Controller verfügbar
+                    sendMessage(new Message<>(new BodyRebootDirection("top")));
+                }
+            });
+        }
     }
+
 
     /**
      * Handles the server response indicating the direction chosen for a rebooted robot.

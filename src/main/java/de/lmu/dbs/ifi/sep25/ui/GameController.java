@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static java.util.Map.entry;
 
@@ -1326,6 +1327,24 @@ public class GameController {
             pause.play();
         }
     }
+    public void askRebootDirection(Consumer<String> callback) {
+        // Öffne ein einfaches Dialog-Fenster mit 4 Buttons oder ChoiceBox
+        List<String> directions = List.of("top", "right", "bottom", "left");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("top", directions);
+        dialog.setTitle("Roboter neu ausrichten");
+        dialog.setHeaderText("Wähle eine neue Ausrichtung für deinen Roboter");
+        dialog.setContentText("Ausrichtung:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            callback.accept(result.get());
+        } else {
+            // Wenn der Dialog geschlossen wurde oder abgebrochen → Standard
+            callback.accept("top");
+        }
+    }
+
 
     /**
      * Zeigt die Energieänderung für einen bestimmten Spieler an.
