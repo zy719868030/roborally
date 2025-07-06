@@ -165,6 +165,7 @@ public class Game {
             // Setup phase
             setPhase(GamePhase.SETUP);
 
+            // redundant call, but rather be safe since no harm.
             resetPlayersRound();
 
             determinePlayerOrder();
@@ -331,7 +332,7 @@ public class Game {
 
         this.currentPhase = phase;
 
-        appLogger.info("Set new phase and broadcasted: {}.", currentPhase);
+        appLogger.info("Set new phase and broadcasted: {}.\n", currentPhase);
 
         // TODO @Lukas broadcast current phase
         Server.getInstance().broadcastMessage(new MessageDefinitions.Message<>(
@@ -409,7 +410,7 @@ public class Game {
             }
 
             appLogger.info("No game end condition met.");
-            appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister + 1);
+            appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
 
             try {
                 Thread.sleep(500); // <-- Delay of 500 milliseconds between registers

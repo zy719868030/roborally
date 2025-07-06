@@ -495,7 +495,8 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
-        server.markReadyRegister(myID);
+//        server.markReadyRegister(myID); already called in player.setReadyRegister(true)
+        player.setReadyRegister(true);
         broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
 
         if (!server.getTimerStarted()) {

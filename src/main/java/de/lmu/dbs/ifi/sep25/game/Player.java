@@ -13,7 +13,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Player {
@@ -263,7 +264,7 @@ public class Player {
      **/
     public void updateHand() {
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
-        appLogger.info("Update player {}'s hand: {}", robot.getRobotID(), handWithNames);
+        appLogger.info("Update player {}'s hand: {}", clientID, handWithNames);
 
         // Always send real cards to the player
         connection.sendMessage(new MessageDefinitions.Message<>(
@@ -279,7 +280,7 @@ public class Player {
             ), connection);
         }
 
-        appLogger.info("Hand information sent.");
+//        appLogger.info("Hand information sent.");
     }
 
     /**
@@ -334,12 +335,6 @@ public class Player {
             }
             programmingDeck.discard(card);
             removeFromHand(card);
-//            if (hand.contains(card)) {
-//                programmingDeck.discard(card);
-//                removeFromHand(card);
-//            } else {
-//                connection.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodyError("Card " + card + " is not in your hand!")));
-//            }
         }
     }
 
@@ -387,16 +382,14 @@ public class Player {
                     if (register.get(registerSlot) != null) {
                         removeCardFromRegister(registerSlot);
                     }
+                    appLogger.info("Player {} selected card {} in register slot {}", clientID, cardName, registerSlot);
                     register.set(registerSlot, cardToPlay);
+                    appLogger.info("Current register: {}", registerToString());
                     removeFromHand(cardToPlay);
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
                                     clientID, registerSlot, Boolean.TRUE)));
-                    // Check whether all registers are filled
-                    if (register.stream().noneMatch(Objects::isNull)) {
-                        setReadyRegister(true);
-                    }
                 } else {
                     connection.sendMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyError("Card " + cardName + " is not in your hand!")
@@ -434,6 +427,7 @@ public class Player {
                 RegisterCard removedCard = register.get(registerSlot);
                 if (removedCard != null) {
                     // Remove the card from the register and return it to your hand.
+                    appLogger.info("Player {} removed card {} from register slot {}", clientID, CardFactory.getCardName(removedCard), registerSlot);
                     register.set(registerSlot, null);
                     addToHand(removedCard);
 
@@ -473,17 +467,20 @@ public class Player {
         for (int i = 0; i < register.size(); i++) {
             if (register.get(i) == null) {
                 RegisterCard newCard = drawCard();
-                register.set(i, newCard);
+                while (i == 0 && CardFactory.getCardName(newCard).equals("Again")) {
+                    discardCardFromHand(newCard);
+                    newCard = drawCard();
+                }
+                chooseCardToRegister(CardFactory.getCardName(newCard), i);
                 cardsYouGotNow.add(CardFactory.getCardName(newCard));
-                connection.sendMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyCardSelected(clientID, i, Boolean.TRUE)
-                ));
             }
         }
 
         connection.sendMessage(new MessageDefinitions.Message<>(
                 new MessageDefinitions.BodyCardsYouGotNow(cardsYouGotNow))
         );
+        // setReadyRegister(true) call needed to simulate push of the ready button
+        setReadyRegister(true);
     }
 
     public void addUpgrade(UpgradeCard upgrade) {
@@ -546,12 +543,14 @@ public class Player {
      * Resets the register. Fills the register with null objs and sets the flag readyRegister to false.
      **/
     public void resetRegister() {
+        appLogger.info("resetRegister called for player {}. Current register: {}", clientID, registerToString());
         // Move cards from registers to discard pile
         for (int i = 0; i < register.size(); i++) {
             RegisterCard card = register.get(i);
             if (card != null) {
-                discardCardFromHand(card);
+                appLogger.info("Clearing register slot {} for player {} and discarding from hand.", i, clientID);
                 register.set(i, null);
+                discardCardFromHand(card);
             }
         }
 
@@ -560,16 +559,50 @@ public class Player {
             register.set(i, null);
         }
         setReadyRegister(false);
+        appLogger.info("Player {}'s register has been reset.", clientID);
     }
 
     // UTILITY
 
+    /**
+     * Converts the player's register to a string representation.
+     * The register is represented as a map, where the key is the index of the register slot,
+     * and the value is the name of the card in that slot. Card names are retrieved using
+     * the {@code CardFactory} class.
+     *
+     * @return a string representation of the player's register, where each entry maps
+     *         register indices to the corresponding card names
+     */
+    public String registerToString() {
+        try {
+            return IntStream.range(0, register.size())
+                    .boxed()
+                    .collect(Collectors.toMap(
+                            i -> i,
+                            i -> {
+                                RegisterCard card = register.get(i);
+                                return card != null ? CardFactory.getCardName(card) : "EMPTY";
+                            }
+                    )).toString();
+        } catch (NullPointerException e) {
+            return "Register not yet initialized. (Nullpointer exception)";
+        }
+    }
+
+    /**
+     * Returns a string representation of the Player object, providing detailed information
+     * about the player's attributes including client ID, robot details, name, and register contents.
+     *
+     * @return a formatted string representing the Player object with its client ID, robot ID,
+     *         name, robot state, and the string representation of the register.
+     */
     public String toString() {
         return "Player{" +
-                "id=" + clientID +
+                "clientID=" + clientID +
+                ", robotID='" + robot.getRobotID() +
                 ", name='" + name + '\'' +
-                ", robot=" + robot +
-                ", register=" + register +
+                ", robot=" + robot.toString() +
+                ", register=" + registerToString() +
                 '}';
     }
 

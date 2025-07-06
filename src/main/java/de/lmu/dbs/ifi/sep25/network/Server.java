@@ -587,7 +587,14 @@ public class Server {
      * @param clientID the unique identifier of the client to be removed from the ready register
      */
     public void markReadyRegister(Integer clientID) {
+        appLogger.info("Marking client {} as ready.", clientID);
+        if (!waitingForProgramming.contains(clientID)) {
+            appLogger.warn("Client {} was not in the ready register, already removed.", clientID);
+            appLogger.info("waitingForProgramming: {}", waitingForProgramming);
+            return;
+        }
         waitingForProgramming.remove(clientID);
+        appLogger.info("waitingForProgramming: {}", waitingForProgramming);
         if (waitingForProgramming.isEmpty()) {
             game.checkAndAdvanceFromProgrammingPhase();
             resetReadyRegister();
@@ -601,6 +608,7 @@ public class Server {
      */
     public List<Integer> getWaitingForProgramming() {
         List<Integer> copy = new ArrayList<>(waitingForProgramming);
+        appLogger.info("Returning and resetting waitingForProgramming: {}", waitingForProgramming);
         resetReadyRegister();
         return copy;
     }
