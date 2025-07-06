@@ -418,7 +418,7 @@ public class Game {
         appLogger.info("All registers processed. Entering the end of round phase.");
 
         try {
-            Thread.sleep(1000); // 1-second pause before starting next round
+            Thread.sleep(1000); // 10-second pause before starting next round
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
