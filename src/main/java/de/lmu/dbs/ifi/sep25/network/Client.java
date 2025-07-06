@@ -1294,7 +1294,8 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.showGameResult(isWinner);
+                controller.showGameResult(isWinner, winnerID);
+
             } else {
                 appLogger.error("[WARN] GameController is null in handleBodyGameFinished");
             }

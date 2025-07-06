@@ -9,9 +9,11 @@ import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -20,10 +22,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.util.Loader;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -283,6 +288,10 @@ public class GameController {
         Integer x = GridPane.getColumnIndex(selectedPane);
         Integer y = GridPane.getRowIndex(selectedPane);
         if (x == null || y == null) return;
+        int myID = ClientSingleton.getInstance().getID();
+        appLogger.info("Mi ClientID: {}", myID);
+        appLogger.info("Jugador en turno (currentPlayerID): {}", currentPlayerID);
+
 
         // Nachricht senden
         var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y,
@@ -610,59 +619,49 @@ public class GameController {
             playedCardsBox.getChildren().remove(0);
         }
     }
+    private final List<StackPane> startPointPanes = new ArrayList<>();
 
-    /**
-     * Hebt den Spieler hervor, der aktuell am Zug ist.
-     *
-     * @param clientID Die Client-ID des Spielers
-     */
     public void markCurrentPlayer(int clientID) {
+        this.currentPlayerID = clientID; // Immer setzen
+        int myID = ClientSingleton.getInstance().getID();
         int phaseID = getCurrentPhaseID();
+
         appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
+        appLogger.info("ClientID (ich): {}, aktueller Spieler: {}", myID, clientID);
+
+        boolean isMyTurn = (myID == clientID);
 
         if (phaseID == 2) {
             appendChatMessage("[INFO] Programmieren...");
             statusLabel.setText("Spiel läuft...");
         }
-        appLogger.info("Aktueller Spieler ist: {}", clientID);
 
-        for (PlayerEntry entry : recipientBox.getItems()) {
-            if (entry.getClientID() == clientID) {
-                String playerName = entry.getName();
-
-                // Es ist dein eigener Zug
-                if (clientID == ClientSingleton.getInstance().getID()) {
-                    appendChatMessage("[INFO] Du bist am Zug!");
-
-                    if (currentPhaseID == 0) {
-                        appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
-                    }
-                } else {
-                    appendChatMessage("[INFO] " + playerName + " ist am Zug.");
-                    statusLabel.setText(playerName + " ist am Zug.");
-                }
-                recipientBox.getSelectionModel().select(entry);
-
-                this.currentPlayerID = clientID;
-                return;
-            }
-        }
-
-        // Falls der Spieler nicht gefunden wurde
-        if (clientID == ClientSingleton.getInstance().getID()) {
-            appendChatMessage("[INFO] Du bist am Zug.");
-
-            if (currentPhaseID == 0) {
+        if (isMyTurn) {
+            appendChatMessage("[INFO] Du bist am Zug!");
+            statusLabel.setText("Du bist am Zug.");
+            if (phaseID == 0) {
                 appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
             }
-
-            statusLabel.setText("Du bist am Zug.");
         } else {
-            String name = getPlayerNameById(clientID);
+            String name = getPlayerNameById(clientID); // eigene Methode
             appendChatMessage("[INFO] " + name + " ist am Zug.");
             statusLabel.setText(name + " ist am Zug.");
         }
+
+        // 🔒 Startpunkte deaktivieren, außer wenn ich am Zug bin
+        for (StackPane sp : startPointPanes) {
+            sp.setDisable(!isMyTurn);
+        }
+
+        // 🔄 Optional: Empfängerfeld markieren (falls sinnvoll)
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() == clientID) {
+                recipientBox.getSelectionModel().select(entry);
+                break;
+            }
+        }
     }
+
 
     /**
      * Zeigt die Startposition eines Roboters im Spielfeld an.
@@ -1485,17 +1484,70 @@ public class GameController {
      *
      * @param isWinner true, wenn der Spieler gewonnen hat; false sonst
      */
-    public void showGameResult(boolean isWinner) {
-        String resultText = isWinner ? "🎉 Glückwunsch, du hast GEWONNEN! 🎉"
-                : "☠️ Leider verloren. Versuch es erneut! ☠️";
-        appendChatMessage("[SPIELENDE] " + resultText);
+    /**
+     * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
+     *
+     * @param isWinner         true, wenn der Spieler selbst gewonnen hat
+     * @param winnerClientId   Client-ID des Gewinner-Spielers
+     */
+    public void showGameResult(boolean isWinner, int winnerClientId) {
+        Platform.runLater(() -> {
+            String playerName = getPlayerNameById(winnerClientId);
+            String message = isWinner
+                    ? " Glückwunsch, " + playerName + " hat das Rennen gemeistert! 🏆"
+                    : "🔩 Du hast deine Schrauben verloren. " + playerName + " dominiert das Spielfeld!";
 
-        // Optional: Fenster, Animation oder Szenewechsel
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Spiel beendet");
-        alert.setHeaderText(null);
-        alert.setContentText(resultText);
-        alert.showAndWait();
+            appendChatMessage("[SPIELENDE] " + message);
+
+            int robotId = clientToRobotID.getOrDefault(winnerClientId, 1);
+            String direction = robotDirections.getOrDefault(winnerClientId, "top");
+            String imagePath = "/assets/robots/robot_0" + robotId + "_" + direction + ".png";
+
+            ImageView robotImage = new ImageView();
+            try {
+                Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+                robotImage.setImage(robotImg);
+            } catch (Exception e) {
+                appLogger.error("Roboterbild konnte nicht geladen werden: " + imagePath);
+            }
+
+            robotImage.setFitWidth(180);
+            robotImage.setPreserveRatio(true);
+
+            Label title = new Label(message);
+            title.getStyleClass().add("status-label");
+            title.setWrapText(true);
+            title.setMaxWidth(600);
+            title.setAlignment(Pos.CENTER);
+
+            Button backToMenuBtn = new Button("Zurück zum Hauptmenü");
+            backToMenuBtn.getStyleClass().add("senden-button");
+            backToMenuBtn.setOnAction(e -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                    Parent menuRoot = loader.load();
+                    Scene menuScene = new Scene(menuRoot, 800, 600);
+                    menuScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+                    Stage stage = (Stage) root.getScene().getWindow();
+                    stage.setScene(menuScene);
+                } catch (IOException ex) {
+                    appLogger.error("Hauptmenü konnte nicht geladen werden.", ex);
+                    displayErrorAlert("Fehler", "Das Hauptmenü konnte nicht geladen werden.");
+                }
+            });
+
+            VBox layout = new VBox(30, title, robotImage, backToMenuBtn);
+            layout.setAlignment(Pos.CENTER);
+            layout.getStyleClass().add("vbox");
+
+            StackPane rootPane = new StackPane(layout);
+            Scene scene = new Scene(rootPane, 800, 600);
+            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+            Stage stage = (Stage) root.getScene().getWindow();
+            stage.setScene(scene);
+        });
     }
 
 
@@ -1641,7 +1693,7 @@ public class GameController {
             view.setEffect(null);
         });
 
-        // 🖱️ Klick-Ereignis → fügt Karte ins nächste freie Registerfeld ein
+        //  Klick-Ereignis → fügt Karte ins nächste freie Registerfeld ein
         view.setOnMouseClicked(e -> {
             logger.info("Karte '{}' wurde angeklickt.", cardName);
             addCardToNextEmptyRegister(cardName);
