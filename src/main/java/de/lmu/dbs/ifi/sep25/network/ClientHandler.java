@@ -396,6 +396,12 @@ public class ClientHandler implements Runnable {
             return;
         }
 
+        // Added check: Ensure that only the current player can select the starting position.
+        if (placementLatch == null) {
+            sendMessage(new Message<>(new BodyError("Es ist nicht dein Zug. Bitte warte, bis du an der Reihe bist.")));
+            appLogger.warn("Player {} (ID: {}) attempted to set starting position but it's not their turn", player.getName(), myID);
+            return;
+        }
 
         // Broadcasts are handled in setPlayerStartingPosition
         if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
@@ -407,6 +413,7 @@ public class ClientHandler implements Runnable {
             throw new IllegalStateException("Latch is not set! Probable cause for this error: Player selected staring position although not their turn.");
         }
     }
+
 
     /**
      * Handles the processing of a body-selected card event. Calls chooseCard in player.
