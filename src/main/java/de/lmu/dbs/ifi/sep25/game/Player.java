@@ -396,7 +396,7 @@ public class Player {
             }
         } else {
             connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("You already selected your registry cards! Called in chooseCardToRegister() method in Player.java")
+                    new MessageDefinitions.BodyError("You already selected your registry cards! Called in chooseCardToRegister() method in Player.java. CALLED IN chooseCardToRegister.")
             ));
         }
     }

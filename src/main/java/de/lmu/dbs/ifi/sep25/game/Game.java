@@ -226,57 +226,9 @@ public class Game {
 
         appLogger.info("Entering activation phase.");
         setPhase(GamePhase.ACTIVATION);
-        resetPlayersHand();
-        determinePlayerOrder();
+        clearPlayerHands();
+        appLogger.info("Starting activation phase. Current register: {}", currentRegister);
         handleActivationPhase();
-    }
-
-    /**
-     * Checks if the current activation phase for the current register is complete.
-     * If completed, advances to the next register or ends the round.
-     * This method should be called after each player's robot movement is processed.
-     *
-     * @return true if game advanced to next register or round, false otherwise
-     */
-    public boolean checkAndAdvanceActivationPhase() {
-        if (currentPlayerTurn.isEmpty() && currentPhase == GamePhase.ACTIVATION) {
-            currentRegister++;
-
-            if (currentRegister < 5) {
-                appLogger.info("Register {} completed. Moving to register {}.", currentRegister - 1, currentRegister);
-                determinePlayerOrder();
-                return true;
-            } else {
-                appLogger.info("All registers processed. Ending round {}.", roundNumber);
-                endRound();
-
-                // Check if the game has ended
-                if (checkGameEnd()) {
-                    appLogger.info("Game end condition met. Game over.");
-                } else {
-                    startNewGameRound();
-                }
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void endRound() {
-        // Reset players
-        resetPlayersRound();
-
-        // Reset the current register counter
-        currentRegister = 0;
-
-        // TODO @lukas：Broadcast end of round message
-        Server.getInstance().broadcastMessage(
-                new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
-                                " completed.", 0, false)
-                )
-        );
     }
 
     /**
@@ -406,24 +358,6 @@ public class Game {
             }
             currentPlayerTurn.remove(player);
         }
-//        while (!currentPlayerTurn.isEmpty()) {
-//            ClientHandler currentPlayerConnection = currentPlayerTurn.pop().getConnection();
-//
-//            final CountDownLatch latch = new CountDownLatch(1);  // One latch per turn
-//            currentPlayerConnection.setPlacementLatch(latch);
-//
-//            // Notify all clients who is placing TODO @Lukas broadcast CurrentPlayer
-//            currentPlayerConnection.broadcastMessage(new MessageDefinitions.Message<>(
-//                    new MessageDefinitions.BodyCurrentPlayer(currentPlayerConnection.getMyID())
-//            ));
-//
-//            try {
-//                latch.await();
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                System.err.println("Interrupted while waiting for placements.");
-//            }
-//        }
         appLogger.info("All players have chosen their starting positions. Enter the programming phase.");
     }
 
@@ -448,14 +382,59 @@ public class Game {
      * Handle the activation phase using per-register logic and correct player order updates.
      */
     private void handleActivationPhase() {
-        while (!checkGameEnd() && currentRegister < 5) {
+        if (currentPhase != GamePhase.ACTIVATION) {
+            appLogger.error("handleActivationPhase() called while phase is {}", currentPhase);
+            return;
+        }
+
+        if (currentRegister != 0) {
+            appLogger.warn("currentRegister has not been reset properly. currentRegister: {}", currentRegister);
+        }
+
+        for (currentRegister = 0; currentRegister < 5; currentRegister++) {
+            appLogger.info("Processing register {}", currentRegister);
+
+            determinePlayerOrder();
             handleCurrentRegister();
 
-            // Advance to next register or round
-            if (!checkAndAdvanceActivationPhase()) {
+            appLogger.info("Processing register {} complete. Checking game end.", currentRegister);
+
+            if (checkGameEnd()) {
+                appLogger.info("Game ended during activation of register {}", currentRegister);
                 break;
             }
+
+            appLogger.info("No game end condition met.");
+            appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister + 1);
+
+            try {
+                Thread.sleep(500); // <-- Delay of 500 milliseconds between registers
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                appLogger.warn("Activation delay interrupted");
+            }
         }
+
+        appLogger.info("All registers processed. Entering the end of round phase.");
+
+        try {
+            Thread.sleep(1000); // 10-second pause before starting next round
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Reset the current register counter
+        currentRegister = 0;
+
+        // TODO @lukas：Broadcast end of round message
+        Server.getInstance().broadcastMessage(
+                new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
+                                " completed.", 0, false)
+                )
+        );
+
+        startNewGameRound();
     }
 
     /**
@@ -465,7 +444,7 @@ public class Game {
      * - activates board elements and lasers
      */
     private void handleCurrentRegister() {
-        appLogger.info("Activating register {}", currentRegister + 1);
+        appLogger.info("Activating register {}", currentRegister);
 
         // Collect active cards to broadcast
         List<MessageDefinitions.ActiveCard> activeCards = new ArrayList<>();
@@ -506,11 +485,6 @@ public class Game {
 
         // Fire robot lasers
         handleRobotLasers();
-
-        // Check if game ends during this register
-        if (checkGameEnd()) {
-            appLogger.info("Game ended during activation of register {}", currentRegister + 1);
-        }
     }
 
 
@@ -765,7 +739,8 @@ public class Game {
     /**
      * Resets all the players hand.
      **/
-    private void resetPlayersHand() {
+    private void clearPlayerHands() {
+        appLogger.info("Resetting hand for all players.");
         for (Player player : players)
             player.resetHand();
     }

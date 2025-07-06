@@ -120,31 +120,37 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             String json;
-            while ((json = reader.readLine()) != null) {
-                String messageType = JsonUtil.parseUnknown(json).messageType();
-                switch (messageType) {
-                    case "Alive" -> handleBodyAlive();
-                    case "HelloServer" -> handleBodyHelloServer(json);
-                    case "PlayerValues" -> handleBodyPlayerValues(json);
-                    case "SetStatus" -> handleBodySetStatus(json);
-                    case "MapSelected" -> handleBodyMapSelected(json);
-                    case "SendChat" -> handleBodySendChat(json);
-                    case "ReceivedChat" -> handleBodyReceivedChat(json);
-                    case "Error" -> handleBodyError(json);
-                    case "PlayCard" -> handleBodyPlayCard(json);
-                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-                    case "SelectedCard" -> handleBodySelectedCard(json);
-                    case "SelectedDamage" -> handleBodySelectedDamage(json);
-                    case "RebootDirection" -> handleBodyRebootDirection(json);
-                    case "SelectionFinished" -> setReadyRegister();
-
-                    default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+            while (!Thread.currentThread().isInterrupted() && (json = reader.readLine()) != null) {
+                try {
+                    String messageType = JsonUtil.parseUnknown(json).messageType();
+                    switch (messageType) {
+                        case "Alive" -> handleBodyAlive();
+                        case "HelloServer" -> handleBodyHelloServer(json);
+                        case "PlayerValues" -> handleBodyPlayerValues(json);
+                        case "SetStatus" -> handleBodySetStatus(json);
+                        case "MapSelected" -> handleBodyMapSelected(json);
+                        case "SendChat" -> handleBodySendChat(json);
+                        case "ReceivedChat" -> handleBodyReceivedChat(json);
+                        case "Error" -> handleBodyError(json);
+                        case "PlayCard" -> handleBodyPlayCard(json);
+                        case "SetStartingPoint" -> handleBodySetStartingPoint(json);
+                        case "SelectedCard" -> handleBodySelectedCard(json);
+                        case "SelectedDamage" -> handleBodySelectedDamage(json);
+                        case "RebootDirection" -> handleBodyRebootDirection(json);
+                        case "SelectionFinished" -> setReadyRegister();
+                        default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                    }
+                } catch (IllegalArgumentException e) {
+                    appLogger.warn("Invalid message received: " + e.getMessage());
+                    sendMessage(new Message<>(new BodyError("Invalid message format: " + e.getMessage())));
                 }
             }
         } catch (IOException e) {
-            sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
-            appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
-//            e.printStackTrace(); DEBUG
+            if (!Thread.currentThread().isInterrupted()) {
+                appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
+                sendMessage(new Message<>(new BodyError("Connection error: " + e.getMessage())));
+            }
+        } finally {
             closeAll();
         }
     }
@@ -677,4 +683,3 @@ public class ClientHandler implements Runnable {
         this.mapSelecting = mapSelecting;
     }
 }
-
