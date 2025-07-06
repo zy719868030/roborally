@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -495,9 +496,7 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
-//        server.markReadyRegister(myID); already called in player.setReadyRegister(true)
         player.setReadyRegister(true);
-        broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
 
         if (!server.getTimerStarted()) {
             server.setTimerStarted(true);
@@ -523,6 +522,11 @@ public class ClientHandler implements Runnable {
 
         scheduler.schedule(() -> {
             List<Integer> readyRegister = server.getWaitingForProgramming();
+            //DEBUG
+            appLogger.info("Timer ended. Ready register: {}", readyRegister);
+            appLogger.info("ready register set to empty list for testing purposes.");
+            readyRegister = new ArrayList<>();
+            //
             broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
             server.setTimerStarted(false);
 

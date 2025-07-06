@@ -947,10 +947,7 @@ public class GameController {
         int clientID = ClientSingleton.getInstance().getID();
         for (int i = 0; i < selectedCards.size(); i++) {
             String cardName = selectedCards.get(i);
-            var body = new MessageDefinitions.BodySelectedCard(cardName, i);
-            var msg = new MessageDefinitions.Message<>(body);
-            messageLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
-            ClientSingleton.getInstance().sendMessage(msg);
+            appLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
         }
 
         // Sende "fertig" Nachricht an Server
@@ -1089,6 +1086,11 @@ public class GameController {
      * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
+        if (!timerLabel.isVisible()) {
+            appLogger.info("Timer ended, but not displayed since timer was already hidden.");
+            return;
+        }
+
         hideCountdown();
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
