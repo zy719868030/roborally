@@ -432,6 +432,8 @@ public class Player {
                     register.set(registerSlot, null);
                     addToHand(removedCard);
 
+                    appLogger.info("Card {} has been removed from the register: {}", removedCard, registerToString());
+
                     // Notify server that register slot has been cleared
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
@@ -546,13 +548,14 @@ public class Player {
      * Resets the register. Fills the register with null objs and sets the flag readyRegister to false.
      **/
     public void resetRegister() {
+        setReadyRegister(false);
+
         appLogger.info("resetRegister called for player {}. Current register: {}", clientID, registerToString());
         // Move cards from registers to discard pile
         for (int i = 0; i < register.size(); i++) {
             RegisterCard card = register.get(i);
             if (card != null) {
                 appLogger.info("Clearing register slot {} for player {} and discarding from hand.", i, clientID);
-                register.set(i, null);
                 removeCardFromRegister(i);
                 discardCardFromHand(card);
             }
@@ -562,7 +565,6 @@ public class Player {
         for (int i = 0; i < 5; i++) {
             register.set(i, null);
         }
-        setReadyRegister(false);
         appLogger.info("Player {}'s register has been reset.", clientID);
     }
 

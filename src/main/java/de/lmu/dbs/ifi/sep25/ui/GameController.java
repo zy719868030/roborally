@@ -33,6 +33,7 @@ public class GameController {
     // 0. Logger
     private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
     private static final Logger appLogger = LogManager.getLogger(GameController.class);
+    private static final Logger errorLogger = LogManager.getLogger(GameController.class);
 
     @FXML
     private GridPane gameBoardPane;
@@ -81,7 +82,7 @@ public class GameController {
      * Keeps track of the current register cards (null = empty)
      **/
     private final String[] registerState = new String[5];
-    private static final Logger errorLogger = LogManager.getLogger(GameController.class);
+    private final Set<Integer> manuallyClearedSlots = new HashSet<>();
 
 
     @FXML
@@ -908,6 +909,7 @@ public class GameController {
                     }
 
                     if (slotIndex != -1) {
+                        manuallyClearedSlots.add(slotIndex); // for differentiation between server changes and client changes
                         pane.getChildren().clear();
                         registerState[slotIndex] = null;
 
@@ -1000,12 +1002,33 @@ public class GameController {
      * @param clientID Die ID des Spielers
      * @param filled   Ob das Register des Spielers vollständig ist
      */
-    public void handleCardSelection(int clientID, boolean filled) {
-        boolean isSelf = clientID == ClientSingleton.getInstance().getID();
-        String playerName = getPlayerNameById(clientID);
+    public void handleCardSelection(int clientID,int register, boolean filled) {
+        final boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        final String playerName = getPlayerNameById(clientID);
 
         if (!isSelf) {
             appendChatMessage("[INFO] " + playerName + " hat eine Karte ausgewählt.");
+            return;
+        }
+        // Self && !filled so self and emptied
+        if (!filled) {
+            if (manuallyClearedSlots.remove(register)) {
+                appLogger.debug("Ignoring register {} deselection - user triggered.", register);
+                return;
+            }
+            // for server forced removal
+            if (register >= 0 && register < registerBox.getChildren().size()) {
+                Node boxNode = registerBox.getChildren().get(register);
+                if (boxNode instanceof VBox vbox) {
+                    StackPane pane = (StackPane) vbox.getChildren().get(1);
+                    pane.getChildren().clear();
+                }
+            }
+            registerState[register] = null;
+
+            // No need to update the hand manually — will be handled by displayHandCards
+            appendChatMessage("[INFO] Deine Karte aus Register " + (register + 1) + " wurde entfernt.");
+            appLogger.info("Card removed from register slot {} by server (isSelf).", register);
         }
     }
 

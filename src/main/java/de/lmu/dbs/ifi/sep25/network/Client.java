@@ -790,12 +790,14 @@ public class Client {
         BodyCardSelected body = message.messageBody();
 
         int clientID = body.clientID();
+        int register = body.register();
         boolean filled = body.filled();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.handleCardSelection(clientID, filled); // implement in GameController
+                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
+                controller.handleCardSelection(clientID, register, filled); // implement in GameController
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
             }
