@@ -427,7 +427,8 @@ public class Player {
                 RegisterCard removedCard = register.get(registerSlot);
                 if (removedCard != null) {
                     // Remove the card from the register and return it to your hand.
-                    appLogger.info("Player {} removed card {} from register slot {}", clientID, CardFactory.getCardName(removedCard), registerSlot);
+                    appLogger.info("Player {} removed card {} from register slot {}", clientID,
+                            CardFactory.getCardName(removedCard), registerSlot);
                     register.set(registerSlot, null);
                     addToHand(removedCard);
 
@@ -449,13 +450,15 @@ public class Player {
                 ));
                 return false;
             }
-        } else {
-            connection.sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Unable to modify the register: You have completed your card " +
-                            "selection for this round. Please wait for the next round to begin.")
-            ));
-            return false;
         }
+//        } else {
+//            connection.sendMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyError("Unable to modify the register: You have completed your card " +
+//                            "selection for this round. Please wait for the next round to begin.")
+//            ));
+//            return false;
+//        }
+        return false;
     }
 
     /**
@@ -550,6 +553,7 @@ public class Player {
             if (card != null) {
                 appLogger.info("Clearing register slot {} for player {} and discarding from hand.", i, clientID);
                 register.set(i, null);
+                removeCardFromRegister(i);
                 discardCardFromHand(card);
             }
         }
