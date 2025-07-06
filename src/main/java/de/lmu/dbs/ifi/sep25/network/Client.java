@@ -2,6 +2,8 @@ package de.lmu.dbs.ifi.sep25.network;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.GameController;
@@ -232,11 +234,20 @@ public class Client {
      */
     private void handleBodyWelcome(String json) {
         Message<BodyWelcome> msg = JsonUtil.parseMessage(json, BodyWelcome.class);
+        clientLogger.info("[RECEIVED] Welcome: {}", gsonPretty.toJson(msg));
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
         clientLogger.info("Your client ID: {}", getID());
-        usernames.put(ID, "(me)");// identify the local player in user lists
+        usernames.put(ID, "(me)");
+
+        //  PlayerValues only after Welcome
+        LoginController loginCtrl = ControllerRegistry.getLoginController();
+        if (loginCtrl != null && loginCtrl.cachedName != null) {
+            String name = loginCtrl.cachedName;
+            int figure = loginCtrl.cachedFigure;
+            sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+        }
     }
 
     /**
@@ -376,21 +387,28 @@ public class Client {
         Platform.runLater(() -> {
             LobbyController controller = ControllerRegistry.getLobbyController();
             if (controller != null) {
-                controller.showMapSelection(availableMaps);
+                int selectorID = message.messageBody().selectorID();
+                int myID = ClientSingleton.getInstance().getID();
+                if (selectorID == myID) {
+                    controller.showMapSelection(message.messageBody().availableMaps());
+                } else {
+                    controller.hideMapSelection(); // sicherheitshalber
+                }
             } else {
                 errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
             }
         });
     }
 
-    /**
-     * Handles the selected body map event provided in JSON format.
-     * Parses the JSON message, retrieves the selected map,
-     * and updates the LobbyController with the corresponding map information.
-     *
-     * @param json a JSON string representing the selected body map event,
-     *             expected to contain the necessary data to identify the selected map.
-     */
+
+        /**
+         * Handles the selected body map event provided in JSON format.
+         * Parses the JSON message, retrieves the selected map,
+         * and updates the LobbyController with the corresponding map information.
+         *
+         * @param json a JSON string representing the selected body map event,
+         *             expected to contain the necessary data to identify the selected map.
+         */
     private void handleBodyMapSelected(String json) {
         Message<MessageDefinitions.BodyMapSelected> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
@@ -442,7 +460,6 @@ public class Client {
 
                 controller.drawBoard(boardMap);
                 controller.setInitialPlayerStats(energy, checkpointsReached);
-                controller.showWelcomeDialog();
 
 
 
@@ -539,6 +556,37 @@ public class Client {
             return;
         }
 
+        // Handle the error of placing the Again card in the first register.
+        if (errorText.contains("Again card cannot be played in the first register")) {
+            Platform.runLater(() -> {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Card placement error",
+                            "The card Again cannot be placed in the first register position!\n" +
+                                    "Please select the 2nd to 5th register positions.");
+                    gameCtrl.highlightRegisterSlot(0);
+                } else {
+                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
+                }
+            });
+            return;
+        }
+
+        // Handle other game rule-related errors to prevent the client from closing.
+        if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
+            Platform.runLater(() -> {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Card operation error", errorText);
+                } else {
+                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
+                }
+            });
+            return;
+        }
+
         closeAll(); // bei anderen Fehlern
     }
 
@@ -598,36 +646,45 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = waitForGameController();
             if (controller != null) {
+                int phase = controller.getCurrentPhaseID();
+
+                if (phase == 2) {
+                    appLogger.warn(" not markCurrentPlayer in Programmierphase (Phase 2)");
+                    return;
+                }
+
                 controller.markCurrentPlayer(currentClientID);
-            } else {
-                errorLogger.error("[WARN] GameController ist null nach Warten in handleBodyCurrentPlayer");
             }
         });
     }
-
-    /**
-     * Handles the "BodyActivePhase" message received from the server.
-     * This method processes a JSON string representing a {@code BodyActivePhase} message,
-     * extracts the phase information from the message body, and updates the client's internal state.
-     *
-     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
-     */
+        /**
+         * Handles the "BodyActivePhase" message received from the server.
+         * This method processes a JSON string representing a {@code BodyActivePhase} message,
+         * extracts the phase information from the message body, and updates the client's internal state.
+         *
+         * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+         */
     private void handleBodyActivePhase(String json) {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
-            String phaseName = switch (phaseID) {
-                case 0 -> "Aufbauphase";
-                case 1 -> "Upgradephase";
-                case 2 -> "Programmierphase";
-                case 3 -> "Aktivierungsphase";
-                default -> "Unbekannt";
-            };
-            controller.updatePhase(phaseName);
+            if (controller != null) {
+                controller.setCurrentPhaseID(phaseID);
+
+                String phaseName = switch (phaseID) {
+                    case 0 -> "Aufbauphase";
+                    case 1 -> "Upgradephase";
+                    case 2 -> "Programmierphase";
+                    case 3 -> "Aktivierungsphase";
+                    default -> "Unbekannt";
+                };
+                controller.updatePhase(phaseName);
+            }
         });
     }
+
 
     /**
      * Handles the "StartingPointTaken" message from the server, indicating that a player
@@ -649,6 +706,8 @@ public class Client {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
                 controller.displayStartingPoint(x, y, clientID, direction);
+                //  Position merken!
+                controller.setRobotPosition(clientID, new Position(x, y));
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
             }
@@ -731,12 +790,14 @@ public class Client {
         BodyCardSelected body = message.messageBody();
 
         int clientID = body.clientID();
+        int register = body.register();
         boolean filled = body.filled();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.handleCardSelection(clientID, filled); // implement in GameController
+                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
+                controller.handleCardSelection(clientID, register, filled); // implement in GameController
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
             }
@@ -753,18 +814,20 @@ public class Client {
      * @param json the JSON string containing the serialized {@code BodyCardSelected} message
      */
     private void handleBodySelectionFinished(String json) {
-        Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
-        BodyCardSelected body = message.messageBody();
+        Message<BodySelectionFinished> message = JsonUtil.parseMessage(json, BodySelectionFinished.class);
+        BodySelectionFinished body = message.messageBody();
+        int clientID = body.clientID();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.markPlayerReady(body.clientID());
+                controller.markPlayerReady(clientID);
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodySelectionFinished");
             }
         });
     }
+
 
     private void handleBodyTimerStarted() {
         Platform.runLater(() -> {
@@ -878,27 +941,89 @@ public class Client {
      * @param json JSON string containing the new coordinates and client ID
      */
     public void handleBodyMovement(String json) {
+        clientLogger.info("[CLIENT] handleBodyMovement called");
+        clientLogger.info("json = {}", json);
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
         BodyMovement body = message.messageBody();
-        // Server server = Server.getInstance();
 
         int clientID = body.clientID();
-        int x = body.x();
-        int y = body.y();
+        int newX = body.x();
+        int newY = body.y();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.moveRobotTo(clientID, x, y);
-            } else {
+            if (controller == null) {
                 errorLogger.error("[WARN] GameController is null in handleBodyMovement");
+                return;
             }
-        });
 
-        //TODO display:
-        // maybe clear board of robot, set robot at new position?
-        // maybe use sendMessageSelf(new Message<>(new BodyAnimaton("Movement"))
+            if (newX < 0 || newY < 0 ||
+                    (currentGameMap != null && (newX >= currentGameMap.size() ||
+                            (currentGameMap.get(0) != null && newY >= currentGameMap.get(0).size())))) {
+                clientLogger.info("Robot {} fell off the board to point ({}, {})", clientID, newX, newY);
+                controller.handleRobotFellOffBoard(clientID);
+                return;
+            }
+
+
+            Position oldPos = controller.getRobotPosition(clientID);
+            if (oldPos == null) {
+                errorLogger.warn("[WARN] Keine alte Roboterposition bekannt für Client {}", clientID);
+                return;
+            }
+
+            int dx = newX - oldPos.x();
+            int dy = newY - oldPos.y();
+            Direction moveDir = null;
+
+            if (dx == 1) moveDir = Direction.EAST;
+            else if (dx == -1) moveDir = Direction.WEST;
+            else if (dy == 1) moveDir = Direction.SOUTH;
+            else if (dy == -1) moveDir = Direction.NORTH;
+
+
+            if (moveDir == null) {
+                errorLogger.warn("[WARN] Ungültige Bewegungsrichtung von ({},{}) nach ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                return;
+            }
+
+            // Check if the current map range is valid
+            if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.get(0).size() ||
+                    oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.get(0).size()) {
+                errorLogger.warn("[WARN] Ungültige Kartenkoordinaten: alt ({},{}) neu ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                return;
+            }
+
+            List<MessageDefinitions.Field> sourceFields = currentGameMap.get(oldPos.x()).get(oldPos.y());
+            List<MessageDefinitions.Field> targetFields = currentGameMap.get(newX).get(newY);
+
+            boolean blocked = false;
+
+            for (MessageDefinitions.Field f : sourceFields) {
+                if (f instanceof MessageDefinitions.FieldWall wall &&
+                        wall.orientations().contains(moveDir.toString().toLowerCase())) {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            for (MessageDefinitions.Field f : targetFields) {
+                if (f instanceof MessageDefinitions.FieldWall wall &&
+                        wall.orientations().contains(moveDir.turnAround().toString().toLowerCase())) {
+                    blocked = true;
+                    break;
+                }
+            }
+
+            if (blocked) {
+                controller.appendChatMessage("[BLOCKIERT] Bewegung durch Wand verhindert.");
+                return;
+            }
+
+            controller.moveRobotTo(clientID, newX, newY);
+        });
     }
+
 
 
     /**
@@ -1046,17 +1171,9 @@ public class Client {
     public void handleBodyReboot(String json) {
         Message<BodyReboot> message = JsonUtil.parseMessage(json, BodyReboot.class);
         BodyReboot body = message.messageBody();
-        rebootingInProgress = body.clientID(); // mark that a reboot is pending
+        rebootingInProgress = body.clientID(); // Mark that a reboot is pending
 
-        // If it's this client's reboot, send the direction back
-        if (body.clientID().equals(ID)) {
-            String rebootDirection = "top"; // Placeholder direction (can be improved via GUI selection later)
-
-            // Send reboot direction back to server
-            sendMessage(new Message<>(new BodyRebootDirection(rebootDirection)));
-        }
-
-        // Optional: display something in the GUI
+        // Zeige Reboot-Animation/Info im Spiel
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
@@ -1064,11 +1181,22 @@ public class Client {
             }
         });
 
-        //TODO reboot direction selection
-        // display rotation, best directly in/during selection
-        // Sollte die Nachricht zur Ausrichtung nicht bis zum Ende der aktuellen Runde
-        // angekommen sein, wird die Standardausrichtung verwendet.
+        // Wenn der eigene Roboter rebooted wird → Richtung auswählen lassen
+        if (body.clientID().equals(ID)) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.askRebootDirection(direction -> {
+                        sendMessage(new Message<>(new BodyRebootDirection(direction)));
+                    });
+                } else {
+                    // Fallback falls kein Controller verfügbar
+                    sendMessage(new Message<>(new BodyRebootDirection("top")));
+                }
+            });
+        }
     }
+
 
     /**
      * Handles the server response indicating the direction chosen for a rebooted robot.
@@ -1166,7 +1294,8 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.showGameResult(isWinner);
+                controller.showGameResult(isWinner, winnerID);
+
             } else {
                 appLogger.error("[WARN] GameController is null in handleBodyGameFinished");
             }

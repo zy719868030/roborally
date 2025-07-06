@@ -144,7 +144,7 @@ public class CheckPoints extends BoardElement {
         activate(robot);
 
         // Check whether the robot can access this checkpoint.
-        int robotId = robot.getId();
+        int robotId = robot.getRobotID();
         if (canVisit(robotId)) {
             recordCheckpoint(robotId, number);
             System.out.println("Robot " + robotId + " reached checkpoint " + number + "!");

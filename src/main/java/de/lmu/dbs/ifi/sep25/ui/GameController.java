@@ -7,26 +7,29 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static java.util.Map.entry;
 
@@ -34,6 +37,7 @@ public class GameController {
     // 0. Logger
     private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
     private static final Logger appLogger = LogManager.getLogger(GameController.class);
+    private static final Logger errorLogger = LogManager.getLogger(GameController.class);
 
     @FXML
     private GridPane gameBoardPane;
@@ -71,6 +75,22 @@ public class GameController {
     private HBox discardPileBox;
     @FXML
     private Label phaseLabel;
+    @FXML
+    private Button confirmSelectionButton;
+
+
+    private int currentPlayerID = -1;
+    private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
+    /**
+     * Stores the direction of the robot of each clientID as a lowercase string.
+     **/
+    private final Map<Integer, String> robotDirections = new HashMap<>();
+
+    /**
+     * Keeps track of the current register cards (null = empty)
+     **/
+    private final String[] registerState = new String[5];
+    private final Set<Integer> manuallyClearedSlots = new HashSet<>();
 
 
     @FXML
@@ -121,7 +141,10 @@ public class GameController {
     }
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
-        if (ClientSingleton.getInstance().getID() == clientID) return; // Sich selbst nicht hinzufügen
+        clientToRobotID.put(clientID, figure);
+
+        if (ClientSingleton.getInstance().getID() == clientID)
+            return; // Sich selbst nicht hinzufügen
 
         boolean exists = recipientBox.getItems().stream()
                 .anyMatch(p -> p.getClientID() == clientID);
@@ -230,7 +253,8 @@ public class GameController {
                     if (tileImages.containsKey(key)) {
                         addImage(pane, key, 0);
                     } else {
-                        System.err.println("Fehlendes Bild: " + key);
+                        appLogger.warn("Fehlendes Bild: {}", key);
+
                     }
                 }
             }
@@ -246,7 +270,7 @@ public class GameController {
     private void addImage(StackPane pane, String key, double rotation) {
         Image img = tileImages.get(key);
         if (img == null) {
-            System.err.println("Fehlendes Bild: " + key);
+            appLogger.warn("Fehlendes Bild: {}", key);
             return;
         }
         ImageView view = new ImageView(img);
@@ -263,6 +287,10 @@ public class GameController {
         Integer x = GridPane.getColumnIndex(selectedPane);
         Integer y = GridPane.getRowIndex(selectedPane);
         if (x == null || y == null) return;
+        int myID = ClientSingleton.getInstance().getID();
+        appLogger.info("Mi ClientID: {}", myID);
+        appLogger.info("Jugador en turno (currentPlayerID): {}", currentPlayerID);
+
 
         // Nachricht senden
         var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y,
@@ -446,13 +474,12 @@ public class GameController {
         PlayerEntry selected = recipientBox.getSelectionModel().getSelectedItem();
         int recipientID = (selected == null || selected.getClientID() == -1) ? -1 : selected.getClientID();
 
-        System.out.println("[DEBUG] Sende Chatnachricht an " + (recipientID == -1 ? "ALLE" : recipientID) + ": " + msg);
-
+        messageLogger.info("→ Chat gesendet an {}: {}", (recipientID == -1 ? "ALLE" : recipientID), msg);
         var client = ClientSingleton.getInstance();
         if (client != null) {
             client.sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySendChat(msg, recipientID)));
         } else {
-            System.err.println("[ERROR] ClientSingleton is null in handleSendChat");
+            messageLogger.error("ClientSingleton is null in handleSendChat");
         }
 
 
@@ -466,10 +493,11 @@ public class GameController {
     }
 
     public void updatePhase(String phaseName) {
-        boolean isSetupPhase = "Aufbauphase".equalsIgnoreCase(phaseName);
-        boolean isProgrammingPhase = "Programmierung".equalsIgnoreCase(phaseName);
-        boolean isActivationPhase = "Aktivierungsphase".equalsIgnoreCase(phaseName);
-        boolean isGameOverPhase = "Spielende".equalsIgnoreCase(phaseName);
+        boolean isSetupPhase = phaseName.toLowerCase().contains("aufbau");
+        boolean isProgrammingPhase = phaseName.toLowerCase().contains("programm");
+        boolean isActivationPhase = phaseName.toLowerCase().contains("aktivierung");
+        boolean isGameOverPhase = phaseName.toLowerCase().contains("ende") || phaseName.toLowerCase().contains("spielende");
+        logger.info("Update game stage: {}, isProgrammingPhase={}", phaseName, isProgrammingPhase);
         // Label aktualisieren
         if (phaseLabel != null) {
             phaseLabel.setText("Phase: " + phaseName);
@@ -488,17 +516,36 @@ public class GameController {
         }
         // Handkarten nur in Programmierphase aktiv
         handCardBox.setDisable(!isProgrammingPhase);
+        logger.info(isProgrammingPhase ? "Enable hand card area" : "No-touch zone");
+
+        if (isProgrammingPhase) {
+            handCardBox.setDisable(false);
+            handCardBox.setVisible(true);
+            handCardBox.setManaged(true);
+            logger.info("Hand card area enabled");
+        } else {
+            handCardBox.setDisable(true);
+            logger.info("No handball zone");
+        }
 
         // DiscardPile nur in Aktivierungsphase sichtbar
         discardPileBox.setVisible(isActivationPhase);
         discardPileBox.setManaged(isActivationPhase);
 
-        // Timer nur in Programmierphase starten
-        if (isProgrammingPhase) {
-            startCountdown();
-        } else {
-            hideCountdown();
+        if (confirmSelectionButton != null) {
+            updateConfirmButtonVisibility();
+
+            //confirmSelectionButton.setVisible(isProgrammingPhase);
+            // confirmSelectionButton.setManaged(isProgrammingPhase);
         }
+
+
+//        // Timer nur in Programmierphase starten
+//        if (isProgrammingPhase) {
+//            startCountdown();
+//        } else {
+//            hideCountdown();
+//        }
 
         // Chat sperren, wenn Spiel vorbei ist
         chatInput.setDisable(isGameOverPhase);
@@ -513,7 +560,7 @@ public class GameController {
             chatBox.setManaged(false);
         }
 
-        appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+        //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
 
@@ -528,6 +575,10 @@ public class GameController {
         }
     }
 
+    /**
+     * Zeigt oder versteckt das Chat-Fenster.
+     * Blendet das Icon-Menü entsprechend ein oder aus.
+     */
     @FXML
     private void toggleChatBox() {
         boolean currentlyVisible = chatBox.isVisible();
@@ -568,35 +619,47 @@ public class GameController {
         }
     }
 
-    /**
-     * Hebt den Spieler hervor, der aktuell am Zug ist.
-     *
-     * @param clientID Die Client-ID des Spielers
-     */
+    private final List<StackPane> startPointPanes = new ArrayList<>();
+
     public void markCurrentPlayer(int clientID) {
-        System.out.println("[INFO] Aktueller Spieler ist: " + clientID);
+        this.currentPlayerID = clientID; // Immer setzen
+        int myID = ClientSingleton.getInstance().getID();
+        int phaseID = getCurrentPhaseID();
 
-        // Spielername herausfinden (aus der ComboBox)
-        for (PlayerEntry entry : recipientBox.getItems()) {
-            if (entry.getClientID() == clientID) {
-                String playerName = entry.getName();
+        appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
+        appLogger.info("ClientID (ich): {}, aktueller Spieler: {}", myID, clientID);
 
-                // Nachricht im Chat anzeigen
-                appendChatMessage("[INFO] " + playerName + " ist am Zug.");
+        boolean isMyTurn = (myID == clientID);
 
-                // Status-Label oben aktualisieren
-                statusLabel.setText(playerName + " ist am Zug.");
-
-                // Optional: Spieler in ComboBox markieren
-                recipientBox.getSelectionModel().select(entry);
-
-                return;
-            }
+        if (phaseID == 2) {
+            appendChatMessage("[INFO] Programmieren...");
+            statusLabel.setText("Spiel läuft...");
         }
 
-        // Falls der Spieler nicht gefunden wurde
-        appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
-        statusLabel.setText("Spieler " + clientID + " ist am Zug.");
+        if (isMyTurn) {
+            appendChatMessage("[INFO] Du bist am Zug!");
+            statusLabel.setText("Du bist am Zug.");
+            if (phaseID == 0) {
+                appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+            }
+        } else {
+            String name = getPlayerNameById(clientID); // eigene Methode
+            appendChatMessage("[INFO] " + name + " ist am Zug.");
+            statusLabel.setText(name + " ist am Zug.");
+        }
+
+        // 🔒 Startpunkte deaktivieren, außer wenn ich am Zug bin
+        for (StackPane sp : startPointPanes) {
+            sp.setDisable(!isMyTurn);
+        }
+
+        // 🔄 Optional: Empfängerfeld markieren (falls sinnvoll)
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() == clientID) {
+                recipientBox.getSelectionModel().select(entry);
+                break;
+            }
+        }
     }
 
 
@@ -609,8 +672,10 @@ public class GameController {
      * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
+        int robotID = clientToRobotID.get(clientID);
         try {
-            String imagePath = "/assets/robot_" + clientID + ".png";
+            robotDirections.put(clientID, direction);
+            String imagePath = "/assets/robots/robot_0" + robotID + "_" + direction.toLowerCase() + ".png";
             Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
@@ -618,20 +683,14 @@ public class GameController {
             robotView.setPreserveRatio(true);
             robotView.setUserData("robot");//verbessern
 
-            // Drehe Bild je nach Richtung
-            switch (direction.toLowerCase()) {
-                case "right" -> robotView.setRotate(0);
-                case "bottom" -> robotView.setRotate(90);
-                case "left" -> robotView.setRotate(180);
-                case "top" -> robotView.setRotate(270);
-            }
-
             // Setze Roboter auf das Spielfeld (Grid)
             StackPane tile = getTileAt(x, y);
             tile.getChildren().add(robotView);
 
+            robotPositions.put(clientID, new Position(x, y));
+
         } catch (Exception e) {
-            System.err.println("[FEHLER] Roboter konnte nicht angezeigt werden an (" + x + "," + y + ")");
+            appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
             e.printStackTrace();
         }
     }
@@ -654,23 +713,30 @@ public class GameController {
         return fallback;
     }
 
+
     /**
      * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
      *
-     * @param cardNames Liste der Kartennamen (z. B. "MoveI", "TurnLeft", ...)
+     * <p>Diese Methode:
+     * <ul>
+     *   <li>Prüft, ob Karten vorhanden sind.</li>
+     *   <li>Leert und initialisiert die Registerfelder (Slots 1–5).</li>
+     *   <li>Zeigt die Karten in der Handkarten-Box an.</li>
+     *   <li>Fügt jeder Karte ein Klick-Ereignis hinzu, um sie ins Register zu verschieben.</li>
      */
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
-            System.err.println("[INFO] Spieler hat keine Karten erhalten.");
+            logger.error("Spieler hat keine Karten erhalten..");
             return;
         }
 
         if (handCardBox == null || registerBox == null) {
-            System.err.println("[FEHLER] handCardBox oder registerBox ist null.");
+            appLogger.error("handCardBox oder registerBox ist null.");
             return;
         }
 
 
+        // 1. Rebuild register UI (DO keep this)
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {
@@ -688,37 +754,47 @@ public class GameController {
 
             VBox slotWithLabel = new VBox(5, numberLabel, slot);
             slotWithLabel.setAlignment(Pos.CENTER);
-
             registerBox.getChildren().add(slotWithLabel);
+
+            if (registerState[i] != null) {
+                placeCardInRegisterSlot(registerState[i], i);
+            }
         }
 
-        // Zeigt HandCard
+        // 2. Filter used cards
+        List<String> adjustedHand = new ArrayList<>();
+        Map<String, Integer> cardInstanceCounter = new HashMap<>();
+
+        for (String card : cardNames) {
+            int instance = cardInstanceCounter.getOrDefault(card, 0);
+            cardInstanceCounter.put(card, instance + 1);
+            adjustedHand.add(card + "#" + instance);
+        }
+
+        // 3. Show remaining hand cards
         handCardBox.getChildren().clear();
 
-        for (String name : cardNames) {
-            String imagePath = "/assets/cards/" + name.toLowerCase() + ".png";
-
-            Image img;
-            try {
-                img = new Image(getClass().getResourceAsStream(imagePath));
-            } catch (Exception e) {
-                System.err.println("[WARNUNG] Bild nicht gefunden für Karte: " + name + " → verwende Platzhalter.");
-                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-            }
-
-            ImageView view = createDraggableCard(name);
+        for (String tagged : adjustedHand) {
+            String base = tagged.split("#")[0];       // e.g. "MoveII#1" → "MoveII"
+            ImageView view = createClickableCard(base);
+            view.setUserData(tagged);                 // userData = "MoveII#1"
             handCardBox.getChildren().add(view);
         }
+
+        updateConfirmButtonVisibility();
     }
 
-
-    //new
-    private ImageView createDraggableCard(String cardName) {
+    private ImageView createClickableCard(String cardName) {
         String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
         Image img;
         try {
             img = new Image(getClass().getResourceAsStream(imagePath));
+            if (img.isError()) {
+                logger.error("Error loading card image: {}", imagePath);
+                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            }
         } catch (Exception e) {
+            logger.error("Abnormal loading of card images: {}", e.getMessage());
             img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
         }
 
@@ -727,43 +803,156 @@ public class GameController {
         view.setFitHeight(90);
         view.setPreserveRatio(true);
         view.setSmooth(true);
-        view.setUserData(cardName); // Name für später merken
 
-        view.setOnDragDetected(event -> {
-            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
-            content.putString(cardName);
-            db.setContent(content);
-            event.consume();
+        view.setStyle("-fx-cursor: hand;");
+        view.setOnMouseEntered(e -> view.setEffect(new DropShadow()));
+        view.setOnMouseExited(e -> view.setEffect(null));
+
+        view.setOnMouseClicked(event -> {
+            // Add validation here before attempting to place the card
+            int nextSlot = findNextEmptyRegisterSlot();
+
+            // Prevent "Again" card from being placed in register 0
+            if (cardName.toLowerCase().contains("again") && nextSlot == 0) {
+                displayErrorAlert("Card placement error",
+                        "The card Again cannot be placed in the first register position!\n" +
+                                "Please select the 2nd to 5th register positions.");
+                highlightRegisterSlot(0);
+                return;
+            }
+
+            String raw = view.getUserData().toString(); // e.g. "TurnRight#1"
+            String actualCardName = raw.contains("#") ? raw.split("#")[0] : raw;
+
+            logger.info("Card clicked: {}", actualCardName);
+
+            int nextEmptySlot = findNextEmptyRegisterSlot();
+            if (nextEmptySlot != -1) {
+                appLogger.info("Place the card {} into the storage slot {}.", actualCardName, nextEmptySlot);
+
+                // Only update logical state
+                registerState[nextEmptySlot] = actualCardName;
+
+                // Let server & displayHandCards() handle UI
+
+                var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
+                var msg = new MessageDefinitions.Message<>(body);
+                ClientSingleton.getInstance().sendMessage(msg);
+
+                appLogger.info("Card selection message sent");
+                appendChatMessage("[INFO] Card: " + actualCardName + " has been selected for slot " + (nextEmptySlot + 1));
+            } else {
+                appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
+                appLogger.warn("No available storage slots");
+            }
+            updateConfirmButtonVisibility();
+
+
         });
 
         return view;
     }
 
-    private void setupRegisterSlot(StackPane pane) {
-        pane.setOnDragOver(event -> {
-            if (event.getGestureSource() != pane && event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.MOVE);
+    private int findNextEmptyRegisterSlot() {
+        for (int i = 0; i < registerState.length; i++) {
+            if (registerState[i] == null) {
+                appLogger.info("Found empty register slot at index {}", i);
+                return i;
             }
-            event.consume();
-        });
+        }
+        return -1;
+    }
 
-        pane.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            if (db.hasString()) {
-                String cardName = db.getString();
-                pane.getChildren().clear();
-                pane.getChildren().add(createDraggableCard(cardName));
-                event.setDropCompleted(true);
-            } else {
-                event.setDropCompleted(false);
+    private void placeCardInRegisterSlot(String cardName, int slotIndex) {
+        if (slotIndex >= 0 && slotIndex < registerBox.getChildren().size()) {
+            Node node = registerBox.getChildren().get(slotIndex);
+            if (node instanceof VBox vbox) {
+                Node slotNode = vbox.getChildren().get(1);
+                if (slotNode instanceof StackPane pane) {
+                    pane.getChildren().clear();
+
+                    String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+                    Image img;
+                    try {
+                        img = new Image(getClass().getResourceAsStream(imagePath));
+                    } catch (Exception e) {
+                        img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+                    }
+
+                    ImageView cardView = new ImageView(img);
+                    cardView.setFitWidth(60);
+                    cardView.setFitHeight(90);
+                    cardView.setPreserveRatio(true);
+                    cardView.setSmooth(true);
+                    cardView.setUserData(cardName);
+                    cardView.setOpacity(0.7);
+
+                    pane.getChildren().add(cardView);
+                    // remember what card is in slot
+                    registerState[slotIndex] = cardName;
+                    appLogger.info("Card {} placed in register slot {}", cardName, slotIndex);
+                }
+            }
+        }
+    }
+
+    private void setupRegisterSlot(StackPane pane) {
+        pane.setOnDragOver(null);
+        pane.setOnDragDropped(null);
+        pane.setOnMouseClicked(event -> {
+            if (!pane.getChildren().isEmpty()) {
+                Node node = pane.getChildren().getFirst();
+                if (node instanceof ImageView) {
+                    int slotIndex = -1;
+                    for (int i = 0; i < registerBox.getChildren().size(); i++) {
+                        Node boxNode = registerBox.getChildren().get(i);
+                        if (boxNode instanceof VBox vbox) {
+                            Node slotNode = vbox.getChildren().get(1);
+                            if (slotNode == pane) {
+                                slotIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (slotIndex != -1) {
+                        manuallyClearedSlots.add(slotIndex);
+
+                        // Restore card to hand before nulling
+                        String removedCardName = registerState[slotIndex];
+                        if (removedCardName != null) {
+                            ImageView cardView = createClickableCard(removedCardName);
+                            cardView.setUserData(removedCardName + "#" + UUID.randomUUID());
+                            handCardBox.getChildren().add(cardView);
+                            appLogger.info("Manually returned {} to hand from slot {}", removedCardName, slotIndex);
+                        }
+
+                        var deselectMsg = new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodySelectedCard(null, slotIndex)
+                        );
+                        ClientSingleton.getInstance().sendMessage(deselectMsg);
+                        appLogger.info("Deselection message sent for card {} in slot {}", removedCardName, slotIndex);
+
+                        pane.getChildren().clear();
+                        registerState[slotIndex] = null;
+
+                        appendChatMessage("[INFO] Karte aus Register " + (slotIndex + 1) + " entfernt.");
+                        appLogger.info("Card removed from register slot {}", slotIndex);
+                    }
+
+                }
             }
             event.consume();
         });
     }
 
+    /**
+     * Bestätigt die ausgewählten Karten und sendet sie an den Server.
+     */
     @FXML
     private void handleConfirmSelection() {
+        appLogger.info("Sending SelectionFinished manually for clientID {}", ClientSingleton.getInstance().getID());
+
         List<String> selectedCards = registerBox.getChildren().stream()
                 .filter(n -> n instanceof VBox)
                 .map(n -> ((VBox) n).getChildren().get(1))
@@ -780,23 +969,25 @@ public class GameController {
                 .filter(Objects::nonNull)
                 .toList();
 
-
         if (selectedCards.size() != 5) {
             appendChatMessage("[WARNUNG] Du musst genau 5 Karten ins Register ziehen.");
             return;
         }
 
-
         int clientID = ClientSingleton.getInstance().getID();
-        for (int i = 0; i < 5; i++) {
-            var body = new MessageDefinitions.BodyCardSelected(clientID, i, true);
-            var msg = new MessageDefinitions.Message<>(body);
-            ClientSingleton.getInstance().sendMessage(msg);
+        for (int i = 0; i < selectedCards.size(); i++) {
+            String cardName = selectedCards.get(i);
+            appLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
         }
 
+        // Sende "fertig" Nachricht an Server
+        var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
+        var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
+        ClientSingleton.getInstance().sendMessage(finishedMsg);
 
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
     }
+
 
     /**
      * Zeigt für einen anderen Spieler Kartenrückseiten an.
@@ -836,12 +1027,55 @@ public class GameController {
      * @param clientID Die ID des Spielers
      * @param filled   Ob das Register des Spielers vollständig ist
      */
-    public void handleCardSelection(int clientID, boolean filled) {
-        String message = filled
-                ? "Spieler " + clientID + " hat sein Programm fertiggestellt."
-                : "Spieler " + clientID + " hat eine Karte ausgewählt.";
-        appendChatMessage("[INFO] " + message);
+    public void handleCardSelection(int clientID, int register, boolean filled) {
+        final boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        final String playerName = getPlayerNameById(clientID);
+
+        if (!isSelf) {
+            appendChatMessage("[INFO] " + playerName + " hat eine Karte ausgewählt.");
+            return;
+        }
+        // Self && !filled so self and emptied
+        if (!filled) {
+            if (manuallyClearedSlots.remove(register)) {
+                appLogger.debug("Ignoring register {} deselection - user triggered.", register);
+                return;
+            }
+            // for server forced removal
+            if (register >= 0 && register < registerBox.getChildren().size()) {
+                Node boxNode = registerBox.getChildren().get(register);
+                if (boxNode instanceof VBox vbox) {
+                    StackPane pane = (StackPane) vbox.getChildren().get(1);
+                    pane.getChildren().clear();
+                }
+            }
+
+            String removedCardName = registerState[register];
+            if (removedCardName != null) {
+                ImageView cardView = createClickableCard(removedCardName);
+                cardView.setUserData(removedCardName + "#" + UUID.randomUUID()); // simulate unique tag
+                handCardBox.getChildren().add(cardView);
+                appLogger.info("Manually restored card {} to hand after deselection.", removedCardName);
+            }
+
+            registerState[register] = null;
+
+            // No need to update the hand manually — will be handled by displayHandCards
+            appendChatMessage("[INFO] Deine Karte aus Register " + (register + 1) + " wurde entfernt.");
+            appLogger.info("Card removed from register slot {} by server (isSelf).", register);
+        }
     }
+
+
+    private String getPlayerNameById(int id) {
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() == id) {
+                return entry.getName();
+            }
+        }
+        return "Spieler " + id;
+    }
+
 
     /**
      * Hebt hervor, dass ein Spieler sein Programm abgeschlossen hat.
@@ -849,8 +1083,16 @@ public class GameController {
      * @param clientID Die ID des Spielers
      */
     public void markPlayerReady(int clientID) {
-        appendChatMessage("[INFO] Spieler " + clientID + " ist bereit.");
+        boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        String playerName = getPlayerNameById(clientID);
+
+        if (isSelf) {
+            appendChatMessage("[INFO] Du hast dein Programm fertiggestellt.");
+        } else {
+            appendChatMessage("[INFO] " + playerName + " hat sein Programm fertiggestellt.");
+        }
     }
+
 
     /**
      * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
@@ -897,24 +1139,18 @@ public class GameController {
         timerLabel.setManaged(false);
     }
 
-
     /**
      * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
      *
      * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
      * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
-     *
-     * <p>Funktionsweise:</p>
-     * <ul>
-     *   <li>Zeigt eine Nachricht im Chat an, dass die Zeit abgelaufen ist.</li>
-     *   <li>Listet die IDs der Spieler auf, die zu langsam waren, falls vorhanden.</li>
-     *   <li>Markiert diese Spieler visuell in der Empfänger-ComboBox (z. B. durch ein "✖" vor ihrem Namen).</li>
-     *   <li>Setzt die Auswahl in der ComboBox zurück, falls ein markierter Spieler ausgewählt war.</li>
-     * </ul>
-     *
-     * @param slowPlayers Eine Liste von Spieler-IDs, die zu langsam waren. Kann null oder leer sein.
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
+        if (!timerLabel.isVisible()) {
+            appLogger.info("Timer ended, but not displayed since timer was already hidden.");
+            return;
+        }
+
         hideCountdown();
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
@@ -1004,13 +1240,25 @@ public class GameController {
      * @return StackPane der Zelle oder null, wenn nicht gefunden
      */
     private StackPane getCellAt(int x, int y) {
-        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
-            if (GridPane.getColumnIndex(node) == x && GridPane.getRowIndex(node) == y) {
+        if (x < 0 || y < 0) {
+            errorLogger.error("Ungültiger Zugriff in getCellAt({}, {}): Koordinaten negativ", x, y);
+            return null;
+        }
+
+        for (Node node : gameBoardPane.getChildren()) {
+            Integer col = GridPane.getColumnIndex(node);
+            Integer row = GridPane.getRowIndex(node);
+
+            // Falls col/row null (z. B. bei nicht gesetztem Index), skip
+            if (col != null && row != null && col == x && row == y) {
                 return (StackPane) node;
             }
         }
+
+        errorLogger.warn("Kein StackPane gefunden bei Koordinaten ({}, {})", x, y);
         return null;
     }
+
 
     /**
      * Ersetzt eine Karte in einem bestimmten Register (z. B. durch Schaden).
@@ -1026,13 +1274,6 @@ public class GameController {
         // TODO (optional): Animation oder visuelles Update für Register-Karte
     }
 
-/**
- * Aktualisiert die Position eines Roboters auf dem Spielfeld.
- *
- * @param clientID ID des Spielers/Roboters
- * @param x        Neue X-Position
- * @param y        Neue Y-Position
- */
     /**
      * Bewegt den Roboter eines Spielers auf das Feld (x, y).
      *
@@ -1041,29 +1282,48 @@ public class GameController {
      * @param y        Die Zielzeile
      */
     public void moveRobotTo(int clientID, int x, int y) {
-        try {
-            String imagePath = "/assets/robot_" + clientID + ".png";
-            Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-            ImageView robot = new ImageView(robotImg);
+        messageLogger.info("clientToRobotID = {}", clientToRobotID);
+        messageLogger.info("clientID = {}", clientID);
 
+        try {
+            Integer robotID = clientToRobotID.get(clientID);
+            appLogger.info("looking up for clientID {}", clientID);
+            appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
+            appLogger.info("Robot {} moved to ({}, {})", robotID, x, y);
+
+            final String direction = robotDirections.get(clientID);
+            if (direction == null)
+                throw new IllegalStateException("Direction for clientID " + clientID + " not found in robotDirections map.");
+            final String imagePath = "/assets/robots/robot_0" + robotID + "_" + direction + ".png";
+            final Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
+            robotView.setUserData("robot");
 
-            // Bestehende Roboter entfernen (optional)
-            StackPane cell = getCellAt(x, y);
-            if (cell != null) {
-                cell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
-                cell.getChildren().add(robotView);
+            // REMOVE old robot image at previous position (if any)
+            Position oldPos = robotPositions.get(clientID);
+            if (oldPos != null) {
+                StackPane oldCell = getCellAt(oldPos.x(), oldPos.y());
+                if (oldCell != null) {
+                    oldCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                }
             }
 
-            //Position
+            // REMOVE robot image at new position to avoid stacking
+            StackPane newCell = getCellAt(x, y);
+            if (newCell != null) {
+                newCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                newCell.getChildren().add(robotView);
+            }
+
+            // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
 
             appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
-            System.err.println("[FEHLER] Roboterbild konnte nicht geladen werden für Spieler " + clientID);
+            appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
         }
     }
@@ -1083,18 +1343,75 @@ public class GameController {
 
         StackPane cell = getCellAt(pos.x(), pos.y());
         if (cell != null) {
-            for (javafx.scene.Node node : cell.getChildren()) {
-                if (node instanceof ImageView img && img.getImage().getUrl() != null &&
-                        img.getImage().getUrl().contains("robot_" + clientID)) {
-                    double currentRotation = img.getRotate();
-                    img.setRotate(rotation.equals("clockwise") ? currentRotation + 90 : currentRotation - 90);
+            for (Node node : cell.getChildren()) {
+                if (node instanceof ImageView img && "robot".equals(img.getUserData())) {
+                    final String currentDirection = robotDirections.get(clientID);
+                    if (currentDirection == null)
+                        throw new IllegalStateException("Direction for clientID " + clientID + " not found in robotDirections map. (called in rotateRobot)");
+
+                    final String newDirection = switch (rotation.toLowerCase()) {
+                        case "clockwise" -> rotateClockwise(currentDirection);
+                        case "counterclockwise" -> rotateCounterClockwise(currentDirection);
+                        case "uturn" -> rotateClockwise(rotateClockwise(currentDirection));
+                        default -> throw new IllegalArgumentException("Invalid rotation: " + rotation);
+                    };
+
+                    robotDirections.put(clientID, newDirection);
+
+                    Integer robotID = clientToRobotID.get(clientID);
+                    if (robotID == null)
+                        throw new IllegalStateException("Robot ID for clientID " + clientID + " not found in clientToRobotID map.");
+
+                    final String imagePath = "/assets/robots/robot_0" + robotID + "_" + newDirection + ".png";
+
+                    // Remove old image
+                    cell.getChildren().remove(node);
+
+                    // Add new image
+                    Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+                    ImageView newRobot = new ImageView(robotImg);
+                    newRobot.setFitWidth(40);
+                    newRobot.setFitHeight(40);
+                    newRobot.setPreserveRatio(true);
+                    newRobot.setUserData("robot");
+                    cell.getChildren().add(newRobot);
+
                     appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
                     break;
                 }
             }
+        } else {
+            appendChatMessage("[FEHLER] Kein Zellen-StackPane an Position (" + pos.x() + ", " + pos.y() + ") gefunden.");
         }
     }
 
+    private String rotateClockwise(String dir) {
+        return switch (dir) {
+            case "top" -> "right";
+            case "right" -> "bottom";
+            case "bottom" -> "left";
+            case "left" -> "top";
+            default -> dir;
+        };
+    }
+
+    private String rotateCounterClockwise(String dir) {
+        return switch (dir) {
+            case "top" -> "left";
+            case "left" -> "bottom";
+            case "bottom" -> "right";
+            case "right" -> "top";
+            default -> dir;
+        };
+    }
+
+    public void setRobotPosition(int clientID, Position position) {
+        robotPositions.put(clientID, position);
+    }
+
+    public Position getRobotPosition(int clientID) {
+        return robotPositions.get(clientID);
+    }
 
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.
@@ -1155,6 +1472,25 @@ public class GameController {
         }
     }
 
+    public void askRebootDirection(Consumer<String> callback) {
+        // Öffne ein einfaches Dialog-Fenster mit 4 Buttons oder ChoiceBox
+        List<String> directions = List.of("top", "right", "bottom", "left");
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("top", directions);
+        dialog.setTitle("Roboter neu ausrichten");
+        dialog.setHeaderText("Wähle eine neue Ausrichtung für deinen Roboter");
+        dialog.setContentText("Ausrichtung:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            callback.accept(result.get());
+        } else {
+            // Wenn der Dialog geschlossen wurde oder abgebrochen → Standard
+            callback.accept("top");
+        }
+    }
+
+
     /**
      * Zeigt die Energieänderung für einen bestimmten Spieler an.
      *
@@ -1187,40 +1523,72 @@ public class GameController {
      *
      * @param isWinner true, wenn der Spieler gewonnen hat; false sonst
      */
-    public void showGameResult(boolean isWinner) {
-        String resultText = isWinner ? "🎉 Glückwunsch, du hast GEWONNEN! 🎉"
-                : "☠️ Leider verloren. Versuch es erneut! ☠️";
-        appendChatMessage("[SPIELENDE] " + resultText);
+    /**
+     * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
+     *
+     * @param isWinner       true, wenn der Spieler selbst gewonnen hat
+     * @param winnerClientId Client-ID des Gewinner-Spielers
+     */
+    public void showGameResult(boolean isWinner, int winnerClientId) {
+        Platform.runLater(() -> {
+            String playerName = getPlayerNameById(winnerClientId);
+            String message = isWinner
+                    ? " Glückwunsch, " + playerName + " hat das Rennen gemeistert! 🏆"
+                    : "🔩 Du hast deine Schrauben verloren. " + playerName + " dominiert das Spielfeld!";
 
-        // Optional: Fenster, Animation oder Szenewechsel
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Spiel beendet");
-        alert.setHeaderText(null);
-        alert.setContentText(resultText);
-        alert.showAndWait();
+            appendChatMessage("[SPIELENDE] " + message);
+
+            int robotId = clientToRobotID.getOrDefault(winnerClientId, 1);
+            String direction = robotDirections.getOrDefault(winnerClientId, "top");
+            String imagePath = "/assets/robots/robot_0" + robotId + "_" + direction + ".png";
+
+            ImageView robotImage = new ImageView();
+            try {
+                Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+                robotImage.setImage(robotImg);
+            } catch (Exception e) {
+                appLogger.error("Roboterbild konnte nicht geladen werden: " + imagePath);
+            }
+
+            robotImage.setFitWidth(180);
+            robotImage.setPreserveRatio(true);
+
+            Label title = new Label(message);
+            title.getStyleClass().add("status-label");
+            title.setWrapText(true);
+            title.setMaxWidth(600);
+            title.setAlignment(Pos.CENTER);
+
+            Button backToMenuBtn = new Button("Zurück zum Hauptmenü");
+            backToMenuBtn.getStyleClass().add("senden-button");
+            backToMenuBtn.setOnAction(e -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                    Parent menuRoot = loader.load();
+                    Scene menuScene = new Scene(menuRoot, 800, 600);
+                    menuScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+                    Stage stage = (Stage) root.getScene().getWindow();
+                    stage.setScene(menuScene);
+                } catch (IOException ex) {
+                    appLogger.error("Hauptmenü konnte nicht geladen werden.", ex);
+                    displayErrorAlert("Fehler", "Das Hauptmenü konnte nicht geladen werden.");
+                }
+            });
+
+            VBox layout = new VBox(30, title, robotImage, backToMenuBtn);
+            layout.setAlignment(Pos.CENTER);
+            layout.getStyleClass().add("vbox");
+
+            StackPane rootPane = new StackPane(layout);
+            Scene scene = new Scene(rootPane, 800, 600);
+            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+            Stage stage = (Stage) root.getScene().getWindow();
+            stage.setScene(scene);
+        });
     }
 
-
-    public void showWelcomeDialog() {
-        Label title = new Label("Willkommen!");
-        title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
-
-        Label info = new Label("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
-        info.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
-
-        VBox content = new VBox(15, title, info);
-        content.setAlignment(Pos.CENTER);
-        content.setStyle("-fx-background-color: rgba(20,20,30,0.95); -fx-padding: 30; -fx-background-radius: 12;");
-
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Spielstart");
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-        dialog.getDialogPane().lookupButton(ButtonType.OK).setStyle(
-                "-fx-background-color: #00ffd0; -fx-text-fill: black; -fx-font-weight: bold;");
-
-        dialog.showAndWait();
-    }
 
     public void showInstructionDialog() {
         Label title = new Label("Nächster Schritt");
@@ -1243,6 +1611,7 @@ public class GameController {
         dialog.showAndWait();
     }
 //DAMAGE CARDS
+
     /**
      * Zeigt dem Spieler die gezogenen Schadenskarten an.
      *
@@ -1260,7 +1629,7 @@ public class GameController {
             try {
                 img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
             } catch (Exception e) {
-                System.err.println("[WARN] Fehlendes Schadensbild: " + card);
+                appLogger.warn("Fehlendes Schadensbild: {}", card);
                 img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
             }
 
@@ -1321,6 +1690,151 @@ public class GameController {
 
         appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
     }
+
+    /**
+     * Erstellt eine Karte, die per Klick ins nächste freie Registerfeld gelegt wird.
+     * Drag-and-drop ist deaktiviert.
+     *
+     * @param cardName Name der Karte
+     * @return ImageView mit der Karte
+     */
+    private ImageView createDraggableCard(String cardName) {
+        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+        Image img;
+        try {
+            img = new Image(getClass().getResourceAsStream(imagePath));
+        } catch (Exception e) {
+            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            logger.warn("Bild für Karte '{}' nicht gefunden, Platzhalter wird verwendet.", cardName);
+        }
+
+        ImageView view = new ImageView(img);
+        view.setFitWidth(60);
+        view.setFitHeight(90);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        view.setUserData(cardName);
+
+        // 🟠 Hover-Effekt
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(10);
+        shadow.setColor(javafx.scene.paint.Color.ORANGE);
+
+        view.setOnMouseEntered(e -> {
+            view.setScaleX(1.1);
+            view.setScaleY(1.1);
+            view.setEffect(shadow);
+        });
+
+        view.setOnMouseExited(e -> {
+            view.setScaleX(1.0);
+            view.setScaleY(1.0);
+            view.setEffect(null);
+        });
+
+        //  Klick-Ereignis → fügt Karte ins nächste freie Registerfeld ein
+        view.setOnMouseClicked(e -> {
+            logger.info("Karte '{}' wurde angeklickt.", cardName);
+            addCardToNextEmptyRegister(cardName);
+        });
+
+        return view;
+    }
+
+    private void addCardToNextEmptyRegister(String cardName) {
+    }
+
+    /**
+     * Handle the situation where a robot falls off the board.
+     *
+     * @param clientID The client ID corresponding to the robot that fell off the board.
+     */
+    public void handleRobotFellOffBoard(int clientID) {
+        Integer robotID = clientToRobotID.getOrDefault(clientID, -1);
+        appLogger.info("Robot {} (clientID {}) fell off the board", robotID, clientID);
+
+        Position oldPos = robotPositions.get(clientID);
+        if (oldPos != null) {
+            StackPane oldCell = getCellAt(oldPos.x(), oldPos.y());
+            if (oldCell != null) {
+                oldCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+            }
+        }
+
+        robotPositions.put(clientID, new Position(-1, -1));
+
+        String playerName = getPlayerNameById(clientID);
+        appendChatMessage("[INFO] " + playerName + " fell off the chessboard!");
+
+    }
+
+    /**
+     * Display an error message dialog box.
+     *
+     * @param title   Dialog box title.
+     * @param message Error message.
+     */
+    public void displayErrorAlert(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    /**
+     * Highlight the register slot to indicate an error.
+     *
+     * @param registerSlot The index of the register slot to be highlighted (0-4).
+     */
+    public void highlightRegisterSlot(int registerSlot) {
+        if (registerSlot < 0 || registerSlot >= 5 || registerBox == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            if (registerBox.getChildren().size() > registerSlot) {
+                Node node = registerBox.getChildren().get(registerSlot);
+                if (node instanceof VBox vbox && vbox.getChildren().size() > 1) {
+                    Node slotNode = vbox.getChildren().get(1);
+                    if (slotNode instanceof StackPane pane) {
+                        String originalStyle = pane.getStyle();
+                        pane.setStyle(originalStyle + "; -fx-border-color: red; -fx-border-width: 3px; -fx-effect: dropshadow(gaussian, #ff0000, 10, 0.5, 0, 0);");
+                        PauseTransition pause = new PauseTransition(Duration.seconds(2));
+                        pause.setOnFinished(e -> pane.setStyle(originalStyle));
+                        pause.play();
+                    }
+                }
+            }
+        });
+    }
+
+    private int currentPhaseID = -1;
+
+    public void setCurrentPhaseID(int phaseID) {
+        this.currentPhaseID = phaseID;
+    }
+
+    public int getCurrentPhaseID() {
+        return currentPhaseID;
+    }
+
+    private void updateConfirmButtonVisibility() {
+        long filledSlots = registerBox.getChildren().stream()
+                .filter(n -> n instanceof VBox)
+                .map(n -> ((VBox) n).getChildren().get(1)) // StackPane
+                .filter(n -> n instanceof StackPane)
+                .map(n -> (StackPane) n)
+                .filter(p -> !p.getChildren().isEmpty())
+                .count();
+
+        confirmSelectionButton.setVisible(filledSlots == 5);
+        confirmSelectionButton.setManaged(filledSlots == 5);
+    }
+
+
 }
 
 

@@ -57,10 +57,12 @@ public class Server {
     private final int minPlayer;
     private volatile boolean mapSelectionOngoing = false;
     private final AtomicBoolean timerStarted = new AtomicBoolean(false);
+    private final ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> activeTimer = null;
 
     // 5. Game logic
     private Game game;
-    private final List<Integer> readyRegister = new ArrayList<>();
+    private final List<Integer> waitingForProgramming = new ArrayList<>();
 
 
     /**
@@ -128,7 +130,7 @@ public class Server {
                 handler.sendMessage(new Message<>(new BodyHelloClient(protocol)));
 
                 int newClientID = clientIDCounter.getAndIncrement();
-                broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
+                // broadcastMessage(new Message<>(new BodyReceivedChat("New client connected with ID " + newClientID, 0, false)));
                 clients.put(handler, newClientID);
             }
         } catch (IOException e) {
@@ -242,8 +244,14 @@ public class Server {
         unmarkReady(clientHandler);
         if (clientHandler.isMapSelecting()) {
             setMapSelectionOngoing(false);
-            getFirstReadyClient().sendMessage(new Message<>(new BodySelectMap(availableMaps)));
+            ClientHandler next = getFirstReadyClient();
+            if (next != null) {
+                setMapSelectionOngoing(true);
+                next.setMapSelecting(true);
+                next.sendMessage(new Message<>(new BodySelectMap(availableMaps, next.getMyID())));
+            }
         }
+
         broadcastMessage(new Message<>(new BodyReceivedChat("Client disconnected.", 0, false)));
         System.out.println("Client disconnected.");
     }
@@ -405,6 +413,16 @@ public class Server {
     }
 
     /**
+     * Retrieves the corresponding figure for the specified client handler.
+     *
+     * @param handler the client handler for which the figure is to be retrieved
+     * @return the figure associated with the provided handler, or null if no figure is found
+     */
+    public Integer getFigureForHandler(ClientHandler handler) {
+        return figures.getByKeyOrDefault(handler, null);
+    }
+
+    /**
      * Adds a client handler to the lobby.
      * If the lobby meets the minimum player count and all players are AI,
      * a random map is selected and the game is started.
@@ -430,13 +448,13 @@ public class Server {
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler);
-        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());
+//        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());  DEBUG
 
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
         snapshotReadyOrder.clear();
         snapshotReadyOrder.addAll(readyOrder);
 
-        if (lobby.allReady() && game != null) {
+        if (lobby.size() >= minPlayer && lobby.allReady() && game != null) {
             startGame();
         }
     }
@@ -447,8 +465,12 @@ public class Server {
      * @param handler the client handler to unmark as ready
      */
     public synchronized void unmarkReady(ClientHandler handler) {
-        readyOrder.remove(handler);
-        appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+        if (readyOrder.contains(handler)) {
+            readyOrder.remove(handler);
+            appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+        } else {
+            appLogger.info("Client {} was not in ready order.", handler.getMyID());
+        }
 
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
         snapshotReadyOrder.clear();
@@ -465,7 +487,8 @@ public class Server {
     public synchronized ClientHandler getFirstReadyClient() {
         Iterator<ClientHandler> iterator = readyOrder.iterator();
         if (!iterator.hasNext()) {
-            throw new IllegalStateException("No players are ready.");
+            appLogger.error("No clients marked as ready. Cannot get first ready client. Returned null.");
+            return null;
         }
         // update snapshot
 //        appLogger.info("Snapshot of ready order: {}", readyOrder);
@@ -482,7 +505,7 @@ public class Server {
      *
      * @return {@code true} if no clients are ready; {@code false} otherwise
      */
-    public synchronized boolean readyIsEmpty() {
+    public synchronized boolean readyOrderIsEmpty() {
         return readyOrder.isEmpty();
     }
 
@@ -496,7 +519,7 @@ public class Server {
      * @return an unmodifiable list representing the ready order of clients at snapshot time
      */
     public synchronized List<ClientHandler> getSnapshotReadyOrder() {
-        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList());
+//        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList()); DEBUG
         return List.copyOf(snapshotReadyOrder);
     }
 
@@ -525,7 +548,7 @@ public class Server {
      * @param mapName the name of the map to use for the new game
      */
     public void newGame(String mapName) {
-        System.out.println("Creating new game with map " + mapName + "...");
+        appLogger.info("Creating new game with map {} ...", mapName);
         this.game = Game.getInstance(mapName);
         for (ClientHandler client : clients.keySet()) {
             client.setGame(this.game); // Set the game instance for each client handler to avoid crashes
@@ -553,9 +576,9 @@ public class Server {
      * The method retrieves all clients from the lobby, maps them to their respective identifiers,
      * and adds these identifiers to the ready register.
      */
-    private void resetReadyRegister() {
-        readyRegister.clear();
-        readyRegister.addAll(getLobby().getClients().stream().map(clients::getByKey).toList());
+    public void resetReadyRegister() {
+        waitingForProgramming.clear();
+        waitingForProgramming.addAll(getLobby().getClients().stream().map(clients::getByKey).toList());
     }
 
     /**
@@ -566,19 +589,42 @@ public class Server {
      * @param clientID the unique identifier of the client to be removed from the ready register
      */
     public void markReadyRegister(Integer clientID) {
-        readyRegister.remove(clientID);
-        game.checkAndAdvanceFromProgrammingPhase();
+        if (game.getCurrentPhase() != Game.GamePhase.PROGRAMMING.getValue()) {
+            appLogger.warn("Ignored markReadyRegister outside of programming phase for clientID {}", clientID);
+            return;
+        }
+
+        appLogger.info("Marking client {} as ready.", clientID);
+
+        if (!waitingForProgramming.contains(clientID)) {
+            appLogger.warn("Client {} was not in the ready register, already removed.", clientID);
+            appLogger.info("waitingForProgramming: {}", waitingForProgramming);
+            return;
+        }
+
+        // Start timer when first player becomes ready
+        if (waitingForProgramming.size() == getLobby().getClients().size() && !getTimerStarted()) {
+            startTimer();
+        }
+
+        waitingForProgramming.remove(clientID);
+        appLogger.info("waitingForProgramming: {}", waitingForProgramming);
+
+        if (waitingForProgramming.isEmpty()) {
+            cancelTimer();
+            game.checkAndAdvanceFromProgrammingPhase();
+        }
     }
+
 
     /**
      * Retrieves a copy of the list of ready client IDs and resets the ready register for the next round.
      *
      * @return a copy of the current ready register containing client IDs marked as ready
      */
-    public List<Integer> getReadyRegister() {
-        List<Integer> copy = new ArrayList<>(readyRegister);
-        resetReadyRegister();
-        return copy;
+    public List<Integer> getWaitingForProgramming() {
+        appLogger.info("Returning and resetting waitingForProgramming: {}", waitingForProgramming);
+        return new ArrayList<>(waitingForProgramming);
     }
 
     /**
@@ -633,4 +679,80 @@ public class Server {
     public void setTimerStarted(boolean timerStarted) {
         this.timerStarted.set(timerStarted);
     }
+
+    /**
+     * Handles the start of the body timer by scheduling a task to execute
+     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
+     * the list of ready players from the server and broadcasts a
+     * BodyTimerEnded message containing this list.
+     * <p>
+     * This method uses a single-threaded scheduled executor service to perform
+     * the delayed task execution. The task is responsible for broadcasting
+     * a message via the method `broadcastMessage`.
+     */
+    public void startTimer() {
+        if (getTimerStarted()) {
+            appLogger.warn("Timer already started.");
+            return;
+        }
+
+        if (waitingForProgramming.isEmpty()) {
+            appLogger.warn("All clients are already ready. Timer not started.");
+            setTimerStarted(false);
+            return;
+        }
+
+        appLogger.info("Starting timer...");
+
+        setTimerStarted(true);
+        broadcastMessage(new Message<>(new BodyTimerStarted()));
+
+        activeTimer = timerScheduler.schedule(() -> {
+            List<Integer> readyRegister = getWaitingForProgramming();
+            setTimerStarted(false);
+
+            if (readyRegister.isEmpty()) {
+                appLogger.info("Timer expired but no clients are late. Timer closed silently. (No TimerEnded sent)");
+                return;
+            }
+
+            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
+
+            for (Integer clientID : readyRegister)
+                getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+
+            resetReadyRegister();
+
+            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
+                game.enterActivationPhase();
+            } else {
+                appLogger.warn("Timer expired but game is already in phase: {}", game.getCurrentPhase());
+            }
+        }, 30, TimeUnit.SECONDS);
+    }
+
+    public void cancelTimer() {
+        if (activeTimer != null && !activeTimer.isDone()) {
+            activeTimer.cancel(false);
+            setTimerStarted(false);
+            appLogger.info("Timer cancelled.");
+
+            List<Integer> remaining = new ArrayList<>(waitingForProgramming);
+            broadcastMessage(new Message<>(new BodyTimerEnded(remaining)));
+
+            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
+                for (Integer clientID : remaining) {
+                    getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+                }
+                game.enterActivationPhase();
+            } else {
+                appLogger.warn("Timer cancelled but game is already in phase: {}", game.getCurrentPhase());
+            }
+
+            resetReadyRegister();
+        } else {
+            appLogger.warn("No active timer to cancel.");
+        }
+    }
+
 }

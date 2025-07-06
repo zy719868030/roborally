@@ -69,11 +69,15 @@ public abstract class RandomBot {
             }else if (messageType.equals("SetStartingPoint")) {
                 BodySetStartingPoint body = (BodySetStartingPoint) message.messageBody();
                 details = "x=" + body.x() + ", y=" + body.y() + ", dir=" + body.direction();
-            } else if (messageType.equals("Cardelected")) {
-                BodyCardSelected body = (BodyCardSelected) message.messageBody();
-                details = "clientID=" + body.clientID() + ", register=" + body.register() + ", filled=" + body.filled();
+            } else if (messageType.equals("SelectedCard")) {
+                BodySelectedCard body = (BodySelectedCard) message.messageBody();
+                details = "card=" + body.card() + ", register=" + body.register();
+                //details = "clientID=" + body.clientID() + ", register=" + body.register() + ", filled=" + body.filled();
             } else if (messageType.equals("SelectionFinished")) {
                 details = "finished";
+            } else if (messageType.equals("PlayCard")) {
+                BodyPlayCard body = (BodyPlayCard) message.messageBody();
+                details = "card=" + body.card();
             }
             System.out.println("[RandomBot] Sent message: " + messageType + (details.isEmpty() ? "" : " (" + details + ")"));
         } else {

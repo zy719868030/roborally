@@ -45,8 +45,7 @@ public class MessageDefinitions {
     public record BodyPlayerStatus(Integer clientID, Boolean ready) {
     }
 
-    public record BodySelectMap(List<String> availableMaps) {
-    }
+    public record BodySelectMap(List<String> availableMaps, int selectorID) {}
 
     public record BodyMapSelected(String map) {
     }

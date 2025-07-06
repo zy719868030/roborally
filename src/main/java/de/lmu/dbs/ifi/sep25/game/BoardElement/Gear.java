@@ -154,10 +154,10 @@ public class Gear extends BoardElement {
         // Rotate the robot according to the rotation direction of the gear.
         if (rotationDirection == RotationDirection.CLOCKWISE) {
             robot.turnRight();
-            System.out.println("Green gear at " + position + " rotated Robot " + robot.getId() + " clockwise");
+            System.out.println("Green gear at " + position + " rotated Robot " + robot.getRobotID() + " clockwise");
         } else {
             robot.turnLeft();
-            System.out.println("Red gear at " + position + " rotated Robot " + robot.getId() + " counterclockwise");
+            System.out.println("Red gear at " + position + " rotated Robot " + robot.getRobotID() + " counterclockwise");
         }
     }
 

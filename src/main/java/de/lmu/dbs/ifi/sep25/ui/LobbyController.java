@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,9 @@ public class LobbyController {
     @FXML private Button chatToggleButton;
     @FXML private Button lobbyRestoreButton;
     @FXML private Button chatRestoreButton;
+
+    private final List<Integer> readyOrder = new ArrayList<>();
+    private List<String> lastReceivedMapList = null;
 
 
 
@@ -223,20 +227,42 @@ public class LobbyController {
         sendReadyStatus(true);
         statusLabel.setText("Du bist bereit.");
         updateReadyButtons(true);
+        int myID = ClientSingleton.getInstance().getID();
+        updatePlayerStatus(myID, true);  // <<< Status in der PlayerList setzen
+
         if (!lobbyBox.getStyleClass().contains("lobby-box-ready")) {
             lobbyBox.getStyleClass().add("lobby-box-ready");
         }
 
     }
+    /* public boolean amIMapSelector() {
+        if (readyOrder.isEmpty()) return false;
+
+        Client client = ClientSingleton.getInstance();
+        int myID = client.getID();
+
+        return readyOrder.get(0) == myID;
+    } */
+
 
     @FXML
     private void handleNotReady() {
         sendReadyStatus(false);
         statusLabel.setText("Du bist nicht bereit.");
         updateReadyButtons(false);
+        int myID = ClientSingleton.getInstance().getID();
+        updatePlayerStatus(myID, false);  // <<< Unready setzen
+
         lobbyBox.getStyleClass().remove("lobby-box-ready");
 
+        // Prüfe: Bin ich gerade der Map-Wähler?
+        if (!selectMapButton.isDisabled()) {
+            // Ich bin (oder war) Map-Wähler → Mapauswahl ausblenden
+            hideMapSelection();
+            // Warten auf erneute Nachricht vom Server, falls ich wieder Mapwähler werde
+        }
     }
+
 
     private void sendReadyStatus(boolean ready) {
         Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
@@ -277,25 +303,27 @@ public class LobbyController {
 
 
     public void showMapSelection(List<String> maps) {
-        if (mapChoiceBox == null || mapSelectionBox == null) {
-            System.err.println("[ERROR] mapChoiceBox oder mapSelectionBox ist null in showMapSelection!");
-            return;
-        }
-
         if (maps == null || maps.isEmpty()) {
             System.err.println("[WARN] showMapSelection mit leerer Map-Liste aufgerufen.");
             return;
         }
 
+        lastReceivedMapList = maps;
+
         mapChoiceBox.getItems().setAll(maps);
         mapChoiceBox.getSelectionModel().selectFirst();
         mapSelectionBox.setVisible(true);
         mapSelectionBox.setManaged(true);
+        selectMapButton.setDisable(false);
+        mapChoiceBox.setDisable(false);
     }
+
+
 
     @FXML
     private void handleMapSelection() {
         String selectedMap = mapChoiceBox.getValue();
+        System.out.println("[DEBUG] Karte gewählt: " + selectedMap);
         if (selectedMap != null && !selectedMap.isBlank()) {
             ClientSingleton.getInstance().sendMessage(
                     new Message<>(new MessageDefinitions.BodyMapSelected(selectedMap))
@@ -304,12 +332,18 @@ public class LobbyController {
 
         }
     }
+     List<String> getLastReceivedMapList() {
+        return lastReceivedMapList;
+    }
 
 
     //Methode zum Verstecken, wenn Spieler z. B. unready wird
     public void hideMapSelection() {
         mapSelectionBox.setVisible(false);
         mapSelectionBox.setManaged(false);
+        selectMapButton.setDisable(true);
+        mapChoiceBox.setDisable(true);
+
     }
 
     public void setMapLabel(String text) {
@@ -330,37 +364,53 @@ public class LobbyController {
             mapPreviewImage.setManaged(false);
         }
     }
+    public void updatePlayerStatus(int clientID, boolean isReady) {
+        PlayerEntry found = players.stream()
+                .filter(p -> p.getClientID() == clientID)
+                .findFirst()
+                .orElse(null);
 
+        if (found != null) {
+            found.setReady(isReady);
 
+            boolean wasFirst = !readyOrder.isEmpty() && readyOrder.get(0).equals(clientID);
 
-    public void updatePlayerStatus(int clientID, boolean ready) {
-        for (PlayerEntry player : players) {
-            if (player.getClientID() == clientID) {
-                player.setReady(ready);
-                playerList.refresh();
+            if (isReady && !readyOrder.contains(clientID)) {
+                readyOrder.add(clientID);
+            } else if (!isReady) {
+                readyOrder.remove((Integer) clientID);
+            }
 
+            // NEU: Prüfe, ob ich jetzt der Erste bin → dann showMapSelection aktualisieren
+            int myID = ClientSingleton.getInstance().getID();
+            int newFirstID = readyOrder.isEmpty() ? -1 : readyOrder.get(0);
 
-                if (ClientSingleton.getInstance().getID() == clientID) {
-                    boolean ichBinErsterReady = ready && binIchErsterReady(clientID);
-
-                    // Nur der erste "Bereit"-Client darf die Karte auswählen
-                    selectMapButton.setDisable(!ichBinErsterReady);
-                    mapChoiceBox.setDisable(!ichBinErsterReady);
+            if (myID == newFirstID) {
+                // Erneut showMapSelection mit der aktuellen Liste triggern
+                // Du brauchst hier die Liste der Karten wieder
+                // Also am besten speicherst du sie zwischen:
+                if (lastReceivedMapList != null) {
+                    showMapSelection(lastReceivedMapList);
                 }
-
-                break;
+            } else {
+                hideMapSelection(); // falls ich es vorher war
             }
+            playerList.refresh();
         }
     }
 
-    private boolean binIchErsterReady(int clientID) {
-        for (PlayerEntry player : players) {
-            if (player.isReady() && player.getClientID() != clientID) {
-                return false;
-            }
-        }
-        return true;
+
+
+
+
+    private int getFirstReadyClientID() {
+        return players.stream()
+                .filter(PlayerEntry::isReady)
+                .map(PlayerEntry::getClientID)
+                .findFirst()
+                .orElse(-1);
     }
+
 
 
     @FXML

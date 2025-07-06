@@ -32,12 +32,12 @@ public class DamageCard extends Card implements RegisterCard{
         switch (damageType) {
             case SPAM:
                 // SPAM Card: Simple damage, no additional effects.
-                System.out.println("Robot " + robot.getId() + " executes SPAM damage card");
+                System.out.println("Robot " + robot.getRobotID() + " executes SPAM damage card");
                 break;
 
             case WORM:
                 // WORM card: Restart the robot immediately.
-                System.out.println("Robot " + robot.getId() + " executes WORM - must reboot!");
+                System.out.println("Robot " + robot.getRobotID() + " executes WORM - must reboot!");
 
                 Reboot rebootElement = Game.getInstance().getBoard().getReboot();
                 Board currentBoard = robot.getBoard();
@@ -46,13 +46,13 @@ public class DamageCard extends Card implements RegisterCard{
 
             case VIRUS:
                 // VIRUS card: Send SPAM cards to all robots within a 6-square range.
-                System.out.println("Robot " + robot.getId() + " executes VIRUS - spreading damage!");
+                System.out.println("Robot " + robot.getRobotID() + " executes VIRUS - spreading damage!");
                 spreadVirus(robot);
                 break;
 
             case TROJAN_HORSE:
                 // TROJAN HORSE Card: Immediately obtain two SPAM Damage Cards.
-                System.out.println("Robot " + robot.getId() + " executes TROJAN HORSE - taking extra damage!");
+                System.out.println("Robot " + robot.getRobotID() + " executes TROJAN HORSE - taking extra damage!");
                 robot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM).getDamageType());
                 robot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM).getDamageType());
                 break;
@@ -70,7 +70,7 @@ public class DamageCard extends Card implements RegisterCard{
             for (Robot targetRobot : nearbyRobots) {
                 if (targetRobot != robot) {
                     targetRobot.addDamageCard(new DamageCard("SPAM", DamageType.SPAM).getDamageType());
-                    System.out.println("Robot " + targetRobot.getId() + " infected by virus!");
+                    System.out.println("Robot " + targetRobot.getRobotID() + " infected by virus!");
                 }
             }
         }

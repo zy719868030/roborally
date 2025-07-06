@@ -21,9 +21,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -120,29 +117,37 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             String json;
-            while ((json = reader.readLine()) != null) {
-                String messageType = JsonUtil.parseUnknown(json).messageType();
-                switch (messageType) {
-                    case "Alive" -> handleBodyAlive();
-                    case "HelloServer" -> handleBodyHelloServer(json);
-                    case "PlayerValues" -> handleBodyPlayerValues(json);
-                    case "SetStatus" -> handleBodySetStatus(json);
-                    case "MapSelected" -> handleBodyMapSelected(json);
-                    case "SendChat" -> handleBodySendChat(json);
-                    case "ReceivedChat" -> handleBodyReceivedChat(json);
-                    case "Error" -> handleBodyError(json);
-                    case "PlayCard" -> handleBodyPlayCard(json);
-                    case "SetStartingPoint" -> handleBodySetStartingPoint(json);
-                    case "SelectedCard" -> handleBodySelectedCard(json);
-                    case "SelectedDamage" -> handleBodySelectedDamage(json);
-                    case "RebootDirection" -> handleBodyRebootDirection(json);
-                    default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+            while (!Thread.currentThread().isInterrupted() && (json = reader.readLine()) != null) {
+                try {
+                    String messageType = JsonUtil.parseUnknown(json).messageType();
+                    switch (messageType) {
+                        case "Alive" -> handleBodyAlive();
+                        case "HelloServer" -> handleBodyHelloServer(json);
+                        case "PlayerValues" -> handleBodyPlayerValues(json);
+                        case "SetStatus" -> handleBodySetStatus(json);
+                        case "MapSelected" -> handleBodyMapSelected(json);
+                        case "SendChat" -> handleBodySendChat(json);
+                        case "ReceivedChat" -> handleBodyReceivedChat(json);
+                        case "Error" -> handleBodyError(json);
+                        case "PlayCard" -> handleBodyPlayCard(json);
+                        case "SetStartingPoint" -> handleBodySetStartingPoint(json);
+                        case "SelectedCard" -> handleBodySelectedCard(json);
+                        case "SelectedDamage" -> handleBodySelectedDamage(json);
+                        case "RebootDirection" -> handleBodyRebootDirection(json);
+                        case "SelectionFinished" -> setReadyRegister();
+                        default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
+                    }
+                } catch (IllegalArgumentException e) {
+                    appLogger.warn("Invalid message received: " + e.getMessage());
+                    sendMessage(new Message<>(new BodyError("Invalid message format: " + e.getMessage())));
                 }
             }
         } catch (IOException e) {
-            sendMessage(new Message<>(new BodyError("Client connection failed or closed unexpectedly: " + e.getMessage())));
-            appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
-//            e.printStackTrace(); DEBUG
+            if (!Thread.currentThread().isInterrupted()) {
+                appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
+                sendMessage(new Message<>(new BodyError("Connection error: " + e.getMessage())));
+            }
+        } finally {
             closeAll();
         }
     }
@@ -189,8 +194,13 @@ public class ClientHandler implements Runnable {
         if (!body.protocol().equalsIgnoreCase(server.getProtocol())) {
             sendMessage(new Message<>(new BodyError("Connection refused, protocol mismatch: " + body.protocol() + " != " + server.getProtocol())));
             closeAll();
+            return;
         }
         server.getIsAI().put(this, body.isAI());
+
+        // Give ID
+        this.myID = server.getClients().getByKey(this);
+        sendMessage(new Message<>(new BodyWelcome(myID)));//
     }
 
     /**
@@ -214,7 +224,7 @@ public class ClientHandler implements Runnable {
             server.getNames().put(this, name);
             server.addToLobby(this);
 
-            sendMessage(new Message<>(new BodyWelcome(myID)));
+            //sendMessage(new Message<>(new BodyWelcome(myID)));
 
             broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
@@ -259,14 +269,28 @@ public class ClientHandler implements Runnable {
 
         if (!Boolean.TRUE.equals(server.getIsAI().get(this))) {
             if (ready) {
-                if (server.readyIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
+                if (server.readyOrderIsEmpty() && server.getGame() == null && !server.isMapSelectionOngoing()) {
                     server.setMapSelectionOngoing(true);
                     setMapSelecting(true);
-                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps())));
+                    sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps(), myID)));
                 }
                 server.markReady(this);
-            } else
+            } else {
                 server.unmarkReady(this);
+                if (isMapSelecting()) {
+                    server.setMapSelectionOngoing(false);
+                    setMapSelecting(false);
+                    final ClientHandler nextClient;
+                    if ((nextClient = server.getFirstReadyClient()) != null) {
+                        server.setMapSelectionOngoing(true);
+                        nextClient.setMapSelecting(true);
+                        nextClient.sendMessage(new Message<>(new BodySelectMap(server.getAvailableMaps(), nextClient.getMyID())));
+                    } else {
+                        appLogger.info("No other player ready: is ready order empty? {} -> no map selection ongoing.", server.readyOrderIsEmpty());
+                    }
+                }
+                server.unmarkReady(this);
+            }
         }
     }
 
@@ -359,50 +383,33 @@ public class ClientHandler implements Runnable {
      *             parsed into a {@code BodySetStartingPoint} object which provides the coordinates (x, y).
      */
     private void handleBodySetStartingPoint(String json) {
-//        BodySetStartingPoint body = JsonUtil.parseMessage(json, BodySetStartingPoint.class).messageBody();
         Message<BodySetStartingPoint> message = JsonUtil.parseMessage(json, BodySetStartingPoint.class);
         BodySetStartingPoint body = message.messageBody();
 
-        int x = body.x();
-        int y = body.y();
+
         if (game == null) {
             sendMessage(new Message<>(new BodyError("Game not initialized")));
             return;
         }
 
-        boolean success = game.setPlayerStartingPosition(player, x, y);
-        if (success) {
-            broadcastMessage(new Message<>(new BodyMovement(player.getRobot().getId(), x, y)));
-            String direction = "right";
-            broadcastMessage(new Message<>(
-                    new BodyStartingPointTaken(x, y, direction, player.getRobot().getId())
-            ));
+        // Added check: Ensure that only the current player can select the starting position.
+        if (placementLatch == null) {
+            sendMessage(new Message<>(new BodyError("Es ist nicht dein Zug. Bitte warte, bis du an der Reihe bist.")));
+            appLogger.warn("Player {} (ID: {}) attempted to set starting position but it's not their turn", player.getName(), myID);
+            return;
         }
 
-        if (placementLatch != null) {
+        // Broadcasts are handled in setPlayerStartingPosition
+        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
+            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
+        } else if (placementLatch != null) {
             placementLatch.countDown();
-            placementLatch = null;
         } else {
             appLogger.error("Placement latch was not set for player {} (ID: {})", player.getName(), myID);
+            throw new IllegalStateException("Latch is not set! Probable cause for this error: Player selected staring position although not their turn.");
         }
-        // Versuche die Startposition zu setzen
-//        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
-//            // Ungültige Position – evtl. eine Nachricht an Client schicken
-//            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
-//        } else {
-//            // Wenn gültig und Latch aktiv ist
-//            if (placementLatch != null) {
-//                placementLatch.countDown();
-//                //draw cards are called in game loop
-//            } else {
-////                throw new IllegalStateException("Latch is not set!");
-//                appLogger.error("Placement latch was not set for player {} (ID: {})",
-//                        player.getName(), myID);
-//                CountDownLatch newLatch = new CountDownLatch(1);
-//                this.placementLatch = newLatch;
-//                this.placementLatch.countDown();
-//            }
-        }
+    }
+
 
     /**
      * Handles the processing of a body-selected card event. Calls chooseCard in player.
@@ -445,7 +452,7 @@ public class ClientHandler implements Runnable {
 
             Server.getInstance().broadcastMessage(
                     new Message<>(
-                            new BodyDrawDamage(robot.getId(), selectedCards)
+                            new BodyDrawDamage(robot.getRobotID(), selectedCards)
                     )
             );
         }
@@ -467,6 +474,7 @@ public class ClientHandler implements Runnable {
 
 
     // -------------
+
 
     /**
      * Sets the placement latch to the specified CountDownLatch instance.
@@ -492,40 +500,16 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
+        appLogger.info("Calling setReadyRegister in setReadyRegister (clientID: {})", myID);
+        player.setReadyRegister(true);
         server.markReadyRegister(myID);
-        broadcastMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectionFinished(myID)));
 
-        if (server.getTimerStarted()) {
-            server.setTimerStarted(true);
-            startTimer();
-        }
-
+        // Remove this unconditional timer start
+        // if (!server.getTimerStarted()) {
+        //     server.startTimer();
+        // }
     }
 
-    /**
-     * Handles the start of the body timer by scheduling a task to execute
-     * after a fixed delay of 30 seconds. When the timer ends, it retrieves
-     * the list of ready players from the server and broadcasts a
-     * BodyTimerEnded message containing this list.
-     * <p>
-     * This method uses a single-threaded scheduled executor service to perform
-     * the delayed task execution. The task is responsible for broadcasting
-     * a message via the method `broadcastMessage`.
-     */
-    private void startTimer () {
-        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.schedule(() -> {
-            List<Integer> readyRegister = server.getReadyRegister();
-            broadcastMessage(new Message<>(new BodyTimerEnded(readyRegister)));
-            server.setTimerStarted(false);
-
-            for (Integer clientID : readyRegister)
-                server.getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
-
-            game.enterActivationPhase();
-
-        }, 30, TimeUnit.SECONDS);
-    }
 
     /**
      * Validates the liveness state of the client connection and sends a "BodyAlive" message
@@ -674,4 +658,3 @@ public class ClientHandler implements Runnable {
         this.mapSelecting = mapSelecting;
     }
 }
-
