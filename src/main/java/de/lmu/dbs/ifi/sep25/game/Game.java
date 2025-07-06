@@ -307,7 +307,7 @@ public class Game {
             // TODO @lukas：Broadcast game end message
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyGameFinished(winner.getRobot().getId())
+                            new MessageDefinitions.BodyGameFinished(winner.getRobot().getRobotID())
                     )
             );
 
@@ -435,7 +435,7 @@ public class Game {
         // Deal cards to all players
         for (Player player : players) {
             // Deal new cards and send to server
-            appLogger.info("Deal cards to players {}", player.getRobot().getId());
+            appLogger.info("Deal cards to players {}", player.getClientID());
             player.dealProgrammingCards();
         }
 
@@ -587,7 +587,7 @@ public class Game {
         }
 
         // Occupy a new starting point
-        startPoint.occupy(robot.getId());
+        startPoint.occupy(robot.getRobotID());
 
         // Set robot position and orientation
 //        robot.setPosition(targetPos);
@@ -673,7 +673,7 @@ public class Game {
             String cardName = CardFactory.getCardName(card);
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodyCardPlayed(player.getRobot().getId(), cardName)
+                            new MessageDefinitions.BodyCardPlayed(player.getClientID(), cardName)
                     )
             );
 
@@ -689,7 +689,7 @@ public class Game {
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyMovement(
-                                    player.getRobot().getId(),
+                                    player.getClientID(),
                                     robotPosition.x(),
                                     robotPosition.y()
                             )
@@ -858,7 +858,7 @@ public class Game {
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyPlayerTurning(
-                                                        robot.getId(), rotation
+                                                        robot.getRobotID(), rotation
                                                 )
                                         )
                                 );
@@ -905,7 +905,7 @@ public class Game {
                                 //TODO @lukas:MessageDefinitions.BodyDrawDamage
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
-                                                new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
+                                                new MessageDefinitions.BodyDrawDamage(robot.getRobotID(), damageCards)
                                         )
                                 );
                             }
@@ -940,7 +940,7 @@ public class Game {
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
                                                     new MessageDefinitions.BodyEnergy(
-                                                            robot.getId(),
+                                                            robot.getRobotID(),
                                                             player.getEnergy(),
                                                             "EnergySpace"
                                                     )
@@ -968,16 +968,16 @@ public class Game {
                     if (element instanceof CheckPoints checkpoint) {
                         Robot robot = board.getRobotAt(new Position(x, y));
                         if (robot != null) {
-                            int oldCheckpoints = checkpoint.getRobotHighestCheckpoint(robot.getId());
+                            int oldCheckpoints = checkpoint.getRobotHighestCheckpoint(robot.getRobotID());
                             checkpoint.applyEffect(robot, board);
-                            int newCheckpoints = checkpoint.getRobotHighestCheckpoint(robot.getId());
+                            int newCheckpoints = checkpoint.getRobotHighestCheckpoint(robot.getRobotID());
 
                             // TODO @lukas：If new checkpoint reached, broadcast update
                             if (newCheckpoints > oldCheckpoints) {
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyCheckPointReached(
-                                                        robot.getId(), newCheckpoints
+                                                        robot.getRobotID(), newCheckpoints
                                                 )
                                         )
                                 );
@@ -1101,7 +1101,7 @@ public class Game {
         // Broadcast reboot message
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReboot(robot.getId())
+                        new MessageDefinitions.BodyReboot(robot.getRobotID())
                 )
         );
 
@@ -1119,7 +1119,7 @@ public class Game {
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyMovement(
-                                robot.getId(),
+                                robot.getRobotID(),
                                 rebootPos.x(),
                                 rebootPos.y()
                         )
@@ -1191,7 +1191,7 @@ public class Game {
             }
 
             // If no damage cards are available or player can't be found, don't apply damage
-            appLogger.warn("No damage cards available for robot {}", robot.getId());
+            appLogger.warn("No damage cards available for robot {}", robot.getRobotID());
             return;
         }
 
@@ -1203,7 +1203,7 @@ public class Game {
 
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyDrawDamage(robot.getId(), damageCards)
+                        new MessageDefinitions.BodyDrawDamage(robot.getRobotID(), damageCards)
                 )
         );
     }

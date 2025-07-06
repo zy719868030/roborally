@@ -212,7 +212,7 @@ public class Belts extends BoardElement {
         for (Direction inDir : inDirections) {
             if (robotDirection == inDir.turnAround() && !robotDirection.equals(outDir)) {
                 robot.setDirection(outDir);
-                appLogger.info("Robot {} rotated from {} to {} on rotating conveyor belt.", robot.getId(), robot.getDirection().getName(), outDir.getName());
+                appLogger.info("Robot {} rotated from {} to {} on rotating conveyor belt.", robot.getRobotID(), robot.getDirection().getName(), outDir.getName());
                 return;
             }
         }
@@ -234,7 +234,7 @@ public class Belts extends BoardElement {
             Position nextPos = currentPos.move(outDir);
             // Robot fell off the game board and needs to be restarted.
             if (!board.isValidPosition(nextPos)) {
-                System.out.println("Robot " + robot.getId() + " would be pushed off the board by conveyor belt! " +
+                System.out.println("Robot " + robot.getRobotID() + " would be pushed off the board by conveyor belt! " +
                         "Robot falls and reboots.");
                 rebootRobot(robot, board);
                 return;
@@ -243,7 +243,7 @@ public class Belts extends BoardElement {
             // Check if the next position is valid. If there is a robot at the target position, stop moving.
             Robot targetRobot = board.getRobotAt(nextPos);
             if (targetRobot != null) {
-                System.out.println("Robot " + robot.getId() + " is blocked by Robot " + targetRobot.getId() +
+                System.out.println("Robot " + robot.getRobotID() + " is blocked by Robot " + targetRobot.getRobotID() +
                         " on conveyor belt.");
                 return;
             }
@@ -262,7 +262,7 @@ public class Belts extends BoardElement {
                         nextBelt.rotateRobot(robot);
                     }
                 } else {
-                    System.out.println("Robot " + robot.getId() + " cannot continue on conveyor belt due to " +
+                    System.out.println("Robot " + robot.getRobotID() + " cannot continue on conveyor belt due to " +
                             "direction mismatch.");
                     return;
                 }
@@ -321,7 +321,7 @@ public class Belts extends BoardElement {
             robot.setPosition(rebootPosition);
             board.updateRobotPosition(robot, rebootPosition);
 
-            System.out.println("Robot " + robot.getId() + " has been rebooted at " + rebootPosition);
+            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
         } else {
             System.err.println("Error: No reboot position found on the board!");
         }

@@ -411,6 +411,16 @@ public class Server {
     }
 
     /**
+     * Retrieves the corresponding figure for the specified client handler.
+     *
+     * @param handler the client handler for which the figure is to be retrieved
+     * @return the figure associated with the provided handler, or null if no figure is found
+     */
+    public Integer getFigureForHandler(ClientHandler handler) {
+        return figures.getByKeyOrDefault(handler, null);
+    }
+
+    /**
      * Adds a client handler to the lobby.
      * If the lobby meets the minimum player count and all players are AI,
      * a random map is selected and the game is started.
