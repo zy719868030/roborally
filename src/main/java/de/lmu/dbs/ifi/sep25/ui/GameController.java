@@ -80,6 +80,7 @@ public class GameController {
      * Keeps track of the current register cards (null = empty)
      **/
     private final String[] registerState = new String[5];
+    private static final Logger errorLogger = LogManager.getLogger(GameController.class);
 
 
     @FXML
@@ -1172,13 +1173,26 @@ public class GameController {
      * @return StackPane der Zelle oder null, wenn nicht gefunden
      */
     private StackPane getCellAt(int x, int y) {
-        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
-            if (GridPane.getColumnIndex(node) == x && GridPane.getRowIndex(node) == y) {
+        if (x < 0 || y < 0) {
+            errorLogger.error("Ungültiger Zugriff in getCellAt({}, {}): Koordinaten negativ", x, y);
+            return null;
+        }
+
+        for (Node node : gameBoardPane.getChildren()) {
+            Integer col = GridPane.getColumnIndex(node);
+            Integer row = GridPane.getRowIndex(node);
+
+            // Falls col/row null (z. B. bei nicht gesetztem Index), skip
+            if (col != null && row != null && col == x && row == y) {
                 return (StackPane) node;
             }
         }
+
+        errorLogger.warn("Kein StackPane gefunden bei Koordinaten ({}, {})", x, y);
         return null;
     }
+
+
 
     /**
      * Ersetzt eine Karte in einem bestimmten Register (z. B. durch Schaden).
@@ -1202,6 +1216,10 @@ public class GameController {
      * @param y        Die Zielzeile
      */
     public void moveRobotTo(int clientID, int x, int y) {
+        messageLogger.info("clientToRobotID = {}", clientToRobotID);
+        messageLogger.info("clientID = {}", clientID);
+       // System.out.println("robotID = " + robotID);
+
         try {
             Integer robotID = clientToRobotID.get(clientID);
             appLogger.info("looking up for clientID {}", clientID);
@@ -1257,17 +1275,30 @@ public class GameController {
 
         StackPane cell = getCellAt(pos.x(), pos.y());
         if (cell != null) {
-            for (javafx.scene.Node node : cell.getChildren()) {
-                if (node instanceof ImageView img && img.getImage().getUrl() != null &&
-                        img.getImage().getUrl().contains("robot_" + clientID)) {
+            for (Node node : cell.getChildren()) {
+                if (node instanceof ImageView img && "robot".equals(img.getUserData())) {
                     double currentRotation = img.getRotate();
-                    img.setRotate(rotation.equals("clockwise") ? currentRotation + 90 : currentRotation - 90);
+                    double newRotation = switch (rotation.toLowerCase()) {
+                        case "clockwise" -> currentRotation + 90;
+                        case "counterclockwise" -> currentRotation - 90;
+                        case "uturn" -> currentRotation + 180;
+                        default -> currentRotation;
+                    };
+                    img.setRotate(newRotation % 360);  // für saubere Rotation (z. B. 450° -> 90°)
                     appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
                     break;
                 }
             }
+        } else {
+            appendChatMessage("[FEHLER] Kein Zellen-StackPane an Position (" + pos.x() + ", " + pos.y() + ") gefunden.");
         }
     }
+
+
+    public void setRobotPosition(int clientID, Position position) {
+        robotPositions.put(clientID, position);
+    }
+
     public Position getRobotPosition(int clientID) {
         return robotPositions.get(clientID);
     }

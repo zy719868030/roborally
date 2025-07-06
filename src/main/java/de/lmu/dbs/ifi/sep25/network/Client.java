@@ -675,6 +675,8 @@ public class Client {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
                 controller.displayStartingPoint(x, y, clientID, direction);
+                //  Position merken!
+                controller.setRobotPosition(clientID, new Position(x, y));
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
             }
@@ -906,6 +908,8 @@ public class Client {
      * @param json JSON string containing the new coordinates and client ID
      */
     public void handleBodyMovement(String json) {
+        clientLogger.info("[CLIENT] handleBodyMovement called");
+        clientLogger.info("json = {}", json);
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
         BodyMovement body = message.messageBody();
 
