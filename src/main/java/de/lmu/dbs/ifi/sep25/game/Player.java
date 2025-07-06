@@ -380,6 +380,14 @@ public class Player {
      * @param registerSlot The index of the register slot to place the card (0-4)
      */
     public void chooseCardToRegister(String cardName, int registerSlot) {
+        // First check for Again card in first register
+        if (cardName != null && cardName.toLowerCase().contains("again") && registerSlot == 0) {
+            connection.sendMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyError("Again card cannot be played in the first register")
+            ));
+            return;  // Important: Return here to prevent the card from being placed
+        }
+
         if (!readyRegister) {
             if (registerSlot >= 0 && registerSlot < 5) {
                 if (cardName == null || cardName.isEmpty()) {

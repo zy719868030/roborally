@@ -26,7 +26,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.util.Loader;
 
 import java.io.IOException;
 import java.util.*;
@@ -619,6 +618,7 @@ public class GameController {
             playedCardsBox.getChildren().remove(0);
         }
     }
+
     private final List<StackPane> startPointPanes = new ArrayList<>();
 
     public void markCurrentPlayer(int clientID) {
@@ -809,6 +809,18 @@ public class GameController {
         view.setOnMouseExited(e -> view.setEffect(null));
 
         view.setOnMouseClicked(event -> {
+            // Add validation here before attempting to place the card
+            int nextSlot = findNextEmptyRegisterSlot();
+
+            // Prevent "Again" card from being placed in register 0
+            if (cardName.toLowerCase().contains("again") && nextSlot == 0) {
+                displayErrorAlert("Card placement error",
+                        "The card Again cannot be placed in the first register position!\n" +
+                                "Please select the 2nd to 5th register positions.");
+                highlightRegisterSlot(0);
+                return;
+            }
+
             String raw = view.getUserData().toString(); // e.g. "TurnRight#1"
             String actualCardName = raw.contains("#") ? raw.split("#")[0] : raw;
 
@@ -1514,8 +1526,8 @@ public class GameController {
     /**
      * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
      *
-     * @param isWinner         true, wenn der Spieler selbst gewonnen hat
-     * @param winnerClientId   Client-ID des Gewinner-Spielers
+     * @param isWinner       true, wenn der Spieler selbst gewonnen hat
+     * @param winnerClientId Client-ID des Gewinner-Spielers
      */
     public void showGameResult(boolean isWinner, int winnerClientId) {
         Platform.runLater(() -> {
