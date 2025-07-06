@@ -739,6 +739,7 @@ public class GameController {
             return;
         }
 
+
         // 1. Rebuild register UI (DO keep this)
         registerBox.getChildren().clear();
 
