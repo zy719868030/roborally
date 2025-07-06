@@ -777,18 +777,20 @@ public class Client {
      * @param json the JSON string containing the serialized {@code BodyCardSelected} message
      */
     private void handleBodySelectionFinished(String json) {
-        Message<BodyCardSelected> message = JsonUtil.parseMessage(json, BodyCardSelected.class);
-        BodyCardSelected body = message.messageBody();
+        Message<BodySelectionFinished> message = JsonUtil.parseMessage(json, BodySelectionFinished.class);
+        BodySelectionFinished body = message.messageBody();
+        int clientID = body.clientID();
 
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.markPlayerReady(body.clientID());
+                controller.markPlayerReady(clientID);
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodySelectionFinished");
             }
         });
     }
+
 
     private void handleBodyTimerStarted() {
         Platform.runLater(() -> {

@@ -68,6 +68,9 @@ public class GameController {
     private HBox discardPileBox;
     @FXML
     private Label phaseLabel;
+    @FXML
+    private Button confirmSelectionButton;
+
 
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
@@ -513,6 +516,13 @@ public class GameController {
         discardPileBox.setVisible(isActivationPhase);
         discardPileBox.setManaged(isActivationPhase);
 
+        if (confirmSelectionButton != null) {
+            confirmSelectionButton.setVisible(isProgrammingPhase);
+            confirmSelectionButton.setManaged(isProgrammingPhase);
+        }
+
+
+
 //        // Timer nur in Programmierphase starten
 //        if (isProgrammingPhase) {
 //            startCountdown();
@@ -601,9 +611,10 @@ public class GameController {
         int phaseID = getCurrentPhaseID();
         appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
 
-        // Keine Spielerzüge in der Programmierphase (Phase 2)
-        if (phaseID == 2) return;
-
+        if (phaseID == 2) {
+            appendChatMessage("[INFO] Programmieren...");
+            statusLabel.setText("Spiel läuft...");
+        }
         appLogger.info("Aktueller Spieler ist: {}", clientID);
 
         for (PlayerEntry entry : recipientBox.getItems()) {
@@ -613,15 +624,14 @@ public class GameController {
                 // Es ist dein eigener Zug
                 if (clientID == ClientSingleton.getInstance().getID()) {
                     appendChatMessage("[INFO] Du bist am Zug!");
+
+                    if (currentPhaseID == 0) {
+                        appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+                    }
                 } else {
                     appendChatMessage("[INFO] " + playerName + " ist am Zug.");
+                    statusLabel.setText(playerName + " ist am Zug.");
                 }
-
-                if (currentPhaseID == 0) {
-                    appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
-                }
-
-                statusLabel.setText(playerName + " ist am Zug.");
                 recipientBox.getSelectionModel().select(entry);
 
                 this.currentPlayerID = clientID;
@@ -630,19 +640,29 @@ public class GameController {
         }
 
         // Falls der Spieler nicht gefunden wurde
-        appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
-        statusLabel.setText("Spieler " + clientID + " ist am Zug.");
+        if (clientID == ClientSingleton.getInstance().getID()) {
+            appendChatMessage("[INFO] Du bist am Zug.");
+
+            if (currentPhaseID == 0) {
+                appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+            }
+
+            statusLabel.setText("Du bist am Zug.");
+        } else {
+            String name = getPlayerNameById(clientID);
+            appendChatMessage("[INFO] " + name + " ist am Zug.");
+            statusLabel.setText(name + " ist am Zug.");
+        }
     }
 
-
-    /**
-     * Zeigt die Startposition eines Roboters im Spielfeld an.
-     *
-     * @param x         X-Koordinate auf dem Spielfeld
-     * @param y         Y-Koordinate auf dem Spielfeld
-     * @param clientID  Die Client-ID des Spielers
-     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
-     */
+        /**
+         * Zeigt die Startposition eines Roboters im Spielfeld an.
+         *
+         * @param x         X-Koordinate auf dem Spielfeld
+         * @param y         Y-Koordinate auf dem Spielfeld
+         * @param clientID  Die Client-ID des Spielers
+         * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
+         */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         int robotID = clientToRobotID.get(clientID);
         try {
@@ -799,9 +819,9 @@ public class GameController {
 
                 // Let server & displayHandCards() handle UI
 
-                var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
-                var msg = new MessageDefinitions.Message<>(body);
-                ClientSingleton.getInstance().sendMessage(msg);
+               var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
+               var msg = new MessageDefinitions.Message<>(body);
+               ClientSingleton.getInstance().sendMessage(msg);
 
                 appLogger.info("Card selection message sent");
                 appendChatMessage("[INFO] Card: " + actualCardName + " has been selected for slot " + (nextEmptySlot + 1));
@@ -879,12 +899,11 @@ public class GameController {
                     if (slotIndex != -1) {
                         pane.getChildren().clear();
                         registerState[slotIndex] = null;
-                        var body = new MessageDefinitions.BodySelectedCard("", slotIndex);
-                        var msg = new MessageDefinitions.Message<>(body);
-                        ClientSingleton.getInstance().sendMessage(msg);
 
                         appendChatMessage("[INFO] Karte aus Register " + (slotIndex + 1) + " entfernt.");
+                        appLogger.info("Card removed from register slot {}", slotIndex);
                     }
+
                 }
             }
             event.consume();
@@ -928,9 +947,13 @@ public class GameController {
             ClientSingleton.getInstance().sendMessage(msg);
         }
 
+        var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
+        var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
+        ClientSingleton.getInstance().sendMessage(finishedMsg);
 
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
     }
+
 
     /**
      * Zeigt für einen anderen Spieler Kartenrückseiten an.
@@ -971,11 +994,24 @@ public class GameController {
      * @param filled   Ob das Register des Spielers vollständig ist
      */
     public void handleCardSelection(int clientID, boolean filled) {
-        String message = filled
-                ? "Spieler " + clientID + " hat sein Programm fertiggestellt."
-                : "Spieler " + clientID + " hat eine Karte ausgewählt.";
-        appendChatMessage("[INFO] " + message);
+        boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        String playerName = getPlayerNameById(clientID);
+
+        if (!isSelf) {
+            appendChatMessage("[INFO] " + playerName + " hat eine Karte ausgewählt.");
+        }
     }
+
+
+    private String getPlayerNameById(int id) {
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() == id) {
+                return entry.getName();
+            }
+        }
+        return "Spieler " + id;
+    }
+
 
     /**
      * Hebt hervor, dass ein Spieler sein Programm abgeschlossen hat.
@@ -983,8 +1019,16 @@ public class GameController {
      * @param clientID Die ID des Spielers
      */
     public void markPlayerReady(int clientID) {
-        appendChatMessage("[INFO] Spieler " + clientID + " ist bereit.");
+        boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        String playerName = getPlayerNameById(clientID);
+
+        if (isSelf) {
+            appendChatMessage("[INFO] Du hast dein Programm fertiggestellt.");
+        } else {
+            appendChatMessage("[INFO] " + playerName + " hat sein Programm fertiggestellt.");
+        }
     }
+
 
     /**
      * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
