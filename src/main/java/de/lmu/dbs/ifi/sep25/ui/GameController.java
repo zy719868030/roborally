@@ -905,7 +905,23 @@ public class GameController {
                     }
 
                     if (slotIndex != -1) {
-                        manuallyClearedSlots.add(slotIndex); // for differentiation between server changes and client changes
+                        manuallyClearedSlots.add(slotIndex);
+
+                        // Restore card to hand before nulling
+                        String removedCardName = registerState[slotIndex];
+                        if (removedCardName != null) {
+                            ImageView cardView = createClickableCard(removedCardName);
+                            cardView.setUserData(removedCardName + "#" + UUID.randomUUID());
+                            handCardBox.getChildren().add(cardView);
+                            appLogger.info("Manually returned {} to hand from slot {}", removedCardName, slotIndex);
+                        }
+
+                        var deselectMsg = new MessageDefinitions.Message<>(
+                                new MessageDefinitions.BodySelectedCard(null, slotIndex)
+                        );
+                        ClientSingleton.getInstance().sendMessage(deselectMsg);
+                        appLogger.info("Deselection message sent for card {} in slot {}", removedCardName, slotIndex);
+
                         pane.getChildren().clear();
                         registerState[slotIndex] = null;
 
@@ -1020,6 +1036,15 @@ public class GameController {
                     pane.getChildren().clear();
                 }
             }
+
+            String removedCardName = registerState[register];
+            if (removedCardName != null) {
+                ImageView cardView = createClickableCard(removedCardName);
+                cardView.setUserData(removedCardName + "#" + UUID.randomUUID()); // simulate unique tag
+                handCardBox.getChildren().add(cardView);
+                appLogger.info("Manually restored card {} to hand after deselection.", removedCardName);
+            }
+
             registerState[register] = null;
 
             // No need to update the hand manually — will be handled by displayHandCards
