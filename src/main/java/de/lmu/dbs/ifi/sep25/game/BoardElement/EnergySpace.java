@@ -148,7 +148,7 @@ public class EnergySpace extends BoardElement {
         // If there are energy cubes in the energy space, the robot can collect them.
         if (!collected) {
             int energy = collectEnergy();
-            System.out.println("Robot " + robot.getId() + " collected " + energy +
+            System.out.println("Robot " + robot.getRobotID() + " collected " + energy +
                     " energy cube(s) from energy space at " + position +
                     ". Energy should be added to the player.");
         }

@@ -274,7 +274,7 @@ public class Board {
                     }
                 }
                 if (element instanceof CheckPoints checkPoint) {
-                    int checkpoints = checkPoint.getRobotHighestCheckpoint(robot.getId()); // Check CheckPoints class for correct implementation
+                    int checkpoints = checkPoint.getRobotHighestCheckpoint(robot.getRobotID()); // Check CheckPoints class for correct implementation
                     if (checkpoints > 0) {
                         Player player = Game.getInstance().getPlayers().stream()
                                 .filter(p -> p.getRobot() == robot)
@@ -282,11 +282,11 @@ public class Board {
                                 .orElse(null);
                         if (player != null) {
                             player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                                    new MessageDefinitions.BodyCheckPointReached(robot.getId(), checkpoints)
+                                    new MessageDefinitions.BodyCheckPointReached(robot.getRobotID(), checkpoints)
                             ));
                             if (checkpoints == getTotalCheckpoints()) {
                                 player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                                        new MessageDefinitions.BodyGameFinished(robot.getId())
+                                        new MessageDefinitions.BodyGameFinished(robot.getRobotID())
                                 ));
                             }
                         }
@@ -470,7 +470,7 @@ public class Board {
         // Apply damage and cancel programming
         robot.takeDamage(2);
         robot.cancelProgramming();
-        System.out.println("Robot " + robot.getId() + " fell off the board and is at VOID_POINT (-1, -1)");
+        System.out.println("Robot " + robot.getRobotID() + " fell off the board and is at VOID_POINT (-1, -1)");
     }
 
     public boolean hasRobotFallen(Robot robot) {
@@ -507,7 +507,7 @@ public class Board {
         updateRobotPosition(robot, rebootPos);
         robot.takeDamage(2);
         robot.cancelProgramming();
-        System.out.println("Robot " + robot.getId() + " rebooted to " + rebootPos);
+        System.out.println("Robot " + robot.getRobotID() + " rebooted to " + rebootPos);
 
     }
 

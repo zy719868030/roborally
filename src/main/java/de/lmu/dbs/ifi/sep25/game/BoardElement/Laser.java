@@ -85,7 +85,7 @@ public class Laser extends BoardElement {
     @Override
     public void activate(Robot robot) {
         robot.takeDamage(power);
-        System.out.println("Robot " + robot.getId() + " was hit by a laser and took " + power + " damage!");
+        System.out.println("Robot " + robot.getRobotID() + " was hit by a laser and took " + power + " damage!");
     }
 
     @Override
@@ -143,7 +143,7 @@ public class Laser extends BoardElement {
             Robot targetRobot = board.getRobotAt(currentPos);
             if (targetRobot != null) {
                 targetRobot.takeDamage(power);
-                System.out.println("Robot " + targetRobot.getId() + " was hit by a laser and took " + power + " damage!");
+                System.out.println("Robot " + targetRobot.getRobotID() + " was hit by a laser and took " + power + " damage!");
                 break;
             }
         }

@@ -136,6 +136,8 @@ public class ClientHandler implements Runnable {
                     case "SelectedCard" -> handleBodySelectedCard(json);
                     case "SelectedDamage" -> handleBodySelectedDamage(json);
                     case "RebootDirection" -> handleBodyRebootDirection(json);
+                    case "SelectionFinished" -> setReadyRegister();
+
                     default -> throw new IllegalArgumentException("Unknown messageType: " + messageType);
                 }
             }
@@ -440,7 +442,7 @@ public class ClientHandler implements Runnable {
 
             Server.getInstance().broadcastMessage(
                     new Message<>(
-                            new BodyDrawDamage(robot.getId(), selectedCards)
+                            new BodyDrawDamage(robot.getRobotID(), selectedCards)
                     )
             );
         }

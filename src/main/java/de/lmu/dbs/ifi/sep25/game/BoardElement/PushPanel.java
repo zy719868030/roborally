@@ -152,7 +152,7 @@ public class PushPanel extends BoardElement {
 
         // Check if the target location is valid
         if (!board.isValidPosition(targetPos)) {
-            System.out.println("Robot " + robot.getId() + " would be pushed off the board! Robot falls and reboots.");
+            System.out.println("Robot " + robot.getRobotID() + " would be pushed off the board! Robot falls and reboots.");
             // The robot has fallen off the game board and needs to be restarted.
             rebootRobot(robot, board);
             return;
@@ -168,7 +168,7 @@ public class PushPanel extends BoardElement {
             moveRobot(robot, targetPos, board);
         }
 
-        System.out.println("Push panel at " + position + " pushed Robot " + robot.getId() + " to " + targetPos);
+        System.out.println("Push panel at " + position + " pushed Robot " + robot.getRobotID() + " to " + targetPos);
     }
 
     /**
@@ -186,7 +186,7 @@ public class PushPanel extends BoardElement {
 
         // Check if the next position is valid
         if (!board.isValidPosition(nextPos)) {
-            System.out.println("Robot " + targetRobot.getId() + " would be pushed off the board! Robot falls and reboots.");
+            System.out.println("Robot " + targetRobot.getRobotID() + " would be pushed off the board! Robot falls and reboots.");
             // The target robot has fallen off the game board and needs to be restarted.
             rebootRobot(targetRobot, board);
 
@@ -238,7 +238,7 @@ public class PushPanel extends BoardElement {
             robot.setPosition(rebootPosition);
             board.updateRobotPosition(robot, rebootPosition);
 
-            System.out.println("Robot " + robot.getId() + " has been rebooted at " + rebootPosition);
+            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
         } else {
             System.err.println("Error: No reboot position found on the board!");
         }

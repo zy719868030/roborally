@@ -68,14 +68,17 @@ public class GameController {
     private HBox discardPileBox;
     @FXML
     private Label phaseLabel;
+    @FXML
+    private Button confirmSelectionButton;
+
 
     private int currentPlayerID = -1;
+    private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
 
     /**
      * Keeps track of the current register cards (null = empty)
      **/
     private final String[] registerState = new String[5];
-    private List<String> latestHandFromServer = new ArrayList<>();
 
 
     @FXML
@@ -126,7 +129,10 @@ public class GameController {
     }
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
-        if (ClientSingleton.getInstance().getID() == clientID) return; // Sich selbst nicht hinzufügen
+        clientToRobotID.put(clientID, figure);
+
+        if (ClientSingleton.getInstance().getID() == clientID)
+            return; // Sich selbst nicht hinzufügen
 
         boolean exists = recipientBox.getItems().stream()
                 .anyMatch(p -> p.getClientID() == clientID);
@@ -510,6 +516,13 @@ public class GameController {
         discardPileBox.setVisible(isActivationPhase);
         discardPileBox.setManaged(isActivationPhase);
 
+        if (confirmSelectionButton != null) {
+            confirmSelectionButton.setVisible(isProgrammingPhase);
+            confirmSelectionButton.setManaged(isProgrammingPhase);
+        }
+
+
+
 //        // Timer nur in Programmierphase starten
 //        if (isProgrammingPhase) {
 //            startCountdown();
@@ -598,9 +611,10 @@ public class GameController {
         int phaseID = getCurrentPhaseID();
         appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
 
-        // Keine Spielerzüge in der Programmierphase (Phase 2)
-        if (phaseID == 2) return;
-
+        if (phaseID == 2) {
+            appendChatMessage("[INFO] Programmieren...");
+            statusLabel.setText("Spiel läuft...");
+        }
         appLogger.info("Aktueller Spieler ist: {}", clientID);
 
         for (PlayerEntry entry : recipientBox.getItems()) {
@@ -610,15 +624,14 @@ public class GameController {
                 // Es ist dein eigener Zug
                 if (clientID == ClientSingleton.getInstance().getID()) {
                     appendChatMessage("[INFO] Du bist am Zug!");
+
+                    if (currentPhaseID == 0) {
+                        appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+                    }
                 } else {
                     appendChatMessage("[INFO] " + playerName + " ist am Zug.");
+                    statusLabel.setText(playerName + " ist am Zug.");
                 }
-
-                if (currentPhaseID == 0) {
-                    appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
-                }
-
-                statusLabel.setText(playerName + " ist am Zug.");
                 recipientBox.getSelectionModel().select(entry);
 
                 this.currentPlayerID = clientID;
@@ -627,22 +640,33 @@ public class GameController {
         }
 
         // Falls der Spieler nicht gefunden wurde
-        appendChatMessage("[INFO] Spieler mit ID " + clientID + " ist am Zug.");
-        statusLabel.setText("Spieler " + clientID + " ist am Zug.");
+        if (clientID == ClientSingleton.getInstance().getID()) {
+            appendChatMessage("[INFO] Du bist am Zug.");
+
+            if (currentPhaseID == 0) {
+                appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+            }
+
+            statusLabel.setText("Du bist am Zug.");
+        } else {
+            String name = getPlayerNameById(clientID);
+            appendChatMessage("[INFO] " + name + " ist am Zug.");
+            statusLabel.setText(name + " ist am Zug.");
+        }
     }
 
-
-    /**
-     * Zeigt die Startposition eines Roboters im Spielfeld an.
-     *
-     * @param x         X-Koordinate auf dem Spielfeld
-     * @param y         Y-Koordinate auf dem Spielfeld
-     * @param clientID  Die Client-ID des Spielers
-     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
-     */
+        /**
+         * Zeigt die Startposition eines Roboters im Spielfeld an.
+         *
+         * @param x         X-Koordinate auf dem Spielfeld
+         * @param y         Y-Koordinate auf dem Spielfeld
+         * @param clientID  Die Client-ID des Spielers
+         * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
+         */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
+        int robotID = clientToRobotID.get(clientID);
         try {
-            String imagePath = "/assets/robot_" + clientID + ".png";
+            String imagePath = "/assets/robot_0" + robotID + ".png";
             Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
@@ -661,6 +685,8 @@ public class GameController {
             // Setze Roboter auf das Spielfeld (Grid)
             StackPane tile = getTileAt(x, y);
             tile.getChildren().add(robotView);
+
+            robotPositions.put(clientID, new Position(x, y));
 
         } catch (Exception e) {
             appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
@@ -707,8 +733,6 @@ public class GameController {
             appLogger.error("handCardBox oder registerBox ist null.");
             return;
         }
-
-        this.latestHandFromServer = new ArrayList<>(cardNames);
 
         // 1. Rebuild register UI (DO keep this)
         registerBox.getChildren().clear();
@@ -795,9 +819,9 @@ public class GameController {
 
                 // Let server & displayHandCards() handle UI
 
-                var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
-                var msg = new MessageDefinitions.Message<>(body);
-                ClientSingleton.getInstance().sendMessage(msg);
+               var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
+               var msg = new MessageDefinitions.Message<>(body);
+               ClientSingleton.getInstance().sendMessage(msg);
 
                 appLogger.info("Card selection message sent");
                 appendChatMessage("[INFO] Card: " + actualCardName + " has been selected for slot " + (nextEmptySlot + 1));
@@ -875,12 +899,11 @@ public class GameController {
                     if (slotIndex != -1) {
                         pane.getChildren().clear();
                         registerState[slotIndex] = null;
-                        var body = new MessageDefinitions.BodySelectedCard("", slotIndex);
-                        var msg = new MessageDefinitions.Message<>(body);
-                        ClientSingleton.getInstance().sendMessage(msg);
 
                         appendChatMessage("[INFO] Karte aus Register " + (slotIndex + 1) + " entfernt.");
+                        appLogger.info("Card removed from register slot {}", slotIndex);
                     }
+
                 }
             }
             event.consume();
@@ -924,9 +947,13 @@ public class GameController {
             ClientSingleton.getInstance().sendMessage(msg);
         }
 
+        var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
+        var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
+        ClientSingleton.getInstance().sendMessage(finishedMsg);
 
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
     }
+
 
     /**
      * Zeigt für einen anderen Spieler Kartenrückseiten an.
@@ -967,11 +994,24 @@ public class GameController {
      * @param filled   Ob das Register des Spielers vollständig ist
      */
     public void handleCardSelection(int clientID, boolean filled) {
-        String message = filled
-                ? "Spieler " + clientID + " hat sein Programm fertiggestellt."
-                : "Spieler " + clientID + " hat eine Karte ausgewählt.";
-        appendChatMessage("[INFO] " + message);
+        boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        String playerName = getPlayerNameById(clientID);
+
+        if (!isSelf) {
+            appendChatMessage("[INFO] " + playerName + " hat eine Karte ausgewählt.");
+        }
     }
+
+
+    private String getPlayerNameById(int id) {
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() == id) {
+                return entry.getName();
+            }
+        }
+        return "Spieler " + id;
+    }
+
 
     /**
      * Hebt hervor, dass ein Spieler sein Programm abgeschlossen hat.
@@ -979,8 +1019,16 @@ public class GameController {
      * @param clientID Die ID des Spielers
      */
     public void markPlayerReady(int clientID) {
-        appendChatMessage("[INFO] Spieler " + clientID + " ist bereit.");
+        boolean isSelf = clientID == ClientSingleton.getInstance().getID();
+        String playerName = getPlayerNameById(clientID);
+
+        if (isSelf) {
+            appendChatMessage("[INFO] Du hast dein Programm fertiggestellt.");
+        } else {
+            appendChatMessage("[INFO] " + playerName + " hat sein Programm fertiggestellt.");
+        }
     }
+
 
     /**
      * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
@@ -1026,7 +1074,6 @@ public class GameController {
         timerLabel.setVisible(false);
         timerLabel.setManaged(false);
     }
-
 
     /**
      * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
@@ -1146,13 +1193,6 @@ public class GameController {
         // TODO (optional): Animation oder visuelles Update für Register-Karte
     }
 
-/**
- * Aktualisiert die Position eines Roboters auf dem Spielfeld.
- *
- * @param clientID ID des Spielers/Roboters
- * @param x        Neue X-Position
- * @param y        Neue Y-Position
- */
     /**
      * Bewegt den Roboter eines Spielers auf das Feld (x, y).
      *
@@ -1162,23 +1202,36 @@ public class GameController {
      */
     public void moveRobotTo(int clientID, int x, int y) {
         try {
-            String imagePath = "/assets/robot_" + clientID + ".png";
-            Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-            ImageView robot = new ImageView(robotImg);
+            Integer robotID = clientToRobotID.get(clientID);
+            appLogger.info("looking up for clientID {}", clientID);
+            appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
+            appLogger.info("Robot {} moved to ({}, {})", robotID, x, y);
 
+            final String imagePath = "/assets/robot_0" + robotID + ".png";
+            final Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
+            robotView.setUserData("robot");
 
-            // Bestehende Roboter entfernen (optional)
-            StackPane cell = getCellAt(x, y);
-            if (cell != null) {
-                cell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
-                cell.getChildren().add(robotView);
+            // REMOVE old robot image at previous position (if any)
+            Position oldPos = robotPositions.get(clientID);
+            if (oldPos != null) {
+                StackPane oldCell = getCellAt(oldPos.x(), oldPos.y());
+                if (oldCell != null) {
+                    oldCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                }
             }
 
-            //Position
+            // REMOVE robot image at new position to avoid stacking
+            StackPane newCell = getCellAt(x, y);
+            if (newCell != null) {
+                newCell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+                newCell.getChildren().add(robotView);
+            }
+
+            // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
 
             appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
@@ -1214,7 +1267,6 @@ public class GameController {
             }
         }
     }
-
 
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.
