@@ -46,6 +46,10 @@ public class Robot {
         return this.robotID;
     }
 
+    public int getClientID() {
+        return this.clientID;
+    }
+
     // Method for damaging robots
     public void takeDamage(int damageAmount) {
         this.damage += damageAmount;
@@ -126,7 +130,7 @@ public class Robot {
             }
         } else {
             Logger logger = Logger.getLogger(this.getClass().getName());
-            logger.info("Robot " + id + " attempted to move backward off the board at position " + position + ". Movement prevented.");
+            logger.info("Robot " + clientID + " attempted to move backward off the board at position " + position + ". Movement prevented.");
         }
     }
 

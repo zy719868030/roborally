@@ -473,7 +473,7 @@ public class Game {
             RegisterCard card = player.getRegisterCard(currentRegister);
             if (card != null) {
                 String cardName = CardFactory.getCardName(card);
-                activeCards.add(new MessageDefinitions.ActiveCard(player.getRobot().getId(), cardName));
+                activeCards.add(new MessageDefinitions.ActiveCard(player.getRobot().getClientID(), cardName));
             }
         }
 
