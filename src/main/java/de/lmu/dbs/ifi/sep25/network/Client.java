@@ -27,7 +27,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Client {
     // 0. Logging
@@ -400,14 +403,14 @@ public class Client {
     }
 
 
-        /**
-         * Handles the selected body map event provided in JSON format.
-         * Parses the JSON message, retrieves the selected map,
-         * and updates the LobbyController with the corresponding map information.
-         *
-         * @param json a JSON string representing the selected body map event,
-         *             expected to contain the necessary data to identify the selected map.
-         */
+    /**
+     * Handles the selected body map event provided in JSON format.
+     * Parses the JSON message, retrieves the selected map,
+     * and updates the LobbyController with the corresponding map information.
+     *
+     * @param json a JSON string representing the selected body map event,
+     *             expected to contain the necessary data to identify the selected map.
+     */
     private void handleBodyMapSelected(String json) {
         Message<MessageDefinitions.BodyMapSelected> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
@@ -459,7 +462,6 @@ public class Client {
 
                 controller.drawBoard(boardMap);
                 controller.setInitialPlayerStats(energy, checkpointsReached);
-
 
 
                 // Szene wechseln
@@ -542,22 +544,16 @@ public class Client {
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         String errorText = msg.messageBody().error();
-        errorLogger.error("[Error] Vom Server erhalten:{} ",errorText);
+        errorLogger.error("[RECEIVED]  ERROR  {}", errorText);
 
-        if (errorText.contains("Figure already selected")) {
-            Platform.runLater(() -> {
+        Platform.runLater(() -> {
+            if (errorText.contains("Figure already selected")) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
                     loginCtrl.setFigureTakenWarningShown(true);
                     loginCtrl.displayFigureAlreadyTaken();
                 }
-            });
-            return;
-        }
-
-        // Handle the error of placing the Again card in the first register.
-        if (errorText.contains("Again card cannot be played in the first register")) {
-            Platform.runLater(() -> {
+            } else if (errorText.contains("Again card cannot be played in the first register")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
                     gameCtrl.appendChatMessage("[ERROR] " + errorText);
@@ -565,26 +561,29 @@ public class Client {
                             "The card Again cannot be placed in the first register position!\n" +
                                     "Please select the 2nd to 5th register positions.");
                     gameCtrl.highlightRegisterSlot(0);
-                } else {
-                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
                 }
-            });
-            return;
-        }
-
-        // Handle other game rule-related errors to prevent the client from closing.
-        if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
-            Platform.runLater(() -> {
+            } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
                     gameCtrl.appendChatMessage("[ERROR] " + errorText);
                     gameCtrl.displayErrorAlert("Card operation error", errorText);
-                } else {
-                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
                 }
-            });
-            return;
-        }
+            } else if (errorText.toLowerCase().contains("starting position")) {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.deselectStartingPosition();
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Starting position selection error", errorText);
+                }
+            } else {
+
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Server Error", errorText);
+                }
+            }
+        });
     }
 
     /****/
@@ -654,13 +653,14 @@ public class Client {
             }
         });
     }
-        /**
-         * Handles the "BodyActivePhase" message received from the server.
-         * This method processes a JSON string representing a {@code BodyActivePhase} message,
-         * extracts the phase information from the message body, and updates the client's internal state.
-         *
-         * @param json the JSON string containing the serialized {@code BodyActivePhase} message
-         */
+
+    /**
+     * Handles the "BodyActivePhase" message received from the server.
+     * This method processes a JSON string representing a {@code BodyActivePhase} message,
+     * extracts the phase information from the message body, and updates the client's internal state.
+     *
+     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+     */
     private void handleBodyActivePhase(String json) {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();
@@ -702,6 +702,9 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
+                if (clientID == ID) {
+                    controller.deactivateStartPointClick();
+                }
                 controller.displayStartingPoint(x, y, clientID, direction);
                 //  Position merken!
                 controller.setRobotPosition(clientID, new Position(x, y));
@@ -1022,7 +1025,6 @@ public class Client {
     }
 
 
-
     /**
      * Handles a message indicating that a player's robot should rotate.
      *
@@ -1084,9 +1086,6 @@ public class Client {
             }
         });
     }
-
-
-
 
 
     /**
@@ -1433,8 +1432,9 @@ public class Client {
 
     /**
      * Returns the selected map variable, stored in handleMapSelected.
+     *
      * @return selected map as string
-     * **/
+     **/
     public String getSelectedMap() {
         return selectedMap;
     }

@@ -72,6 +72,7 @@
         <!-- Logger for errors -->
         <Logger name="ErrorLogger" level="error" additivity="false">
             <AppenderRef ref="ErrorFile"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
         <!-- Logger for alive checks -->

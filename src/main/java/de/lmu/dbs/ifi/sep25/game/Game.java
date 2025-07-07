@@ -516,37 +516,26 @@ public class Game {
      * @param y      Y-coordinate of starting position
      * @return Returns true if starting position is successfully set, otherwise returns false
      */
-    public boolean setPlayerStartingPosition(Player player, int x, int y) {
+    public MessageDefinitions.BodyError setPlayerStartingPosition(Player player, int x, int y) {
         if (player == null) {
-            return false;
+            return new MessageDefinitions.BodyError("Player is null during starting position selection.");
         }
 
         // Check if it is in the setup phase
         if (currentPhase != GamePhase.SETUP) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Not in setup phase")
-            ));
-            return false;
+            return new MessageDefinitions.BodyError("Not in setup Phase to select starting position. Current phase " + currentPhase.toString());
         }
 
         final Position targetPos = new Position(x, y);
 
         // Check if the location is valid
         if (!board.isValidPosition(targetPos)) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Invalid position: (" + x + ", " + y + ")")
-            ));
-            return false;
+            return new MessageDefinitions.BodyError("Selected starting Position (" + x + ", " + y + ") out of bounds.");
         }
 
         // Check if this location is the starting point
-        boolean isStartPoint = board.getStartingPoints().contains(targetPos);
-
-        if (!isStartPoint) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Position (" + x + ", " + y + ") is not a starting point")
-            ));
-            return false;
+        if (!board.getStartingPoints().contains(targetPos)) {
+            return new MessageDefinitions.BodyError("Selected position (" + x + ", " + y + ") is not a valid starting position (already occupied)");
         }
 
         // If the player has already selected a starting position, the previous position must be released.
@@ -565,8 +554,7 @@ public class Game {
         final StartPoint startPoint = (StartPoint) board.getElements(x, y).stream().filter(e -> e instanceof StartPoint).findFirst().orElse(null);
 
         if (startPoint == null) {
-            errorLogger.error("No start point found at (" + x + ", " + y + ")");
-            return false;
+            return new MessageDefinitions.BodyError("No starting position found at (" + x + ", " + y + ")");
         }
 
         // Occupy a new starting point
@@ -593,7 +581,7 @@ public class Game {
                 }, player.getConnection().getMyID())
         ));
 
-        return true;
+        return null;
     }
 
     /**

@@ -45,6 +45,7 @@ public class ClientHandler implements Runnable {
     private static final Logger appLogger = LogManager.getLogger(ClientHandler.class);
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
     private static final Logger serverCommLogger = LogManager.getLogger("ServerCommLogger");
+    private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
@@ -94,7 +95,6 @@ public class ClientHandler implements Runnable {
         System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
         this.game = game;
     }
-
 
 
     /**
@@ -231,8 +231,6 @@ public class ClientHandler implements Runnable {
 
             server.getNames().put(this, name);
             server.addToLobby(this);
-
-            //sendMessage(new Message<>(new BodyWelcome(myID)));
 
             broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
@@ -408,14 +406,15 @@ public class ClientHandler implements Runnable {
         }
 
         // Broadcasts are handled in setPlayerStartingPosition
-        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
-            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
-        } else if (placementLatch != null) {
+        BodyError error = game.setPlayerStartingPosition(player, body.x(), body.y());
+        if (error == null && placementLatch != null) {
             placementLatch.countDown();
-        } else {
-            appLogger.error("Placement latch was not set for player {} (ID: {})", player.getName(), myID);
-            throw new IllegalStateException("Latch is not set! Probable cause for this error: Player selected staring position although not their turn.");
+            return;
+        } else if (placementLatch == null) {
+            error = new BodyError("Cannot select starting position; Not your turn!");
         }
+        errorLogger.error(error.error());
+        sendMessage(new Message<>(error));
     }
 
 
