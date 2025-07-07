@@ -214,28 +214,25 @@ public class Player {
 
         if (ready) {
             if (this.readyRegister) {
-                appLogger.warn("Ignored duplicate setReadyRegister(true) for clientID {}", clientID);
+                appLogger.warn("Ignored duplicate setReadyRegister(true) for {}", getPlayerIdentifier());
                 return;
             }
 
             if (game.getCurrentPhase() != Game.GamePhase.PROGRAMMING.getValue()) {
-                appLogger.warn("Blocked setReadyRegister(true) outside PROGRAMMING for clientID {}", clientID);
+                appLogger.warn("Blocked setReadyRegister(true) outside PROGRAMMING phase for {}", getPlayerIdentifier());
                 return;
             }
 
             this.readyRegister = true;
 
-            appLogger.info("Player {} readyRegister set to: true", (robot != null ? robot.getRobotID() : "null"));
-            connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodySelectionFinished(clientID)
-            ));
+            appLogger.info("{} readyRegister set to: true", getPlayerIdentifier());
 
             // ✅ DON'T call markReadyRegister() again
             // let whoever called setReadyRegister(true) be responsible for that
 
         } else {
             this.readyRegister = false;
-            appLogger.info("Player {} readyRegister set to: false", (robot != null ? robot.getRobotID() : "null"));
+            appLogger.info("{} readyRegister set to: false", getPlayerIdentifier());
         }
     }
 
@@ -306,22 +303,22 @@ public class Player {
      * Deal cards to player at the start of a programming phase
      */
     public void dealProgrammingCards() {
-        appLogger.info("Deal cards to play-ers {}", robot.getRobotID());
+        appLogger.info("{} dealing programming cards", getPlayerIdentifier());
         // Clear hand
         resetHand();
 
         // Draw 9 cards (or fewer if damaged)
         int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
-        System.out.println("[DEBUG] Player " + robot.getRobotID() + " draws " + cardsToDraw + " cards");
+        appLogger.debug("{} draws {} cards", getPlayerIdentifier(), cardsToDraw);
         for (int i = 0; i < cardsToDraw; i++) {
             drawCard();
         }
 
         // Reset register state
-        appLogger.info("Calling setReadyRegister(false) in dealProgrammingCards() method in Player.java. CALLED IN dealProgrammingCards. Current register: {}", registerToString());
+        appLogger.info("{} reset register state. Current register: {}", getPlayerIdentifier(), registerToString());
         setReadyRegister(false);
         updateHand();
-        appLogger.info("Player {}'s hand has been updated and sent.", robot.getRobotID());
+        appLogger.info("{} hand has been updated and sent", getPlayerIdentifier());
     }
 
     /**
@@ -581,12 +578,12 @@ public class Player {
     public void resetRegister() {
         setReadyRegister(false);
 
-        appLogger.info("resetRegister called for player {}. Current register: {}", clientID, registerToString());
+        appLogger.info("Resetting register for {}. Current register: {}", getPlayerIdentifier(), registerToString());
         // Move cards from registers to discard pile
         for (int i = 0; i < register.size(); i++) {
             RegisterCard card = register.get(i);
             if (card != null) {
-                appLogger.info("Clearing register slot {} for player {} and discarding from hand.", i, clientID);
+                appLogger.info("{} clearing register slot {} and discarding card", getPlayerIdentifier(), i);
                 removeCardFromRegister(i);
                 discardCardFromHand(card);
             }
@@ -596,7 +593,7 @@ public class Player {
         for (int i = 0; i < 5; i++) {
             register.set(i, null);
         }
-        appLogger.info("Player {}'s register has been reset.", clientID);
+        appLogger.info("{} register has been reset", getPlayerIdentifier());
     }
 
     // UTILITY
@@ -627,20 +624,30 @@ public class Player {
     }
 
     /**
+     * Helper method to provide a consistent player identifier for logging.
+     * Format: Player [clientID=X, robotID=Y, name=Z]
+     *
+     * @return Formatted player identifier string
+     */
+    private String getPlayerIdentifier() {
+        return String.format("Player [clientID=%d, robotID=%d, name='%s']",
+                clientID, robot.getRobotID(), name);
+    }
+
+    /**
      * Returns a string representation of the Player object, providing detailed information
      * about the player's attributes including client ID, robot details, name, and register contents.
      *
      * @return a formatted string representing the Player object with its client ID, robot ID,
      * name, robot state, and the string representation of the register.
      */
-    public String toString() {
-        return "Player{" +
-                "clientID=" + clientID +
-                ", robotID='" + robot.getRobotID() +
-                ", name='" + name + '\'' +
-                ", robot=" + robot.toString() +
-                ", register=" + registerToString() +
-                '}';
+    public String toString() {return getPlayerIdentifier() + " Register=" + registerToString();
+//        return "Player{" +
+//                "clientID=" + clientID +
+//                ", robotID='" + robot.getRobotID() +
+//                ", name='" + name + '\'' +
+//                ", robot=" + robot.toString() +
+//                ", register=" + registerToString() +
+//                '}';
     }
-
 }
