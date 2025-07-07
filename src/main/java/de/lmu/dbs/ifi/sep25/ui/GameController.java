@@ -1519,11 +1519,6 @@ public class GameController {
     }
 
     /**
-     * Zeigt das Spielende an und informiert den Benutzer, ob er gewonnen oder verloren hat.
-     *
-     * @param isWinner true, wenn der Spieler gewonnen hat; false sonst
-     */
-    /**
      * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
      *
      * @param isWinner       true, wenn der Spieler selbst gewonnen hat

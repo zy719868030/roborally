@@ -3,7 +3,7 @@
     <Appenders>
         <!-- Console (optional) -->
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+            <PatternLayout pattern="%d{HH:mm:ss} %-5level %c{1} - %msg%n"/>
         </Console>
 
         <!-- Main application log -->
@@ -35,6 +35,10 @@
             </Policies>
         </RollingFile>
 
+        <!-- Server communication log -->
+        <File name="ServerCommFile" fileName="logs/server_comm.log" append="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+        </File>
 
         <!-- Per-client routing appender -->
         <Routing name="ClientRouting">
@@ -52,6 +56,12 @@
         <!-- Logger for message I/O -->
         <Logger name="MessageLogger" level="info" additivity="false">
             <AppenderRef ref="MessageFile"/>
+        </Logger>
+
+        <!-- Logger for server-side communication -->
+        <Logger name="ServerCommLogger" level="info" additivity="false">
+            <AppenderRef ref="ServerCommFile"/>
+<!--            <AppenderRef ref ="Console" />-->
         </Logger>
 
         <!-- Logger for per-client routing -->

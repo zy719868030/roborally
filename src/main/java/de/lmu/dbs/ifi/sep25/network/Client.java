@@ -202,7 +202,7 @@ public class Client {
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
-        appLogger.info("Connected using protocol: {} " + protocol);
+        appLogger.info("Connected using protocol: {} (Received HelloClient)", protocol);
 
         sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol)));
     }
@@ -238,7 +238,6 @@ public class Client {
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        clientLogger.info("Your client ID: {}", getID());
         usernames.put(ID, "(me)");
 
         //  PlayerValues only after Welcome
@@ -586,8 +585,6 @@ public class Client {
             });
             return;
         }
-
-        closeAll(); // bei anderen Fehlern
     }
 
     /****/

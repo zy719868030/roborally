@@ -44,11 +44,16 @@ public class ClientHandler implements Runnable {
     // 0. Logger
     private static final Logger appLogger = LogManager.getLogger(ClientHandler.class);
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
+    private static final Logger serverCommLogger = LogManager.getLogger("ServerCommLogger");
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    private final Gson gsonPretty = new GsonBuilder()
+            .setPrettyPrinting()
             .create();
 
     private Integer myID;
@@ -120,6 +125,9 @@ public class ClientHandler implements Runnable {
             while (!Thread.currentThread().isInterrupted() && (json = reader.readLine()) != null) {
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
+                    if (!messageType.equals("Alive")) {
+                        serverCommLogger.info("[RECEIVED] {}: {}", messageType, gsonPretty.toJson(JsonUtil.parseUnknown(json)));
+                    }
                     switch (messageType) {
                         case "Alive" -> handleBodyAlive();
                         case "HelloServer" -> handleBodyHelloServer(json);
@@ -540,6 +548,8 @@ public class ClientHandler implements Runnable {
      */
     public void sendMessage(String message) {
         try {
+            if (!JsonUtil.parseUnknown(message).messageType().equalsIgnoreCase("Alive"))
+                serverCommLogger.info("[SENDING] {}: {}", JsonUtil.parseUnknown(message).messageType(), gsonPretty.toJson(JsonUtil.parseUnknown(message)));
             writer.println(message);
             writer.flush();
         } catch (Exception e) {
