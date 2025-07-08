@@ -243,7 +243,7 @@ public class Player {
 
         this.energy += amount;
         connection.broadcastMessage(new MessageDefinitions.Message<>(
-                new MessageDefinitions.BodyEnergy(robot.getRobotID(), energy, source)
+                new MessageDefinitions.BodyEnergy(clientID, energy, source)
         ));
     }
 
@@ -251,7 +251,7 @@ public class Player {
         if (energy >= cost) {
             energy -= cost;
             connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyEnergy(robot.getRobotID(), energy, "Consumption")
+                    new MessageDefinitions.BodyEnergy(clientID, energy, "Consumption")
             ));
             return true;
         }

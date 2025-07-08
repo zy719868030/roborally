@@ -4,6 +4,7 @@ import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -804,7 +805,7 @@ public class GameController {
             }
         } else {
             String name = getPlayerNameById(clientID);
-            appendChatMessage("[INFO] " + name + " ist am Zug.");
+            appendChatMessage("[INFO] Spieler " + name + " ist am Zug.");
             statusLabel.setText(name + " ist am Zug.");
         }
 
@@ -1303,7 +1304,8 @@ public class GameController {
             handCardBox.getChildren().add(cardBack);
         }
 
-        appendChatMessage("Spieler #" + clientID + " hat " + count + " Karten erhalten.");
+        String playerName = getPlayerNameById(clientID);
+        appendChatMessage("Spieler " + playerName + " hat " + count + " Karten erhalten.");
     }
 
     /**
@@ -1325,7 +1327,7 @@ public class GameController {
         final String playerName = getPlayerNameById(clientID);
 
         if (!isSelf) {
-            appendChatMessage("[INFO] " + playerName + " hat eine Karte ausgewählt.");
+            appendChatMessage("[INFO] Spieler " + playerName + " hat eine Karte ausgewählt.");
             return;
         }
         // Self && !filled so self and emptied
@@ -1361,11 +1363,36 @@ public class GameController {
 
 
     private String getPlayerNameById(int id) {
+        String name = ClientSingleton.getInstance().getUsernames().getByKeyOrDefault(id, null);
+        if (name != null && !name.isBlank()) {
+            logger.info("getPlayerNameById({}): found in usernames: {}", id, name);
+            return name;
+        }
         for (PlayerEntry entry : recipientBox.getItems()) {
-            if (entry.getClientID() == id) {
+            if (entry.getClientID() == id && entry.getName() != null && !entry.getName().isBlank()) {
+                logger.info("getPlayerNameById({}): found in recipientBox: {}", id, entry.getName());
+                ClientSingleton.getInstance().getUsernames().put(id, entry.getName());
                 return entry.getName();
             }
         }
+
+        LobbyController lobbyController = ControllerRegistry.getLobbyController();
+        if (lobbyController != null) {
+            for (PlayerEntry entry : lobbyController.getPlayers()) {
+                if (entry.getClientID() == id && entry.getName() != null && !entry.getName().isBlank()) {
+                    logger.info("getPlayerNameById({}): found in lobby players: {}", id, entry.getName());
+                    ClientSingleton.getInstance().getUsernames().put(id, entry.getName());
+                    return entry.getName();
+                }
+            }
+        }
+
+        logger.warn("getPlayerNameById({}): fallback to id!", id);
+//        for (PlayerEntry entry : recipientBox.getItems()) {
+//            if (entry.getClientID() == id) {
+//                return entry.getName();
+//            }
+//        }
         return "Spieler " + id;
     }
 
@@ -1448,7 +1475,11 @@ public class GameController {
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
-            appendChatMessage("Folgende Spieler waren zu langsam: " + slowPlayers);
+            List<String> slowNames = new ArrayList<>();
+            for (Integer id : slowPlayers) {
+                slowNames.add(getPlayerNameById(id));
+            }
+            appendChatMessage("Folgende Spieler waren zu langsam: " + slowNames);
 
             for (PlayerEntry entry : recipientBox.getItems()) {
                 if (slowPlayers.contains(entry.getClientID())) {
@@ -1614,7 +1645,8 @@ public class GameController {
             // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
 
-            appendChatMessage("[BEWEGUNG] Spieler " + clientID + " wurde nach (" + x + ", " + y + ") bewegt.");
+            String playerName = getPlayerNameById(clientID);
+            appendChatMessage("[BEWEGUNG] Spieler " +  playerName  + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
             appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
@@ -1628,9 +1660,11 @@ public class GameController {
      * @param rotation "clockwise" oder "counterclockwise"
      */
     public void rotateRobot(int clientID, String rotation) {
+        syncPlayerNames();
         Position pos = robotPositions.get(clientID);
         if (pos == null) {
-            appendChatMessage("[FEHLER] Position für Spieler " + clientID + " nicht gefunden.");
+            String playerName = getPlayerNameById(clientID);
+            appendChatMessage("[FEHLER] Position für " + playerName + " nicht gefunden.");
             return;
         }
 
@@ -1669,7 +1703,8 @@ public class GameController {
                     newRobot.setUserData("robot");
                     cell.getChildren().add(newRobot);
 
-                    appendChatMessage("[DREHUNG] Spieler " + clientID + " dreht sich " + rotation + ".");
+                    String playerName = getPlayerNameById(clientID);
+                    appendChatMessage("[DREHUNG] Spieler " + playerName + " dreht sich " + rotation + ".");
                     break;
                 }
             }
@@ -1726,10 +1761,10 @@ public class GameController {
      */
     public void showReboot(int clientID) {
         // Optional: Spielername ermitteln – hier als Platzhalter
-        String playerName = "Spieler " + clientID;
+        final String playerName = getPlayerNameById(clientID);
 
         // Nachricht im Chat anzeigen
-        appendChatMessage("[REBOOT] " + playerName + " wurde rebootet.");
+        appendChatMessage("[REBOOT] Spieler " + playerName + " wurde rebootet.");
 
         // TODO: Hier könnte man auch eine Reboot-Animation zeigen
         // oder ein Symbol auf dem Spielfeld darstellen
@@ -1792,8 +1827,9 @@ public class GameController {
      * @param source   Quelle der Energie (z. B. "EnergySpace", "Laser")
      */
     public void showEnergyChange(int clientID, int energy, String source) {
-        String playerName = "Spieler " + clientID;
-        appendChatMessage("[ENERGIE] " + playerName + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")");
+        String playerName = getPlayerNameById(clientID);
+        appendChatMessage("[ENERGIE] Spieler " + playerName
+                + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")");
 
         // Optional: weitere Anzeige z. B. Energiebalken, Symbol-Update etc.
     }
@@ -1805,8 +1841,8 @@ public class GameController {
      * @param checkpointNumber Die Nummer des erreichten Checkpoints
      */
     public void showCheckpointReached(int clientID, int checkpointNumber) {
-        String playerName = "Spieler " + clientID;
-        appendChatMessage("[ZIEL] " + playerName + " hat Checkpoint #" + checkpointNumber + " erreicht! 🏁");
+        String playerName = getPlayerNameById(clientID);
+        appendChatMessage("[ZIEL] Spieler " + playerName + " hat Checkpoint #" + checkpointNumber + " erreicht! 🏁");
 
         // Optional: UI-Markierung im Spielfeld oder Spieleranzeige
     }
@@ -2261,6 +2297,28 @@ private void shuffleHandCards() {
     //appendChatMessage("[INFO] Deine Handkarten wurden gemischt.");
 }
 
+    /**
+     * Synchronize the current player's nickname mapping.
+     * This method ensures that the latest username mapping is obtained from ClientSingleton and
+     * synchronized with the data in recipientBox.
+     */
+    public void syncPlayerNames() {
+        ConcurrentBidirectionalMap<Integer, String> usernames = ClientSingleton.getInstance().getUsernames();
+
+        logger.info("Current usernames in ClientSingleton: {}", usernames);
+        logger.info("Current recipientBox items: {}", recipientBox.getItems());
+
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            if (entry.getClientID() > 0 && entry.getName() != null && !entry.getName().isBlank()) {
+                String currentName = usernames.getByKeyOrDefault(entry.getClientID(), null);
+                if (currentName == null || currentName.isBlank() || !currentName.equals(entry.getName())) {
+                    logger.info("Updating username for client {}: '{}' -> '{}'",
+                            entry.getClientID(), currentName, entry.getName());
+                    usernames.put(entry.getClientID(), entry.getName());
+                }
+            }
+        }
+    }
 
     private void showDragAndDropInfoPopup() {
         Platform.runLater(() -> {

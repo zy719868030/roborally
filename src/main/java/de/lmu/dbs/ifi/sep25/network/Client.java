@@ -594,14 +594,15 @@ public class Client {
         BodyCardPlayed body = message.messageBody();
         int clientID = body.clientID();
         String card = body.card();
-        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
-        String logMessage = playerName + "hat Karte gespielt" + card;
+        String playerName = usernames.getByKeyOrDefault(clientID, null);
+//        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
+        String logMessage = "Spieler " + playerName + " hat Karte " + card + " gespielt.";
         appLogger.info("[GAME] {}", logMessage);
 
         Platform.runLater(() -> {
             GameController gameCtrl = ControllerRegistry.getGameController();
             if (gameCtrl != null) {
-                gameCtrl.appendChatMessage("[GAME]" + logMessage);
+                gameCtrl.appendChatMessage("[GAME] " + logMessage);
                 gameCtrl.showPlayedCard(clientID, card);
             } else {
                 appLogger.warn("[WARN] GameController ist null in handleBodyCardPlayed");
@@ -958,6 +959,8 @@ public class Client {
                 errorLogger.error("[WARN] GameController is null in handleBodyMovement");
                 return;
             }
+
+            controller.syncPlayerNames();
 
             if (newX < 0 || newY < 0 ||
                     (currentGameMap != null && (newX >= currentGameMap.size() ||
@@ -1439,6 +1442,10 @@ public class Client {
      **/
     public String getSelectedMap() {
         return selectedMap;
+    }
+
+    public ConcurrentBidirectionalMap<Integer, String> getUsernames() {
+        return usernames;
     }
 
 }

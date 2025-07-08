@@ -32,6 +32,7 @@ public class Robot {
         this.personalDeck = new Deck<>();
     }
 
+
     public boolean isPoweredDown() {
         return this.isPoweredDown;
     }
@@ -343,6 +344,18 @@ public class Robot {
         return position == null ? "Robot " + robotID + " (no position or direction)" : "Robot " + robotID + " (" + position.x() + ", " + position.y() + ") " + direction;
     }
 
+    public Player getPlayer() {
+        return Game.getInstance().getPlayers().stream()
+                .filter(p -> p.getRobot() == this)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Get the nickname of the player corresponding to this Robot
+    public String getPlayerName() {
+        Player p = getPlayer();
+        return p != null ? p.getName() : ("Spieler" + clientID);
+    }
 
 //    public void addEnergy(int amount) {
 //        this.energy += amount;

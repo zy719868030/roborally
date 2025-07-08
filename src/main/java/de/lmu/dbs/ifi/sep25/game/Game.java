@@ -904,7 +904,7 @@ public class Game {
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
                                                     new MessageDefinitions.BodyEnergy(
-                                                            robot.getRobotID(),
+                                                            player.getClientID(),
                                                             player.getEnergy(),
                                                             "EnergySpace"
                                                     )
