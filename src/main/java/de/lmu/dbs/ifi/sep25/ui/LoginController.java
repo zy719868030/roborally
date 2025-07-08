@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+import javafx.animation.TranslateTransition;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -20,8 +21,21 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.util.Random;
+
+import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
+import javafx.scene.Node;
+
 
 /**
  * Controller für die Login-Oberfläche.
@@ -50,6 +64,8 @@ public class LoginController {
     private ComboBox<Integer> figureBox;
     @FXML
     private javafx.scene.control.Button loginButton;
+    @FXML
+    private Label warningLabel;
 
 
     /**
@@ -63,6 +79,7 @@ public class LoginController {
     private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
     private Stage stage;
     private boolean figureTakenWarningShown = false;
+
     /**
      * Initialisiert die Login-Oberfläche:
      * - registriert den Controller
@@ -79,7 +96,22 @@ public class LoginController {
 
         nameField.textProperty().bindBidirectional(playerName);
         figureBox.valueProperty().bindBidirectional(selectedFigure);
+
+        nameField.textProperty().addListener((obs, oldText, newText) -> {
+            if (!newText.isBlank() && figureBox.getValue() != null) {
+                warningLabel.setVisible(false);
+                warningLabel.setManaged(false);
+                    }
+                });
+
+        figureBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !nameField.getText().isBlank()) {
+                warningLabel.setVisible(false);
+                warningLabel.setManaged(false);
+            }
+        });
     }
+
 
     /**
      * Wird aufgerufen, wenn der Nutzer auf "Login" klickt.
@@ -101,7 +133,12 @@ public class LoginController {
 
 
         if (name == null || name.isBlank() || figure == null) {
-            showAlert("Bitte Namen und Spielfigur auswählen.");
+            warningLabel.setText("Bitte Namen und Spielfigur auswählen.");
+            warningLabel.setVisible(true);
+            warningLabel.setManaged(true);
+            shakeNode(nameField.getParent());
+            ((Node) event.getSource()).setDisable(false);
+           //loginButton.setDisable(false);
             return;
         }
 
@@ -110,6 +147,7 @@ public class LoginController {
             port = Integer.parseInt(portText);
         } catch (NumberFormatException e) {
             showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
+            //loginButton.setDisable(false);
             return;
         }
         try {
@@ -120,12 +158,15 @@ public class LoginController {
                 ClientSingleton.setInstance(client);
             }
 
-            // GUARDAR para enviar más tarde (después de Welcome)
+
             cachedName = name;
             cachedFigure = figure;
+            //client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
 
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
+            //loginButton.setDisable(false);
+
         }
     }
 
@@ -220,18 +261,56 @@ public class LoginController {
      */
     public void displayFigureAlreadyTaken() {
         logger.warn("Spielfigur bereits vergeben. Zeige Warnfenster an.");
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Figur vergeben");
-        alert.setHeaderText("Diese Spielfigur wurde bereits gewählt");
-        alert.setContentText("Bitte wähle eine andere Figur aus.");
-        alert.showAndWait();
+
+        Label title = new Label("Diese Spielfigur wurde bereits gewählt");
+        title.setStyle("-fx-text-fill: #F5A623; -fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Label info = new Label("Bitte wähle eine andere Figur aus.");
+        info.setWrapText(true);
+        info.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        VBox content = new VBox(15, title, info);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle(
+                "-fx-background-color: rgba(20,20,30,0.95); " +
+                        "-fx-padding: 30; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-effect: dropshadow(gaussian, #F5A623, 10, 0.3, 0, 0);"
+        );
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Figur vergeben");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setStyle(
+                "-fx-background-color: #F5A623; " +
+                        "-fx-text-fill: black; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8;"
+        );
+
+        dialog.getDialogPane().setStyle(
+                "-fx-background-color: transparent; " +
+                        "-fx-border-color: #F5A623; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-border-radius: 12;"
+        );
+
+        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        stage.initStyle(StageStyle.TRANSPARENT);
+        dialog.showAndWait();
+
         // Auswahlfelder wieder aktivieren
         nameField.setDisable(false);
         figureBox.setDisable(false);
         loginButton.setDisable(false);
         figureTakenWarningShown = false;
-
     }
+
+
     public boolean isFigureTakenWarningShown() {
         return figureTakenWarningShown;
     }
@@ -251,10 +330,21 @@ public class LoginController {
         alert.setContentText(text);
         alert.showAndWait();
     }
+
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
     public String cachedName;
     public int cachedFigure;
+
+    private void shakeNode(Node node) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(50), node);
+        tt.setFromX(-10);
+        tt.setToX(10);
+        tt.setCycleCount(6);
+        tt.setAutoReverse(true);
+        tt.play();
+    }
 }
+

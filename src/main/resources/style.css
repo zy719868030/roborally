@@ -208,11 +208,50 @@
 
 
 }
-.sourcetext{
+.sourcetext {
     -fx-text-fill: orange;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-font-family: "Segoe UI", sans-serif;
+}
+.sourcetext-neon-yellow {
+    -fx-text-fill: #F5A623; /* Neón dorado/ámbar */
+    -fx-effect: dropshadow(gaussian, #F5A623, 10, 0.5, 0, 0);
+}
+.sourcetext-neon-cyan {
+    -fx-text-fill: #00ffd0;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 10, 0.5, 0, 0);
+}
+
+
+
+.sourcetext-neon-red {
+    -fx-text-fill: #ff4444;
+    -fx-effect: dropshadow(gaussian, #ff4444, 10, 0.5, 0, 0);
+}
+
+.sourcetext-neon-white {
+    -fx-text-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, white, 6, 0.2, 0, 0);
+}
+
+/* Stil Lobby und Chat Button */
+
+.button-dorado {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #F5A623, 8, 0.4, 0, 0);
+}
+.button-neon-cyan {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 8, 0.4, 0, 0);
 }
 
 

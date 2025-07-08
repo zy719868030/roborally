@@ -11,12 +11,17 @@
 <?import javafx.scene.paint.Stop?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.layout.StackPane?>
 <VBox alignment="CENTER" spacing="20" style="-fx-padding: 30; -fx-background-image: url('/assets/cover.png'); -fx-background-size: cover;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
 
 
     <TextField fx:id="nameField" promptText="Dein Name" styleClass="chat-input" />
-
-    <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" styleClass="combo-recipient" />
+    <StackPane>
+        <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" styleClass="combo-recipient"/>
+        <Label fx:id="warningLabel" visible="false" managed="true"
+               styleClass="sourcetext-neon-yellow"
+               StackPane.alignment="BOTTOM_CENTER"/>
+    </StackPane>
 
     <Button fx:id="loginButton" onAction="#handleLogin" text="Weiter zur Lobby" styleClass="senden-button">
         <font>

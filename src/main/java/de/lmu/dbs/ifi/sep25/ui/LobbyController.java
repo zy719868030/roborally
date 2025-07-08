@@ -63,19 +63,32 @@ public class LobbyController {
     private ComboBox<String> mapChoiceBox;
     @FXML
     private Button selectMapButton;
-    @FXML private ImageView mapPreviewImage;
-    @FXML private StackPane mapPreviewContainer;
-    @FXML private VBox chatBox;
-    @FXML private VBox lobbyBox;
-    @FXML private HBox iconMenu;
-    @FXML private Button lobbyToggleButton;
-    @FXML private Button chatToggleButton;
-    @FXML private Button lobbyRestoreButton;
-    @FXML private Button chatRestoreButton;
+    @FXML
+    private ImageView mapPreviewImage;
+    @FXML
+    private StackPane mapPreviewContainer;
+    @FXML
+    private VBox chatBox;
+    @FXML
+    private VBox lobbyBox;
+    @FXML
+    private HBox iconMenu;
+    @FXML
+    private Button lobbyToggleButton;
+    @FXML
+    private Button chatToggleButton;
+    @FXML
+    private Button lobbyRestoreButton;
+    @FXML
+    private Button chatRestoreButton;
+    @FXML
+    private Label lobbyIconLabel;
+    @FXML
+    private Label chatIconLabel;
+
 
     private final List<Integer> readyOrder = new ArrayList<>();
     private List<String> lastReceivedMapList = null;
-
 
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
@@ -85,12 +98,14 @@ public class LobbyController {
     private void toggleLobbyBox() {
         if (lobbyBox.isVisible()) {
             slideOut(lobbyBox);
+            lobbyIconLabel.setText("▲");
             lobbyToggleButton.setVisible(false);
             lobbyToggleButton.setManaged(false);
             lobbyRestoreButton.setVisible(true);
             lobbyRestoreButton.setManaged(true);
         } else {
             slideIn(lobbyBox);
+            lobbyIconLabel.setText("▼");
             lobbyToggleButton.setVisible(true);
             lobbyToggleButton.setManaged(true);
             lobbyRestoreButton.setVisible(false);
@@ -103,12 +118,14 @@ public class LobbyController {
     private void toggleChatBox() {
         if (chatBox.isVisible()) {
             slideOut(chatBox);
+            chatIconLabel.setText("▲");
             chatToggleButton.setVisible(false);
             chatToggleButton.setManaged(false);
             chatRestoreButton.setVisible(true);
             chatRestoreButton.setManaged(true);
         } else {
             slideIn(chatBox);
+            chatIconLabel.setText("▼");
             chatToggleButton.setVisible(true);
             chatToggleButton.setManaged(true);
             chatRestoreButton.setVisible(false);
@@ -125,19 +142,13 @@ public class LobbyController {
         iconMenu.setManaged(irgendwasMinimiert);
 
 
-
     }
-
-
-
-
 
 
     @FXML
     public void initialize() {
         ControllerRegistry.setLobbyController(this);
         playerList.setItems(players);
-
 
 
         playerList.setCellFactory(listView -> new ListCell<>() {
@@ -206,6 +217,10 @@ public class LobbyController {
         }
         mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty());
         mapPreviewImage.fitHeightProperty().bind(mapPreviewContainer.heightProperty());
+        //für Buttons
+        addHoverAnimation(lobbyToggleButton);
+        addHoverAnimation(chatToggleButton);
+
     }
 
     private void loadMapPreview(String mapName) {
@@ -400,9 +415,6 @@ public class LobbyController {
     }
 
 
-
-
-
     private int getFirstReadyClientID() {
         return players.stream()
                 .filter(PlayerEntry::isReady)
@@ -410,7 +422,6 @@ public class LobbyController {
                 .findFirst()
                 .orElse(-1);
     }
-
 
 
     @FXML
@@ -499,6 +510,7 @@ public class LobbyController {
 
 
     }
+
     public List<PlayerEntry> getPlayers() {
         return players.stream()
                 .map(p -> new PlayerEntry(
@@ -536,5 +548,20 @@ public class LobbyController {
 
     public Parent getRoot() {
         return root;
+    }
+
+
+    private void addHoverAnimation(Button button) {
+        button.setOnMouseEntered(e -> {
+            TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
+            tt.setToY(-3);
+            tt.play();
+        });
+
+        button.setOnMouseExited(e -> {
+            TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
+            tt.setToY(0);
+            tt.play();
+        });
     }
 }
