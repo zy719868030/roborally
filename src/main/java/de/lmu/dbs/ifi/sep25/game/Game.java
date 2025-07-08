@@ -13,10 +13,7 @@ import de.lmu.dbs.ifi.sep25.network.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class Game {
@@ -751,6 +748,9 @@ public class Game {
      * <p><b>Note:</b> Robot-to-robot laser interactions are handled separately in {@code handleRobotLasers()}.
      */
     private void activateBoardElements() {
+        // 0. Set to track already moved robots
+        final Set<Robot> movedByBelt = new HashSet<>();
+
         // 1. Blue conveyor belts (fast)
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
@@ -759,8 +759,9 @@ public class Game {
                             belt.getSpeed() == Belts.BeltSpeed.FAST) {
                         // Find robot at this position and activate belt
                         Robot robot = board.getRobotAt(new Position(x, y));
-                        if (robot != null) {
+                        if (robot != null && !movedByBelt.contains(robot)) {
                             belt.applyEffect(robot, board);
+                            movedByBelt.add(robot);
                         }
                     }
                 }
@@ -774,8 +775,9 @@ public class Game {
                     if (element instanceof Belts belt &&
                             belt.getSpeed() == Belts.BeltSpeed.SLOW) {
                         Robot robot = board.getRobotAt(new Position(x, y));
-                        if (robot != null) {
+                        if (robot != null && !movedByBelt.contains(robot)) {
                             belt.applyEffect(robot, board);
+                            movedByBelt.add(robot);
                         }
                     }
                 }
