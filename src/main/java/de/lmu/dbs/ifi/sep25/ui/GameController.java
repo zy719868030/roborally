@@ -76,6 +76,7 @@ public class GameController {
 
     private final Map<String, Image> tileImages = new HashMap<>();
     private final Map<Integer, Position> robotPositions = new HashMap<>();
+    private final Map<Integer, String> robotIDToPlayerName = new HashMap<>();
     private Parent root;
     @FXML
     private Label timerLabel;
@@ -207,6 +208,11 @@ public class GameController {
 
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         clientToRobotID.put(clientID, figure);
+
+        if (name != null && !name.isBlank()) {
+            robotIDToPlayerName.put(figure, name);
+            ClientSingleton.getInstance().getUsernames().put(clientID, name);
+        }
 
         if (ClientSingleton.getInstance().getID() == clientID)
             return; // Sich selbst nicht hinzufügen
@@ -1363,25 +1369,63 @@ public class GameController {
 
 
     private String getPlayerNameById(int id) {
+        // Attempt to retrieve from ClientSingleton (via clientID)
         String name = ClientSingleton.getInstance().getUsernames().getByKeyOrDefault(id, null);
         if (name != null && !name.isBlank()) {
-            logger.info("getPlayerNameById({}): found in usernames: {}", id, name);
+            logger.info("getPlayerNameById({}): found in usernames as clientID: {}", id, name);
             return name;
         }
+
+        // Try to retrieve from robotIDToPlayerName (via robotID)
+        name = robotIDToPlayerName.get(id);
+        if (name != null && !name.isBlank()) {
+            logger.info("getPlayerNameById({}): found in robotIDToPlayerName: {}", id, name);
+            return name;
+        }
+
+        // Try reverse lookup from clientToRobotID to see if it is robotID.
+        for (Map.Entry<Integer, Integer> entry : clientToRobotID.entrySet()) {
+            if (entry.getValue() == id) {
+                int clientID = entry.getKey();
+                name = ClientSingleton.getInstance().getUsernames().getByKeyOrDefault(clientID, null);
+                if (name != null && !name.isBlank()) {
+                    logger.info("getPlayerNameById({}): found through reverse lookup as robotID -> clientID {}: {}",
+                            id, clientID, name);
+                    robotIDToPlayerName.put(id, name);
+                    return name;
+                }
+            }
+        }
+
+        // Try to find it in recipientBox
         for (PlayerEntry entry : recipientBox.getItems()) {
             if (entry.getClientID() == id && entry.getName() != null && !entry.getName().isBlank()) {
-                logger.info("getPlayerNameById({}): found in recipientBox: {}", id, entry.getName());
+                logger.info("getPlayerNameById({}): found in recipientBox as clientID: {}", id, entry.getName());
                 ClientSingleton.getInstance().getUsernames().put(id, entry.getName());
+                return entry.getName();
+            }
+
+            Integer robotID = clientToRobotID.get(entry.getClientID());
+            if (robotID != null && robotID == id && entry.getName() != null && !entry.getName().isBlank()) {
+                logger.info("getPlayerNameById({}): found in recipientBox as robotID: {}", id, entry.getName());
+                robotIDToPlayerName.put(id, entry.getName());
                 return entry.getName();
             }
         }
 
+        // Try to find it in LobbyController.
         LobbyController lobbyController = ControllerRegistry.getLobbyController();
         if (lobbyController != null) {
             for (PlayerEntry entry : lobbyController.getPlayers()) {
                 if (entry.getClientID() == id && entry.getName() != null && !entry.getName().isBlank()) {
-                    logger.info("getPlayerNameById({}): found in lobby players: {}", id, entry.getName());
+                    logger.info("getPlayerNameById({}): found in lobby players as clientID: {}", id, entry.getName());
                     ClientSingleton.getInstance().getUsernames().put(id, entry.getName());
+                    return entry.getName();
+                }
+
+                if (entry.getFigure() == id && entry.getName() != null && !entry.getName().isBlank()) {
+                    logger.info("getPlayerNameById({}): found in lobby players as robotID/figure: {}", id, entry.getName());
+                    robotIDToPlayerName.put(id, entry.getName());
                     return entry.getName();
                 }
             }
@@ -1664,7 +1708,7 @@ public class GameController {
         Position pos = robotPositions.get(clientID);
         if (pos == null) {
             String playerName = getPlayerNameById(clientID);
-            appendChatMessage("[FEHLER] Position für " + playerName + " nicht gefunden.");
+            appendChatMessage("[FEHLER] Position für Spieler " + playerName + " nicht gefunden.");
             return;
         }
 
@@ -2087,7 +2131,7 @@ public class GameController {
         robotPositions.put(clientID, new Position(-1, -1));
 
         String playerName = getPlayerNameById(clientID);
-        appendChatMessage("[INFO] " + playerName + " fell off the chessboard!");
+        appendChatMessage("[INFO] Spieler " + playerName + " fiel vom Spielbrett herunter!");
 
     }
 
@@ -2303,22 +2347,34 @@ private void shuffleHandCards() {
      * synchronized with the data in recipientBox.
      */
     public void syncPlayerNames() {
-        ConcurrentBidirectionalMap<Integer, String> usernames = ClientSingleton.getInstance().getUsernames();
+        LobbyController lobbyController = ControllerRegistry.getLobbyController();
+        if (lobbyController != null) {
+            for (PlayerEntry entry : lobbyController.getPlayers()) {
+                int clientID = entry.getClientID();
+                int figure = entry.getFigure();
+                String name = entry.getName();
 
-        logger.info("Current usernames in ClientSingleton: {}", usernames);
-        logger.info("Current recipientBox items: {}", recipientBox.getItems());
-
-        for (PlayerEntry entry : recipientBox.getItems()) {
-            if (entry.getClientID() > 0 && entry.getName() != null && !entry.getName().isBlank()) {
-                String currentName = usernames.getByKeyOrDefault(entry.getClientID(), null);
-                if (currentName == null || currentName.isBlank() || !currentName.equals(entry.getName())) {
-                    logger.info("Updating username for client {}: '{}' -> '{}'",
-                            entry.getClientID(), currentName, entry.getName());
-                    usernames.put(entry.getClientID(), entry.getName());
+                if (name != null && !name.isBlank()) {
+                    ClientSingleton.getInstance().getUsernames().put(clientID, name);
+                    robotIDToPlayerName.put(figure, name);
+                    clientToRobotID.put(clientID, figure);
                 }
             }
         }
+
+        for (PlayerEntry entry : recipientBox.getItems()) {
+            int clientID = entry.getClientID();
+            int figure = entry.getFigure();
+            String name = entry.getName();
+
+            if (name != null && !name.isBlank()) {
+                ClientSingleton.getInstance().getUsernames().put(clientID, name);
+                robotIDToPlayerName.put(figure, name);
+                clientToRobotID.put(clientID, figure);
+            }
+        }
     }
+
 
     private void showDragAndDropInfoPopup() {
         Platform.runLater(() -> {
