@@ -265,10 +265,12 @@ public class ClientHandler implements Runnable {
         boolean ready = message.messageBody().ready();
 
         if (player == null) {
-            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + myID + ")");
+            errorLogger.error("[ERROR] Player is null in handleBodySetStatus (clientID: {})", myID);
             sendMessage(new Message<>(new BodyError("Cannot change ready state: Player not initialized.")));
             return;
         }
+
+        appLogger.info("Setting ready state for player {} to {}", player.toString(), ready);
 
         player.setReady(ready);
         broadcastMessage(new Message<>(new BodyPlayerStatus(myID, ready)));
@@ -295,7 +297,6 @@ public class ClientHandler implements Runnable {
                         appLogger.info("No other player ready: is ready order empty? {} -> no map selection ongoing.", server.readyOrderIsEmpty());
                     }
                 }
-                server.unmarkReady(this);
             }
         }
     }
@@ -310,12 +311,15 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
-        String map = message.messageBody().map();
+        String selectedMap = message.messageBody().map();
 
-        broadcastMessage(new Message<>(new BodyMapSelected(map)));
-        server.setMapSelectionOngoing(false);
-        setMapSelecting(false);
-        server.newGame(map);
+        broadcastMessage(new Message<>(new BodyMapSelected(selectedMap)));
+
+        if (game == null) {
+            server.newGame(selectedMap);
+        } else {
+            game.setBoard(selectedMap);
+        }
     }
 
     /**
