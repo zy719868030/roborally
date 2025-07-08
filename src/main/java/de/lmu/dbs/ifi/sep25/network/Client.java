@@ -1435,6 +1435,7 @@ public class Client {
         return -1; // Default/fallback
     }
 
+
     /**
      * Returns the selected map variable, stored in handleMapSelected.
      *
