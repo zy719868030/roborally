@@ -262,4 +262,8 @@
 .stack-pane {
     -fx-background-color: transparent;
 }
+#mapPreviewContainer {
+    -fx-background-color: rgba(0,0,0,0.1);
+    -fx-padding: 20;
+}
 

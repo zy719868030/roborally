@@ -129,6 +129,9 @@ public class LobbyController {
     public void initialize() {
         ControllerRegistry.setLobbyController(this);
         playerList.setItems(players);
+      //  mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty().subtract(20));
+        //mapPreviewImage.setPreserveRatio(true);
+
 
 
         playerList.setCellFactory(listView -> new ListCell<>() {
@@ -195,8 +198,9 @@ public class LobbyController {
         if (client != null) {
             client.flushPendingPlayers();
         }
-        mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty());
-        mapPreviewImage.fitHeightProperty().bind(mapPreviewContainer.heightProperty());
+       // mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty().subtract(40));
+        //mapPreviewImage.fitHeightProperty().bind(mapPreviewContainer.heightProperty().subtract(40));
+
         //für Buttons
         addHoverAnimation(lobbyToggleButton);
         addHoverAnimation(chatToggleButton);

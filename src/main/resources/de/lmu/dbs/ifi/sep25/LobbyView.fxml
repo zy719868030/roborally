@@ -89,18 +89,23 @@
     </VBox>
     <!-- === Rechte Seite: Spielfeld + Map-Vorschau === -->
     <VBox spacing="10" alignment="TOP_CENTER">
-        <Label text="Spielfeld" styleClass="status-label" />
+        <Label text="Spielfeld Vorschau" styleClass="status-label" />
         <Label fx:id="mapLabel" text="Noch keine Karte gewählt." styleClass="sourcetext"/>
-        <StackPane fx:id="mapPreviewContainer" prefWidth="300" prefHeight="300" maxWidth="Infinity" maxHeight="Infinity">
-            <ImageView fx:id="mapPreviewImage"
-                       preserveRatio="true"
-                       smooth="true"
-                       fitWidth="Infinity"
-                       fitHeight="Infinity"
-                       visible="false"
-                       managed="false"/>
-        </StackPane>
-        <GridPane fx:id="gameBoardPane" visible="true" managed="true"/>
+            <StackPane fx:id="mapPreviewContainer"
+                       alignment="CENTER"
+                       prefWidth="800"
+                       prefHeight="600"
+                       maxWidth="Infinity"
+                       maxHeight="Infinity">
+                <ImageView fx:id="mapPreviewImage"
+                           preserveRatio="true"
+                           smooth="true"
+                           visible="false"
+                           managed="false" />
+            </StackPane>
+
+
+
     </VBox>
 
     <!-- === Miniatur-Icons unten zum Wiederherstellen === -->
