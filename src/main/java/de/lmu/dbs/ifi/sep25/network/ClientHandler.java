@@ -311,12 +311,15 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
-        String map = message.messageBody().map();
+        String selectedMap = message.messageBody().map();
 
-        broadcastMessage(new Message<>(new BodyMapSelected(map)));
-        server.setMapSelectionOngoing(false);
-        setMapSelecting(false);
-        server.newGame(map);
+        broadcastMessage(new Message<>(new BodyMapSelected(selectedMap)));
+
+        if (game == null) {
+            server.newGame(selectedMap);
+        } else {
+            game.setBoard(selectedMap);
+        }
     }
 
     /**

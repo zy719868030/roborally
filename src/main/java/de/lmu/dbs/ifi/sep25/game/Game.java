@@ -33,9 +33,9 @@ public class Game {
     private int roundNumber = 0;
 
     // Core game components
-    private final Board board;
+    private Board board;
+    private String selectedMap;
     private final List<Player> players;
-    private final String selectedMap;
     private final Stack<Player> currentPlayerTurn;
 
     // Card decks
@@ -66,18 +66,6 @@ public class Game {
             instance = new Game(mapName);
         }
         return instance;
-    }
-
-    /**
-     * Set Board references for all robots when initializing the game
-     */
-    public void initializeGame() {
-        // TODO game.initializeGame(); (in Server)
-
-        for (Player player : players) {
-            Robot robot = player.getRobot();
-            robot.setBoard(board);
-        }
     }
 
     private void initializeUpgradeCards() {
@@ -672,6 +660,7 @@ public class Game {
             }
         }
     }
+
     /**
      * Handles the effects of a DamageCard on a player's robot based on the card's damage type.
      *
@@ -1219,6 +1208,17 @@ public class Game {
     }
 
     // 7. Utility and Getter Methods
+
+    public void setBoard(String newMapName) {
+        if (newMapName.equalsIgnoreCase(selectedMap)) {
+            errorLogger.warn("Tried to set board to same map as current board.");
+            return;
+        }
+
+        appLogger.info("Changing board from {} to {}",selectedMap , newMapName);
+        this.selectedMap = newMapName;
+        this.board = new Board(MapType.fromString(selectedMap));
+    }
 
     /**
      * Gets the game board.

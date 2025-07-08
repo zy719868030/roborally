@@ -564,8 +564,13 @@ public class Server {
      * Starts the game and broadcasts a game start message to all players.
      */
     public void startGame() {
-        System.out.println("Starting game...");
+        appLogger.info("Starting game with map {}", game.getMapType());
+        setMapSelectionOngoing(false);
+        for (ClientHandler client : clients.keySet()) {
+            client.setMapSelecting(false);
+        }
         resetReadyRegister();
+
         broadcastMessage(game.getBoard().getSerializedBoardAsMessage());
 
         game.startGameLoop();

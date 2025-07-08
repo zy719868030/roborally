@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
-
-
 public class LobbyController {
     @FXML
     private ComboBox<PlayerEntry> recipientBox;
@@ -72,10 +69,8 @@ public class LobbyController {
     @FXML
     private Label chatIconLabel;
 
-
     private final List<Integer> readyOrder = new ArrayList<>();
     private List<String> lastReceivedMapList = null;
-
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
     private Parent root;
@@ -129,7 +124,6 @@ public class LobbyController {
 
 
     }
-
 
     @FXML
     public void initialize() {
@@ -245,7 +239,6 @@ public class LobbyController {
         return readyOrder.get(0) == myID;
     } */
 
-
     @FXML
     private void handleNotReady() {
         sendReadyStatus(false);
@@ -263,7 +256,6 @@ public class LobbyController {
             // Warten auf erneute Nachricht vom Server, falls ich wieder Mapwähler werde
         }
     }
-
 
     private void sendReadyStatus(boolean ready) {
         Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
@@ -301,8 +293,6 @@ public class LobbyController {
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
 
-
-
     public void showMapSelection(List<String> maps) {
         if (maps == null || maps.isEmpty()) {
             System.err.println("[WARN] showMapSelection mit leerer Map-Liste aufgerufen.");
@@ -319,8 +309,6 @@ public class LobbyController {
         mapChoiceBox.setDisable(false);
     }
 
-
-
     @FXML
     private void handleMapSelection() {
         String selectedMap = mapChoiceBox.getValue();
@@ -333,10 +321,10 @@ public class LobbyController {
 
         }
     }
-     List<String> getLastReceivedMapList() {
+
+    List<String> getLastReceivedMapList() {
         return lastReceivedMapList;
     }
-
 
     //Methode zum Verstecken, wenn Spieler z. B. unready wird
     public void hideMapSelection() {
@@ -354,6 +342,7 @@ public class LobbyController {
         String mapName = text.replace("Ausgewählte Karte: ", "").trim();
         displayMapPreview(mapName);
     }
+
     public void updatePlayerStatus(int clientID, boolean isReady) {
         PlayerEntry found = players.stream()
                 .filter(p -> p.getClientID() == clientID)
@@ -389,7 +378,6 @@ public class LobbyController {
         }
     }
 
-
     private int getFirstReadyClientID() {
         return players.stream()
                 .filter(PlayerEntry::isReady)
@@ -397,7 +385,6 @@ public class LobbyController {
                 .findFirst()
                 .orElse(-1);
     }
-
 
     @FXML
     private void handleSendChat() {
@@ -446,20 +433,11 @@ public class LobbyController {
         playerList.refresh();
     }
 
-
-  /*  public void displaySelectedMap(String mapName) {
-        // Diese Methode zeigt den ausgewählten Kartennamen in der Benutzeroberfläche an.
-        // Zum Beispiel kann hier ein Label aktualisiert werden, das den Namen der Karte zeigt:
-        mapLabel.setText("Ausgewählte Karte: " + mapName);
-    } */
-
-
     @FXML
     private void handleClearRecipient() {
         recipientBox.getSelectionModel().clearSelection();
         System.out.println("[DEBUG] Chat-Empfänger zurückgesetzt auf 'Alle'");
     }
-
 
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
@@ -471,7 +449,6 @@ public class LobbyController {
         notReadyButton.setVisible(isReady);
         notReadyButton.setManaged(!isReady);
     }
-
 
     public void renamePlayer(int clientID, String newName) { //@SEBAS
         for (PlayerEntry p : players) {
@@ -496,7 +473,6 @@ public class LobbyController {
                 ))
                 .toList();
     }
-
 
     private void slideOut(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
@@ -524,7 +500,6 @@ public class LobbyController {
     public Parent getRoot() {
         return root;
     }
-
 
     private void addHoverAnimation(Button button) {
         button.setOnMouseEntered(e -> {
