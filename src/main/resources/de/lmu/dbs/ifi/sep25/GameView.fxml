@@ -45,6 +45,10 @@
             </HBox>
         </VBox>
     </VBox>
+    <!-- Popup-Container unter dem Chat einfügen -->
+    <StackPane fx:id="popupContainer" visible="false" managed="false" style="-fx-padding: 5;"/>
+
+
 
     <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->
     <VBox spacing="10" alignment="TOP_CENTER">

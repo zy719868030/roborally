@@ -88,6 +88,8 @@ public class GameController {
     @FXML
     private Button confirmSelectionButton;
     private Node draggedCard;
+    @FXML
+    private StackPane popupContainer;
 
 
 
@@ -95,6 +97,7 @@ public class GameController {
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
 
     private boolean startPositionSelectionActive = false;
+    private double dragStartX, dragStartY;
 
     /**
      * Stores the direction of the robot of each clientID as a lowercase string.
@@ -568,6 +571,7 @@ public class GameController {
             handCardBox.setVisible(true);
             handCardBox.setManaged(true);
             logger.info("Hand card area enabled");
+            showDragAndDropInfoPopup();
         } else {
             handCardBox.setDisable(true);
             logger.info("No handball zone");
@@ -576,13 +580,17 @@ public class GameController {
         // DiscardPile nur in Aktivierungsphase sichtbar
         discardPileBox.setVisible(isActivationPhase);
         discardPileBox.setManaged(isActivationPhase);
+        if (isActivationPhase) {
+            enterActivationPhase();
+        }
 
         if (confirmSelectionButton != null) {
             updateConfirmButtonVisibility();
+        }
 
             //confirmSelectionButton.setVisible(isProgrammingPhase);
             // confirmSelectionButton.setManaged(isProgrammingPhase);
-        }
+
 
 
 //        // Timer nur in Programmierphase starten
@@ -596,7 +604,6 @@ public class GameController {
         chatInput.setDisable(isGameOverPhase);
         recipientBox.setDisable(isGameOverPhase);
 
-        // Beispiel: iconMenu (z. B. Buttons oder Aktionsleiste)
         iconMenu.setDisable(isGameOverPhase || isSetupPhase);
 
         // ChatBox bei Spielende ausblenden
@@ -608,6 +615,33 @@ public class GameController {
         //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
+
+    public void enterActivationPhase() {
+        logger.info("[PHASE] Entering Activation Phase");
+
+
+        clearProgrammingUI();
+
+        if (!confirmedCards.isEmpty()) {
+            displayConfirmedCards(confirmedCards);
+        }
+
+        handCardBox.setDisable(true);
+        handCardBox.setVisible(false);
+        handCardBox.setManaged(false);
+
+        if (confirmSelectionButton != null) {
+            confirmSelectionButton.setVisible(false);
+            confirmSelectionButton.setManaged(false);
+        }
+
+
+    }
+
+    private void clearProgrammingUI() {
+    }
+    private List<String> confirmedCards = new ArrayList<>();
+
 
     public void updateDiscardPile(List<String> discardedCards) {
         discardPileBox.getChildren().clear();
@@ -914,6 +948,48 @@ public class GameController {
             view.setEffect(null);
         });
 
+        view.setOnMousePressed(event -> {
+            dragStartX = event.getSceneX();
+            dragStartY = event.getSceneY();
+        });
+
+        view.setOnMouseReleased(event -> {
+            double deltaX = Math.abs(event.getSceneX() - dragStartX);
+            double deltaY = Math.abs(event.getSceneY() - dragStartY);
+            if (deltaX < 5 && deltaY < 5) {
+                int firstEmptySlot = -1;
+                for (int i = 0; i < registerState.length; i++) {
+                    if (registerState[i] == null) {
+                        firstEmptySlot = i;
+                        break;
+                    }
+                }
+                if (firstEmptySlot != -1) {
+                    placeCardInRegisterSlot(cardName, firstEmptySlot);
+                    handCardBox.getChildren().remove(view);
+                    appendChatMessage("[INFO] Karte " + cardName + " wurde per Klick ins Register " + (firstEmptySlot + 1) + " gelegt.");
+                    logger.info("Card {} placed in register slot {} by click", cardName, firstEmptySlot);
+                } else {
+                    appendChatMessage("[WARN] Kein freier Register-Slot verfügbar.");
+                    logger.warn("No empty register slot available for card {}", cardName);
+                }
+            }
+        });
+
+        view.setOnDragDetected(event -> {
+            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(cardName);
+            db.setContent(content);
+            db.setDragView(view.getImage());
+
+            draggedCard = view;
+            event.consume();
+        });
+
+        return view;
+    }
+
 
        /* view.setOnMouseClicked(event -> {
          //   // Add validation here before attempting to place the card
@@ -957,20 +1033,7 @@ public class GameController {
 
         });
         */
-        view.setOnDragDetected(event -> {
-            Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
-            content.putString(cardName);
-            db.setContent(content);
-            db.setDragView(view.getImage());
 
-            draggedCard = view;
-            event.consume();
-        });
-
-
-        return view;
-    }
 
     private int findNextEmptyRegisterSlot() {
         for (int i = 0; i < registerState.length; i++) {
@@ -1021,6 +1084,41 @@ public class GameController {
                     cardView.setUserData(cardName);
                     cardView.setOpacity(0.7);
 
+                    // Drag & drop
+                    cardView.setOnDragDetected(event -> {
+                        Dragboard db = cardView.startDragAndDrop(TransferMode.MOVE);
+                        ClipboardContent content = new ClipboardContent();
+                        content.putString(cardName);
+                        db.setContent(content);
+                        db.setDragView(cardView.getImage());
+                        draggedCard = cardView;
+                        event.consume();
+                    });
+
+
+                    cardView.setOnMouseClicked(event -> {
+
+                        pane.getChildren().clear();
+
+
+                        registerState[slotIndex] = null;
+
+                        ImageView handCard = createClickableCard(cardName);
+                        handCardBox.getChildren().add(handCard);
+
+
+                        manuallyClearedSlots.add(slotIndex);
+                        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectedCard(null, slotIndex));
+                        ClientSingleton.getInstance().sendMessage(msg);
+
+
+                        updateConfirmButtonVisibility();
+
+
+                        appendChatMessage("[INFO] Karte " + cardName + " wurde aus Register " + (slotIndex + 1) + " entfernt.");
+                    });
+
+
                     pane.getChildren().add(cardView);
                     // remember what card is in slot
                     registerState[slotIndex] = cardName;
@@ -1029,6 +1127,9 @@ public class GameController {
             }
         }
     }
+
+
+
 
     /**
      * Initialisiert einen Register-Slot zur Annahme von Karten per Drag & Drop.
@@ -1128,6 +1229,10 @@ public class GameController {
         ClientSingleton.getInstance().sendMessage(finishedMsg);
 
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
+
+        confirmSelectionButton.setVisible(false);
+        confirmSelectionButton.setManaged(false);
+        confirmSelectionButton.setDisable(true);
     }
 
 
@@ -2109,7 +2214,44 @@ private void shuffleHandCards() {
     // Informiere den Spieler
     //appendChatMessage("[INFO] Deine Handkarten wurden gemischt.");
 }
+
+
+    private void showDragAndDropInfoPopup() {
+        Platform.runLater(() -> {
+            // Label mit Info-Text und Styling
+            Label infoLabel = new Label("Ziehe 5 Karten per Drag & Drop in die Registerfelder,\num deinen Roboter zu programmieren.");
+            infoLabel.getStyleClass().add("status-label");
+            infoLabel.setWrapText(true);
+            infoLabel.setMaxWidth(280);
+            infoLabel.setStyle(
+                    "-fx-background-color: rgba(20, 20, 30, 0.85);" +
+                            "-fx-text-fill: #F5A623;" +
+                            "-fx-padding: 12 16;" +
+                            "-fx-background-radius: 12;" +
+                            "-fx-effect: dropshadow(gaussian, #00ffd0, 6, 0.5, 0, 0);"
+            );
+
+            // Vorher vorhandene Kinder entfernen
+            popupContainer.getChildren().clear();
+            popupContainer.getChildren().add(infoLabel);
+
+            // Popup sichtbar machen
+            popupContainer.setVisible(true);
+            popupContainer.setManaged(true);
+
+            // Nach 5 Sekunden Popup wieder verstecken
+            PauseTransition delay = new PauseTransition(Duration.seconds(6));
+            delay.setOnFinished(event -> {
+                popupContainer.getChildren().clear();
+                popupContainer.setVisible(false);
+                popupContainer.setManaged(false);
+            });
+            delay.play();
+        });
+    }
 }
+
+
 
 
 
