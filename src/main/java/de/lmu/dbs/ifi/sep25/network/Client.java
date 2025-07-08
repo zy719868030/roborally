@@ -134,8 +134,6 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-//                System.out.println("[RECEIVED] " + json); // DEBUG
-
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
                     if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
@@ -416,8 +414,12 @@ public class Client {
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         selectedMap = message.messageBody().map();
 
-        clientLogger.info("[MapSelected] Map selected: " + selectedMap);
-
+        Platform.runLater(() -> {
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl != null) {
+                lobbyCtrl.setMapLabel("Ausgewählte Karte: " + selectedMap);
+            }
+        });
     }
 
     /**

@@ -1,42 +1,28 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
-import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 
@@ -206,7 +192,7 @@ public class LobbyController {
         mapChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldMap, newMap) -> {
             if (newMap != null) {
                 mapLabel.setText("Ausgewählte Karte: " + newMap);
-                loadMapPreview(newMap); // << NUR Bild laden
+                displayMapPreview(newMap);
             }
         });
 
@@ -223,8 +209,8 @@ public class LobbyController {
 
     }
 
-    private void loadMapPreview(String mapName) {
-        String imageFile = "/assets/" + mapName.toLowerCase().replace(" ", "_") + ".png";
+    private void displayMapPreview(String mapName) {
+        final String imageFile = "/assets/mapPreviews/" + mapName.toLowerCase().replace(" ", "_") + ".png";
         InputStream imageStream = getClass().getResourceAsStream(imageFile);
         if (imageStream != null) {
             mapPreviewImage.setImage(new Image(imageStream));
@@ -366,18 +352,7 @@ public class LobbyController {
 
         // Lade zugehöriges Bild
         String mapName = text.replace("Ausgewählte Karte: ", "").trim();
-        String imageFile = "/assets/maps/" + mapName.toLowerCase().replace(" ", "_") + ".png";
-
-        InputStream imageStream = getClass().getResourceAsStream(imageFile);
-        if (imageStream != null) {
-            mapPreviewImage.setImage(new Image(imageStream));
-            mapPreviewImage.setVisible(true);
-            mapPreviewImage.setManaged(true);
-        } else {
-            System.err.println("[WARN] Kein Vorschaubild gefunden für: " + mapName);
-            mapPreviewImage.setVisible(false);
-            mapPreviewImage.setManaged(false);
-        }
+        displayMapPreview(mapName);
     }
     public void updatePlayerStatus(int clientID, boolean isReady) {
         PlayerEntry found = players.stream()
