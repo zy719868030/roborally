@@ -4,6 +4,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.Group?>
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
@@ -65,9 +66,18 @@
                visible="false"
                managed="false"/> <!-- damit auch kein Platz reserviert wird -->
         <!-- Spielfeld -->
-        <ScrollPane fitToWidth="true" fitToHeight="true">
-            <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
+        <ScrollPane fx:id="gameBoardScrollPane"
+                    fitToWidth="false"
+                    fitToHeight="false"
+                    style="-fx-background-color: transparent;">
+            <Group>
+                <StackPane fx:id="zoomWrapper" style="-fx-background-color: transparent;">
+                    <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
+                </StackPane>
+            </Group>
         </ScrollPane>
+
+
 
         <!-- Handkartenbereich -->
         <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>

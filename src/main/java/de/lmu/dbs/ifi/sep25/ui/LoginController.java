@@ -98,14 +98,15 @@ public class LoginController {
         figureBox.valueProperty().bindBidirectional(selectedFigure);
 
         nameField.textProperty().addListener((obs, oldText, newText) -> {
-            if (!newText.isBlank() && figureBox.getValue() != null) {
+            if (newText != null && !newText.isBlank() && figureBox.getValue() != null) {
                 warningLabel.setVisible(false);
                 warningLabel.setManaged(false);
                     }
                 });
 
         figureBox.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && !nameField.getText().isBlank()) {
+            String currentName = nameField.getText();
+            if (newVal != null && currentName != null && !currentName.isBlank()) {
                 warningLabel.setVisible(false);
                 warningLabel.setManaged(false);
             }

@@ -9,6 +9,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -90,6 +91,11 @@ public class GameController {
     private Node draggedCard;
     @FXML
     private StackPane popupContainer;
+    @FXML private ScrollPane gameBoardScrollPane;
+    @FXML private StackPane zoomWrapper;
+
+    private double scaleValue = 1.0;
+    private final double SCALE_DELTA = 1.1;
 
 
 
@@ -114,6 +120,26 @@ public class GameController {
     @FXML
     public void initialize() {
         loadTileImages();
+        gameBoardScrollPane.setStyle("-fx-background-color: transparent;");
+        zoomWrapper.setStyle("-fx-background-color: transparent;");
+        zoomWrapper.setOnScroll(event -> {
+            if (event.isControlDown()) {
+                event.consume();
+                double oldScale = scaleValue;
+                if (event.getDeltaY() > 0) {
+                    scaleValue *= SCALE_DELTA;
+                } else {
+                    scaleValue /= SCALE_DELTA;
+                }
+
+                scaleValue = clamp(scaleValue, 0.5, 2.5);
+                zoomWrapper.setScaleX(scaleValue);
+                zoomWrapper.setScaleY(scaleValue);
+
+                repositionScrollPane(event.getX(), event.getY(), oldScale);
+            }
+        });
+
 
         // Initialisiere EmpfängerBox
         PlayerEntry alleOption = new PlayerEntry(-1, "Alle", -1, false);
@@ -136,6 +162,26 @@ public class GameController {
         });
 
         chatInput.setOnAction(e -> handleSendChat());
+    }
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private void repositionScrollPane(double mouseX, double mouseY, double oldScale) {
+        Bounds viewportBounds = gameBoardScrollPane.getViewportBounds();
+        Bounds contentBounds = zoomWrapper.getBoundsInParent();
+
+        double posX = (mouseX + gameBoardScrollPane.getHvalue() * (contentBounds.getWidth() - viewportBounds.getWidth())) / oldScale;
+        double posY = (mouseY + gameBoardScrollPane.getVvalue() * (contentBounds.getHeight() - viewportBounds.getHeight())) / oldScale;
+
+        double newX = posX * scaleValue;
+        double newY = posY * scaleValue;
+
+        double hValue = (newX - viewportBounds.getWidth() / 2) / (contentBounds.getWidth() - viewportBounds.getWidth());
+        double vValue = (newY - viewportBounds.getHeight() / 2) / (contentBounds.getHeight() - viewportBounds.getHeight());
+
+        gameBoardScrollPane.setHvalue(clamp(hValue, 0, 1));
+        gameBoardScrollPane.setVvalue(clamp(vValue, 0, 1));
     }
 
 
