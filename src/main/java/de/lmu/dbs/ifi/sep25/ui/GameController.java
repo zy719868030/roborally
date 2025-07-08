@@ -1534,8 +1534,8 @@ public class GameController {
 
         try {
             Integer robotID = clientToRobotID.get(clientID);
-            appLogger.info("looking up for clientID {}", clientID);
-            appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
+//            appLogger.info("looking up for clientID {}", clientID);
+//            appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
             appLogger.info("Robot {} moved to ({}, {})", robotID, x, y);
 
             final String direction = robotDirections.get(clientID);

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -264,7 +265,7 @@ public class Player {
      **/
     public void addToHand(RegisterCard card) {
         hand.add(card);
-        updateHand();
+//        updateHand();
     }
 
     /**
@@ -272,7 +273,7 @@ public class Player {
      **/
     public void removeFromHand(RegisterCard card) {
         hand.remove(card);
-        updateHand();
+//        updateHand();
     }
 
     /**
@@ -295,8 +296,6 @@ public class Player {
                     )
             ), connection);
         }
-
-//        appLogger.info("Hand information sent.");
     }
 
     /**
@@ -329,7 +328,7 @@ public class Player {
     public RegisterCard drawCard() {
         if (programmingDeck.isEmpty()) {
             programmingDeck.reset();
-            // Send ShuffleCoding message
+            // Send ShuffleCoding message TODO maybe switch to broadcast, also move to deck shuffle
             connection.broadcastMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyShuffleCoding(this.getRobot().getRobotID())
             ));
@@ -415,6 +414,11 @@ public class Player {
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
                                     clientID, registerSlot, Boolean.TRUE)));
+
+                    // automatic ready check:
+                    if (register.stream().allMatch(Objects::nonNull)) {
+                        connection.setReadyRegister();
+                    }
                 } else {
                     connection.sendMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyError("Card " + cardName + " is not in your hand!")
