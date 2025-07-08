@@ -18,6 +18,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class Game {
     // Constants
@@ -374,7 +377,7 @@ public class Game {
         // Deal cards to all players
         for (Player player : players) {
             // Deal new cards and send to server
-            appLogger.info("Deal cards to players {}", player.getClientID());
+            appLogger.info("Deal cards to {}", player.getPlayerIdentifier());
             player.dealProgrammingCards();
         }
 
@@ -477,12 +480,12 @@ public class Game {
             RegisterCard card = player.getRegisterCard(currentRegister);
             if (card != null) {
                 appLogger.info("Player {} plays {} from register {}",
-                        player.getConnection().getMyID(),
+                        player.getPlayerIdentifier(),
                         CardFactory.getCardName(card),
                         currentRegister);
             } else {
                 appLogger.info("Player {} has no card for register {}",
-                        player.getConnection().getMyID(),
+                        player.getPlayerIdentifier(),
                         currentRegister);
             }
 
@@ -602,7 +605,9 @@ public class Game {
                     currentPlayerTurn.push(player);
                 }
 
-                appLogger.info("SETUP player order: {}", setupOrder.stream().map(p -> "Player " + p.getConnection().getMyID()).toList());
+                appLogger.info("SETUP player order: {}", setupOrder.stream()
+                        .map(Player::getPlayerIdentifier)
+                        .collect(Collectors.toList()));
             }
             case ACTIVATION -> {
                 List<Player> sortedPlayers = new ArrayList<>(players);
@@ -623,7 +628,9 @@ public class Game {
                     currentPlayerTurn.push(sortedPlayers.get(i));
                 }
 
-                appLogger.info("Current player order set: {}", sortedPlayers.stream().map(Player::toString).toList());
+                appLogger.info("Current player order set: {}", sortedPlayers.stream()
+                        .map(Player::getPlayerIdentifier)
+                        .collect(Collectors.toList()));
             }
             default ->
                     throw new IllegalAccessError("determinePlayerOrder should not be called in phase: " + currentPhase);

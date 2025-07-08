@@ -280,7 +280,7 @@ public class Player {
      **/
     public void updateHand() {
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
-        appLogger.info("Update player {}'s hand: {}", clientID, handWithNames);
+        appLogger.info("Update {}'s hand: {}", getPlayerIdentifier(), handWithNames);
 
         // Always send real cards to the player
         connection.sendMessage(new MessageDefinitions.Message<>(
@@ -629,7 +629,7 @@ public class Player {
      *
      * @return Formatted player identifier string
      */
-    private String getPlayerIdentifier() {
+    public String getPlayerIdentifier() {
         return String.format("Player [clientID=%d, robotID=%d, name='%s']",
                 clientID, robot.getRobotID(), name);
     }
