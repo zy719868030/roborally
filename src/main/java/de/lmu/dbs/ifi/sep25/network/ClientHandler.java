@@ -44,11 +44,17 @@ public class ClientHandler implements Runnable {
     // 0. Logger
     private static final Logger appLogger = LogManager.getLogger(ClientHandler.class);
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
+    private static final Logger serverCommLogger = LogManager.getLogger("ServerCommLogger");
+    private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    private final Gson gsonPretty = new GsonBuilder()
+            .setPrettyPrinting()
             .create();
 
     private Integer myID;
@@ -91,7 +97,6 @@ public class ClientHandler implements Runnable {
     }
 
 
-
     /**
      * Executes the main logic for handling incoming messages from a client.
      * This method reads JSON-formatted messages from the client's input stream,
@@ -120,6 +125,9 @@ public class ClientHandler implements Runnable {
             while (!Thread.currentThread().isInterrupted() && (json = reader.readLine()) != null) {
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
+                    if (!messageType.equals("Alive")) {
+                        serverCommLogger.info("[RECEIVED] {}: {}", messageType, gsonPretty.toJson(JsonUtil.parseUnknown(json)));
+                    }
                     switch (messageType) {
                         case "Alive" -> handleBodyAlive();
                         case "HelloServer" -> handleBodyHelloServer(json);
@@ -223,8 +231,6 @@ public class ClientHandler implements Runnable {
 
             server.getNames().put(this, name);
             server.addToLobby(this);
-
-            //sendMessage(new Message<>(new BodyWelcome(myID)));
 
             broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
@@ -400,14 +406,15 @@ public class ClientHandler implements Runnable {
         }
 
         // Broadcasts are handled in setPlayerStartingPosition
-        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
-            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
-        } else if (placementLatch != null) {
+        BodyError error = game.setPlayerStartingPosition(player, body.x(), body.y());
+        if (error == null && placementLatch != null) {
             placementLatch.countDown();
-        } else {
-            appLogger.error("Placement latch was not set for player {} (ID: {})", player.getName(), myID);
-            throw new IllegalStateException("Latch is not set! Probable cause for this error: Player selected staring position although not their turn.");
+            return;
+        } else if (placementLatch == null) {
+            error = new BodyError("Cannot select starting position; Not your turn!");
         }
+        errorLogger.error(error.error());
+        sendMessage(new Message<>(error));
     }
 
 
@@ -540,6 +547,8 @@ public class ClientHandler implements Runnable {
      */
     public void sendMessage(String message) {
         try {
+            if (!JsonUtil.parseUnknown(message).messageType().equalsIgnoreCase("Alive"))
+                serverCommLogger.info("[SENDING] {}: {}", JsonUtil.parseUnknown(message).messageType(), gsonPretty.toJson(JsonUtil.parseUnknown(message)));
             writer.println(message);
             writer.flush();
         } catch (Exception e) {

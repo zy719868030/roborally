@@ -10,6 +10,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -22,11 +23,17 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.Circle;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.util.Loader;
 
 import java.io.IOException;
 import java.util.*;
@@ -82,6 +89,9 @@ public class GameController {
 
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
+
+    private boolean startPositionSelectionActive = false;
+
     /**
      * Stores the direction of the robot of each clientID as a lowercase string.
      **/
@@ -243,12 +253,21 @@ public class GameController {
 
                 case "StartPoint" -> {
                     addImage(pane, "black and white gears", 0);
-                    pane.setStyle("-fx-border-color: yellow; -fx-border-width: 2px;");
-                    if (pane.getOnMouseClicked() == null) {
-                        pane.setOnMouseClicked(_ -> handleStartPointClick(pane));
-                    }
-                }
 
+                    Circle yellowGlow = new Circle(15);
+                    yellowGlow.setFill(Color.TRANSPARENT); // default = invisible
+                    StackPane.setAlignment(yellowGlow, Pos.CENTER);
+
+                    Circle overlay = new Circle(15);
+                    overlay.setFill(Color.TRANSPARENT);
+                    StackPane.setAlignment(overlay, Pos.CENTER);
+
+                    pane.getChildren().addAll(yellowGlow, overlay);
+                    pane.setUserData(overlay); // for green overlay access
+                    pane.getProperties().put("yellowGlow", yellowGlow); // store for toggling
+
+                    startPointPanes.add(pane); // for later bulk update
+                }
                 default -> {
                     String key = getTileKeyForElement(element);
                     if (tileImages.containsKey(key)) {
@@ -288,12 +307,7 @@ public class GameController {
         Integer x = GridPane.getColumnIndex(selectedPane);
         Integer y = GridPane.getRowIndex(selectedPane);
         if (x == null || y == null) return;
-        int myID = ClientSingleton.getInstance().getID();
-        appLogger.info("Mi ClientID: {}", myID);
-        appLogger.info("Jugador en turno (currentPlayerID): {}", currentPlayerID);
 
-
-        // Nachricht senden
         var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySetStartingPoint(x, y,
                 switch (ClientSingleton.getInstance().getSelectedMap()) {
                     case "Heavy Merge Area", "Death Trap" -> "left";
@@ -302,21 +316,47 @@ public class GameController {
                 }));
         ClientSingleton.getInstance().sendMessage(msg);
 
-        // Deaktiviere alle Startfelder (nur einmalige Auswahl zulassen)
-        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
-            if (node instanceof StackPane pane) {
-                pane.setOnMouseClicked(null);
-                pane.setStyle("-fx-border-color: transparent;"); // entferne ggf. gelbe Rahmen
-            }
-        }
-
-        // Nur den gewählten grün markieren
-        selectedPane.setStyle("-fx-border-color: green; -fx-border-width: 2px;");
+        // Visually mark this tile as selected (solid green)
+        Circle overlay = (Circle) selectedPane.getUserData();
+        overlay.setFill(Color.rgb(39, 174, 96, 0.6)); // solid green
 
         appendChatMessage("[INFO] Startposition gewählt bei (" + x + ", " + y + ")");
-        showInstructionDialog();
     }
 
+    public void deselectStartingPosition() {
+        for (Node node : gameBoardPane.getChildren()) {
+            if (node instanceof StackPane pane) {
+                Circle overlay = (Circle) pane.getUserData();
+                if (overlay != null) overlay.setFill(Color.TRANSPARENT);
+            }
+        }
+    }
+
+    /**
+     * Deactivates the startpointselection. Is called when startingpoint selection is confirmed by server.
+     **/
+    public void deactivateStartPointClick() {
+        for (Node node : gameBoardPane.getChildren()) {
+            if (node instanceof StackPane pane) {
+                // Disable interaction
+                pane.setOnMouseClicked(null);
+                pane.setOnMouseEntered(null);
+                pane.setOnMouseExited(null);
+
+                // Reset green overlay
+                Circle overlay = (Circle) pane.getUserData();
+                if (overlay != null) {
+                    overlay.setFill(Color.TRANSPARENT);
+                }
+
+                // Reset yellow glow
+                Circle yellowGlow = (Circle) pane.getProperties().get("yellowGlow");
+                if (yellowGlow != null) {
+                    yellowGlow.setFill(Color.TRANSPARENT);
+                }
+            }
+        }
+    }
 
     /**
      * Determines which conveyor tile to use.
@@ -619,6 +659,7 @@ public class GameController {
             playedCardsBox.getChildren().remove(0);
         }
     }
+
     private final List<StackPane> startPointPanes = new ArrayList<>();
 
     public void markCurrentPlayer(int clientID) {
@@ -639,21 +680,52 @@ public class GameController {
         if (isMyTurn) {
             appendChatMessage("[INFO] Du bist am Zug!");
             statusLabel.setText("Du bist am Zug.");
-            if (phaseID == 0) {
-                appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+            switch (phaseID) {
+                case 0 -> {
+                    appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+
+                    startPointPanes.forEach(pane -> {
+                        Circle yellow = (Circle) pane.getProperties().get("yellowGlow");
+                        if (yellow != null)
+                            yellow.setFill(new RadialGradient(
+                                    0, 0, 0.5, 0.5, 1.0, true, CycleMethod.NO_CYCLE,
+                                    new Stop(0.0, Color.rgb(255, 223, 0, 0.4)),
+                                    new Stop(1.0, Color.TRANSPARENT)
+                            ));
+
+                        Circle overlay = (Circle) pane.getUserData();
+                        pane.setOnMouseClicked(e -> handleStartPointClick(pane));
+                        pane.setOnMouseEntered(e -> {
+                            if (overlay.getFill().equals(Color.TRANSPARENT)) {
+                                overlay.setFill(Color.rgb(46, 204, 113, 0.3));
+                            }
+                        });
+                        pane.setOnMouseExited(e -> {
+                            if (overlay.getFill().equals(Color.rgb(46, 204, 113, 0.3))) {
+                                overlay.setFill(Color.TRANSPARENT);
+                            }
+                        });
+                    });
+                }
+
+                case 1 -> {
+
+                }
+
+                case 2 -> {
+
+                }
             }
         } else {
-            String name = getPlayerNameById(clientID); // eigene Methode
+            String name = getPlayerNameById(clientID);
             appendChatMessage("[INFO] " + name + " ist am Zug.");
             statusLabel.setText(name + " ist am Zug.");
         }
 
-        // 🔒 Startpunkte deaktivieren, außer wenn ich am Zug bin
         for (StackPane sp : startPointPanes) {
             sp.setDisable(!isMyTurn);
         }
 
-        // 🔄 Optional: Empfängerfeld markieren (falls sinnvoll)
         for (PlayerEntry entry : recipientBox.getItems()) {
             if (entry.getClientID() == clientID) {
                 recipientBox.getSelectionModel().select(entry);
@@ -809,6 +881,18 @@ public class GameController {
         view.setOnMouseExited(e -> view.setEffect(null));
 
         view.setOnMouseClicked(event -> {
+            // Add validation here before attempting to place the card
+            int nextSlot = findNextEmptyRegisterSlot();
+
+            // Prevent "Again" card from being placed in register 0
+            if (cardName.toLowerCase().contains("again") && nextSlot == 0) {
+                displayErrorAlert("Card placement error",
+                        "The card Again cannot be placed in the first register position!\n" +
+                                "Please select the 2nd to 5th register positions.");
+                highlightRegisterSlot(0);
+                return;
+            }
+
             String raw = view.getUserData().toString(); // e.g. "TurnRight#1"
             String actualCardName = raw.contains("#") ? raw.split("#")[0] : raw;
 
@@ -1507,15 +1591,10 @@ public class GameController {
     }
 
     /**
-     * Zeigt das Spielende an und informiert den Benutzer, ob er gewonnen oder verloren hat.
-     *
-     * @param isWinner true, wenn der Spieler gewonnen hat; false sonst
-     */
-    /**
      * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
      *
-     * @param isWinner         true, wenn der Spieler selbst gewonnen hat
-     * @param winnerClientId   Client-ID des Gewinner-Spielers
+     * @param isWinner       true, wenn der Spieler selbst gewonnen hat
+     * @param winnerClientId Client-ID des Gewinner-Spielers
      */
     public void showGameResult(boolean isWinner, int winnerClientId) {
         Platform.runLater(() -> {
@@ -1527,8 +1606,7 @@ public class GameController {
             appendChatMessage("[SPIELENDE] " + message);
 
             int robotId = clientToRobotID.getOrDefault(winnerClientId, 1);
-            String direction = robotDirections.getOrDefault(winnerClientId, "top");
-            String imagePath = "/assets/robots/robot_0" + robotId + "_" + direction + ".png";
+            String imagePath = "/assets/robots/robot_0" + robotId + "_right.png";
 
             ImageView robotImage = new ImageView();
             try {
@@ -1579,7 +1657,7 @@ public class GameController {
 
 
     public void showInstructionDialog() {
-        Label title = new Label("Nächster Schritt");
+        Label title = new Label("Programmierphase");
         title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
 
         Label info = new Label("Ziehe 5 Karten in die Registerfelder, um deinen Roboter zu programmieren.");
@@ -1764,11 +1842,54 @@ public class GameController {
      */
     public void displayErrorAlert(String title, String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initStyle(StageStyle.TRANSPARENT);
+
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #b00020;");
+
+            Label messageLabel = new Label(message);
+            messageLabel.setWrapText(true);
+            messageLabel.setStyle("-fx-font-size: 13px;");
+
+            Button okButton = new Button("OK");
+            okButton.setDefaultButton(true); // ENTER works
+            okButton.setStyle("""
+                        -fx-background-color: #e0e0e0;
+                        -fx-text-fill: black;
+                        -fx-font-size: 13px;
+                        -fx-padding: 6 14 6 14;
+                        -fx-background-radius: 6;
+                        -fx-border-radius: 6;
+                    """);
+            okButton.setOnAction(_ -> dialog.close());
+
+            VBox layout = new VBox(12, titleLabel, messageLabel, okButton);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(20));
+            layout.setStyle("""
+                        -fx-background-color: white;
+                        -fx-background-radius: 12;
+                        -fx-border-radius: 12;
+                        -fx-border-color: #b00020;
+                        -fx-border-width: 2;
+                    """);
+
+            Scene scene = new Scene(layout);
+            scene.setFill(Color.TRANSPARENT);
+
+            // ESC or SPACE to close
+            scene.setOnKeyPressed(event -> {
+                switch (event.getCode()) {
+                    case ESCAPE, SPACE, ENTER -> dialog.close();
+                }
+            });
+
+            dialog.setScene(scene);
+            dialog.setResizable(false);
+            dialog.show();
+            scene.getRoot().requestFocus(); // ensures key events are registered
         });
     }
 
