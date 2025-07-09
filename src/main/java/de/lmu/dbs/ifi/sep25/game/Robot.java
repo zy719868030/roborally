@@ -5,6 +5,7 @@ import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Wall;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.ArrayList;
@@ -78,15 +79,52 @@ public class Robot {
         notifyTurning("clockwise");
     }
 
+    /**
+     * Rotates the robot 180 degrees to face the opposite direction.
+     * The robot remains in its current space.
+     */
+    public void turnAround() {
+        if (isPoweredDown) return;
+        direction = direction.turnAround();
+        notifyTurning("clockwise");
+        notifyTurning("clockwise");
+    }
+
     // Moves the robot forward one space, checking Board for validity
     public void moveForward(Board board) {
         if (isPoweredDown) return;
+        // Check if current position has walls blocking exit in movement direction
+        List<BoardElement> currentElements = board.getElements(position.x(), position.y());
+        for (BoardElement element : currentElements) {
+            if (element instanceof Wall wall) {
+                if (!wall.canExitToDirection(direction)) {
+                    // Cannot exit current cell due to wall
+                    return;
+                }
+            }
+        }
+
         Position newPos = position.move(direction);
         if (board.isValidPosition(newPos)) {
-            // Check if new position's tiles allow passage
-            List<BoardElement> elements = board.getElements(newPos.x(), newPos.y());
-            boolean canPass = elements.stream().allMatch(e -> e.canPassThrough(this));
-            if (canPass && board.getRobotAt(newPos) == null) {
+            // Check if new position's tiles allow entry from current direction
+            List<BoardElement> targetElements = board.getElements(newPos.x(), newPos.y());
+            boolean canEnter = true;
+
+            // Check walls in target cell
+            for (BoardElement element : targetElements) {
+                if (element instanceof Wall wall) {
+                    // Check if wall blocks entry from the opposite direction
+                    if (!wall.canPassThroughFromDirection(direction.turnAround())) {
+                        canEnter = false;
+                        break;
+                    }
+                } else if (!element.canPassThrough(this)) {
+                    canEnter = false;
+                    break;
+                }
+            }
+
+            if (canEnter && board.getRobotAt(newPos) == null) {
                 position = newPos;
                 board.updateRobotPosition(this, position);
                 pushRobot(board, direction);
@@ -112,17 +150,6 @@ public class Robot {
     }
 
     /**
-     * Rotates the robot 180 degrees to face the opposite direction.
-     * The robot remains in its current space.
-     */
-    public void turnAround() {
-        if (isPoweredDown) return;
-        direction = direction.turnAround();
-        notifyTurning("clockwise");
-        notifyTurning("clockwise");
-    }
-
-    /**
      * Moves the robot one step backward in the direction opposite to its current orientation.
      * This method determines the reverse direction of the robot's current orientation
      * and updates the position accordingly by moving one step in that direction.
@@ -131,11 +158,38 @@ public class Robot {
     public void moveBackward(Board board) {
         if (isPoweredDown) return;
         Direction opposite = direction.turnAround();
+
+        // Check if current position has walls blocking exit in backward direction
+        List<BoardElement> currentElements = board.getElements(position.x(), position.y());
+        for (BoardElement element : currentElements) {
+            if (element instanceof Wall wall) {
+                if (!wall.canExitToDirection(opposite)) {
+                    // Cannot exit current cell due to wall
+                    return;
+                }
+            }
+        }
+
         Position newPos = position.move(opposite);
         if (board.isValidPosition(newPos)) {
-            List<BoardElement> elements = board.getElements(newPos.x(), newPos.y());
-            boolean canPass = elements.stream().allMatch(e -> e.canPassThrough(this));
-            if (canPass && board.getRobotAt(newPos) == null) {
+            List<BoardElement> targetElements = board.getElements(newPos.x(), newPos.y());
+            boolean canEnter = true;
+
+            // Check walls in target cell
+            for (BoardElement element : targetElements) {
+                if (element instanceof Wall wall) {
+                    // Check if wall blocks entry from the direction we're coming from
+                    if (!wall.canPassThroughFromDirection(opposite.turnAround())) {
+                        canEnter = false;
+                        break;
+                    }
+                } else if (!element.canPassThrough(this)) {
+                    canEnter = false;
+                    break;
+                }
+            }
+
+            if (canEnter && board.getRobotAt(newPos) == null) {
                 position = newPos;
                 board.updateRobotPosition(this, position);
                 pushRobot(board, opposite);
@@ -166,11 +220,41 @@ public class Robot {
         Position nextPos = position.move(pushDirection);
         Robot otherRobot = board.getRobotAt(nextPos);
         if (otherRobot != null) {
+            // Check if the other robot can be pushed (check walls at its current position)
+            List<BoardElement> otherRobotElements = board.getElements(nextPos.x(), nextPos.y());
+            boolean canPush = true;
+            for (BoardElement element : otherRobotElements) {
+                if (element instanceof Wall wall) {
+                    if (!wall.canExitToDirection(pushDirection)) {
+                        canPush = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!canPush) {
+                return; // Cannot push due to wall
+            }
+
             Position otherNewPos = nextPos.move(pushDirection);
             if (board.isValidPosition(otherNewPos)) {
-                List<BoardElement> elements = board.getElements(otherNewPos.x(), otherNewPos.y());
-                boolean canPass = elements.stream().allMatch(e -> e.canPassThrough(otherRobot));
-                if (canPass && board.getRobotAt(otherNewPos) == null) {
+                List<BoardElement> targetElements = board.getElements(otherNewPos.x(), otherNewPos.y());
+                boolean canEnter = true;
+
+                // Check if target position allows entry
+                for (BoardElement element : targetElements) {
+                    if (element instanceof Wall wall) {
+                        if (!wall.canPassThroughFromDirection(pushDirection.turnAround())) {
+                            canEnter = false;
+                            break;
+                        }
+                    } else if (!element.canPassThrough(otherRobot)) {
+                        canEnter = false;
+                        break;
+                    }
+                }
+
+                if (canEnter && board.getRobotAt(otherNewPos) == null) {
                     otherRobot.setPosition(otherNewPos);
                     board.updateRobotPosition(otherRobot, otherNewPos);
                     otherRobot.pushRobot(board, pushDirection);
@@ -245,7 +329,6 @@ public class Robot {
             }
         }
     }
-
     /**
      * Cancels the remaining programming for this round.
      * This is used when the robot is rebooted or certain damage cards are activated.

@@ -102,16 +102,20 @@ public class Wall extends BoardElement {
     }
 
     /**
-     * Checks whether the robot can pass through the wall from the specified direction.
-     * If the robot's movement direction is opposite to the wall's blocking direction, it cannot pass through.
+     * Checks whether the robot can pass through the wall.
+     * This method is called when checking if a robot can enter a cell with this wall.
+     * The wall blocks movement if the wall is configured to block entry from the robot's current position.
      *
      * @param robot The robot attempting to pass through.
      * @return Returns true if it can pass through, otherwise returns false.
      */
     @Override
     public boolean canPassThrough(Robot robot) {
-        Direction robotDirection = robot.getDirection();
-        return !isDirectionBlocked(robotDirection.turnAround());
+        // Walls on a cell block entry from specific directions
+        // Robot can stand on a cell with walls, but cannot enter if the wall blocks that direction
+        // Since this method doesn't know from which direction the robot is coming,
+        // it should always return true. The actual blocking logic should be in canPassThroughFromDirection
+        return true;
     }
 
     /**
@@ -122,6 +126,18 @@ public class Wall extends BoardElement {
      */
     public boolean canPassThroughFromDirection(Direction fromDirection) {
         return !isDirectionBlocked(fromDirection);
+    }
+
+    /**
+     * Checks whether the robot can exit this cell in the specified direction.
+     * Used to check if a wall on the current cell blocks movement out.
+     *
+     * @param toDirection The direction in which the robot attempts to exit this cell.
+     * @return Returns true if it can exit, otherwise returns false.
+     */
+    public boolean canExitToDirection(Direction toDirection) {
+        // If the wall blocks the direction to which the robot is exiting, it cannot pass
+        return !isDirectionBlocked(toDirection);
     }
 
     /**
