@@ -44,11 +44,8 @@
                 <ComboBox fx:id="recipientBox" promptText="An..." prefWidth="100" styleClass="combo-recipient"/>
                 <Button text="Senden" onAction="#handleSendChat" styleClass="senden-button"/>
             </HBox>
-        </VBox>
+        </VBox><StackPane fx:id="popupContainer" visible="false" managed="false" style="-fx-padding: 5;"/>
     </VBox>
-    <!-- Popup-Container unter dem Chat einfügen -->
-    <StackPane fx:id="popupContainer" visible="false" managed="false" style="-fx-padding: 5;"/>
-
 
 
     <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->

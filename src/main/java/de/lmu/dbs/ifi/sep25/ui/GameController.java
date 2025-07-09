@@ -956,7 +956,7 @@ public class GameController {
             String base = tagged.split("#")[0];       // e.g. "MoveII#1" → "MoveII"
             ImageView view = createClickableCard(base);
             view.setUserData(tagged);                 // userData = "MoveII#1"
-x//            enableCardDragAndDrop(view);
+//            enableCardDragAndDrop(view);
 
             handCardBox.getChildren().add(view);
         }
@@ -2337,8 +2337,8 @@ private void shuffleHandCards() {
             popupContainer.setVisible(true);
             popupContainer.setManaged(true);
 
-            // Nach 5 Sekunden Popup wieder verstecken
-            PauseTransition delay = new PauseTransition(Duration.seconds(6));
+            // Nach 15 Sekunden Popup wieder verstecken
+            PauseTransition delay = new PauseTransition(Duration.seconds(15));
             delay.setOnFinished(event -> {
                 popupContainer.getChildren().clear();
                 popupContainer.setVisible(false);
