@@ -14,6 +14,7 @@ import java.util.List;
 
 public class SpecialPro extends ProgrammingCard {
     private String specialEffect;
+    private static final Logger appLogger = LogManager.getLogger(SpecialPro.class);
 
     public SpecialPro(String description, String actionType, String specialEffect) {
         super(description, actionType);
@@ -63,53 +64,38 @@ public class SpecialPro extends ProgrammingCard {
 
     // Again card: Repeat the action of the previous register.
     private void executeAgain(Robot robot, Board board) {
+        Player player = findPlayerByRobot(robot);
+        if (player == null) {
+            appLogger.error("Cannot find player for robot {}", robot.getRobotID());
+            return;
+        }
+
         Game game = Game.getInstance();
-        org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger(getClass());
+        int currentRegister = game.getCurrentRegister();
 
-        Player player = game.getPlayers().stream()
-                .filter(p -> p.getRobot() == robot)
-                .findFirst()
-                .orElse(null);
+        // Find the actual card to execute by recursively looking back
+        RegisterCard cardToExecute = findPreviousNonAgainCard(player, currentRegister);
 
-        if (player != null) {
-            List<RegisterCard> registers = player.getRegister();
-            int currentCardIndex = -1;
-            for (int i = 0; i < registers.size(); i++) {
-                RegisterCard card = registers.get(i);
-                if (card == this) {
-                    currentCardIndex = i;
-                    break;
-                }
-            }
+        if (cardToExecute == null) {
+            appLogger.warn("No valid card found for Again card execution");
+            return;
+        }
 
-            if (currentCardIndex > 0) {
-                RegisterCard previousCard = player.getRegisterCard(currentCardIndex - 1);
+        // Execute the found card
+        appLogger.info("Robot {} executes Again - repeating {}",
+                robot.getRobotID(), CardFactory.getCardName(cardToExecute));
 
-                if (previousCard != null) {
-                    // Check if the previous card is a damage card
-                    if (previousCard instanceof DamageCard) {
-                        logger.info("Robot {} executes Again card - previous card was a damage card, drawing new card",
-                                robot.getRobotID());
-                        RegisterCard newCard = player.drawCard();
-                        logger.info("Robot {} drew {} from the deck to replace damage card",
-                                robot.getRobotID(), CardFactory.getCardName(newCard));
-                        newCard.execute(robot, player);
-                    } else {
-                        logger.info("Robot {} executes Again card - repeating previous action from register {}",
-                                robot.getRobotID(), (currentCardIndex - 1));
-                        previousCard.execute(robot, player);
-                    }
-                } else {
-                    logger.warn("Robot {} executes Again card but no card found in previous register {}",
-                            robot.getRobotID(), (currentCardIndex - 1));
-                }
-            } else if (currentCardIndex == 0) {
-                logger.warn("Robot {} attempted to execute Again card in the first register (index=0)", robot.getRobotID());
-            } else {
-                logger.warn("Robot {} executes Again card but failed to determine its position in register", robot.getRobotID());
+        if (cardToExecute instanceof DamageCard) {
+            // For damage cards, draw a new card instead
+            RegisterCard newCard = player.drawCard();
+            appLogger.info("Previous card was damage card, drawing new card: {}",
+                    CardFactory.getCardName(newCard));
+            if (newCard != null) {
+                newCard.execute(robot, player);
             }
         } else {
-            logger.error("Robot {} executes Again card but no player found for this robot", robot.getRobotID());
+            // Execute the card normally
+            cardToExecute.execute(robot, player);
         }
 
         // TODO Here, we need to retrieve the card from the previous register and re-execute it.
@@ -120,6 +106,38 @@ public class SpecialPro extends ProgrammingCard {
         // if (previousCard != null) {
         //     previousCard.execute(robot);
         // }
+    }
+
+    // Recursively find the first non-Again card in previous registers
+    private RegisterCard findPreviousNonAgainCard(Player player, int currentRegister) {
+        // Start from the previous register
+        for (int i = currentRegister - 1; i >= 0; i--) {
+            RegisterCard card = player.getRegisterCard(i);
+            if (card == null) {
+                continue;
+            }
+
+            // Check if it's an Again card
+            String cardName = CardFactory.getCardName(card);
+            if (!"Again".equals(cardName) && !"RepeatRoutine".equals(cardName)) {
+                // Found a non-Again card
+                return card;
+            }
+        }
+
+        // No valid card found in previous registers
+        return null;
+    }
+
+    // Helper method to find player by robot
+    private Player findPlayerByRobot(Robot robot) {
+        Game game = Game.getInstance();
+        for (Player player : game.getPlayers()) {
+            if (player.getRobot() == robot) {
+                return player;
+            }
+        }
+        return null;
     }
 
     // Sandbox Routine: Actions that players can choose to perform
