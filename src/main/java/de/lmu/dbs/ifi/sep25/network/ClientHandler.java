@@ -511,14 +511,11 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
-        appLogger.info("Calling setReadyRegister in setReadyRegister (clientID: {})", myID);
+        appLogger.info("Player {} has finished their selection.", player.toString());
         player.setReadyRegister(true);
         server.markReadyRegister(myID);
 
-        // Remove this unconditional timer start
-        // if (!server.getTimerStarted()) {
-        //     server.startTimer();
-        // }
+        broadcastMessage(new Message<>(new BodySelectionFinished(myID)));
     }
 
 

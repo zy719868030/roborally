@@ -956,7 +956,7 @@ public class GameController {
             String base = tagged.split("#")[0];       // e.g. "MoveII#1" → "MoveII"
             ImageView view = createClickableCard(base);
             view.setUserData(tagged);                 // userData = "MoveII#1"
-            enableCardDragAndDrop(view);
+x//            enableCardDragAndDrop(view);
 
             handCardBox.getChildren().add(view);
         }
@@ -966,17 +966,13 @@ public class GameController {
     }
 
     private ImageView createClickableCard(String cardName) {
-        String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
+        String imagePath = "/assets/cards/" + cardName + ".png";
         Image img;
         try {
-            img = new Image(getClass().getResourceAsStream(imagePath));
-            if (img.isError()) {
-                logger.error("Error loading card image: {}", imagePath);
-                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-            }
+            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
         } catch (Exception e) {
-            logger.error("Abnormal loading of card images: {}", e.getMessage());
-            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            logger.error("Image not found: {}", imagePath);
+            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
         }
 
         ImageView view = new ImageView(img);
@@ -984,9 +980,9 @@ public class GameController {
         view.setFitHeight(90);
         view.setPreserveRatio(true);
         view.setSmooth(true);
-
-        view.setStyle("-fx-cursor: hand;");
         view.setUserData(cardName);
+        view.setStyle("-fx-cursor: hand;");
+
         view.setOnMouseEntered(e -> {
             view.setScaleX(1.2);
             view.setScaleY(1.2);
@@ -1009,22 +1005,16 @@ public class GameController {
         view.setOnMouseReleased(event -> {
             double deltaX = Math.abs(event.getSceneX() - dragStartX);
             double deltaY = Math.abs(event.getSceneY() - dragStartY);
-            if (deltaX < 5 && deltaY < 5) {
-                int firstEmptySlot = -1;
-                for (int i = 0; i < registerState.length; i++) {
-                    if (registerState[i] == null) {
-                        firstEmptySlot = i;
-                        break;
-                    }
-                }
-                if (firstEmptySlot != -1) {
-                    placeCardInRegisterSlot(cardName, firstEmptySlot);
+
+            // Only handle click if not dragged
+            if (deltaX < 5 && deltaY < 5 && draggedCard == null) {
+                int slot = findNextEmptyRegisterSlot();
+                if (slot != -1) {
                     handCardBox.getChildren().remove(view);
-                    appendChatMessage("[INFO] Karte " + cardName + " wurde per Klick ins Register " + (firstEmptySlot + 1) + " gelegt.");
-                    logger.info("Card {} placed in register slot {} by click", cardName, firstEmptySlot);
+                    placeCardInRegisterSlot(cardName, slot);
+                    appendChatMessage("[INFO] Karte " + cardName + " wurde ins Register " + (slot + 1) + " gelegt.");
                 } else {
                     appendChatMessage("[WARN] Kein freier Register-Slot verfügbar.");
-                    logger.warn("No empty register slot available for card {}", cardName);
                 }
             }
         });
@@ -1032,61 +1022,19 @@ public class GameController {
         view.setOnDragDetected(event -> {
             Dragboard db = view.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
-            content.putString(cardName);
+            content.putString(cardName + "#" + System.nanoTime());
             db.setContent(content);
             db.setDragView(view.getImage());
-
             draggedCard = view;
             event.consume();
         });
 
+        view.setOnDragDone(event -> {
+            draggedCard = null;
+        });
+
         return view;
     }
-
-
-       /* view.setOnMouseClicked(event -> {
-         //   // Add validation here before attempting to place the card
-         //   int nextSlot = findNextEmptyRegisterSlot();
-
-            // Prevent "Again" card from being placed in register 0
-          //  if (cardName.toLowerCase().contains("again") && nextSlot == 0) {
-          //      displayErrorAlert("Card placement error",
-          //              "The card Again cannot be placed in the first register position!\n" +
-          //                      "Please select the 2nd to 5th register positions.");
-           //     highlightRegisterSlot(0);
-           //     return;
-          //  }
-
-           // String raw = view.getUserData().toString(); // e.g. "TurnRight#1"
-           //String actualCardName = raw.contains("#") ? raw.split("#")[0] : raw;
-
-            logger.info("Card clicked: {}", actualCardName);
-
-            int nextEmptySlot = findNextEmptyRegisterSlot();
-            if (nextEmptySlot != -1) {
-                appLogger.info("Place the card {} into the storage slot {}.", actualCardName, nextEmptySlot);
-
-                // Only update logical state
-                registerState[nextEmptySlot] = actualCardName;
-
-                // Let server & displayHandCards() handle UI
-
-                var body = new MessageDefinitions.BodySelectedCard(actualCardName, nextEmptySlot);
-                var msg = new MessageDefinitions.Message<>(body);
-                ClientSingleton.getInstance().sendMessage(msg);
-
-                appLogger.info("Card selection message sent");
-                appendChatMessage("[INFO] Card: " + actualCardName + " has been selected for slot " + (nextEmptySlot + 1));
-            } else {
-                appendChatMessage("[WARNUNG] Alle Registerspeicher sind bereits belegt.");
-                appLogger.warn("No available storage slots");
-            }
-            updateConfirmButtonVisibility();
-
-
-        });
-        */
-
 
     private int findNextEmptyRegisterSlot() {
         for (int i = 0; i < registerState.length; i++) {
@@ -1112,77 +1060,73 @@ public class GameController {
         return -1;
     }
 
-
     private void placeCardInRegisterSlot(String cardName, int slotIndex) {
-        if (slotIndex >= 0 && slotIndex < registerBox.getChildren().size()) {
-            Node node = registerBox.getChildren().get(slotIndex);
-            if (node instanceof VBox vbox) {
-                Node slotNode = vbox.getChildren().get(1);
-                if (slotNode instanceof StackPane pane) {
-                    pane.getChildren().clear();
+        if (slotIndex < 0 || slotIndex >= registerBox.getChildren().size()) return;
 
-                    String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
-                    Image img;
-                    try {
-                        img = new Image(getClass().getResourceAsStream(imagePath));
-                    } catch (Exception e) {
-                        img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-                    }
+        Node node = registerBox.getChildren().get(slotIndex);
+        if (!(node instanceof VBox vbox)) return;
+        Node slotNode = vbox.getChildren().get(1);
+        if (!(slotNode instanceof StackPane pane)) return;
 
-                    ImageView cardView = new ImageView(img);
-                    cardView.setFitWidth(60);
-                    cardView.setFitHeight(90);
-                    cardView.setPreserveRatio(true);
-                    cardView.setSmooth(true);
-                    cardView.setUserData(cardName);
-                    cardView.setOpacity(0.7);
-
-                    // Drag & drop
-                    cardView.setOnDragDetected(event -> {
-                        Dragboard db = cardView.startDragAndDrop(TransferMode.MOVE);
-                        ClipboardContent content = new ClipboardContent();
-                        content.putString(cardName);
-                        db.setContent(content);
-                        db.setDragView(cardView.getImage());
-                        draggedCard = cardView;
-                        event.consume();
-                    });
-
-
-                    cardView.setOnMouseClicked(event -> {
-
-                        pane.getChildren().clear();
-
-
-                        registerState[slotIndex] = null;
-
-                        ImageView handCard = createClickableCard(cardName);
-                        handCardBox.getChildren().add(handCard);
-
-
-                        manuallyClearedSlots.add(slotIndex);
-                        var msg = new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectedCard(null, slotIndex));
-                        ClientSingleton.getInstance().sendMessage(msg);
-
-
-                        updateConfirmButtonVisibility();
-
-
-                        appendChatMessage("[INFO] Karte " + cardName + " wurde aus Register " + (slotIndex + 1) + " entfernt.");
-                    });
-
-
-                    pane.getChildren().add(cardView);
-                    // remember what card is in slot
-                    registerState[slotIndex] = cardName;
-                    appLogger.info("Card {} placed in register slot {}", cardName, slotIndex);
-                }
-            }
+        // Return previous card to hand
+        String previousCard = registerState[slotIndex];
+        if (previousCard != null) {
+            ImageView returnCard = createClickableCard(previousCard);
+            handCardBox.getChildren().add(returnCard);
         }
+
+        // Clear and place new card
+        pane.getChildren().clear();
+
+        String imagePath = "/assets/cards/" + cardName + ".png";
+        Image img;
+        try {
+            img = new Image(getClass().getResourceAsStream(imagePath));
+        } catch (Exception e) {
+            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+        }
+
+        ImageView cardView = new ImageView(img);
+        cardView.setFitWidth(60);
+        cardView.setFitHeight(90);
+        cardView.setPreserveRatio(true);
+        cardView.setSmooth(true);
+        cardView.setOpacity(0.7);
+        cardView.setUserData(cardName);
+
+        // Enable drag from register
+        cardView.setOnDragDetected(event -> {
+            Dragboard db = cardView.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(cardName + "#" + System.nanoTime());
+            db.setContent(content);
+            db.setDragView(cardView.getImage());
+            draggedCard = cardView;
+            event.consume();
+        });
+
+        // Enable click-to-remove
+        cardView.setOnMouseClicked(event -> {
+            if (findNextEmptyRegisterSlot() != -1) {
+                pane.getChildren().clear();
+                registerState[slotIndex] = null;
+
+                handCardBox.getChildren().add(createClickableCard(cardName));
+                manuallyClearedSlots.add(slotIndex);
+
+                sendCardSelectionUpdate(null, slotIndex);
+
+                appendChatMessage("[INFO] Karte " + cardName + " wurde aus Register " + (slotIndex + 1) + " entfernt.");
+            }
+        });
+
+        pane.getChildren().add(cardView);
+        registerState[slotIndex] = cardName;
+
+        sendCardSelectionUpdate(cardName, slotIndex);
+
+        appLogger.info("Card {} placed in register slot {}", cardName, slotIndex);
     }
-
-
-
 
     /**
      * Initialisiert einen Register-Slot zur Annahme von Karten per Drag & Drop.
@@ -1199,40 +1143,24 @@ public class GameController {
             Dragboard db = event.getDragboard();
             boolean success = false;
 
-            if (db.hasString() && draggedCard instanceof ImageView cardView) {
-                String rawCardName = db.getString(); // z.B. "TurnLeft#0"
+            if (db.hasString() && draggedCard instanceof ImageView) {
+                String rawCardName = db.getString();
                 String actualCardName = rawCardName.contains("#")
                         ? rawCardName.split("#")[0]
                         : rawCardName;
 
-                pane.getChildren().clear();
-
-                ImageView newCard = new ImageView(cardView.getImage());
-                newCard.setFitWidth(60);
-                newCard.setFitHeight(90);
-                newCard.setPreserveRatio(true);
-                newCard.setSmooth(true);
-                newCard.setOpacity(0.7);
-                newCard.setUserData(actualCardName);
-
-                pane.getChildren().add(newCard);
-
                 int index = findRegisterSlotIndex(pane);
                 if (index != -1) {
-                    registerState[index] = actualCardName;
+                    // Place card using shared logic
+                    placeCardInRegisterSlot(actualCardName, index);
 
-                    handCardBox.getChildren().remove(draggedCard);
+                    // Remove from hand only if it's still there
+                    if (handCardBox.getChildren().contains(draggedCard)) {
+                        handCardBox.getChildren().remove(draggedCard);
+                    }
 
-                    var msg = new MessageDefinitions.Message<>(
-                            new MessageDefinitions.BodySelectedCard(actualCardName, index)
-                    );
-                    ClientSingleton.getInstance().sendMessage(msg);
-
-                    appendChatMessage("[INFO] Karte " + actualCardName + " wurde ins Register " + (index + 1) + " gezogen.");
-                    appLogger.info("Card {} dropped into register slot {}", actualCardName, index);
+                    success = true;
                 }
-
-                success = true;
             }
 
             event.setDropCompleted(success);
@@ -1241,6 +1169,16 @@ public class GameController {
         });
     }
 
+    private void sendCardSelectionUpdate(String cardName, int registerIndex) {
+        ClientSingleton.getInstance().sendMessage(
+                new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectedCard(cardName, registerIndex))
+        );
+        if (cardName == null) {
+            appLogger.info("→ Removed card from register {}", registerIndex);
+        } else {
+            appLogger.info("→ Selected card '{}' for register {}", cardName, registerIndex);
+        }
+    }
 
     /**
      * Bestätigt die ausgewählten Karten und sendet sie an den Server.
