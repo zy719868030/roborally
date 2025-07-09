@@ -4,7 +4,6 @@ import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
-import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -1063,9 +1062,11 @@ public class GameController {
             if (deltaX < 5 && deltaY < 5 && draggedCard == null) {
                 int slot = findNextEmptyRegisterSlot();
                 if (slot != -1) {
-                    handCardBox.getChildren().remove(view);
-                    placeCardInRegisterSlot(cardName, slot);
-                    appendChatMessage("[INFO] Karte " + cardName + " wurde ins Register " + (slot + 1) + " gelegt.");
+                    if (placeCardInRegisterSlot(cardName, slot)) {
+                        handCardBox.getChildren().remove(view);
+                        appendChatMessage("[INFO] Karte " + cardName + " wurde ins Register " + (slot + 1) + " gelegt.");
+
+                    }
                 } else {
                     appendChatMessage("[WARN] Kein freier Register-Slot verfügbar.");
                 }
@@ -1113,13 +1114,23 @@ public class GameController {
         return -1;
     }
 
-    private void placeCardInRegisterSlot(String cardName, int slotIndex) {
-        if (slotIndex < 0 || slotIndex >= registerBox.getChildren().size()) return;
+    private boolean placeCardInRegisterSlot(String cardName, int slotIndex) {
+        if (slotIndex < 0 || slotIndex >= registerBox.getChildren().size()) return false;
+
+        if (slotIndex == 0 && cardName.toLowerCase().contains("again")) {
+            highlightRegisterSlot(0);
+            displayErrorAlert(
+                    "Card placement error",
+                    "The card \"Again\" cannot be placed in the first register position!\n" +
+                            "Please select the 2nd to 5th register positions."
+            );
+            return false;
+        }
 
         Node node = registerBox.getChildren().get(slotIndex);
-        if (!(node instanceof VBox vbox)) return;
+        if (!(node instanceof VBox vbox)) return false;
         Node slotNode = vbox.getChildren().get(1);
-        if (!(slotNode instanceof StackPane pane)) return;
+        if (!(slotNode instanceof StackPane pane)) return false;
 
         // Return previous card to hand
         String previousCard = registerState[slotIndex];
@@ -1179,6 +1190,8 @@ public class GameController {
         sendCardSelectionUpdate(cardName, slotIndex);
 
         appLogger.info("Card {} placed in register slot {}", cardName, slotIndex);
+
+        return true;
     }
 
     /**
