@@ -65,6 +65,14 @@ public class Game {
         return instance;
     }
 
+    /**
+     * Get the index of the currently executing register.
+     * @return Current register index (0-4)
+     */
+    public int getCurrentRegister() {
+        return currentRegister;
+    }
+
     private void initializeUpgradeCards() {
         //TODO @yu or @prajal
         // Initialize 40 upgrade cards according to the game rulebook.

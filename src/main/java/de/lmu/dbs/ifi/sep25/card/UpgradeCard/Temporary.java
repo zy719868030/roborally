@@ -19,7 +19,7 @@ public abstract class Temporary extends UpgradeCard {
         if (!isUsed && isActive) {
             applyTemporaryEffect(robot);
             isUsed = true;
-            isActive = false; // 使用后失效
+            isActive = false;
         }
     }
 
