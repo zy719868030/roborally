@@ -1738,6 +1738,45 @@ public class GameController {
                     newRobot.setUserData("robot");
                     cell.getChildren().add(newRobot);
 
+                    //Insert direction indicator
+                    Label directionIndicator = new Label(switch (newDirection) {
+                        case "top" -> "↑";
+                        case "right" -> "→";
+                        case "bottom" -> "↓";
+                        case "left" -> "←";
+                        default -> "?";
+                    });
+
+                    directionIndicator.setStyle(
+                            "-fx-font-size: 16px; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-text-fill: #ffcc00; " +
+                                    "-fx-background-color: linear-gradient(#303030, #505050); " +
+                                    "-fx-background-radius: 5px; " +
+                                    "-fx-border-color: #ffcc00; " +
+                                    "-fx-border-width: 1px; " +
+                                    "-fx-border-radius: 5px; " +
+                                    "-fx-padding: 3px 6px; " +
+                                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);"
+                    );
+                    directionIndicator.setTranslateY(-25);
+                    cell.getChildren().add(directionIndicator);
+                    ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
+                    appear.setFromX(0.5);
+                    appear.setFromY(0.5);
+                    appear.setToX(1.0);
+                    appear.setToY(1.0);
+                    appear.play();
+                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                    delay.setOnFinished(e -> {
+                        FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
+                        fade.setFromValue(1.0);
+                        fade.setToValue(0.0);
+                        fade.setOnFinished(event -> cell.getChildren().remove(directionIndicator));
+                        fade.play();
+                    });
+                    delay.play();
+
                     String playerName = getPlayerNameById(clientID);
                     appendChatMessage("[DREHUNG] Spieler " + playerName + " dreht sich " + rotation + ".");
                     break;
