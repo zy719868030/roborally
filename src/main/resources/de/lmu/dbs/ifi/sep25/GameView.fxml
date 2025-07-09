@@ -15,7 +15,11 @@
     <VBox fx:id="leftSidebar" spacing="15" alignment="TOP_CENTER" styleClass="lobby-box">
 
         <!-- Spielfeld-Label oder Spielstatus -->
-        <Label fx:id="statusLabel" text="Spiel läuft..." styleClass="status-label"/>
+        <HBox fx:id="turnInfoBox" spacing="10" alignment="CENTER_LEFT">
+            <ImageView fx:id="playerIcon" fitHeight="60" fitWidth="60" preserveRatio="true"/>
+            <Label fx:id="statusLabel" text="Spiel läuft..." styleClass="dynamic-status"/>
+        </HBox>
+
 
         <!-- Chat Minimieren -->
         <Button fx:id="chatToggleButton"

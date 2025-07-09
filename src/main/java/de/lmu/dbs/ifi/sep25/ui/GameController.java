@@ -95,6 +95,9 @@ public class GameController {
     private StackPane popupContainer;
     @FXML private ScrollPane gameBoardScrollPane;
     @FXML private StackPane zoomWrapper;
+    @FXML private HBox turnInfoBox;
+    @FXML private ImageView playerIcon;
+
 
     private double scaleValue = 1.0;
     private final double SCALE_DELTA = 1.1;
@@ -106,6 +109,8 @@ public class GameController {
 
     private boolean startPositionSelectionActive = false;
     private double dragStartX, dragStartY;
+    private TranslateTransition robotFloat;
+
 
     /**
      * Stores the direction of the robot of each clientID as a lowercase string.
@@ -599,6 +604,8 @@ public class GameController {
         boolean isActivationPhase = phaseName.toLowerCase().contains("aktivierung");
         boolean isGameOverPhase = phaseName.toLowerCase().contains("ende") || phaseName.toLowerCase().contains("spielende");
         logger.info("Update game stage: {}, isProgrammingPhase={}", phaseName, isProgrammingPhase);
+        updateMiniRobotInPhase(isSetupPhase, isProgrammingPhase, isActivationPhase);
+
         // Label aktualisieren
         if (phaseLabel != null) {
             phaseLabel.setText("Phase: " + phaseName);
@@ -664,8 +671,21 @@ public class GameController {
             chatBox.setVisible(false);
             chatBox.setManaged(false);
         }
+// VISUAL TURN INDICATORS ENTFERNEN BEI PROGRAMMIERPHASE
+        if (isProgrammingPhase) {
+            statusLabel.setText("🌟 Spiel läuft...");
+            statusLabel.getStyleClass().setAll("dynamic-status");
 
-        //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+            statusLabel.getStyleClass().removeAll("status-other-turn", "another-old-style");
+
+                // Appy  CSS
+                if (!statusLabel.getStyleClass().contains("dynamic-status")) {
+                    statusLabel.getStyleClass().add("dynamic-status");
+                }
+            }
+
+
+            //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
 
@@ -773,6 +793,15 @@ public class GameController {
         if (isMyTurn) {
             appendChatMessage("[INFO] Du bist am Zug!");
             statusLabel.setText("Du bist am Zug.");
+            statusLabel.getStyleClass().removeAll("status-other-turn");
+            if (!statusLabel.getStyleClass().contains("dynamic-status")) {
+                statusLabel.getStyleClass().add("dynamic-status");
+            }
+            playWavingAnimation(statusLabel); //
+            // Imagen Robot)
+            showMiniRobot(myID);
+
+
             switch (phaseID) {
                 case 0 -> {
                     appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
@@ -813,7 +842,16 @@ public class GameController {
             String name = getPlayerNameById(clientID);
             appendChatMessage("[INFO] Spieler " + name + " ist am Zug.");
             statusLabel.setText(name + " ist am Zug.");
+
+            statusLabel.getStyleClass().removeAll("dynamic-status");
+            if (!statusLabel.getStyleClass().contains("status-other-turn")) {
+                statusLabel.getStyleClass().add("status-other-turn");
+            }
+            stopWavingAnimation(statusLabel);
+            playerIcon.setImage(null);
+            //playerIcon.setVisible(false);
         }
+
 
         for (StackPane sp : startPointPanes) {
             sp.setDisable(!isMyTurn);
@@ -826,6 +864,21 @@ public class GameController {
             }
         }
     }
+
+    private void showMiniRobot(int clientID) {
+        try {
+            int robotID = clientToRobotID.getOrDefault(clientID, 0);
+            String imagePath = "/assets/robots/robot_0" + robotID + "_right.png";
+            Image image = new Image(getClass().getResourceAsStream(imagePath));
+            playerIcon.setImage(image);
+            playerIcon.setVisible(true);
+            applyRobotGlow(playerIcon, robotID);
+        } catch (Exception e) {
+            appLogger.warn("Fehler beim Anzeigen des Mini-Roboters: {}", e.getMessage());
+            playerIcon.setVisible(false);
+        }
+    }
+
 
 
     /**
@@ -1271,7 +1324,7 @@ public class GameController {
         final String playerName = getPlayerNameById(clientID);
 
         if (!isSelf) {
-            appendChatMessage("[INFO] Spieler " + playerName + " hat eine Karte ausgewählt.");
+        //    appendChatMessage("[INFO] Spieler " + playerName + " hat eine Karte ausgewählt.");
             return;
         }
         // Self && !filled so self and emptied
@@ -2347,9 +2400,96 @@ private void shuffleHandCards() {
             delay.play();
         });
     }
-}
 
 
+    private void playWavingAnimation(Label label) {
+        TranslateTransition wave = new TranslateTransition(Duration.millis(600), label);
+        wave.setFromX(-5);
+        wave.setToX(5);
+        wave.setCycleCount(Animation.INDEFINITE);
+        wave.setAutoReverse(true);
+        wave.play();
+        label.setUserData(wave);
+    }
+
+    private void stopWavingAnimation(Label label) {
+        Object userData = label.getUserData();
+        if (userData instanceof Animation anim) {
+            anim.stop();
+            label.setTranslateX(0);
+        }
+    }
+
+
+    private void updateMiniRobotInPhase(boolean isSetupPhase, boolean isProgrammingPhase, boolean isActivationPhase) {
+        int myID = ClientSingleton.getInstance().getID();
+
+        if (isSetupPhase || isProgrammingPhase || isActivationPhase) {
+            try {
+                int robotID = clientToRobotID.getOrDefault(myID, 0);
+                String imagePath = "/assets/robots/robot_0" + robotID + "_right.png";
+                Image image = new Image(getClass().getResourceAsStream(imagePath));
+                playerIcon.setImage(image);
+                playerIcon.setVisible(true);
+                playerIcon.setManaged(true);
+
+                if (isProgrammingPhase) {
+                    startMiniRobotFloatAnimation();
+                } else {
+                    stopMiniRobotFloatAnimation();
+                    playerIcon.setTranslateY(0); // Asegura posición normal
+                }
+            } catch (Exception e) {
+                appLogger.warn("Fehler beim Anzeigen des Mini-Roboters: {}", e.getMessage());
+                playerIcon.setVisible(false);
+            }
+        } else {
+            playerIcon.setVisible(false);
+            playerIcon.setManaged(false);
+            stopMiniRobotFloatAnimation();
+        }
+    }
+    private void startMiniRobotFloatAnimation() {
+        if (robotFloat != null) robotFloat.stop();
+
+        robotFloat = new TranslateTransition(Duration.seconds(1.3), playerIcon);
+        robotFloat.setFromY(0);
+        robotFloat.setToY(-6);
+        robotFloat.setAutoReverse(true);
+        robotFloat.setCycleCount(TranslateTransition.INDEFINITE);
+        robotFloat.play();
+    }
+
+    private void stopMiniRobotFloatAnimation() {
+        if (robotFloat != null) {
+            robotFloat.stop();
+            robotFloat = null;
+        }
+    }
+    private Color getRobotGlowColor(int robotID) {
+        return switch (robotID) {
+            case 0 -> Color.RED;
+            case 1 -> Color.BLUE;
+            case 2 -> Color.LIMEGREEN;
+            case 3 -> Color.GOLD;
+            case 4 -> Color.MEDIUMPURPLE;
+            case 5 -> Color.ORANGE;
+            default -> Color.WHITE;
+        };
+    }
+    private void applyRobotGlow(ImageView robotView, int robotID) {
+        Color glowColor = getRobotGlowColor(robotID);
+        DropShadow glow = new DropShadow();
+        glow.setColor(glowColor);
+        glow.setRadius(20);
+        glow.setSpread(0.4);
+        glow.setOffsetX(0);
+        glow.setOffsetY(0);
+        robotView.setEffect(glow);
+    }
+
+
+    }
 
 
 
