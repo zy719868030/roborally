@@ -799,7 +799,7 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
+//                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
                 controller.handleCardSelection(clientID, register, filled); // implement in GameController
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
@@ -1434,6 +1434,7 @@ public class Client {
         }
         return -1; // Default/fallback
     }
+
 
     /**
      * Returns the selected map variable, stored in handleMapSelected.

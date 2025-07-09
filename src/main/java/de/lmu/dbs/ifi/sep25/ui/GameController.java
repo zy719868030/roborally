@@ -1363,14 +1363,14 @@ public class GameController {
         // Attempt to retrieve from ClientSingleton (via clientID)
         String name = ClientSingleton.getInstance().getUsernames().getByKeyOrDefault(id, null);
         if (name != null && !name.isBlank()) {
-            logger.info("getPlayerNameById({}): found in usernames as clientID: {}", id, name);
+//            logger.info("getPlayerNameById({}): found in usernames as clientID: {}", id, name);
             return name;
         }
 
         // Try to retrieve from robotIDToPlayerName (via robotID)
         name = robotIDToPlayerName.get(id);
         if (name != null && !name.isBlank()) {
-            logger.info("getPlayerNameById({}): found in robotIDToPlayerName: {}", id, name);
+//            logger.info("getPlayerNameById({}): found in robotIDToPlayerName: {}", id, name);
             return name;
         }
 
@@ -1380,8 +1380,8 @@ public class GameController {
                 int clientID = entry.getKey();
                 name = ClientSingleton.getInstance().getUsernames().getByKeyOrDefault(clientID, null);
                 if (name != null && !name.isBlank()) {
-                    logger.info("getPlayerNameById({}): found through reverse lookup as robotID -> clientID {}: {}",
-                            id, clientID, name);
+//                    logger.info("getPlayerNameById({}): found through reverse lookup as robotID -> clientID {}: {}",
+//                            id, clientID, name);
                     robotIDToPlayerName.put(id, name);
                     return name;
                 }
@@ -1391,14 +1391,14 @@ public class GameController {
         // Try to find it in recipientBox
         for (PlayerEntry entry : recipientBox.getItems()) {
             if (entry.getClientID() == id && entry.getName() != null && !entry.getName().isBlank()) {
-                logger.info("getPlayerNameById({}): found in recipientBox as clientID: {}", id, entry.getName());
+//                logger.info("getPlayerNameById({}): found in recipientBox as clientID: {}", id, entry.getName());
                 ClientSingleton.getInstance().getUsernames().put(id, entry.getName());
                 return entry.getName();
             }
 
             Integer robotID = clientToRobotID.get(entry.getClientID());
             if (robotID != null && robotID == id && entry.getName() != null && !entry.getName().isBlank()) {
-                logger.info("getPlayerNameById({}): found in recipientBox as robotID: {}", id, entry.getName());
+//                logger.info("getPlayerNameById({}): found in recipientBox as robotID: {}", id, entry.getName());
                 robotIDToPlayerName.put(id, entry.getName());
                 return entry.getName();
             }
@@ -1409,13 +1409,13 @@ public class GameController {
         if (lobbyController != null) {
             for (PlayerEntry entry : lobbyController.getPlayers()) {
                 if (entry.getClientID() == id && entry.getName() != null && !entry.getName().isBlank()) {
-                    logger.info("getPlayerNameById({}): found in lobby players as clientID: {}", id, entry.getName());
+//                    logger.info("getPlayerNameById({}): found in lobby players as clientID: {}", id, entry.getName());
                     ClientSingleton.getInstance().getUsernames().put(id, entry.getName());
                     return entry.getName();
                 }
 
                 if (entry.getFigure() == id && entry.getName() != null && !entry.getName().isBlank()) {
-                    logger.info("getPlayerNameById({}): found in lobby players as robotID/figure: {}", id, entry.getName());
+//                    logger.info("getPlayerNameById({}): found in lobby players as robotID/figure: {}", id, entry.getName());
                     robotIDToPlayerName.put(id, entry.getName());
                     return entry.getName();
                 }

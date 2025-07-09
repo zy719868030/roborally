@@ -112,6 +112,17 @@ public class Robot {
     }
 
     /**
+     * Rotates the robot 180 degrees to face the opposite direction.
+     * The robot remains in its current space.
+     */
+    public void turnAround() {
+        if (isPoweredDown) return;
+        direction = direction.turnAround();
+        notifyTurning("clockwise");
+        notifyTurning("clockwise");
+    }
+
+    /**
      * Moves the robot one step backward in the direction opposite to its current orientation.
      * This method determines the reverse direction of the robot's current orientation
      * and updates the position accordingly by moving one step in that direction.
@@ -229,11 +240,12 @@ public class Robot {
                     .orElse(null);
             if (player != null) {
                 player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyPlayerTurning(robotID, rotation)
+                        new MessageDefinitions.BodyPlayerTurning(clientID, rotation)
                 ));
             }
         }
     }
+
     /**
      * Cancels the remaining programming for this round.
      * This is used when the robot is rebooted or certain damage cards are activated.
