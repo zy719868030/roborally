@@ -413,7 +413,7 @@ public class Player {
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
-                                    clientID, registerSlot, Boolean.TRUE)));
+                                    clientID, registerSlot, Boolean.TRUE)), connection);
 
                     // automatic ready check:
                     if (register.stream().allMatch(Objects::nonNull)) {
@@ -466,7 +466,7 @@ public class Player {
                     // Notify server that register slot has been cleared
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyCardSelected(
-                                    clientID, registerSlot, Boolean.FALSE)));
+                                    clientID, registerSlot, Boolean.FALSE)), connection);
 
                     return true;
                 } else {

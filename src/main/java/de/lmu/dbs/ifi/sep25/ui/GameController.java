@@ -92,21 +92,24 @@ public class GameController {
     private Node draggedCard;
     @FXML
     private StackPane popupContainer;
-    @FXML private ScrollPane gameBoardScrollPane;
-    @FXML private StackPane zoomWrapper;
-    @FXML private HBox turnInfoBox;
-    @FXML private ImageView playerIcon;
-
+    @FXML
+    private ScrollPane gameBoardScrollPane;
+    @FXML
+    private StackPane zoomWrapper;
+    @FXML
+    private HBox turnInfoBox;
+    @FXML
+    private ImageView playerIcon;
 
     private double scaleValue = 1.0;
     private final double SCALE_DELTA = 1.1;
 
 
-
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
 
-    private boolean startPositionSelectionActive = false;
+    private final Map<Integer, PauseTransition> activeHighlights = new HashMap<>();
+
     private double dragStartX, dragStartY;
     private TranslateTransition robotFloat;
 
@@ -121,6 +124,7 @@ public class GameController {
      **/
     private final String[] registerState = new String[5];
     private final Set<Integer> manuallyClearedSlots = new HashSet<>();
+    private final Set<Integer> swapProtectedSlots = new HashSet<>();
 
 
     @FXML
@@ -169,6 +173,7 @@ public class GameController {
 
         chatInput.setOnAction(e -> handleSendChat());
     }
+
     private double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
@@ -647,9 +652,8 @@ public class GameController {
             updateConfirmButtonVisibility();
         }
 
-            //confirmSelectionButton.setVisible(isProgrammingPhase);
-            // confirmSelectionButton.setManaged(isProgrammingPhase);
-
+        //confirmSelectionButton.setVisible(isProgrammingPhase);
+        // confirmSelectionButton.setManaged(isProgrammingPhase);
 
 
 //        // Timer nur in Programmierphase starten
@@ -677,14 +681,14 @@ public class GameController {
 
             statusLabel.getStyleClass().removeAll("status-other-turn", "another-old-style");
 
-                // Appy  CSS
-                if (!statusLabel.getStyleClass().contains("dynamic-status")) {
-                    statusLabel.getStyleClass().add("dynamic-status");
-                }
+            // Appy  CSS
+            if (!statusLabel.getStyleClass().contains("dynamic-status")) {
+                statusLabel.getStyleClass().add("dynamic-status");
             }
+        }
 
 
-            //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
+        //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
 
@@ -712,6 +716,7 @@ public class GameController {
 
     private void clearProgrammingUI() {
     }
+
     private List<String> confirmedCards = new ArrayList<>();
 
 
@@ -877,7 +882,6 @@ public class GameController {
             playerIcon.setVisible(false);
         }
     }
-
 
 
     /**
@@ -1115,6 +1119,14 @@ public class GameController {
     }
 
     private boolean placeCardInRegisterSlot(String cardName, int slotIndex) {
+        return placeCardInRegisterSlot(cardName, slotIndex, true, true);
+    }
+
+    private boolean placeCardInRegisterSlot(String cardName, int slotIndex, boolean returnToHand) {
+        return placeCardInRegisterSlot(cardName, slotIndex, returnToHand, true);
+    }
+
+    private boolean placeCardInRegisterSlot(String cardName, int slotIndex, boolean returnToHand, boolean sendUpdate) {
         if (slotIndex < 0 || slotIndex >= registerBox.getChildren().size()) return false;
 
         if (slotIndex == 0 && cardName.toLowerCase().contains("again")) {
@@ -1132,9 +1144,8 @@ public class GameController {
         Node slotNode = vbox.getChildren().get(1);
         if (!(slotNode instanceof StackPane pane)) return false;
 
-        // Return previous card to hand
         String previousCard = registerState[slotIndex];
-        if (previousCard != null) {
+        if (previousCard != null && returnToHand) {
             ImageView returnCard = createClickableCard(previousCard);
             handCardBox.getChildren().add(returnCard);
         }
@@ -1187,7 +1198,9 @@ public class GameController {
         pane.getChildren().add(cardView);
         registerState[slotIndex] = cardName;
 
-        sendCardSelectionUpdate(cardName, slotIndex);
+        if (sendUpdate) {
+            sendCardSelectionUpdate(cardName, slotIndex);
+        }
 
         appLogger.info("Card {} placed in register slot {}", cardName, slotIndex);
 
@@ -1215,17 +1228,49 @@ public class GameController {
                         ? rawCardName.split("#")[0]
                         : rawCardName;
 
-                int index = findRegisterSlotIndex(pane);
-                if (index != -1) {
-                    // Place card using shared logic
-                    placeCardInRegisterSlot(actualCardName, index);
-
-                    // Remove from hand only if it's still there
-                    if (handCardBox.getChildren().contains(draggedCard)) {
-                        handCardBox.getChildren().remove(draggedCard);
+                int targetIndex = findRegisterSlotIndex(pane);
+                if (targetIndex != -1) {
+                    if (draggedCard != null) {
+                        for (int i = 0; i < registerBox.getChildren().size(); i++) {
+                            StackPane slot = getRegisterPane(i);
+                            if (slot != null && slot.getChildren().contains(draggedCard) && i == targetIndex) {
+                                // Card dragged back to same slot — ignore
+                                event.setDropCompleted(false);
+                                draggedCard = null;
+                                event.consume();
+                                return;
+                            }
+                        }
                     }
 
-                    success = true;
+                    int sourceIndex = -1;
+                    for (int i = 0; i < registerBox.getChildren().size(); i++) {
+                        StackPane slot = getRegisterPane(i);
+                        if (slot != null && slot.getChildren().contains(draggedCard)) {
+                            sourceIndex = i;
+                            break;
+                        }
+                    }
+
+                    String existingCardInTarget = registerState[targetIndex];
+
+                    if (sourceIndex != -1 && existingCardInTarget != null) {
+                        success = swapRegisterCards(sourceIndex, targetIndex);
+                    } else {
+                        // Standard case: either hand → register or register → empty slot
+                        if (sourceIndex != -1) {
+                            StackPane oldPane = getRegisterPane(sourceIndex);
+                            if (oldPane != null) oldPane.getChildren().clear();
+                            registerState[sourceIndex] = null;
+                            sendCardSelectionUpdate(null, sourceIndex);
+                        }
+
+                        boolean placed = placeCardInRegisterSlot(actualCardName, targetIndex);
+                        if (placed && handCardBox.getChildren().contains(draggedCard)) {
+                            handCardBox.getChildren().remove(draggedCard);
+                        }
+                        success = placed;
+                    }
                 }
             }
 
@@ -1233,6 +1278,71 @@ public class GameController {
             draggedCard = null;
             event.consume();
         });
+    }
+
+
+    private boolean swapRegisterCards(int indexA, int indexB) {
+        String cardA = registerState[indexA];
+        String cardB = registerState[indexB];
+
+        if (cardA == null || cardB == null) return false;
+
+        // Rule check for "Again"
+        if ((indexA == 0 && cardB.toLowerCase().contains("again")) ||
+                (indexB == 0 && cardA.toLowerCase().contains("again"))) {
+
+            highlightRegisterSlot(indexA);
+            highlightRegisterSlot(indexB);
+            displayErrorAlert("Ungültiger Kartentausch",
+                    "Die Karte \"Again\" darf sich nicht im ersten Register befinden –\n" +
+                            "auch nicht durch Tausch mit einer anderen Karte.");
+            return false;
+        }
+
+        // Clear visuals + internal state
+        StackPane paneA = getRegisterPane(indexA);
+        StackPane paneB = getRegisterPane(indexB);
+        if (paneA != null) paneA.getChildren().clear();
+        if (paneB != null) paneB.getChildren().clear();
+
+        registerState[indexA] = null;
+        registerState[indexB] = null;
+
+        // Lock
+        swapProtectedSlots.add(indexA);
+        swapProtectedSlots.add(indexB);
+
+        // Send deselections BEFORE placing anything
+        sendCardSelectionUpdate(null, indexA);
+        sendCardSelectionUpdate(null, indexB);
+
+        // Now reassign state
+        registerState[indexA] = cardB;
+        registerState[indexB] = cardA;
+
+        // Place cards visually WITHOUT sending again
+        placeCardInRegisterSlot(cardB, indexA, false, false);
+        placeCardInRegisterSlot(cardA, indexB, false, false);
+
+        // Final: send correct updates to server
+        sendCardSelectionUpdate(cardB, indexA);
+        sendCardSelectionUpdate(cardA, indexB);
+
+        // Unlock
+        swapProtectedSlots.remove(indexA);
+        swapProtectedSlots.remove(indexB);
+
+        return true;
+    }
+
+    private StackPane getRegisterPane(int index) {
+        if (index < 0 || index >= registerBox.getChildren().size()) return null;
+        Node node = registerBox.getChildren().get(index);
+        if (node instanceof VBox vbox) {
+            Node slotNode = vbox.getChildren().get(1);
+            if (slotNode instanceof StackPane pane) return pane;
+        }
+        return null;
     }
 
     private void sendCardSelectionUpdate(String cardName, int registerIndex) {
@@ -1337,7 +1447,7 @@ public class GameController {
         final String playerName = getPlayerNameById(clientID);
 
         if (!isSelf) {
-        //    appendChatMessage("[INFO] Spieler " + playerName + " hat eine Karte ausgewählt.");
+            //    appendChatMessage("[INFO] Spieler " + playerName + " hat eine Karte ausgewählt.");
             return;
         }
         // Self && !filled so self and emptied
@@ -1346,6 +1456,12 @@ public class GameController {
                 appLogger.debug("Ignoring register {} deselection - user triggered.", register);
                 return;
             }
+
+            if (swapProtectedSlots.remove(register)) {
+                appLogger.debug("Ignoring register {} deselection - part of swap.", register);
+                return;
+            }
+
             // for server forced removal
             if (register >= 0 && register < registerBox.getChildren().size()) {
                 Node boxNode = registerBox.getChildren().get(register);
@@ -1356,7 +1472,7 @@ public class GameController {
             }
 
             String removedCardName = registerState[register];
-            if (removedCardName != null) {
+            if (removedCardName != null && !isCardInAnyRegisterSlot(removedCardName)) {
                 ImageView cardView = createClickableCard(removedCardName);
                 cardView.setUserData(removedCardName + "#" + UUID.randomUUID()); // simulate unique tag
                 handCardBox.getChildren().add(cardView);
@@ -1371,6 +1487,18 @@ public class GameController {
         }
     }
 
+    private boolean isCardInAnyRegisterSlot(String cardName) {
+        for (int i = 0; i < registerBox.getChildren().size(); i++) {
+            StackPane pane = getRegisterPane(i);
+            if (pane != null && !pane.getChildren().isEmpty()) {
+                Node node = pane.getChildren().get(0);
+                if (node instanceof ImageView view && view.getUserData() instanceof String data) {
+                    if (data.equals(cardName)) return true;
+                }
+            }
+        }
+        return false;
+    }
 
     private String getPlayerNameById(int id) {
         // Attempt to retrieve from ClientSingleton (via clientID)
@@ -1694,7 +1822,7 @@ public class GameController {
             robotPositions.put(clientID, new Position(x, y));
 
             String playerName = getPlayerNameById(clientID);
-            appendChatMessage("[BEWEGUNG] Spieler " +  playerName  + " wurde nach (" + x + ", " + y + ") bewegt.");
+            appendChatMessage("[BEWEGUNG] Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.");
         } catch (Exception e) {
             appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
@@ -2206,7 +2334,20 @@ public class GameController {
                         -fx-padding: 6 14 6 14;
                         -fx-background-radius: 6;
                         -fx-border-radius: 6;
+                        -fx-cursor: hand;
+                        -fx-transition: all 0.2s ease-in-out;
                     """);
+
+            okButton.setOnMouseEntered(_ -> {
+                okButton.setScaleX(1.1);
+                okButton.setScaleY(1.1);
+            });
+
+            okButton.setOnMouseExited(_ -> {
+                okButton.setScaleX(1.0);
+                okButton.setScaleY(1.0);
+            });
+
             okButton.setOnAction(_ -> dialog.close());
 
             VBox layout = new VBox(12, titleLabel, messageLabel, okButton);
@@ -2243,9 +2384,7 @@ public class GameController {
      * @param registerSlot The index of the register slot to be highlighted (0-4).
      */
     public void highlightRegisterSlot(int registerSlot) {
-        if (registerSlot < 0 || registerSlot >= 5 || registerBox == null) {
-            return;
-        }
+        if (registerSlot < 0 || registerSlot >= 5 || registerBox == null) return;
 
         Platform.runLater(() -> {
             if (registerBox.getChildren().size() > registerSlot) {
@@ -2254,9 +2393,23 @@ public class GameController {
                     Node slotNode = vbox.getChildren().get(1);
                     if (slotNode instanceof StackPane pane) {
                         String originalStyle = pane.getStyle();
-                        pane.setStyle(originalStyle + "; -fx-border-color: red; -fx-border-width: 3px; -fx-effect: dropshadow(gaussian, #ff0000, 10, 0.5, 0, 0);");
+                        String highlightStyle = originalStyle + "; -fx-border-color: red; -fx-border-width: 3px; " +
+                                "-fx-effect: dropshadow(gaussian, #ff0000, 10, 0.5, 0, 0);";
+
+                        pane.setStyle(highlightStyle);
+
+                        // Cancel existing transition if one is running
+                        PauseTransition existing = activeHighlights.get(registerSlot);
+                        if (existing != null) existing.stop();
+
+                        // Start a new one
                         PauseTransition pause = new PauseTransition(Duration.seconds(2));
-                        pause.setOnFinished(e -> pane.setStyle(originalStyle));
+                        pause.setOnFinished(e -> {
+                            pane.setStyle(originalStyle);
+                            activeHighlights.remove(registerSlot);
+                        });
+
+                        activeHighlights.put(registerSlot, pause);
                         pause.play();
                     }
                 }
@@ -2289,6 +2442,7 @@ public class GameController {
 
     double dragOffsetX;
     private double dragOffsetY;
+
     /**
      * Ermöglicht animiertes Drag & Drop für Handkarten.
      */
@@ -2347,42 +2501,42 @@ public class GameController {
     }
 
 
-/**
- * Mischt die Handkarten visuell neu. Die Reihenfolge wird zufällig geändert.
- * Dies beeinflusst nicht die Spielmechanik, da die Karten individuell gewählt werden.
- */
-private void shuffleHandCards() {
-    ObservableList<Node> cards = handCardBox.getChildren();
+    /**
+     * Mischt die Handkarten visuell neu. Die Reihenfolge wird zufällig geändert.
+     * Dies beeinflusst nicht die Spielmechanik, da die Karten individuell gewählt werden.
+     */
+    private void shuffleHandCards() {
+        ObservableList<Node> cards = handCardBox.getChildren();
 
-    // Keine Aktion bei 0 oder 1 Karte
-    if (cards.size() <= 1) return;
+        // Keine Aktion bei 0 oder 1 Karte
+        if (cards.size() <= 1) return;
 
-    // Kopiere die aktuelle Kartenliste und mische sie zufällig
-    List<Node> shuffled = new ArrayList<>(cards);
-    Collections.shuffle(shuffled);
+        // Kopiere die aktuelle Kartenliste und mische sie zufällig
+        List<Node> shuffled = new ArrayList<>(cards);
+        Collections.shuffle(shuffled);
 
-    // Erstelle eine Ausblend-Animation (Fade-Out)
-    FadeTransition fadeOut = new FadeTransition(Duration.millis(150), handCardBox);
-    fadeOut.setFromValue(1.0);
-    fadeOut.setToValue(0.0);
+        // Erstelle eine Ausblend-Animation (Fade-Out)
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(150), handCardBox);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
 
-    // Sobald ausgeblendet, ersetze die Karten durch die gemischte Liste und blende wieder ein
-    fadeOut.setOnFinished(e -> {
-        handCardBox.getChildren().setAll(shuffled);
+        // Sobald ausgeblendet, ersetze die Karten durch die gemischte Liste und blende wieder ein
+        fadeOut.setOnFinished(e -> {
+            handCardBox.getChildren().setAll(shuffled);
 
-        // Einblend-Animation (Fade-In)
-        FadeTransition fadeIn = new FadeTransition(Duration.millis(150), handCardBox);
-        fadeIn.setFromValue(0.0);
-        fadeIn.setToValue(1.0);
-        fadeIn.play();
-    });
+            // Einblend-Animation (Fade-In)
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(150), handCardBox);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+        });
 
-    // Starte die Animation
-    fadeOut.play();
+        // Starte die Animation
+        fadeOut.play();
 
-    // Informiere den Spieler
-    //appendChatMessage("[INFO] Deine Handkarten wurden gemischt.");
-}
+        // Informiere den Spieler
+        //appendChatMessage("[INFO] Deine Handkarten wurden gemischt.");
+    }
 
     /**
      * Synchronize the current player's nickname mapping.
@@ -2501,6 +2655,7 @@ private void shuffleHandCards() {
             stopMiniRobotFloatAnimation();
         }
     }
+
     private void startMiniRobotFloatAnimation() {
         if (robotFloat != null) robotFloat.stop();
 
@@ -2518,6 +2673,7 @@ private void shuffleHandCards() {
             robotFloat = null;
         }
     }
+
     private Color getRobotGlowColor(int robotID) {
         return switch (robotID) {
             case 0 -> Color.RED;
@@ -2529,6 +2685,7 @@ private void shuffleHandCards() {
             default -> Color.WHITE;
         };
     }
+
     private void applyRobotGlow(ImageView robotView, int robotID) {
         Color glowColor = getRobotGlowColor(robotID);
         DropShadow glow = new DropShadow();
@@ -2541,7 +2698,7 @@ private void shuffleHandCards() {
     }
 
 
-    }
+}
 
 
 

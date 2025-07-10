@@ -406,7 +406,7 @@ public class Game {
             appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
 
             try {
-                Thread.sleep(500); // <-- Delay of 500 milliseconds between registers
+                Thread.sleep(1000); // <-- Delay of 500 milliseconds between registers
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 appLogger.warn("Activation delay interrupted");
@@ -824,23 +824,22 @@ public class Game {
 
                             // TODO @lukas:Broadcast rotation if direction changed
                             if (oldDirection != robot.getDirection()) {
-                                String rotation = gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE
-                                        ? "clockwise" : "counterclockwise";
+                                final String rotation = gear.getRotationDirection().toString();
 
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyPlayerTurning(
-                                                        robot.getRobotID(), rotation
+                                                        robot.getClientID(), rotation
                                                 )
                                         )
                                 );
 
-                                // TODO @lukas:Animation
-                                Server.getInstance().broadcastMessage(
-                                        new MessageDefinitions.Message<>(
-                                                new MessageDefinitions.BodyAnimation("Gear")
-                                        )
-                                );
+//                                // TODO @lukas:Animation
+//                                Server.getInstance().broadcastMessage(
+//                                        new MessageDefinitions.Message<>(
+//                                                new MessageDefinitions.BodyAnimation("Gear")
+//                                        )
+//                                );
                             }
                         }
                     }
@@ -877,7 +876,7 @@ public class Game {
                                 //TODO @lukas:MessageDefinitions.BodyDrawDamage
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
-                                                new MessageDefinitions.BodyDrawDamage(robot.getRobotID(), damageCards)
+                                                new MessageDefinitions.BodyDrawDamage(robot.getClientID(), damageCards)
                                         )
                                 );
                             }
@@ -949,7 +948,7 @@ public class Game {
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyCheckPointReached(
-                                                        robot.getRobotID(), newCheckpoints
+                                                        robot.getClientID(), newCheckpoints
                                                 )
                                         )
                                 );

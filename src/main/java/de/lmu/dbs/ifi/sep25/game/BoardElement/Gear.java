@@ -38,27 +38,10 @@ public class Gear extends BoardElement {
     private String boardId;
     private boolean isOnBoard;
 
-//    public Gear() {
-//        super();
-//        this.rotationDirection = RotationDirection.CLOCKWISE;
-//        this.color = GearColor.GREEN;
-//        this.isOnBoard = false;
-//        this.boardId = "";
-//    }
-//
-//    public Gear(Position position, String boardId) {
-//        super(position, boardId);
-//        this.rotationDirection = RotationDirection.CLOCKWISE;
-//        this.color = GearColor.GREEN;
-//        this.isOnBoard = false;
-//        this.boardId = "";
-//    }
-
-
     /**
      * Constructor with position and rotation direction parameters
      *
-     * @param position Gear position
+     * @param position          Gear position
      * @param rotationDirection Gear rotation direction
      */
     public Gear(Position position, RotationDirection rotationDirection, String boardId) {
@@ -74,7 +57,7 @@ public class Gear extends BoardElement {
      * Constructor with position and colour parameters
      *
      * @param position Gear position
-     * @param color Gear colour
+     * @param color    Gear colour
      */
     public Gear(Position position, GearColor color, String boardId) {
         super(position, boardId);
@@ -85,15 +68,6 @@ public class Gear extends BoardElement {
         this.rotationDirection = (color == GearColor.GREEN) ? RotationDirection.CLOCKWISE :
                 RotationDirection.COUNTERCLOCKWISE;
     }
-
-    /*
-    public Gear(Position position, RotationDirection rotationDirection, String boardId) {
-        super(position, boardId);
-        this.rotationDirection = rotationDirection;
-        // Set colours based on rotation direction
-        this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
-        this.setBoardId(boardId);
-    }*/
 
     public RotationDirection getRotationDirection() {
         return rotationDirection;
@@ -194,53 +168,4 @@ public class Gear extends BoardElement {
     public MessageDefinitions.FieldGear toField() {
         return new MessageDefinitions.FieldGear(boardId, List.of(rotationDirection.toString()));
     }
-
-//    /**
-//     * Convert the RotationDirection enumeration to the direction string required by the protocol.
-//     * @param direction RotationDirection enumeration value.
-//     * @return The direction string used by the protocol: “clockwise” or “counterclockwise”.
-//     */
-//    private String rotationDirectionToString(RotationDirection direction) {
-//        return direction == RotationDirection.CLOCKWISE ? "clockwise" : "counterclockwise";
-//    }
-//
-//    /**
-//     * Convert the direction string in the protocol to a RotationDirection enumeration.
-//     * @param dirString Direction string in the protocol: “clockwise” or “counterclockwise”.
-//     * @return Corresponding RotationDirection enumeration value.
-//     */
-//    private RotationDirection stringToRotationDirection(String dirString) {
-//        return "clockwise".equals(dirString) ? RotationDirection.CLOCKWISE : RotationDirection.COUNTERCLOCKWISE;
-//    }
-
-//    /**
-//     * Serialize to protocol format
-//     * @return Map that complies with the protocol
-//     */
-//    public Map<String, Object> serialize() {
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("type", "Gear");
-//        result.put("isOnBoard", boardId);
-//
-//        List<String> orientations = new ArrayList<>();
-//        orientations.add(rotationDirectionToString(rotationDirection));
-//        result.put("orientations", orientations);
-//
-//        return result;
-//    }
-
-//    /**
-//     * Create a gear instance from the protocol representation.
-//     * @param position Position
-//     * @param orientation Rotation direction string: “clockwise” or “counterclockwise”
-//     * @param boardId Board ID
-//     */
-//    public Gear(Position position, String orientation, String boardId) {
-//        super(position, boardId);
-//        this.rotationDirection = stringToRotationDirection(orientation);
-//        this.color = (rotationDirection == RotationDirection.CLOCKWISE) ? GearColor.GREEN : GearColor.RED;
-//        this.isOnBoard = true;
-//        this.boardId = boardId;
-//    }
-
 }

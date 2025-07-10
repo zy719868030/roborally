@@ -229,53 +229,34 @@ public class Belts extends BoardElement {
         Position currentPos = robot.getPosition();
         Direction outDir = getMainOutDirection();
 
-        // Check if the next position is valid and move the robot
         for (int i = 0; i < steps; i++) {
             Position nextPos = currentPos.move(outDir);
-            // Robot fell off the game board and needs to be restarted.
+
             if (!board.isValidPosition(nextPos)) {
-                System.out.println("Robot " + robot.getRobotID() + " would be pushed off the board by conveyor belt! " +
-                        "Robot falls and reboots.");
                 rebootRobot(robot, board);
                 return;
             }
 
-            // Check if the next position is valid. If there is a robot at the target position, stop moving.
-            Robot targetRobot = board.getRobotAt(nextPos);
-            if (targetRobot != null) {
-                System.out.println("Robot " + robot.getRobotID() + " is blocked by Robot " + targetRobot.getRobotID() +
-                        " on conveyor belt.");
+            if (board.getRobotAt(nextPos) != null) {
                 return;
             }
 
-            // Check if there is a conveyor belt at the next location.If the direction does not match, stop moving.
             Belts nextBelt = findBeltAt(board, nextPos);
-            if (nextBelt != null) {
-                if (isValidBeltMovement(outDir, nextBelt)) {
-                    robot.setPosition(nextPos);
-                    board.updateRobotPosition(robot, nextPos);
-
-                    currentPos = nextPos;
-                    outDir = nextBelt.getMainOutDirection();
-
-                    if (nextBelt.isRotating()) {
-                        nextBelt.rotateRobot(robot);
-                    }
-                } else {
-                    System.out.println("Robot " + robot.getRobotID() + " cannot continue on conveyor belt due to " +
-                            "direction mismatch.");
-                    return;
-                }
+            if (nextBelt != null && isValidBeltMovement(outDir, nextBelt)) {
+                robot.setPosition(nextPos);
+                board.updateRobotPosition(robot, nextPos);
+                currentPos = nextPos;
+                outDir = nextBelt.getMainOutDirection();
             } else {
                 robot.setPosition(nextPos);
                 board.updateRobotPosition(robot, nextPos);
-
-                // Apply the board element effect to the next position
-                board.applyEffects(robot, nextPos.x(), nextPos.y());
-
-                return;
+                currentPos = nextPos;
+                break; // Stop belt movement
             }
         }
+
+        // After belt movement is done, apply effects like gear rotation
+        board.applyEffects(robot, currentPos.x(), currentPos.y());
     }
 
     /**

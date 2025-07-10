@@ -81,7 +81,7 @@
         </Logger>
 
         <!-- Root logger for everything else -->
-        <Root level="info">
+        <Root level="debug">
             <AppenderRef ref="AppFile"/>
             <AppenderRef ref="Console"/>
             <AppenderRef ref="ErrorFile"/>
