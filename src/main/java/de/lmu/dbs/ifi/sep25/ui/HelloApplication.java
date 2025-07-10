@@ -35,6 +35,10 @@ import javafx.stage.Stage;
             // Setze Fenstertitel und Szene
             stage.setTitle("RoboRally – Login");
             stage.setScene(scene);
+            stage.setMinWidth(800);
+            stage.setMinHeight(600);
+            stage.setWidth(800);
+            stage.setHeight(600);
             stage.show();
         }
 

@@ -15,11 +15,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
+import java.io.InputStream;
 import java.util.Random;
 
 import javafx.stage.StageStyle;
@@ -29,10 +31,6 @@ import org.apache.logging.log4j.Logger;
 
 
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.Node;
 
@@ -67,6 +65,15 @@ public class LoginController {
     @FXML
     private Label warningLabel;
 
+    @FXML
+    private HBox figureGallery;
+    @FXML
+    private ScrollPane figureScrollPane;
+    @FXML
+    private Button scrollLeftButton, scrollRightButton;
+
+    private final ToggleGroup figureToggleGroup = new ToggleGroup();
+    //private int selectedFigure = -1;
 
     /**
      * Property zur Bindung des Spielernamens.
@@ -87,24 +94,65 @@ public class LoginController {
      * - bindet UI-Komponenten an Properties
      */
     @FXML
-    public void initialize() {
-        ControllerRegistry.setLoginController(this);
-
+    private void initialize() {
+        // Dynamisch Roboter-Figuren laden
         for (int i = 0; i <= 5; i++) {
-            figureBox.getItems().add(i);
-        }
+            final int figureID = i;
 
-        nameField.textProperty().bindBidirectional(playerName);
-        figureBox.valueProperty().bindBidirectional(selectedFigure);
+            ToggleButton button = new ToggleButton();
+            button.setToggleGroup(figureToggleGroup);
+            button.setUserData(figureID);
+            button.getStyleClass().add("robot-choice");
 
-        nameField.textProperty().addListener((obs, oldText, newText) -> {
-            if (newText != null && !newText.isBlank() && figureBox.getValue() != null) {
+            String path = String.format("/assets/robots/robot_%02d_left.png", i);
+            InputStream stream = getClass().getResourceAsStream(path);
+            if (stream == null) {
+                System.err.println("Fehlendes Bild: " + path);
+            }
+            Image image = new Image(stream);
+            ImageView iv = new ImageView(image);
+            iv.setFitWidth(80);
+            iv.setFitHeight(80);
+            iv.setPreserveRatio(true);
+            button.setGraphic(iv);
+
+            button.setOnAction(e -> {
+                selectedFigure.set(figureID);
                 warningLabel.setVisible(false);
                 warningLabel.setManaged(false);
-                    }
-                });
+            });
 
-        figureBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            figureGallery.getChildren().add(button);
+        }
+        figureToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle != null) {
+                Integer figureID = (Integer) newToggle.getUserData();
+                selectedFigure.set(figureID);
+            } else {
+                selectedFigure.set(null); // keine Auswahl
+            }
+        });
+
+
+        // Scroll-Pfeile
+        scrollLeftButton.setOnAction(e -> scrollBy(-100));
+        scrollRightButton.setOnAction(e -> scrollBy(100));
+
+        // Setze Referenz in Registry
+        ControllerRegistry.setLoginController(this);
+
+        // Name binding
+        nameField.textProperty().bindBidirectional(playerName);
+
+        // Validation: Name + Figur ausgewählt?
+        nameField.textProperty().addListener((obs, oldText, newText) -> {
+            if (newText != null && !newText.isBlank() && selectedFigure.get() != null) {
+                warningLabel.setVisible(false);
+                warningLabel.setManaged(false);
+            }
+        });
+
+        selectedFigure.addListener((obs, oldVal, newVal) -> {
             String currentName = nameField.getText();
             if (newVal != null && currentName != null && !currentName.isBlank()) {
                 warningLabel.setVisible(false);
@@ -113,7 +161,11 @@ public class LoginController {
         });
     }
 
-
+    private void scrollBy(double delta) {
+        double current = figureScrollPane.getHvalue();
+        double newValue = Math.max(0, Math.min(1, current + delta / figureGallery.getWidth()));
+        figureScrollPane.setHvalue(newValue);
+    }
     /**
      * Wird aufgerufen, wenn der Nutzer auf "Login" klickt.
      * Validiert die Eingaben und sendet eine Login-Nachricht an den Server.
@@ -126,7 +178,7 @@ public class LoginController {
         // Deaktiviere Login-Button, damit man nicht mehrfach klickt
         ((javafx.scene.Node) event.getSource()).setDisable(true);
         String name = nameField.getText();
-        Integer figure = figureBox.getValue();
+        Integer figure = selectedFigure.get();
         // Falls Host oder Port leer → Standardwerte nutzen
         String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
         String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
@@ -162,11 +214,12 @@ public class LoginController {
 
             cachedName = name;
             cachedFigure = figure;
-            //client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+
+            client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
 
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
-            //loginButton.setDisable(false);
+            ((Node) event.getSource()).setDisable(false);
 
         }
     }
@@ -304,9 +357,9 @@ public class LoginController {
         stage.initStyle(StageStyle.TRANSPARENT);
         dialog.showAndWait();
 
-        // Auswahlfelder wieder aktivieren
+        // Auswahlfelder wieder aktivieren und alle Cached-Werte zurücksetzen
         nameField.setDisable(false);
-        figureBox.setDisable(false);
+        selectedFigure.set(null); // Auswahl zurücksetzen
         loginButton.setDisable(false);
         figureTakenWarningShown = false;
     }

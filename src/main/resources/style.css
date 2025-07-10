@@ -293,3 +293,54 @@
     -fx-effect: dropshadow(gaussian, #444f66, 6, 0.3, 0, 0);
     -fx-alignment: center;
 }
+.robot-choice {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.2), 2, 0.1, 0, 0);
+}
+
+.robot-choice:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-border-color: #AAAAAA;
+}
+
+.robot-choice:selected,
+.robot-choice:armed,
+.robot-choice:selected:hover {
+    -fx-background-color: #F5A623;
+    -fx-border-color: #ffffff;
+    -fx-border-width: 2px;
+    -fx-text-fill: black;
+}
+.arrow-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-cursor: hand;
+    -fx-padding: 4 10;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.arrow-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: #F5A623;
+}
+.figure-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 10;
+}
+
+.figure-gallery {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 12;
+    -fx-padding: 10;
+}
+.robot-choice:selected {
+    -fx-effect: dropshadow(gaussian, #F5A623, 10, 0.3, 0, 0);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
