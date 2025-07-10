@@ -286,7 +286,6 @@ public class Server {
                         System.err.println("Client did not respond to Alive. Disconnecting...");
                         heartbeatLogger.info("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
                         client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
-                        appLogger.warn("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
 //                        client.closeAll();
                     }
                 }

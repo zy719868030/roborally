@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch;
 public class Game {
     // Constants
     private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
-    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Game.class);
+    private static final Logger appLogger = LogManager.getLogger(Game.class);
 
     // Singleton instance
     private static Game instance;
@@ -642,7 +642,7 @@ public class Game {
                 if (card instanceof DamageCard damageCard) {
                     handleDamageCardEffect(damageCard, player);
                 } else {
-                    appLogger.info("Execturing card: {} for player: {}", cardName, player.toString());
+                    appLogger.debug("Executing card: {} for {}", cardName, player.toString());
                     card.execute(player.getRobot(), player);
                 }
                 Position robotPosition = player.getRobot().getPosition();

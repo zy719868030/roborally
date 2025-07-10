@@ -187,7 +187,7 @@ public class Client {
         } catch (IOException e) {
             System.err.println("Disconnected from server.");
             System.err.println("Message: " + e.getMessage());
-//            e.printStackTrace(); DEBUG
+            e.printStackTrace();
             closeAll();
         }
     }
