@@ -6,6 +6,7 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Represents the gear element on the game board.
@@ -13,6 +14,7 @@ import java.util.List;
  * There are two types of gears: clockwise rotation (green) and counterclockwise rotation (red).
  */
 public class Gear extends BoardElement {
+    private static final Logger logger = Logger.getLogger(Gear.class.getName());
 
     public enum RotationDirection {
         CLOCKWISE,
@@ -128,10 +130,10 @@ public class Gear extends BoardElement {
         // Rotate the robot according to the rotation direction of the gear.
         if (rotationDirection == RotationDirection.CLOCKWISE) {
             robot.turnRight();
-            System.out.println("Green gear at " + position + " rotated Robot " + robot.getRobotID() + " clockwise");
+            logger.info("Green gear at " + position + " rotated Robot " + robot.getClientID() + " clockwise");
         } else {
             robot.turnLeft();
-            System.out.println("Red gear at " + position + " rotated Robot " + robot.getRobotID() + " counterclockwise");
+            logger.info("Red gear at " + position + " rotated Robot " + robot.getClientID() + " counterclockwise");
         }
     }
 

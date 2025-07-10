@@ -824,7 +824,13 @@ public class Game {
 
                             // TODO @lukas:Broadcast rotation if direction changed
                             if (oldDirection != robot.getDirection()) {
-                                final String rotation = gear.getRotationDirection().toString();
+                                // Fixed: Use the actual robot rotation direction, not the gear's rotation direction
+                                String rotation;
+                                if (gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE) {
+                                    rotation = "clockwise";  // Robot turned right (clockwise)
+                                } else {
+                                    rotation = "counterclockwise";  // Robot turned left (counterclockwise)
+                                }
 
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
@@ -834,12 +840,8 @@ public class Game {
                                         )
                                 );
 
-//                                // TODO @lukas:Animation
-//                                Server.getInstance().broadcastMessage(
-//                                        new MessageDefinitions.Message<>(
-//                                                new MessageDefinitions.BodyAnimation("Gear")
-//                                        )
-//                                );
+                                appLogger.info("Gear at " + gear.getPosition() + " rotated Robot " + robot.getClientID() +
+                                        " " + rotation);
                             }
                         }
                     }
