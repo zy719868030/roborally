@@ -158,8 +158,8 @@ public class Game {
             // Setup phase
             setPhase(GamePhase.SETUP);
 
-            // redundant call, but rather be safe since no harm.
-            resetPlayersRound();
+//            // redundant call, but rather be safe since no harm.
+//            resetPlayersRound();
 
             determinePlayerOrder();
             handleSetupPhase();
@@ -169,7 +169,7 @@ public class Game {
             startNewGameRound();
         });
 
-        appLogger.info("Starting game main loop.");
+//        appLogger.info("Starting game main loop.");
         mainLoop.start();
     }
 
@@ -182,14 +182,10 @@ public class Game {
         // Reset
         resetPlayersRound();
         Server.getInstance().resetReadyRegister();
+
         // Start new round
-
-        for (Player player : players) {
-            player.resetRegister();
-        }
-
         roundNumber++;
-        appLogger.info("Starting round {}.", roundNumber);
+        appLogger.info("Starting round {}.\n", roundNumber);
         setPhase(GamePhase.PROGRAMMING);
         appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
         handleProgrammingPhase();
@@ -646,6 +642,7 @@ public class Game {
                 if (card instanceof DamageCard damageCard) {
                     handleDamageCardEffect(damageCard, player);
                 } else {
+                    appLogger.info("Execturing card: {} for player: {}", cardName, player.toString());
                     card.execute(player.getRobot(), player);
                 }
                 Position robotPosition = player.getRobot().getPosition();

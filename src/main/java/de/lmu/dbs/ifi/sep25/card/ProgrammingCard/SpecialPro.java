@@ -10,8 +10,6 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
-
 public class SpecialPro extends ProgrammingCard {
     private String specialEffect;
     private static final Logger appLogger = LogManager.getLogger(SpecialPro.class);
@@ -74,7 +72,7 @@ public class SpecialPro extends ProgrammingCard {
         int currentRegister = game.getCurrentRegister();
 
         // Find the actual card to execute by recursively looking back
-        RegisterCard cardToExecute = findPreviousNonAgainCard(player, currentRegister);
+        final RegisterCard cardToExecute = findPreviousNonAgainCard(player, currentRegister);
 
         if (cardToExecute == null) {
             appLogger.warn("No valid card found for Again card execution");

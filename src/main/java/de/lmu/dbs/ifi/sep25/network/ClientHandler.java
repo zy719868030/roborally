@@ -154,9 +154,11 @@ public class ClientHandler implements Runnable {
             if (!Thread.currentThread().isInterrupted()) {
                 appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
                 sendMessage(new Message<>(new BodyError("Connection error: " + e.getMessage())));
+                e.printStackTrace();
             }
         } finally {
-            closeAll();
+            appLogger.info("Attempted to close client connection: {}", myID);
+//            closeAll();
         }
     }
 
@@ -511,7 +513,7 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
-        appLogger.info("Player {} has finished their selection.", player.toString());
+        appLogger.info("{} has finished their selection.", player.toString());
         player.setReadyRegister(true);
         server.markReadyRegister(myID);
 

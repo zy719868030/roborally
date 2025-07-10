@@ -37,10 +37,7 @@ public class RegularPro extends ProgrammingCard {
                 robot.turnRight();
                 break;
             case "uturn":
-//                System.out.println("Executing UTurn for Robot " + robot.getRobotID());
-//                System.out.println("Before UTurn: Robot direction is " + robot.getDirection());
                 robot.turnAround();
-//                System.out.println("After UTurn: Robot direction is " + robot.getDirection());
                 break;
             case "powerup":
                 player.addEnergy(1, "Power Up");

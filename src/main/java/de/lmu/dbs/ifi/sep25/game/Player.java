@@ -226,14 +226,10 @@ public class Player {
 
             this.readyRegister = true;
 
-            appLogger.info("{} readyRegister set to: true", getPlayerIdentifier());
-
-            // ✅ DON'T call markReadyRegister() again
-            // let whoever called setReadyRegister(true) be responsible for that
-
+//            appLogger.info("{} readyRegister set to: true", getPlayerIdentifier());
         } else {
             this.readyRegister = false;
-            appLogger.info("{} readyRegister set to: false", getPlayerIdentifier());
+//            appLogger.info("{} readyRegister set to: false", getPlayerIdentifier());
         }
     }
 
@@ -289,13 +285,11 @@ public class Player {
         ));
 
         // In der Programmierphase sehen alle Spieler ihre echten Karten zur gleichzeitigen Auswahl.
-        if (Game.getInstance().getCurrentPhase() == Game.GamePhase.ACTIVATION.getValue()) {
-            connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyNotYourCards(
-                            clientID, handWithNames.size()
-                    )
-            ), connection);
-        }
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyNotYourCards(
+                        clientID, handWithNames.size()
+                )
+        ), connection);
     }
 
     /**
@@ -317,7 +311,7 @@ public class Player {
         appLogger.info("{} reset register state. Current register: {}", getPlayerIdentifier(), registerToString());
         setReadyRegister(false);
         updateHand();
-        appLogger.info("{} hand has been updated and sent", getPlayerIdentifier());
+//        appLogger.info("{} hand has been updated and sent", getPlayerIdentifier());
     }
 
     /**
@@ -587,7 +581,7 @@ public class Player {
         for (int i = 0; i < register.size(); i++) {
             RegisterCard card = register.get(i);
             if (card != null) {
-                appLogger.info("{} clearing register slot {} and discarding card", getPlayerIdentifier(), i);
+//                appLogger.info("{} clearing register slot {} and discarding card", getPlayerIdentifier(), i);
                 removeCardFromRegister(i);
                 discardCardFromHand(card);
             }
@@ -597,7 +591,8 @@ public class Player {
         for (int i = 0; i < 5; i++) {
             register.set(i, null);
         }
-        appLogger.info("{} register has been reset", getPlayerIdentifier());
+
+        appLogger.info("Register has successfully been reset");
     }
 
     // UTILITY
@@ -645,7 +640,8 @@ public class Player {
      * @return a formatted string representing the Player object with its client ID, robot ID,
      * name, robot state, and the string representation of the register.
      */
-    public String toString() {return getPlayerIdentifier() + " Register=" + registerToString();
+    public String toString() {
+        return getPlayerIdentifier() + " Register=" + registerToString();
 //        return "Player{" +
 //                "clientID=" + clientID +
 //                ", robotID='" + robot.getRobotID() +

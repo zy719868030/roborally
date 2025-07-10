@@ -66,7 +66,7 @@ public class Robot {
     public void turnLeft() {
         if (isPoweredDown) return;
         direction = direction.turnLeft();
-//        notifyTurning("counterclockwise");
+        notifyTurning("counterclockwise");
     }
 
     /**
@@ -76,7 +76,7 @@ public class Robot {
     public void turnRight() {
         if (isPoweredDown) return;
         direction = direction.turnRight();
-//        notifyTurning("clockwise");
+        notifyTurning("clockwise");
     }
 
     /**
@@ -86,8 +86,8 @@ public class Robot {
     public void turnAround() {
         if (isPoweredDown) return;
         direction = direction.turnAround();
-//        notifyTurning("clockwise");
-//        notifyTurning("clockwise");
+        notifyTurning("clockwise");
+        notifyTurning("clockwise");
     }
 
     // Moves the robot forward one space, checking Board for validity

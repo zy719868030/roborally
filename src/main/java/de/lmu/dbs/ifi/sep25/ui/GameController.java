@@ -108,6 +108,10 @@ public class GameController {
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
 
+    private int currentPhaseID = -1;
+
+    private final List<String> confirmedCards = new ArrayList<>();
+
     private final Map<Integer, PauseTransition> activeHighlights = new HashMap<>();
 
     private double dragStartX, dragStartY;
@@ -602,123 +606,127 @@ public class GameController {
         chatArea.appendText(message + "\n");
     }
 
-    public void updatePhase(String phaseName) {
-        boolean isSetupPhase = phaseName.toLowerCase().contains("aufbau");
-        boolean isProgrammingPhase = phaseName.toLowerCase().contains("programm");
-        boolean isActivationPhase = phaseName.toLowerCase().contains("aktivierung");
-        boolean isGameOverPhase = phaseName.toLowerCase().contains("ende") || phaseName.toLowerCase().contains("spielende");
-        logger.info("Update game stage: {}, isProgrammingPhase={}", phaseName, isProgrammingPhase);
-        updateMiniRobotInPhase(isSetupPhase, isProgrammingPhase, isActivationPhase);
+    public int getCurrentPhaseID() {
+        return currentPhaseID;
+    }
 
-        // Label aktualisieren
+    public void updatePhase(int phaseID) {
+        final int previousPhase = getCurrentPhaseID();
+
+        logger.info("Update game phase from {} to {}", previousPhase, phaseID);
+
+        // Update internal state
+        this.currentPhaseID = phaseID;
+        updateMiniRobotInPhase(phaseID == 0, phaseID == 2, phaseID == 3);
+
+        // Phase label
         if (phaseLabel != null) {
-            phaseLabel.setText("Phase: " + phaseName);
+            phaseLabel.setText("Phase: " + switch (phaseID) {
+                case 0 -> "Aufbauphase";
+                case 1 -> "Upgradephase";
+                case 2 -> "Programmierphase";
+                case 3 -> "Aktivierungsphase";
+                default -> "Unbekannt";
+            });
         }
 
-        // Update availability of click start position depending on phase
-        for (javafx.scene.Node node : gameBoardPane.getChildren()) {
-            // Update the availability of the starting position click based on the stage
+        // Reset all startpoint interactivity unless Setup
+        for (Node node : gameBoardPane.getChildren()) {
             if (node instanceof StackPane pane && pane.getOnMouseClicked() != null) {
-                if (!isSetupPhase) {
-                    // Disable clicks outside the setup phase.
+                if (phaseID != 0) {
                     pane.setOnMouseClicked(null);
                     pane.setStyle("-fx-border-color: gray; -fx-border-width: 2px;");
                 }
             }
         }
-        // Handkarten nur in Programmierphase aktiv
-        handCardBox.setDisable(!isProgrammingPhase);
-        logger.info(isProgrammingPhase ? "Enable hand card area" : "No-touch zone");
 
-        if (isProgrammingPhase) {
-            handCardBox.setDisable(false);
-            handCardBox.setVisible(true);
-            handCardBox.setManaged(true);
-            logger.info("Hand card area enabled");
-            showDragAndDropInfoPopup();
-        } else {
-            handCardBox.setDisable(true);
-            logger.info("No handball zone");
-        }
-
-        // DiscardPile nur in Aktivierungsphase sichtbar
-        discardPileBox.setVisible(isActivationPhase);
-        discardPileBox.setManaged(isActivationPhase);
-        if (isActivationPhase) {
-            enterActivationPhase();
-        }
-
-        if (confirmSelectionButton != null) {
-            updateConfirmButtonVisibility();
-        }
-
-        //confirmSelectionButton.setVisible(isProgrammingPhase);
-        // confirmSelectionButton.setManaged(isProgrammingPhase);
-
-
-//        // Timer nur in Programmierphase starten
-//        if (isProgrammingPhase) {
-//            startCountdown();
-//        } else {
-//            hideCountdown();
-//        }
-
-        // Chat sperren, wenn Spiel vorbei ist
-        chatInput.setDisable(isGameOverPhase);
-        recipientBox.setDisable(isGameOverPhase);
-
-        iconMenu.setDisable(isGameOverPhase || isSetupPhase);
-
-        // ChatBox bei Spielende ausblenden
-        if (isGameOverPhase) {
-            chatBox.setVisible(false);
-            chatBox.setManaged(false);
-        }
-// VISUAL TURN INDICATORS ENTFERNEN BEI PROGRAMMIERPHASE
-        if (isProgrammingPhase) {
-            statusLabel.setText("🌟 Spiel läuft...");
-            statusLabel.getStyleClass().setAll("dynamic-status");
-
-            statusLabel.getStyleClass().removeAll("status-other-turn", "another-old-style");
-
-            // Appy  CSS
-            if (!statusLabel.getStyleClass().contains("dynamic-status")) {
-                statusLabel.getStyleClass().add("dynamic-status");
+        // Phase-specific UI updates
+        switch (phaseID) {
+            case 0 -> {
+                // Setup phase — handled above via interactivity toggle
             }
+
+            case 1 -> { // Upgrade phase UNIMPLEMENTED
+
+            }
+
+            case 2 -> { // Programming phase
+                statusLabel.setText("🌟 Spiel läuft...");
+                statusLabel.getStyleClass().setAll("dynamic-status");
+
+                // Ensure conflicting styles are removed
+                statusLabel.getStyleClass().removeAll("status-other-turn", "another-old-style");
+
+                if (!statusLabel.getStyleClass().contains("dynamic-status")) {
+                    statusLabel.getStyleClass().add("dynamic-status");
+                }
+
+                Platform.runLater(() -> {
+                    clearHandUI();
+                    clearRegisterUI();
+                });
+
+                handCardBox.setDisable(false);
+                handCardBox.setVisible(true);
+                handCardBox.setManaged(true);
+                showDragAndDropInfoPopup();
+
+                if (confirmSelectionButton != null) {
+                    updateConfirmButtonVisibility();
+                }
+            }
+
+            case 3 -> { // Activation phase
+                statusLabel.setText("Aktivierungsphase");
+                statusLabel.getStyleClass().setAll("dynamic-status");
+
+                handCardBox.setDisable(true);
+                handCardBox.setVisible(false);
+                handCardBox.setManaged(false);
+
+                if (confirmSelectionButton != null) {
+                    confirmSelectionButton.setVisible(false);
+                    confirmSelectionButton.setManaged(false);
+                }
+
+                stopCountdown();
+                hideCountdown();
+
+                Platform.runLater(this::clearHandUI);
+
+                if (!confirmedCards.isEmpty()) {
+                    displayConfirmedCards(confirmedCards);
+                }
+
+                handCardBox.setDisable(true);
+                handCardBox.setVisible(false);
+                handCardBox.setManaged(false);
+
+                if (confirmSelectionButton != null) {
+                    confirmSelectionButton.setVisible(false);
+                    confirmSelectionButton.setManaged(false);
+                }
+            }
+
+            default -> throw new IllegalStateException("Unexpected value: " + phaseID);
         }
-
-
-        //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
-
     }
 
-    public void enterActivationPhase() {
-        logger.info("[PHASE] Entering Activation Phase");
-
-
-        clearProgrammingUI();
-
-        if (!confirmedCards.isEmpty()) {
-            displayConfirmedCards(confirmedCards);
-        }
-
-        handCardBox.setDisable(true);
-        handCardBox.setVisible(false);
-        handCardBox.setManaged(false);
-
-        if (confirmSelectionButton != null) {
-            confirmSelectionButton.setVisible(false);
-            confirmSelectionButton.setManaged(false);
-        }
-
-
+    private void clearHandUI() {
+        handCardBox.getChildren().clear();
     }
 
-    private void clearProgrammingUI() {
+    private void clearRegisterUI() {
+        registerBox.getChildren().forEach(node -> {
+            if (node instanceof VBox vbox) {
+                Node slot = vbox.getChildren().get(1);
+                if (slot instanceof StackPane stack) {
+                    stack.getChildren().clear();
+                }
+            }
+        });
+        Arrays.fill(registerState, null); // reset internal state
     }
-
-    private List<String> confirmedCards = new ArrayList<>();
-
 
     public void updateDiscardPile(List<String> discardedCards) {
         discardPileBox.getChildren().clear();
@@ -1630,6 +1638,14 @@ public class GameController {
         countdownTimer.play();
     }
 
+    private void stopCountdown() {
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+            countdownTimer = null;
+        }
+        secondsLeft = 0;
+    }
+
     public void hideCountdown() {
         timerLabel.setVisible(false);
         timerLabel.setManaged(false);
@@ -2417,16 +2433,6 @@ public class GameController {
         });
     }
 
-    private int currentPhaseID = -1;
-
-    public void setCurrentPhaseID(int phaseID) {
-        this.currentPhaseID = phaseID;
-    }
-
-    public int getCurrentPhaseID() {
-        return currentPhaseID;
-    }
-
     private void updateConfirmButtonVisibility() {
         long filledSlots = registerBox.getChildren().stream()
                 .filter(n -> n instanceof VBox)
@@ -2439,67 +2445,6 @@ public class GameController {
         confirmSelectionButton.setVisible(filledSlots == 5);
         confirmSelectionButton.setManaged(filledSlots == 5);
     }
-
-    double dragOffsetX;
-    private double dragOffsetY;
-
-    /**
-     * Ermöglicht animiertes Drag & Drop für Handkarten.
-     */
-    private void enableCardDragAndDrop(Node card) {
-        // Drag starten
-
-        card.setOnMousePressed(event -> {
-            draggedCard = card;
-            dragOffsetX = event.getSceneX() - card.getLayoutX();
-            dragOffsetY = event.getSceneY() - card.getLayoutY();
-            event.consume();
-        });
-
-        card.setOnMouseDragged(event -> {
-            if (draggedCard != null) {
-                draggedCard.setTranslateX(event.getSceneX() - dragOffsetX - card.getLayoutX());
-                draggedCard.setTranslateY(event.getSceneY() - dragOffsetY - card.getLayoutY());
-            }
-            event.consume();
-        });
-
-        card.setOnMouseReleased(event -> {
-            if (draggedCard != null) {
-                // Ursprüngliche Liste
-                HBox parent = (HBox) card.getParent();
-                ObservableList<Node> children = parent.getChildren();
-
-                // Aktuelle Mausposition
-                double x = event.getSceneX();
-
-                // Neue Position berechnen
-                int insertIndex = 0;
-                for (int i = 0; i < children.size(); i++) {
-                    Node other = children.get(i);
-                    if (other == draggedCard) continue;
-
-                    double centerX = other.localToScene(other.getBoundsInLocal()).getMinX() + other.getBoundsInLocal().getWidth() / 2;
-                    if (x > centerX) {
-                        insertIndex = i + 1;
-                    }
-                }
-
-                children.remove(draggedCard);
-                children.add(insertIndex, draggedCard);
-
-                // Animation zurück an Zielposition
-                TranslateTransition tt = new TranslateTransition(Duration.millis(200), draggedCard);
-                tt.setToX(0);
-                tt.setToY(0);
-                tt.play();
-
-                draggedCard = null;
-            }
-            event.consume();
-        });
-    }
-
 
     /**
      * Mischt die Handkarten visuell neu. Die Reihenfolge wird zufällig geändert.

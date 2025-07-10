@@ -63,7 +63,6 @@ public class Client {
     private PrintWriter writer;
 
     // 4. Game state
-    private int phase = 0;
     private final List<String> hand = new ArrayList<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
     private int currentRegister = 0;
@@ -671,16 +670,7 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.setCurrentPhaseID(phaseID);
-
-                String phaseName = switch (phaseID) {
-                    case 0 -> "Aufbauphase";
-                    case 1 -> "Upgradephase";
-                    case 2 -> "Programmierphase";
-                    case 3 -> "Aktivierungsphase";
-                    default -> "Unbekannt";
-                };
-                controller.updatePhase(phaseName);
+                controller.updatePhase(phaseID);
             }
         });
     }

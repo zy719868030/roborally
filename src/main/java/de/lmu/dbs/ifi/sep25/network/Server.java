@@ -286,7 +286,8 @@ public class Server {
                         System.err.println("Client did not respond to Alive. Disconnecting...");
                         heartbeatLogger.info("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
                         client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
-                        client.closeAll();
+                        appLogger.warn("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
+//                        client.closeAll();
                     }
                 }
 
@@ -599,7 +600,7 @@ public class Server {
             return;
         }
 
-        appLogger.info("Marking client {} as ready.", clientID);
+//        appLogger.info("Marking client {} as ready.", clientID);
 
         if (!waitingForProgramming.contains(clientID)) {
             appLogger.warn("Client {} was not in the ready register, already removed.", clientID);
@@ -742,17 +743,17 @@ public class Server {
             setTimerStarted(false);
             appLogger.info("Timer cancelled.");
 
-            List<Integer> remaining = new ArrayList<>(waitingForProgramming);
-            broadcastMessage(new Message<>(new BodyTimerEnded(remaining)));
+//            List<Integer> remaining = new ArrayList<>(waitingForProgramming);
+//            broadcastMessage(new Message<>(new BodyTimerEnded(remaining)));
 
-            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
-                for (Integer clientID : remaining) {
-                    getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
-                }
-                game.enterActivationPhase();
-            } else {
-                appLogger.warn("Timer cancelled but game is already in phase: {}", game.getCurrentPhase());
-            }
+//            if (game.getCurrentPhase() == Game.GamePhase.PROGRAMMING.getValue()) {
+//                for (Integer clientID : remaining) {
+//                    getClients().getByValue(clientID).getPlayer().fillRemainingRegisterSlots();
+//                }
+//                game.enterActivationPhase();
+//            } else {
+//                appLogger.warn("Timer cancelled but game is already in phase: {}", game.getCurrentPhase());
+//            }
 
             resetReadyRegister();
         } else {
