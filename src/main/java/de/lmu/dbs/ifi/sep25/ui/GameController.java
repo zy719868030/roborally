@@ -4,6 +4,7 @@ import de.lmu.dbs.ifi.sep25.game.Direction;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -64,6 +65,10 @@ public class GameController {
     private VBox chatBox;
     @FXML
     private HBox iconMenu;
+    @FXML private Button chatToggleButton;
+    @FXML private Button chatRestoreButton;
+    @FXML private Label chatIconLabel;
+
     @FXML
     private HBox playedCardsBox;
 
@@ -172,6 +177,19 @@ public class GameController {
         });
 
         chatInput.setOnAction(e -> handleSendChat());
+        addHoverAnimation(chatToggleButton);
+    }
+    private void addHoverAnimation(Button button) {
+        button.setOnMouseEntered(e -> {
+            TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
+            tt.setToY(-3);
+            tt.play();
+        });
+        button.setOnMouseExited(e -> {
+            TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
+            tt.setToY(0);
+            tt.play();
+        });
     }
 
     private double clamp(double value, double min, double max) {
@@ -612,8 +630,18 @@ public class GameController {
 
         // Label aktualisieren
         if (phaseLabel != null) {
-            phaseLabel.setText("Phase: " + phaseName);
+            if (isSetupPhase) {
+                setPhaseLabel("🛠️ Phase: Aufbau", "phase-setup");
+            } else if (isProgrammingPhase) {
+                setPhaseLabel("🤖 Phase: Programmierung", "phase-programming");
+            } else if (isActivationPhase) {
+                setPhaseLabel("⚡ Phase: Aktivierung", "phase-activation");
+            } else if (isGameOverPhase) {
+                setPhaseLabel("🏁 Spiel beendet", "phase-gameover");
+            }
         }
+
+
 
         // Update availability of click start position depending on phase
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
@@ -636,6 +664,8 @@ public class GameController {
             handCardBox.setManaged(true);
             logger.info("Hand card area enabled");
             showDragAndDropInfoPopup();
+
+
         } else {
             handCardBox.setDisable(true);
             logger.info("No handball zone");
@@ -691,6 +721,20 @@ public class GameController {
         //appendChatMessage("[INFO] Aktuelle Phase: " + phaseName);
 
     }
+    private void setPhaseLabel(String phaseText, String cssClass) {
+        phaseLabel.setText(phaseText);
+
+        phaseLabel.getStyleClass().removeAll("phase-setup", "phase-programming", "phase-activation");
+        if (!phaseLabel.getStyleClass().contains(cssClass)) {
+            phaseLabel.getStyleClass().add(cssClass);
+        }
+
+        FadeTransition fade = new FadeTransition(Duration.millis(400), phaseLabel);
+        fade.setFromValue(0.0);
+        fade.setToValue(1.0);
+        fade.play();
+    }
+
 
     public void enterActivationPhase() {
         logger.info("[PHASE] Entering Activation Phase");
@@ -737,12 +781,48 @@ public class GameController {
      */
     @FXML
     private void toggleChatBox() {
-        boolean currentlyVisible = chatBox.isVisible();
-        chatBox.setVisible(!currentlyVisible);
-        chatBox.setManaged(!currentlyVisible);
-        iconMenu.setVisible(currentlyVisible);
-        iconMenu.setManaged(currentlyVisible);
+        if (chatBox.isVisible()) {
+            slideOut(chatBox);
+            chatIconLabel.setText("▲");
+            chatToggleButton.setVisible(false);
+            chatToggleButton.setManaged(false);
+            chatRestoreButton.setVisible(true);
+            chatRestoreButton.setManaged(true);
+        } else {
+            slideIn(chatBox);
+            chatIconLabel.setText("▼");
+            chatToggleButton.setVisible(true);
+            chatToggleButton.setManaged(true);
+            chatRestoreButton.setVisible(false);
+            chatRestoreButton.setManaged(false);
+        }
+        updateIconMenuVisibility();
     }
+    private void updateIconMenuVisibility() {
+        boolean irgendwasMinimiert = chatRestoreButton.isVisible();
+        iconMenu.setVisible(irgendwasMinimiert);
+        iconMenu.setManaged(irgendwasMinimiert);
+    }
+
+    private void slideOut(Node node) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
+        tt.setToY(50);
+        tt.setOnFinished(e -> {
+            node.setVisible(false);
+            node.setManaged(false);
+        });
+        tt.play();
+    }
+
+    private void slideIn(Node node) {
+        node.setVisible(true);
+        node.setManaged(true);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
+        tt.setFromY(50);
+        tt.setToY(0);
+        tt.play();
+    }
+
 
     public void setInitialPlayerStats(Map<Integer, Integer> energy, Map<Integer, Integer> checkpointsReached) {
     }

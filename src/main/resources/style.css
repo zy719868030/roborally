@@ -293,3 +293,17 @@
     -fx-effect: dropshadow(gaussian, #444f66, 6, 0.3, 0, 0);
     -fx-alignment: center;
 }
+.phase-setup {
+    -fx-text-fill: #00ffd0; /* Cian neón */
+    -fx-effect: dropshadow(gaussian, #00ffd0, 2, 0.3, 0, 0);
+}
+
+.phase-programming {
+    -fx-text-fill: #ffe664; /* Amarillo neón */
+    -fx-effect: dropshadow(gaussian, #ffe664, 2, 0.3, 0, 0);
+}
+
+.phase-activation {
+    -fx-text-fill: #ff4d94; /* Magenta / rosa neón */
+    -fx-effect: dropshadow(gaussian, #ff4d94, 2, 0.3, 0, 0);
+}
