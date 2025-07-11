@@ -141,7 +141,7 @@
                 <StackPane fx:id="discardPileBox"
                            prefWidth="60" prefHeight="90"
                            style="-fx-padding: 5; -fx-border-color: gray; -fx-background-color: #222;">
-                    <!-- Si no hay carta, esto se ve -->
+
                     <Label text="Ablage"
                            style="-fx-text-fill: #00ffff; -fx-font-size: 12px; -fx-font-weight: bold;"
                            StackPane.alignment="CENTER"/>

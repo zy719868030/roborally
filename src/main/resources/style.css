@@ -4,16 +4,49 @@
 }
 
 .ready-button {
-    -fx-background-color: #28a745;
-    -fx-text-fill: white;
-    -fx-front-weight: bold;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+    -fx-padding: 10 20;
+    -fx-background-color: linear-gradient(to bottom, #aaffaa, #44ff44);
+    -fx-background-radius: 25;
+    -fx-border-color: #00ff88;
+    -fx-border-width: 2;
+    -fx-border-radius: 25;
+    -fx-effect: dropshadow(gaussian, #00ff88, 12, 0.6, 0, 0);
+    -fx-font-family: "Orbitron", sans-serif;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s ease;
 }
-.not-ready-button {
-    -fx-background-color: #dc3545;
-    -fx-text-fill: white;
-    -fx-front-weigh: bold;
+.ready-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #ccffcc, #66ff66);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, #66ffcc, 14, 0.8, 0, 0);
 
 }
+
+.not-ready-button {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-padding: 6 12;
+    -fx-background-color: linear-gradient(to bottom, #ff5555, #aa0000);
+    -fx-background-radius: 25;
+    -fx-border-color: #ff4444;
+    -fx-border-width: 2;
+    -fx-border-radius: 25;
+    -fx-effect: dropshadow(gaussian, #ff3333, 12, 0.6, 0, 0);
+    -fx-font-family: "Orbitron", sans-serif;
+    -fx-cursor: hand;
+}
+.not-ready-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #ff7777, #cc0000);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, #ff8888, 14, 0.8, 0, 0);
+}
+
 /* Style for players who are ready: light green background */
 .player-ready {
     -fx-background-color: #b6fcb6;
@@ -46,23 +79,6 @@
 }
 
 
-/* Stil für den modernen Bereit-Button */
-.ready-button {
-    -fx-background-radius: 20;
-    -fx-background-color: #4488ff; /* Azul moderno */
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-cursor: hand;
-}
-
-/* Stil für den roten Nicht-Bereit-Button */
-.not-ready-button {
-    -fx-background-radius: 20;
-    -fx-background-color: #e74c3c; /* Rojo */
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-cursor: hand;
-}
 /* Stil für modernen "Senden"-Button */
 .senden-button {
     -fx-background-color: #00ffd0;
@@ -162,8 +178,8 @@
 
 .lobby-box-ready {
     -fx-background-color: rgba(255, 230, 100, 0.1);
-    -fx-border-color: #ffe664;
-    -fx-effect: dropshadow(gaussian, #ffe664, 8, 0.5, 0, 0);
+    -fx-border-color: #F5A623;
+    -fx-effect: dropshadow(gaussian, F5A623, 14, 0.5, 0, 0);
 }
 
 .player-cell {
@@ -243,7 +259,7 @@
     -fx-border-width: 2;
     -fx-border-radius: 10;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, #F5A623, 8, 0.4, 0, 0);
+    -fx-effect: dropshadow(gaussian, #F5A623, 4, 0.4, 0, 0);
 }
 .button-neon-cyan {
     -fx-background-color: transparent;
@@ -293,54 +309,47 @@
     -fx-effect: dropshadow(gaussian, #444f66, 6, 0.3, 0, 0);
     -fx-alignment: center;
 }
-.robot-choice {
-    -fx-background-color: transparent;
+.phase-setup {
+    -fx-text-fill: #00ffd0; /* Cian neón */
+    -fx-effect: dropshadow(gaussian, #00ffd0, 2, 0.3, 0, 0);
+}
+
+.phase-programming {
+    -fx-text-fill: #ffe664; /* Amarillo neón */
+    -fx-effect: dropshadow(gaussian, #ffe664, 2, 0.3, 0, 0);
+}
+
+.phase-activation {
+    -fx-text-fill: #ff4d94; /* Magenta / rosa neón */
+    -fx-effect: dropshadow(gaussian, #ff4d94, 2, 0.3, 0, 0);
+}
+.tooltip {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 14px;
+    -fx-text-fill: #00ffff; /* Neon cyan */
+    -fx-background-color: black;
     -fx-background-radius: 8;
-    -fx-padding: 8;
-    -fx-border-color: transparent;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.2), 2, 0.1, 0, 0);
-}
-
-.robot-choice:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.05);
-    -fx-border-color: #AAAAAA;
-}
-
-.robot-choice:selected,
-.robot-choice:armed,
-.robot-choice:selected:hover {
-    -fx-background-color: #F5A623;
-    -fx-border-color: #ffffff;
-    -fx-border-width: 2px;
-    -fx-text-fill: black;
-}
-.arrow-button {
-    -fx-background-color: transparent;
-    -fx-text-fill: white;
-    -fx-font-size: 22px;
-    -fx-cursor: hand;
-    -fx-padding: 4 10;
-    -fx-border-radius: 6;
-    -fx-background-radius: 6;
-}
-
-.arrow-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-text-fill: #F5A623;
-}
-.figure-scroll {
-    -fx-background-color: transparent;
     -fx-padding: 10;
+    -fx-effect: dropshadow(gaussian, #00ffff, 10, 0.8, 0, 0);
+}
+#energyBar .bar {
+    -fx-background-color: linear-gradient(to right, #00ffcc, #00ffff);
+}
+#energyBar .track {
+    -fx-background-color: #222;
+}
+.countdown-label {
+    -fx-font-family: "Orbitron";
+    -fx-font-weight: bold;
+    -fx-text-fill: #00ff66;
+    -fx-effect: dropshadow(gaussian,  #00ff66, 15, 0.7, 0, 0);
+    -fx-padding: 20 40;
+    -fx-background-color:transparent;
+}
+.logo-glow {
+    -fx-effect: dropshadow(gaussian, black, 30, 0.5, 0, 0);
 }
 
-.figure-gallery {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
-    -fx-background-radius: 12;
-    -fx-padding: 10;
-}
-.robot-choice:selected {
-    -fx-effect: dropshadow(gaussian, #F5A623, 10, 0.3, 0, 0);
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
-}
+
+
+
