@@ -1,0 +1,38 @@
+18:20:31 [Thread-7] INFO  PerClientLogger - Received PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 6.0,
+    "name": "2#2",
+    "figure": 0.0
+  }
+}
+18:20:31 [Thread-7] INFO  PerClientLogger - Received PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 1.0,
+    "name": "1",
+    "figure": 3.0
+  }
+}
+18:20:31 [Thread-7] INFO  PerClientLogger - Received PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 4.0,
+    "name": "2#1",
+    "figure": 4.0
+  }
+}
+18:20:38 [Thread-7] INFO  PerClientLogger - Received PlayerStatus: {
+  "messageType": "PlayerStatus",
+  "messageBody": {
+    "clientID": 1.0,
+    "ready": true
+  }
+}
+18:20:39 [Thread-7] INFO  PerClientLogger - Received PlayerStatus: {
+  "messageType": "PlayerStatus",
+  "messageBody": {
+    "clientID": 6.0,
+    "ready": true
+  }
+}
