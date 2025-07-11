@@ -1,0 +1,1607 @@
+7月 11, 2025 11:14:23 下午 de.lmu.gui.App setupGlobalLogging
+信息: Logging initialized. Logs will be written to app.log
+7月 11, 2025 11:14:23 下午 de.lmu.gui.ViewModel bindPlayerStatus
+信息: Binding player at index 0
+7月 11, 2025 11:14:23 下午 de.lmu.gui.ViewModel bindPlayerStatus
+信息: Binding player at index 1
+7月 11, 2025 11:14:23 下午 de.lmu.gui.ViewModel bindPlayerStatus
+信息: Binding player at index 2
+7月 11, 2025 11:14:23 下午 de.lmu.gui.ViewModel bindPlayerStatus
+信息: Binding player at index 3
+7月 11, 2025 11:14:23 下午 de.lmu.gui.ViewModel bindPlayerStatus
+信息: Binding player at index 4
+7月 11, 2025 11:14:23 下午 de.lmu.gui.ViewModel bindPlayerStatus
+信息: Binding player at index 5
+7月 11, 2025 11:14:23 下午 de.lmu.gui.Model setConnectionData
+信息: pre client init: hostName localhost port 1234
+7月 11, 2025 11:14:23 下午 de.lmu.client.Client connect
+信息: Connected to server
+7月 11, 2025 11:14:23 下午 de.lmu.server.ClientHandler <init>
+信息: [ClientHandler#0] created with server = true
+7月 11, 2025 11:14:23 下午 de.lmu.server.ClientHandler run
+严重: >>> ENTERED CLIENT HANDLER FOR SOCKET: /127.0.0.1
+7月 11, 2025 11:14:23 下午 de.lmu.server.ClientHandler run
+信息: Output set? true
+7月 11, 2025 11:14:23 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"HelloClient","messageBody":{"protocol":"Version 1.0"}}
+7月 11, 2025 11:14:23 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 0 received from server: {"messageType":"HelloClient","messageBody":{"protocol":"Version 1.0"}}
+7月 11, 2025 11:14:23 下午 de.lmu.client.ClientInput handleHelloClient
+信息: Received HelloClient
+Protocol: Version 1.0
+7月 11, 2025 11:14:23 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 0 sending: {"messageType":"HelloServer","messageBody":{"group":"DesperateDrosseln","isAI":false,"protocol":"Version 1.0","clientID":0}}
+7月 11, 2025 11:14:23 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"HelloServer","messageBody":{"group":"DesperateDrosseln","isAI":false,"protocol":"Version 1.0","clientID":0}}
+7月 11, 2025 11:14:23 下午 de.lmu.server.ServerInput handleHelloServer
+信息: HelloServer received from clientID: 8609
+7月 11, 2025 11:14:23 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Welcome","messageBody":{"clientID":8609}}
+7月 11, 2025 11:14:23 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 0 received from server: {"messageType":"Welcome","messageBody":{"clientID":8609}}
+7月 11, 2025 11:14:28 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:28 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:28 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:28 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:33 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:33 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:33 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:33 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:38 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:38 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:43 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:43 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:43 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:43 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:48 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:48 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:48 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:48 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:53 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:53 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:53 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:53 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:58 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:58 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:58 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:14:58 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:03 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:03 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:03 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:03 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:08 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:08 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:08 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:08 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:13 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:13 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:13 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:13 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:18 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:18 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:18 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:18 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:23 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:23 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:23 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:23 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:28 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:28 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:28 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:28 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:33 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:33 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:33 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:33 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:38 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:38 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:43 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:43 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:43 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:43 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:48 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:48 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:48 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:48 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:53 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:53 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:53 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:53 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:58 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:58 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:58 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:15:58 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:03 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:03 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:03 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:03 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:08 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:08 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:08 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:08 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:13 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:13 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:13 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:13 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:18 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:18 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:18 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:18 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:23 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:23 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:23 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:23 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:28 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:28 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:28 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:28 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.Client connect
+信息: Connected to server
+7月 11, 2025 11:16:31 下午 de.lmu.server.ClientHandler <init>
+信息: [ClientHandler#1] created with server = true
+7月 11, 2025 11:16:31 下午 de.lmu.server.ClientHandler run
+严重: >>> ENTERED CLIENT HANDLER FOR SOCKET: /127.0.0.1
+7月 11, 2025 11:16:31 下午 de.lmu.server.ClientHandler run
+信息: Output set? true
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"HelloClient","messageBody":{"protocol":"Version 1.0"}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 0 received from server: {"messageType":"HelloClient","messageBody":{"protocol":"Version 1.0"}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput handleHelloClient
+信息: Received HelloClient
+Protocol: Version 1.0
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 0 sending: {"messageType":"HelloServer","messageBody":{"group":"DesperateDrosseln","isAI":true,"protocol":"Version 1.0","clientID":0}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"HelloServer","messageBody":{"group":"DesperateDrosseln","isAI":true,"protocol":"Version 1.0","clientID":0}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerInput handleHelloServer
+信息: HelloServer received from clientID: 6713
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Welcome","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 0 received from server: {"messageType":"Welcome","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"PlayerValues","messageBody":{"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"PlayerValues","messageBody":{"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"SetStatus","messageBody":{"ready":true}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":false}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":false}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":false}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"SetStatus","messageBody":{"ready":true}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":false}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":true}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":true}}
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":true}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerInput handleSetStatus
+信息: There are currently 2 clients connected.
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerInput handleSetStatus
+信息: There are currently 1 players in the game.
+7月 11, 2025 11:16:31 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":true}}
+7月 11, 2025 11:16:31 下午 de.lmu.server.ServerInput handleSetStatus
+信息: Everyone is ready? false
+Map selected? null
+7月 11, 2025 11:16:33 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:33 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:33 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:33 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.Client connect
+信息: Connected to server
+7月 11, 2025 11:16:34 下午 de.lmu.server.ClientHandler <init>
+信息: [ClientHandler#2] created with server = true
+7月 11, 2025 11:16:34 下午 de.lmu.server.ClientHandler run
+严重: >>> ENTERED CLIENT HANDLER FOR SOCKET: /127.0.0.1
+7月 11, 2025 11:16:34 下午 de.lmu.server.ClientHandler run
+信息: Output set? true
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"HelloClient","messageBody":{"protocol":"Version 1.0"}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 0 received from server: {"messageType":"HelloClient","messageBody":{"protocol":"Version 1.0"}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleHelloClient
+信息: Received HelloClient
+Protocol: Version 1.0
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 0 sending: {"messageType":"HelloServer","messageBody":{"group":"DesperateDrosseln","isAI":true,"protocol":"Version 1.0","clientID":0}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"HelloServer","messageBody":{"group":"DesperateDrosseln","isAI":true,"protocol":"Version 1.0","clientID":0}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput handleHelloServer
+信息: HelloServer received from clientID: 7482
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Welcome","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 0 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 0 received from server: {"messageType":"Welcome","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"PlayerValues","messageBody":{"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"PlayerValues","messageBody":{"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"SetStatus","messageBody":{"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput handlePlayerValues
+信息: Spin Bot (easy) is ready? true
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":6713,"name":"Spin Bot (easy)","figure":4}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"PlayerAdded","messageBody":{"clientID":7482,"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":6713,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":7482,"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"PlayerAdded","messageBody":{"clientID":7482,"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"PlayerAdded","messageBody":{"clientID":7482,"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":7482,"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"PlayerAdded","messageBody":{"clientID":7482,"name":"Zoom Bot (easy)","figure":2}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"ReceivedChat","messageBody":{"message":"Twister is the next map.","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"SetStatus","messageBody":{"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"Twister is the next map.","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput handleSetStatus
+信息: There are currently 3 clients connected.
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"PlayerStatus","messageBody":{"clientID":7482,"ready":true}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput handleSetStatus
+信息: There are currently 2 players in the game.
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput handleSetStatus
+信息: Everyone is ready? true
+Map selected? de.lmu.game.board.Board@3f965b79
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput initGame
+信息: Map de.lmu.game.board.Board@3f965b79 has starting positions: [(1,1), (0,3), (1,4), (1,5), (0,6), (1,8)]
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput initGame
+信息: Initializing game with Map: Twister
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"ReceivedChat","messageBody":{"message":"The game has started, select your starting position!","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"The game has started, select your starting position!","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.gui.ViewModel lambda$bindPlayerStatus$0
+信息: Player 2 ready changed: false -> true
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"GameStarted","messageBody":{"energy":5,"gameMap":[[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"Antenna","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"RestartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["bottom"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":3,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":2,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["right"],"type":"Laser","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["left"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":4,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":1,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["top"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]]]}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"ReceivedChat","messageBody":{"message":"The game has started, select your starting position!","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"GameStarted","messageBody":{"energy":5,"gameMap":[[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"Antenna","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"RestartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["bottom"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":3,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":2,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["right"],"type":"Laser","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["left"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":4,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":1,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["top"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]]]}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"The game has started, select your starting position!","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"GameStarted","messageBody":{"energy":5,"gameMap":[[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"Antenna","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"RestartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["bottom"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":3,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":2,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["right"],"type":"Laser","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["left"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":4,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":1,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["top"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]]]}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"ReceivedChat","messageBody":{"message":"The game has started, select your starting position!","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"The game has started, select your starting position!","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 6713 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"GameStarted","messageBody":{"energy":5,"gameMap":[[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"Antenna","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"RestartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["bottom"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":3,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":2,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["right"],"type":"Laser","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["left"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":4,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":1,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["top"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]]]}}
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic chooseRandomStartingPoint
+信息: Bot 6713 triggered chooseRandomStartingPoint
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot 6713 building map...
+BotGame created: true
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"GameStarted","messageBody":{"energy":5,"gameMap":[[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"Antenna","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"RestartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["bottom"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":3,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":2,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["right"],"type":"Laser","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["left"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":4,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":1,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["top"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]]]}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:34 下午 de.lmu.server.ServerInput initGame
+信息: gameRunning = true
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"GameStarted","messageBody":{"energy":5,"gameMap":[[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"Antenna","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"RestartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"type":"StartPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":1,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["bottom"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":3,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":2,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["right"],"type":"Laser","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["left"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["left"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["right"],"type":"Wall","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","bottom"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":4,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["top","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"},{"count":1,"type":"CheckPoint","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["right","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"count":1,"type":"EnergySpace","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","right"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","left"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["bottom","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"speed":2,"orientations":["left","top"],"type":"ConveyorBelt","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]],[[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["top"],"type":"Wall","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"},{"orientations":["bottom"],"type":"Wall","isOnBoard":"Twister"},{"count":1,"orientations":["top"],"type":"Laser","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}],[{"type":"Empty","isOnBoard":"Twister"}]]]}}
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (0,3) to startingPostions.
+ Starting Positions: (0,3) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot 7482 building map...
+BotGame created: true
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (0,6) to startingPostions.
+ Starting Positions: (0,3) (0,6) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (0,3) to startingPostions.
+ Starting Positions: (0,3) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,1) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (0,6) to startingPostions.
+ Starting Positions: (0,3) (0,6) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,4) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,1) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,5) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) (1,5) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,4) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,8) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) (1,5) (1,8) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,5) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) (1,5) 
+7月 11, 2025 11:16:34 下午 de.lmu.ai.BotLogic handleGameStarted
+信息: Bot: Added (1,8) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) (1,5) (1,8) 
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Client: Added (0,3) to startingPostions.
+ Starting Positions: (0,3) 
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Board null initialized successfully.
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Board null initialized successfully.
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Client: Added (0,6) to startingPostions.
+ Starting Positions: (0,3) (0,6) 
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Client: Added (1,1) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) 
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Client: Added (1,4) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) 
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Client: Added (1,5) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) (1,5) 
+7月 11, 2025 11:16:34 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Client: Added (1,8) to startingPostions.
+ Starting Positions: (0,3) (0,6) (1,1) (1,4) (1,5) (1,8) 
+7月 11, 2025 11:16:35 下午 de.lmu.client.ClientInput handleGameStarted
+信息: Board Twister initialized successfully.
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3669677a with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@675c9478 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2c5b836a with elements: [de.lmu.gui.board.elements.ConveyorElement@653d9f6a]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@2c5b836a
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@2c5b836a
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6d0b9bc with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@76603adf with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7f2f3db6 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1af7b5cc with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@19e9f277 with elements: [de.lmu.gui.board.elements.WallElement@6e288557, de.lmu.gui.board.elements.LaserShootElement@686cc7a9, de.lmu.gui.board.elements.LaserShootElement@4f9256bd]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@19e9f277
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@19e9f277
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@19e9f277
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@19be6f72 with elements: [de.lmu.gui.board.elements.WallElement@3396532f, de.lmu.gui.board.elements.LaserElement@3d498b7b]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@19be6f72
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to wallLaser de.lmu.gui.board.Tile@19be6f72
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@19be6f72
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@69f92c2e with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7240ede2 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2f3ce03 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@228de1e9 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2b521ca with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@776fe383 with elements: [de.lmu.gui.board.elements.SpawnElement@6bf0b8bb]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@776fe383
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@263f9e85 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@daf50f9 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5d4d934 with elements: [de.lmu.gui.board.elements.ConveyorElement@6b0f8c55]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@5d4d934
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5d4d934
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@311eec07 with elements: [de.lmu.gui.board.elements.ConveyorElement@46415a45]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@311eec07
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@311eec07
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@65ff36c0 with elements: [de.lmu.gui.board.elements.ConveyorElement@7205630e]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@65ff36c0
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@65ff36c0
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@34bdc79d with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7862303d with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@643750c7 with elements: [de.lmu.gui.board.elements.ConveyorElement@3d73425c]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@643750c7
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@643750c7
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@67a8fb40 with elements: [de.lmu.gui.board.elements.ConveyorElement@ea2dc50, de.lmu.gui.board.elements.CheckpointElement@504d042b]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@67a8fb40
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@67a8fb40
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@67a8fb40
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@770bcddc with elements: [de.lmu.gui.board.elements.ConveyorElement@57d94a86]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@770bcddc
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@770bcddc
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4f814c71 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@77d565f6 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5e9933fd with elements: [de.lmu.gui.board.elements.WallElement@4309dfd2]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5e9933fd
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@62ee106 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5a88cee0 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4d991897 with elements: [de.lmu.gui.board.elements.ConveyorElement@40e3a9b9]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@4d991897
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@4d991897
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@31b44672 with elements: [de.lmu.gui.board.elements.EnergyFieldElement@2d57616a]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to energyField de.lmu.gui.board.Tile@31b44672
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@31b44672
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@66680c25 with elements: [de.lmu.gui.board.elements.ConveyorElement@70227db3]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@66680c25
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@66680c25
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@24b69271 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3344d06a with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@15ebeb03 with elements: [de.lmu.gui.board.elements.ConveyorElement@76c7c3e8]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@15ebeb03
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@15ebeb03
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@66f2e25b with elements: [de.lmu.gui.board.elements.EnergyFieldElement@73a0b96f]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to energyField de.lmu.gui.board.Tile@66f2e25b
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@66f2e25b
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3959f7eb with elements: [de.lmu.gui.board.elements.ConveyorElement@7149abab]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@3959f7eb
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@3959f7eb
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@d86fe3 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@76c5d556 with elements: [de.lmu.gui.board.elements.SpawnElement@d582ca]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@76c5d556
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3c7d6588 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7f99a293 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@272eb753 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@b41a2ae with elements: [de.lmu.gui.board.elements.ConveyorElement@5c47c76b]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@b41a2ae
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@b41a2ae
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6ef86b4a with elements: [de.lmu.gui.board.elements.ConveyorElement@3c3ecde9, de.lmu.gui.board.elements.CheckpointElement@3aec5c12]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@6ef86b4a
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@6ef86b4a
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@6ef86b4a
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5872b8bb with elements: [de.lmu.gui.board.elements.ConveyorElement@75fd3ac4]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@5872b8bb
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5872b8bb
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3fe6f017 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@67b22735 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2a48ec18 with elements: [de.lmu.gui.board.elements.ConveyorElement@367fc88f]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@2a48ec18
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@2a48ec18
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3e91f01f with elements: [de.lmu.gui.board.elements.ConveyorElement@486cf377]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@3e91f01f
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@3e91f01f
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@25a9fe4e with elements: [de.lmu.gui.board.elements.ConveyorElement@6dda61c4]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@25a9fe4e
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@25a9fe4e
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5c7a6568 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@73a2d2db with elements: [de.lmu.gui.board.elements.AntennaElement@1913096f]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@73a2d2db
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@27f98fc8 with elements: [de.lmu.gui.board.elements.SpawnElement@2827ef7a]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@27f98fc8
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4d76d4af with elements: [de.lmu.gui.board.elements.WallElement@4c2ff41f]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@4d76d4af
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@27c3b59d with elements: [de.lmu.gui.board.elements.WallElement@3088d220, de.lmu.gui.board.elements.LaserElement@4ba0ab32]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@27c3b59d
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to wallLaser de.lmu.gui.board.Tile@27c3b59d
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@27c3b59d
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@781c3155 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@42491c96 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3426cf2d with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7a111ba0 with elements: [de.lmu.gui.board.elements.WallElement@639e1b2e, de.lmu.gui.board.elements.EnergyFieldElement@69b91667]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@7a111ba0
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to energyField de.lmu.gui.board.Tile@7a111ba0
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@7a111ba0
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6b64f3da with elements: [de.lmu.gui.board.elements.WallElement@195a290d]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@6b64f3da
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@a8e1663 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2ba5337b with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6713eff6 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2f49b058 with elements: [de.lmu.gui.board.elements.WallElement@550e86dc, de.lmu.gui.board.elements.LaserShootElement@573259ed, de.lmu.gui.board.elements.LaserShootElement@2fa660a2]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@2f49b058
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@2f49b058
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@2f49b058
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4d0fce7e with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6c168965 with elements: [de.lmu.gui.board.elements.SpawnElement@292e583b]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@6c168965
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@35118ecc with elements: [de.lmu.gui.board.elements.WallElement@6deda2e]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@35118ecc
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5edb2631 with elements: [de.lmu.gui.board.elements.WallElement@56f4251, de.lmu.gui.board.elements.LaserShootElement@3c31cbde, de.lmu.gui.board.elements.LaserShootElement@4cce69dc]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5edb2631
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5edb2631
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5edb2631
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4ba334da with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@34a18a35 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@67cd844 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3943c1de with elements: [de.lmu.gui.board.elements.WallElement@6b1427c8]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@3943c1de
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@53dcf8bd with elements: [de.lmu.gui.board.elements.WallElement@3302b47a, de.lmu.gui.board.elements.EnergyFieldElement@1468cef5]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@53dcf8bd
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to energyField de.lmu.gui.board.Tile@53dcf8bd
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@53dcf8bd
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5e8881d7 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6a2593ab with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4ca25bf1 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1eef2bf6 with elements: [de.lmu.gui.board.elements.WallElement@4f397c5, de.lmu.gui.board.elements.LaserElement@420df43b]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@1eef2bf6
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to wallLaser de.lmu.gui.board.Tile@1eef2bf6
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@1eef2bf6
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1c2e4258 with elements: [de.lmu.gui.board.elements.SpawnElement@7bf97ab0]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@1c2e4258
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@63ac97b5 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4ead0bd7 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@207fbcd8 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@10637e9d with elements: [de.lmu.gui.board.elements.ConveyorElement@17f5421b]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@10637e9d
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@10637e9d
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@31200081 with elements: [de.lmu.gui.board.elements.ConveyorElement@6ce4e301]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@31200081
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@31200081
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@67f8ef96 with elements: [de.lmu.gui.board.elements.ConveyorElement@5aa08ce8]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@67f8ef96
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@67f8ef96
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6bb5ab35 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@2002b1a9 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@a66e60 with elements: [de.lmu.gui.board.elements.ConveyorElement@5e3f6550]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@a66e60
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@a66e60
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@181581a1 with elements: [de.lmu.gui.board.elements.ConveyorElement@2dafe4f3]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@181581a1
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@181581a1
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1e494a48 with elements: [de.lmu.gui.board.elements.ConveyorElement@3bf9a934]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@1e494a48
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@1e494a48
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@fd53f63 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5d8fca16 with elements: [de.lmu.gui.board.elements.RebootElement@940c0e5]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5d8fca16
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7f0678f0 with elements: [de.lmu.gui.board.elements.WallElement@598e6e54]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@7f0678f0
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7af2c009 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@75ba705a with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@39b757e5 with elements: [de.lmu.gui.board.elements.ConveyorElement@13616249]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@39b757e5
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@39b757e5
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7fff1aa4 with elements: [de.lmu.gui.board.elements.EnergyFieldElement@59e18da1]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to energyField de.lmu.gui.board.Tile@7fff1aa4
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@7fff1aa4
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5a6af107 with elements: [de.lmu.gui.board.elements.ConveyorElement@4201b329, de.lmu.gui.board.elements.CheckpointElement@45acbbf7]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@5a6af107
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5a6af107
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5a6af107
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1075ba66 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1d1a93a6 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@524de3d7 with elements: [de.lmu.gui.board.elements.ConveyorElement@721e996a, de.lmu.gui.board.elements.CheckpointElement@4f05bbc5]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@524de3d7
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@524de3d7
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@524de3d7
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6cb8620 with elements: [de.lmu.gui.board.elements.EnergyFieldElement@3ba59e75]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to energyField de.lmu.gui.board.Tile@6cb8620
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@6cb8620
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3df695a2 with elements: [de.lmu.gui.board.elements.ConveyorElement@5fcfda4a]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@3df695a2
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@3df695a2
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5efbd15 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@122eddeb with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1bfc1189 with elements: [de.lmu.gui.board.elements.SpawnElement@3a408536]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@1bfc1189
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@423f807e with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@261adc57 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5d91f144 with elements: [de.lmu.gui.board.elements.ConveyorElement@6346b6f5]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@5d91f144
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5d91f144
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5d44f693 with elements: [de.lmu.gui.board.elements.ConveyorElement@2d4c6108]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@5d44f693
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@5d44f693
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@7f05be34 with elements: [de.lmu.gui.board.elements.ConveyorElement@29a24e3f]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@7f05be34
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@7f05be34
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5328c5f6 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@1da2baba with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4f845324 with elements: [de.lmu.gui.board.elements.ConveyorElement@74ec2f5d]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@4f845324
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@4f845324
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@617e5343 with elements: [de.lmu.gui.board.elements.ConveyorElement@690152bc]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@617e5343
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@617e5343
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4f121cb with elements: [de.lmu.gui.board.elements.ConveyorElement@117270cf]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@4f121cb
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@4f121cb
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@285dde9 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@61f2fbb7 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6c80613b with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@6ef6906c with elements: [de.lmu.gui.board.elements.ConveyorElement@42b072ce]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to conveyor de.lmu.gui.board.Tile@6ef6906c
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@6ef6906c
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@34e9066c with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5b0f2073 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@120be8e with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@40478a66 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@3c612e64 with elements: [de.lmu.gui.board.elements.WallElement@1ecf9d23, de.lmu.gui.board.elements.LaserElement@1a9f94ba]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@3c612e64
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: added listener to wallLaser de.lmu.gui.board.Tile@3c612e64
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@3c612e64
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@66773935 with elements: [de.lmu.gui.board.elements.WallElement@53503991, de.lmu.gui.board.elements.LaserShootElement@3194805d, de.lmu.gui.board.elements.LaserShootElement@5748f891]
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@66773935
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@66773935
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel lambda$setupAnimationListeners$0
+信息: skipping checkpoint listener for Twister at de.lmu.gui.board.Tile@66773935
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@8a9cddc with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5a67f1e9 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@4f641490 with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel setupAnimationListeners
+信息: Setting up listeners for tile de.lmu.gui.board.Tile@5f78e19d with elements: []
+7月 11, 2025 11:16:35 下午 de.lmu.gui.ViewModel refreshRegisterView
+信息: refresh registers: []
+7月 11, 2025 11:16:36 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:36 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:36 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:36 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:38 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Clicked start tile at de.lmu.gui.board.Position@3e4
+7月 11, 2025 11:16:38 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Selected direction: de.lmu.gui.board.Position@3e4
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":4}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":4}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 8609 selected: (1, 4)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 1) (0, 3) (1, 4) (1, 5) (0, 6) (1, 8)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Position found
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = true
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 7482 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic chooseRandomStartingPoint
+信息: Bot 7482 triggered chooseRandomStartingPoint
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":4}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":4}}
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic chooseRandomStartingPoint
+信息: Bot 7482 finished chooseRandomStartingPoint
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 7482 selected: (1, 4)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 1) (0, 3) (1, 5) (0, 6) (1, 8)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = false
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 6713 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic chooseRandomStartingPoint
+信息: Bot 6713 triggered chooseRandomStartingPoint
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":8}}
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic chooseRandomStartingPoint
+信息: Bot 6713 finished chooseRandomStartingPoint
+7月 11, 2025 11:16:38 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":8}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 6713 selected: (1, 8)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 1) (0, 3) (1, 5) (0, 6) (1, 8)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Position found
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = true
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Spin Bot (easy) has been assigned to robot: de.lmu.game.player.Robot@18b91a3a
+Starting at Position (1,8)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"StartingPointTaken","messageBody":{"x":1,"y":8,"direction":"right","clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"StartingPointTaken","messageBody":{"x":1,"y":8,"direction":"right","clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"ReceivedChat","messageBody":{"message":"Spin Bot (easy) selected starting position (1, 8).","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"Spin Bot (easy) selected starting position (1, 8).","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"StartingPointTaken","messageBody":{"x":1,"y":8,"direction":"right","clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"ReceivedChat","messageBody":{"message":"Spin Bot (easy) selected starting position (1, 8).","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"StartingPointTaken","messageBody":{"x":1,"y":8,"direction":"right","clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"Spin Bot (easy) selected starting position (1, 8).","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput handleStartingPointTaken
+信息: Client: Received starting position set for Spin Bot (easy)
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"StartingPointTaken","messageBody":{"x":1,"y":8,"direction":"right","clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput handleStartingPointTaken
+信息: Client: Remaining starting oositions are (0,3) (0,6) (1,1) (1,4) (1,5) 
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput handleStartingPointTaken
+信息: Bot: Received starting position set for Spin Bot (easy)
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput handleStartingPointTaken
+信息: Bot: Remaining starting oositions are (0,3) (1,1) (1,5) (1,4) (0,6) 
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"ReceivedChat","messageBody":{"message":"Spin Bot (easy) selected starting position (1, 8).","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"StartingPointTaken","messageBody":{"x":1,"y":8,"direction":"right","clientID":6713}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"ReceivedChat","messageBody":{"message":"Spin Bot (easy) selected starting position (1, 8).","from":-2,"isPrivate":false}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput handleStartingPointTaken
+信息: Bot: Received starting position set for Spin Bot (easy)
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:38 下午 de.lmu.client.ClientInput handleStartingPointTaken
+信息: Bot: Remaining starting oositions are (1,4) (0,6) (1,5) (1,1) (0,3) 
+7月 11, 2025 11:16:38 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 7482 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:39 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:39 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:39 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:39 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:40 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Clicked start tile at de.lmu.gui.board.Position@3e4
+7月 11, 2025 11:16:40 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Selected direction: de.lmu.gui.board.Position@3e4
+7月 11, 2025 11:16:40 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":4}}
+7月 11, 2025 11:16:40 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":4}}
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 8609 selected: (1, 4)
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 1) (0, 3) (1, 5) (0, 6)
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = false
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:40 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:40 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:40 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:40 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 6713 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:40 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Clicked start tile at de.lmu.gui.board.Position@3c4
+7月 11, 2025 11:16:41 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Selected direction: de.lmu.gui.board.Position@3c4
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"SetStartingPoint","messageBody":{"x":0,"y":3}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"SetStartingPoint","messageBody":{"x":0,"y":3}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 8609 selected: (0, 3)
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 1) (0, 3) (1, 5) (0, 6)
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Successfully readded starting position: (1,4)
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Position found
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = true
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:41 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 7482 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:41 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Clicked start tile at de.lmu.gui.board.Position@3e1
+7月 11, 2025 11:16:41 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Selected direction: de.lmu.gui.board.Position@3e1
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":1}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":1}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 8609 selected: (1, 1)
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 1) (1, 5) (0, 6) (1, 4)
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Successfully readded starting position: (0,3)
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Position found
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = true
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:41 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 6713 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:43 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Clicked start tile at de.lmu.gui.board.Position@3e5
+7月 11, 2025 11:16:43 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Selected direction: de.lmu.gui.board.Position@3e5
+7月 11, 2025 11:16:43 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":5}}
+7月 11, 2025 11:16:43 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":5}}
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 8609 selected: (1, 5)
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (1, 5) (0, 6) (1, 4) (0, 3)
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Successfully readded starting position: (1,1)
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Position found
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = true
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:43 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:43 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:43 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":7482}}
+7月 11, 2025 11:16:43 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 7482 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:43 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:43 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:43 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:43 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:44 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:44 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:44 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:44 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:46 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:46 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:46 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:46 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:48 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:48 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:48 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:48 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:49 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:49 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:49 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:49 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:50 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Clicked start tile at de.lmu.gui.board.Position@3e1
+7月 11, 2025 11:16:50 下午 de.lmu.gui.ViewModel lambda$initializeGrid$2
+信息: Selected direction: de.lmu.gui.board.Position@3e1
+7月 11, 2025 11:16:50 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":1}}
+7月 11, 2025 11:16:50 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"SetStartingPoint","messageBody":{"x":1,"y":1}}
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: This map has starting direction: right ENUM: right
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Player 8609 selected: (1, 1)
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Starting Positions: (0, 6) (1, 4) (0, 3) (1, 1)
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Searching Position
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Successfully readded starting position: (1,5)
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: Position found
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: positionFound = true
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerInput handleSetStartingPoint
+信息: allPositionsSelected: false
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:50 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:50 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:50 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:50 下午 de.lmu.ai.BotLogic handleCurrentPlayer
+信息: Bot 6713 triggered handleCurrentPlayer
+Execution Index is: 0
+7月 11, 2025 11:16:50 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"CurrentPlayer","messageBody":{"clientID":6713}}
+7月 11, 2025 11:16:51 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:51 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:51 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:51 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:53 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:53 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:53 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:53 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:54 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:54 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:54 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:54 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:56 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:56 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:56 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:56 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:58 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:58 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:58 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:58 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:59 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:59 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:59 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:16:59 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:01 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:01 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:01 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:01 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:03 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:03 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:03 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:03 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:04 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:04 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:04 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:04 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:06 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:06 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:06 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:06 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:08 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:08 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:08 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:08 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:09 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:09 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:09 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:09 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:11 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:11 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:11 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:11 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:13 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:13 下午 de.lmu.client.ClientInput processIncoming
+信息: Client 8609 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:13 下午 de.lmu.client.ClientOutput sendJson
+信息: Client 8609 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:13 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 8609: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:14 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:14 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 7482 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:14 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 7482 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:14 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 7482: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:16 下午 de.lmu.server.ServerOutput sendJson
+信息: Server sending to 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:16 下午 de.lmu.client.ClientInput processIncoming
+信息: Bot 6713 received from server: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:16 下午 de.lmu.client.ClientOutput sendJson
+信息: Bot 6713 sending: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:16 下午 de.lmu.server.ClientHandler lambda$run$0
+信息: Received from 6713: {"messageType":"Alive","messageBody":{}}
+7月 11, 2025 11:17:18 下午 de.lmu.gui.Model lambda$new$0
+信息: Shutdown Hook triggered. Cleaning up client.

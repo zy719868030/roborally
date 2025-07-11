@@ -1,0 +1,10 @@
+7月 11, 2025 11:14:14 下午 de.lmu.server.Server setupGlobalLogging
+信息: Logging initialized. Logs will be written to log/Server_week28.log
+7月 11, 2025 11:14:14 下午 de.lmu.server.Server start
+信息: Server is running on port: 1234
+7月 11, 2025 11:14:14 下午 de.lmu.server.Server start
+信息: Protocol version is: Version 1.0
+7月 11, 2025 11:14:14 下午 de.lmu.server.Server start
+信息: Available boards: [Dizzy Highway, Extra Crispy, Lost Bearings, Death Trap, Twister]
+7月 11, 2025 11:14:14 下午 de.lmu.server.Server start
+信息: Available robots: [Hulk X90, Hammer Bot, Zoom Bot, Twonky, Spin Bot, Squash Bot]
