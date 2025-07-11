@@ -36,7 +36,7 @@ public class RegularPro extends ProgrammingCard {
             return;
         }
 
-        appLogger.debug("Executing regular programmed action: {} for robot {}", actionType, robot.getRobotID());
+//        appLogger.debug("Executing regular programmed action: {} for robot {}", actionType, robot.getRobotID());
 
         switch (actionType.toLowerCase()) {
             case "move" -> robot.applyMove(board, distance);

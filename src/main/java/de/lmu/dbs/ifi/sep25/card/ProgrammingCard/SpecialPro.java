@@ -28,7 +28,7 @@ public class SpecialPro extends ProgrammingCard {
 
         final Board board = robot.getBoard();
 
-        appLogger.debug("Executing special programmed action: {} for robot {}", actionType, robot.getRobotID());
+//        appLogger.debug("Executing special programmed action: {} for robot {}", actionType, robot.getRobotID());
 
         switch (specialEffect.toLowerCase()) {
             case "energy routine":

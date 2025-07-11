@@ -290,7 +290,7 @@ public class Client {
             if (isMe) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null) {
-                    loginCtrl.loginSuccess(finalUsername, finalFigure);
+                    loginCtrl.loginSuccess();
                 }
             }
         });
@@ -548,7 +548,7 @@ public class Client {
         errorLogger.error("[RECEIVED]  ERROR  {}", errorText);
 
         Platform.runLater(() -> {
-            if (errorText.contains("Figure already selected")) {
+            if (errorText.contains("Robot already taken.")) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
                     loginCtrl.setFigureTakenWarningShown(true);
@@ -1385,7 +1385,7 @@ public class Client {
      * This method is typically called to clean up resources when the client
      * disconnects or an issue occurs, ensuring no resource leaks.
      */
-    private void closeAll() {
+    public final void closeAll() {
         try {
             if (reader != null) reader.close();
             if (writer != null) writer.close();

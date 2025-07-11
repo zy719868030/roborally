@@ -400,9 +400,9 @@ public class Player {
                     if (register.get(registerSlot) != null) {
                         removeCardFromRegister(registerSlot);
                     }
-                    appLogger.info("Player {} selected card {} in register slot {}", clientID, cardName, registerSlot);
                     register.set(registerSlot, cardToPlay);
-                    appLogger.info("Current register: {}", registerToString());
+                    appLogger.info("Player {}: {} -> {} <> {}", clientID, cardName, registerSlot, registerToString());
+//                    appLogger.info("Current register: {}", registerToString());
                     removeFromHand(cardToPlay);
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
@@ -411,6 +411,7 @@ public class Player {
 
                     // automatic ready check:
                     if (register.stream().allMatch(Objects::nonNull)) {
+                        appLogger.info("{} has finished their selection.", this.toString());
                         connection.setReadyRegister();
                     }
                 } else {
@@ -450,12 +451,10 @@ public class Player {
                 RegisterCard removedCard = register.get(registerSlot);
                 if (removedCard != null) {
                     // Remove the card from the register and return it to your hand.
-                    appLogger.info("Player {} removed card {} from register slot {}", clientID,
-                            CardFactory.getCardName(removedCard), registerSlot);
+                    appLogger.info("Player {}: {} <- {} <> {}", clientID,
+                            CardFactory.getCardName(removedCard), registerSlot, registerToString());
                     register.set(registerSlot, null);
                     addToHand(removedCard);
-
-                    appLogger.info("Card {} has been removed from the register: {}", removedCard, registerToString());
 
                     // Notify server that register slot has been cleared
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
@@ -510,7 +509,7 @@ public class Player {
                 new MessageDefinitions.BodyCardsYouGotNow(cardsYouGotNow))
         );
         // setReadyRegister(true) call needed to simulate push of the ready button
-        appLogger.info("Calling setReadyRegister(false) in fillRemainingRegisterSlots() method in Player.java. CALLED IN fillRemainingRegisterSlots. Current register: {}", registerToString());
+//        appLogger.info("Calling setReadyRegister(false) in fillRemainingRegisterSlots() method in Player.java. CALLED IN fillRemainingRegisterSlots. Current register: {}", registerToString());
         setReadyRegister(false);
     }
 

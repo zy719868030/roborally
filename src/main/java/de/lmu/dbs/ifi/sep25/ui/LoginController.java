@@ -5,7 +5,10 @@ import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -13,26 +16,27 @@ import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import java.io.InputStream;
-import java.util.Random;
-
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
-import javafx.geometry.Pos;
-import javafx.scene.layout.VBox;
-import javafx.scene.Node;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 
 /**
@@ -43,18 +47,16 @@ import javafx.scene.Node;
  */
 public class LoginController {
     private static final Logger logger = LogManager.getLogger(LoginController.class);
+
     @FXML
     private TextField hostField;
-
     @FXML
     private TextField portField;
-
     /**
      * Eingabefeld für den Spielernamen.
      */
     @FXML
     private TextField nameField;
-
     /**
      * Auswahlfeld für die Spielfigur (Index 0–5).
      */
@@ -64,7 +66,6 @@ public class LoginController {
     private javafx.scene.control.Button loginButton;
     @FXML
     private Label warningLabel;
-
     @FXML
     private HBox figureGallery;
     @FXML
@@ -73,7 +74,6 @@ public class LoginController {
     private Button scrollLeftButton, scrollRightButton;
 
     private final ToggleGroup figureToggleGroup = new ToggleGroup();
-    //private int selectedFigure = -1;
 
     /**
      * Property zur Bindung des Spielernamens.
@@ -85,7 +85,10 @@ public class LoginController {
      */
     private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
     private Stage stage;
+    public String cachedName;
+    public int cachedFigure;
     private boolean figureTakenWarningShown = false;
+    private final Set<Integer> takenFigures = new HashSet<>();
 
     /**
      * Initialisiert die Login-Oberfläche:
@@ -95,56 +98,50 @@ public class LoginController {
      */
     @FXML
     private void initialize() {
-        // Dynamisch Roboter-Figuren laden
-        for (int i = 0; i <= 5; i++) {
-            final int figureID = i;
+        int robotCount = 6;
 
+        // Clear any previous state (important for reusability)
+        figureGallery.getChildren().clear();
+        figureToggleGroup.getToggles().clear();
+
+        // Load robot figures into the gallery
+        for (int i = 0; i < robotCount; i++) {
             ToggleButton button = new ToggleButton();
             button.setToggleGroup(figureToggleGroup);
-            button.setUserData(figureID);
+            button.setUserData(i);
             button.getStyleClass().add("robot-choice");
 
             String path = String.format("/assets/robots/robot_%02d_left.png", i);
-            InputStream stream = getClass().getResourceAsStream(path);
-            if (stream == null) {
-                System.err.println("Fehlendes Bild: " + path);
-            }
-            Image image = new Image(stream);
+            Image image = new Image(getClass().getResourceAsStream(path));
             ImageView iv = new ImageView(image);
             iv.setFitWidth(80);
             iv.setFitHeight(80);
             iv.setPreserveRatio(true);
             button.setGraphic(iv);
 
-            button.setOnAction(e -> {
-                selectedFigure.set(figureID);
-                warningLabel.setVisible(false);
-                warningLabel.setManaged(false);
-            });
-
             figureGallery.getChildren().add(button);
         }
-        figureToggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
-            if (newToggle != null) {
-                Integer figureID = (Integer) newToggle.getUserData();
-                selectedFigure.set(figureID);
-            } else {
-                selectedFigure.set(null); // keine Auswahl
+
+        // Initialize carousel with all behavior (scroll, drag, select)
+        CarouselManager carouselManager = new CarouselManager(
+                figureScrollPane, figureGallery, figureToggleGroup, robotCount
+        );
+
+        // Buttons to select left/right robot
+        scrollLeftButton.setOnAction(_ -> carouselManager.selectPrevious());
+        scrollRightButton.setOnAction(_ -> carouselManager.selectNext());
+
+        // Selection state (update selectedFigure when user clicks robot)
+        figureToggleGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                selectedFigure.set((Integer) newVal.getUserData());
+                warningLabel.setVisible(false);
+                warningLabel.setManaged(false);
             }
         });
 
-
-        // Scroll-Pfeile
-        scrollLeftButton.setOnAction(e -> scrollBy(-100));
-        scrollRightButton.setOnAction(e -> scrollBy(100));
-
-        // Setze Referenz in Registry
-        ControllerRegistry.setLoginController(this);
-
-        // Name binding
+        // Player name bidirectional binding
         nameField.textProperty().bindBidirectional(playerName);
-
-        // Validation: Name + Figur ausgewählt?
         nameField.textProperty().addListener((obs, oldText, newText) -> {
             if (newText != null && !newText.isBlank() && selectedFigure.get() != null) {
                 warningLabel.setVisible(false);
@@ -152,20 +149,17 @@ public class LoginController {
             }
         });
 
+        // Hide warning when selection is valid
         selectedFigure.addListener((obs, oldVal, newVal) -> {
-            String currentName = nameField.getText();
-            if (newVal != null && currentName != null && !currentName.isBlank()) {
+            if (newVal != null && nameField.getText() != null && !nameField.getText().isBlank()) {
                 warningLabel.setVisible(false);
                 warningLabel.setManaged(false);
             }
         });
+
+        ControllerRegistry.setLoginController(this);
     }
 
-    private void scrollBy(double delta) {
-        double current = figureScrollPane.getHvalue();
-        double newValue = Math.max(0, Math.min(1, current + delta / figureGallery.getWidth()));
-        figureScrollPane.setHvalue(newValue);
-    }
     /**
      * Wird aufgerufen, wenn der Nutzer auf "Login" klickt.
      * Validiert die Eingaben und sendet eine Login-Nachricht an den Server.
@@ -182,16 +176,16 @@ public class LoginController {
         // Falls Host oder Port leer → Standardwerte nutzen
         String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
         String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
-        logger.info("Login-Versuch mit Name '{}' und Figur {}", name, figure);
+        logger.info("Login attempt as '{}' with figure {}", name, figure);
 
-
-        if (name == null || name.isBlank() || figure == null) {
-            warningLabel.setText("Bitte Namen und Spielfigur auswählen.");
-            warningLabel.setVisible(true);
-            warningLabel.setManaged(true);
-            shakeNode(nameField.getParent());
-            ((Node) event.getSource()).setDisable(false);
-           //loginButton.setDisable(false);
+        if ((name == null || name.isBlank()) && figure == null) {
+            displaySelectionError("Bitte Namen & Figur auswählen", event);
+            return;
+        } else if (name == null || name.isBlank()) {
+            displaySelectionError("Bitte einen Namen auswählen", event);
+            return;
+        } else if (figure == null) {
+            displaySelectionError("Bitte eine Figur auswählen", event);
             return;
         }
 
@@ -200,28 +194,31 @@ public class LoginController {
             port = Integer.parseInt(portText);
         } catch (NumberFormatException e) {
             showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
-            //loginButton.setDisable(false);
             return;
         }
-        try {
-            Client client = ClientSingleton.getInstance();
-            if (client == null) {
-                client = new Client();
-                client.start(host, port); // HelloServer wird automatisch nach HelloClient gesendet
-                ClientSingleton.setInstance(client);
-            }
 
+        try {
+            Client client;
+            client = new Client();
+            client.start(host, port); // HelloServer wird automatisch nach HelloClient gesendet
+            ClientSingleton.setInstance(client);
 
             cachedName = name;
             cachedFigure = figure;
-
-            client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
 
         } catch (Exception e) {
             showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
             ((Node) event.getSource()).setDisable(false);
 
         }
+    }
+
+    private void displaySelectionError(String errorText, ActionEvent event) {
+        warningLabel.setText(errorText);
+        warningLabel.setVisible(true);
+        warningLabel.setManaged(true);
+        shakeNode(nameField.getParent());
+        ((Node) event.getSource()).setDisable(false);
     }
 
     /**
@@ -283,10 +280,8 @@ public class LoginController {
      * Wird aufgerufen, wenn der Login erfolgreich war.
      * Lädt die Lobby-Ansicht und wechselt dorthin.
      *
-     * @param name   Der Benutzername
-     * @param figure Die ausgewählte Spielfigur
      */
-    public void loginSuccess(String name, int figure) {
+    public void loginSuccess() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/LobbyView.fxml"));
             Parent root = loader.load();
@@ -314,56 +309,93 @@ public class LoginController {
      * Zeigt einen Warnhinweis an und reaktiviert die Eingabe.
      */
     public void displayFigureAlreadyTaken() {
-        logger.warn("Spielfigur bereits vergeben. Zeige Warnfenster an.");
 
-        Label title = new Label("Diese Spielfigur wurde bereits gewählt");
-        title.setStyle("-fx-text-fill: #F5A623; -fx-font-size: 18px; -fx-font-weight: bold;");
+        Platform.runLater(() -> {
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initStyle(StageStyle.TRANSPARENT);
 
-        Label info = new Label("Bitte wähle eine andere Figur aus.");
-        info.setWrapText(true);
-        info.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+            Label titleLabel = new Label("Diese Spielfigur wurde bereits gewählt");
+            titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #b00020;");
 
-        VBox content = new VBox(15, title, info);
-        content.setAlignment(Pos.CENTER);
-        content.setStyle(
-                "-fx-background-color: rgba(20,20,30,0.95); " +
-                        "-fx-padding: 30; " +
-                        "-fx-background-radius: 12; " +
-                        "-fx-effect: dropshadow(gaussian, #F5A623, 10, 0.3, 0, 0);"
-        );
+            Label messageLabel = new Label("Bitte wähle eine andere Figur aus.");
+            messageLabel.setWrapText(true);
+            messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: white;");
+            messageLabel.setMaxWidth(300);
 
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Figur vergeben");
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+            Button okButton = new Button("OK");
+            okButton.setDefaultButton(true);
+            okButton.setStyle("""
+            -fx-background-color: #e0e0e0;
+            -fx-text-fill: black;
+            -fx-font-size: 13px;
+            -fx-padding: 6 14 6 14;
+            -fx-background-radius: 6;
+            -fx-border-radius: 6;
+            -fx-cursor: hand;
+        """);
 
-        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-        okButton.setStyle(
-                "-fx-background-color: #F5A623; " +
-                        "-fx-text-fill: black; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8;"
-        );
+            okButton.setOnMouseEntered(e -> {
+                okButton.setScaleX(1.1);
+                okButton.setScaleY(1.1);
+            });
 
-        dialog.getDialogPane().setStyle(
-                "-fx-background-color: transparent; " +
-                        "-fx-border-color: #F5A623; " +
-                        "-fx-border-width: 2; " +
-                        "-fx-border-radius: 12;"
-        );
+            okButton.setOnMouseExited(e -> {
+                okButton.setScaleX(1.0);
+                okButton.setScaleY(1.0);
+            });
 
-        Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
-        stage.initStyle(StageStyle.TRANSPARENT);
-        dialog.showAndWait();
+            okButton.setOnAction(_ -> dialog.close());
 
-        // Auswahlfelder wieder aktivieren und alle Cached-Werte zurücksetzen
-        nameField.setDisable(false);
-        selectedFigure.set(null); // Auswahl zurücksetzen
+            VBox layout = new VBox(12, titleLabel, messageLabel, okButton);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(20));
+            layout.setStyle("""
+            -fx-background-color: #1a1a1a;
+            -fx-background-radius: 12;
+            -fx-border-radius: 12;
+            -fx-border-color: #b00020;
+            -fx-border-width: 2;
+        """);
+
+            Scene scene = new Scene(layout);
+            scene.setFill(Color.TRANSPARENT);
+
+            scene.setOnKeyPressed(event -> {
+                switch (event.getCode()) {
+                    case ESCAPE, SPACE, ENTER -> dialog.close();
+                }
+            });
+
+            dialog.setScene(scene);
+            dialog.setResizable(false);
+            dialog.show();
+            scene.getRoot().requestFocus();
+        });
+
+        // Logic for restoring UI state after error
+        Toggle selectedToggle = figureToggleGroup.getSelectedToggle();
+        if (selectedToggle != null) selectedToggle.setSelected(false);
+
+        selectedFigure.set(null);
         loginButton.setDisable(false);
+        nameField.setDisable(false);
         figureTakenWarningShown = false;
-    }
 
+        takenFigures.add(cachedFigure);
+        for (Toggle toggle : figureToggleGroup.getToggles()) {
+            int figID = (int) toggle.getUserData();
+            ToggleButton button = (ToggleButton) toggle;
+            if (takenFigures.contains(figID)) {
+                button.setDisable(true);
+                button.setOpacity(0.4);
+            }
+        }
+
+        cachedFigure = -1;
+        new Timeline(new KeyFrame(Duration.seconds(2), _ -> loginButton.setDisable(false))).play();
+
+    }
 
     public boolean isFigureTakenWarningShown() {
         return figureTakenWarningShown;
@@ -388,9 +420,6 @@ public class LoginController {
     public void setStage(Stage stage) {
         this.stage = stage;
     }
-
-    public String cachedName;
-    public int cachedFigure;
 
     private void shakeNode(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(50), node);

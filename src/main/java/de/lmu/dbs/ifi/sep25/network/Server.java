@@ -286,7 +286,7 @@ public class Server {
                         System.err.println("Client did not respond to Alive. Disconnecting...");
                         heartbeatLogger.info("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
                         client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
-//                        client.closeAll();
+                        client.closeAll();
                     }
                 }
 
@@ -331,8 +331,9 @@ public class Server {
      */
     public boolean assignFigure(Integer figure, ClientHandler handler) {
         synchronized (availableFigures) {
+            appLogger.debug(availableFigures.toString());
             if (!availableFigures.contains(figure)) {
-                handler.sendMessage(new Message<>(new BodyError("Figure already selected. Please select another figure.")));
+                handler.sendMessage(new Message<>(new BodyError("Robot already taken. Please select another figure.")));
                 return false;
             }
             availableFigures.remove(figure);
@@ -355,7 +356,7 @@ public class Server {
             try {
                 figures.removeByValue(figure);
             } catch (Exception e) {
-                System.err.println("Failed to release figure: " + e.getMessage());
+                appLogger.info("Failed to release figure {} (figure not in map)", figure);
             }
         }
     }
