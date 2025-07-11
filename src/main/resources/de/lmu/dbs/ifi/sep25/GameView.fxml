@@ -5,6 +5,8 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.Group?>
+
+
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="de.lmu.dbs.ifi.sep25.ui.GameController"
@@ -12,7 +14,7 @@
 
 
     <!-- === Linke Seitenleiste: Spielerstatus + Chat === -->
-    <VBox fx:id="leftSidebar" spacing="15" alignment="TOP_CENTER" styleClass="lobby-box">
+    <VBox fx:id="leftSidebar" spacing="15" alignment="TOP_CENTER" styleClass="lobby-box" VBox.vgrow="ALWAYS">
 
         <!-- Spielfeld-Label oder Spielstatus -->
         <HBox fx:id="turnInfoBox" spacing="10" alignment="CENTER_LEFT">
@@ -20,7 +22,21 @@
             <Label fx:id="statusLabel" text="Spiel läuft..." styleClass="dynamic-status"/>
         </HBox>
 
-
+        <!-- Spielerstatus Panel -->
+        <VBox fx:id="playerStatusBox" spacing="8" alignment="TOP_LEFT"
+              style="-fx-background-color: #33cccc22; -fx-padding: 10; -fx-border-radius: 8; -fx-background-radius: 8;"
+              prefWidth="220" maxHeight="300">
+            <Label text="Spielerstatus" style="-fx-font-weight: bold; -fx-text-fill: #007777; -fx-font-size: 14px;" />
+            <!-- Dynamisch gefüllt durch GameController -->
+        </VBox>
+        <!-- Energieleiste -->
+        <HBox fx:id="energyBox" spacing="5" alignment="CENTER_LEFT"
+              visible="false" managed="false"
+              style="-fx-padding: 5;">
+            <Label text="⚡" fx:id="energyIcon" style="-fx-font-size: 16px;" />
+            <ProgressBar fx:id="energyBar" prefWidth="150" progress="1.0" />
+            <Label fx:id="energyValue" text="5" />
+        </HBox>
         <!-- Chat Minimieren -->
         <Button fx:id="chatToggleButton"
                 onAction="#toggleChatBox"
@@ -43,8 +59,6 @@
                 </HBox>
             </graphic>
         </Button>
-
-
         <!-- === Chat-Box === -->
         <VBox fx:id="chatBox" spacing="10" alignment="TOP_CENTER">
             <TextArea fx:id="chatArea" styleClass="chat-area" editable="false" wrapText="true" prefHeight="200"
@@ -90,7 +104,7 @@
         <!--  TIMER LABEL -->
         <Label fx:id="timerLabel"
                text="Zeit: 30s"
-               styleClass="status-label"
+               styleClass="countdown-label"
                visible="false"
                managed="false"/> <!-- damit auch kein Platz reserviert wird -->
         <!-- Spielfeld -->
@@ -101,6 +115,17 @@
             <Group>
                 <StackPane fx:id="zoomWrapper" style="-fx-background-color: transparent;">
                     <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
+                    <!-- ROBOLOGO  -->
+                    <ImageView fx:id="gameLogoView"
+                               fitHeight="250" fitWidth="600"
+                               visible="false" managed="false"
+                               preserveRatio="true"
+                               StackPane.alignment="CENTER"
+                               styleClass="logo-glow">
+                        <image>
+                            <Image url="/assets/roborally_log.png"/>
+                        </image>
+                    </ImageView>
                 </StackPane>
             </Group>
         </ScrollPane>
@@ -109,12 +134,29 @@
 
         <!-- Handkartenbereich -->
         <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>
-        <!-- Register-Bereich für 5 ausgewählte Karten -->
-        <HBox fx:id="registerBox"
-              spacing="10"
-              alignment="CENTER"
-              style="-fx-padding: 10;">
+        <!-- Register + Discard-Pile kombiniert -->
+        <HBox spacing="20" alignment="CENTER">
+            <!-- Ablagestapel links -->
+            <VBox alignment="CENTER" spacing="5">
+                <StackPane fx:id="discardPileBox"
+                           prefWidth="60" prefHeight="90"
+                           style="-fx-padding: 5; -fx-border-color: gray; -fx-background-color: #222;">
+                    <!-- Si no hay carta, esto se ve -->
+                    <Label text="Ablage"
+                           style="-fx-text-fill: #00ffff; -fx-font-size: 12px; -fx-font-weight: bold;"
+                           StackPane.alignment="CENTER"/>
+                </StackPane>
+
+            </VBox>
+
+            <!-- Register-Bereich für 5 ausgewählte Karten -->
+            <HBox fx:id="registerBox"
+                  spacing="10"
+                  alignment="CENTER"
+                  style="-fx-padding: 10;">
+            </HBox>
         </HBox>
+
 
         <!-- Bestätigungs-Button -->
         <Button text="Bestätigen"
@@ -126,8 +168,6 @@
 
         <!-- Gespielte Karten -->
         <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
-        <!-- 🔄 Ablagestapel / Discard Pile -->
-        <HBox fx:id="discardPileBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
 
 
 
