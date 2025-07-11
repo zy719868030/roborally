@@ -92,7 +92,7 @@ public class ClientHandler implements Runnable {
     }
 
     public void setGame(Game game) {
-        System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
+//        System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
         this.game = game;
     }
 
@@ -152,11 +152,13 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             if (!Thread.currentThread().isInterrupted()) {
-                appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
+                appLogger.warn("Client connection failed or closed unexpectedly: " + e.getMessage());
                 sendMessage(new Message<>(new BodyError("Connection error: " + e.getMessage())));
+//                e.printStackTrace();
             }
         } finally {
-            closeAll();
+            appLogger.info("Closed client connection: {}", myID);
+//            closeAll();
         }
     }
 
@@ -226,15 +228,15 @@ public class ClientHandler implements Runnable {
 
         if (server.assignFigure(body.figure(), this)) {
             final String name = server.generateUniqueName(body.name());
-            this.player = new Player(name, body.figure(), this);
             this.myID = server.getClients().getByKey(this);
+            this.player = new Player(name, body.figure(), this);
 
             server.getNames().put(this, name);
             server.addToLobby(this);
 
             broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
-            // notify all
+            // notify client for past connected clients
             for (ClientHandler other : server.getLobby().getClients()) {
                 if (other == this) continue;
                 Integer otherID = server.getClients().getByKey(other);
@@ -247,7 +249,7 @@ public class ClientHandler implements Runnable {
             }
 
         } else {
-            sendMessage(new Message<>(new BodyError("Figure already selected.")));
+            closeAll();
         }
     }
 
@@ -511,7 +513,7 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
-        appLogger.info("Player {} has finished their selection.", player.toString());
+        appLogger.info("{} has finished their selection.", player.toString());
         player.setReadyRegister(true);
         server.markReadyRegister(myID);
 
@@ -618,7 +620,6 @@ public class ClientHandler implements Runnable {
      */
     public void closeAll() {
         try {
-            server.removeClientHandler(this);
             if (reader != null)
                 reader.close();
             if (writer != null)
@@ -626,7 +627,8 @@ public class ClientHandler implements Runnable {
             if (socket != null && !socket.isClosed())
                 socket.close();
             alive.set(false);
-            System.out.println("Closed connection for client handler.");
+            server.removeClientHandler(this);
+            System.err.println("Closed connection for client handler.");
         } catch (IOException e) {
             System.err.println("Error closing resources for client: " + e.getMessage());
         }

@@ -1,0 +1,4009 @@
+2025-07-10 21:39:48 INFO  ServerCommLogger - [SENDING] HelloClient: {
+  "messageType": "HelloClient",
+  "messageBody": {
+    "protocol": "Version 1.0"
+  }
+}
+2025-07-10 21:39:48 INFO  ServerCommLogger - [RECEIVED] HelloServer: {
+  "messageType": "HelloServer",
+  "messageBody": {
+    "group": "Edle Eisbecher",
+    "isAI": false,
+    "protocol": "Version 1.0"
+  }
+}
+2025-07-10 21:39:48 INFO  ServerCommLogger - [SENDING] Welcome: {
+  "messageType": "Welcome",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:39:48 INFO  ServerCommLogger - [RECEIVED] PlayerValues: {
+  "messageType": "PlayerValues",
+  "messageBody": {
+    "name": "A",
+    "figure": 0.0
+  }
+}
+2025-07-10 21:39:48 INFO  ServerCommLogger - [SENDING] PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 1.0,
+    "name": "A",
+    "figure": 0.0
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [SENDING] HelloClient: {
+  "messageType": "HelloClient",
+  "messageBody": {
+    "protocol": "Version 1.0"
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [RECEIVED] HelloServer: {
+  "messageType": "HelloServer",
+  "messageBody": {
+    "group": "Edle Eisbecher",
+    "isAI": false,
+    "protocol": "Version 1.0"
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [SENDING] Welcome: {
+  "messageType": "Welcome",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [RECEIVED] PlayerValues: {
+  "messageType": "PlayerValues",
+  "messageBody": {
+    "name": "B",
+    "figure": 2.0
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [SENDING] PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 2.0,
+    "name": "B",
+    "figure": 2.0
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [SENDING] PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 2.0,
+    "name": "B",
+    "figure": 2.0
+  }
+}
+2025-07-10 21:39:53 INFO  ServerCommLogger - [SENDING] PlayerAdded: {
+  "messageType": "PlayerAdded",
+  "messageBody": {
+    "clientID": 1.0,
+    "name": "A",
+    "figure": 0.0
+  }
+}
+2025-07-10 21:39:55 INFO  ServerCommLogger - [RECEIVED] SetStatus: {
+  "messageType": "SetStatus",
+  "messageBody": {
+    "ready": true
+  }
+}
+2025-07-10 21:39:55 INFO  ServerCommLogger - [SENDING] PlayerStatus: {
+  "messageType": "PlayerStatus",
+  "messageBody": {
+    "clientID": 1.0,
+    "ready": true
+  }
+}
+2025-07-10 21:39:55 INFO  ServerCommLogger - [SENDING] PlayerStatus: {
+  "messageType": "PlayerStatus",
+  "messageBody": {
+    "clientID": 1.0,
+    "ready": true
+  }
+}
+2025-07-10 21:39:55 INFO  ServerCommLogger - [SENDING] SelectMap: {
+  "messageType": "SelectMap",
+  "messageBody": {
+    "availableMaps": [
+      "Dizzy Highway",
+      "Extra Crispy",
+      "Lost Bearings",
+      "Death Trap"
+    ],
+    "selectorID": 1.0
+  }
+}
+2025-07-10 21:39:56 INFO  ServerCommLogger - [RECEIVED] SetStatus: {
+  "messageType": "SetStatus",
+  "messageBody": {
+    "ready": true
+  }
+}
+2025-07-10 21:39:56 INFO  ServerCommLogger - [SENDING] PlayerStatus: {
+  "messageType": "PlayerStatus",
+  "messageBody": {
+    "clientID": 2.0,
+    "ready": true
+  }
+}
+2025-07-10 21:39:56 INFO  ServerCommLogger - [SENDING] PlayerStatus: {
+  "messageType": "PlayerStatus",
+  "messageBody": {
+    "clientID": 2.0,
+    "ready": true
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [RECEIVED] MapSelected: {
+  "messageType": "MapSelected",
+  "messageBody": {
+    "map": "Dizzy Highway"
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] MapSelected: {
+  "messageType": "MapSelected",
+  "messageBody": {
+    "map": "Dizzy Highway"
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] MapSelected: {
+  "messageType": "MapSelected",
+  "messageBody": {
+    "map": "Dizzy Highway"
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] GameStarted: {
+  "messageType": "GameStarted",
+  "messageBody": {
+    "energy": 5.0,
+    "gameMap": [
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Antenna",
+            "isOnBoard": "StartA",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "StartA",
+            "speed": 1.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "StartA",
+            "speed": 1.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "top",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "top",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "bottom"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "RestartPoint",
+            "isOnBoard": "5B",
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "left"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "top"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "bottom",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "bottom",
+              "right"
+            ]
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "bottom",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "left"
+            ]
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "CheckPoint",
+            "isOnBoard": "5B",
+            "count": 1.0
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ]
+    ]
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] GameStarted: {
+  "messageType": "GameStarted",
+  "messageBody": {
+    "energy": 5.0,
+    "gameMap": [
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Antenna",
+            "isOnBoard": "StartA",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "StartPoint",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "StartA",
+            "speed": 1.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "StartA"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "StartA",
+            "speed": 1.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "top",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "bottom",
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "top",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "bottom"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "RestartPoint",
+            "isOnBoard": "5B",
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "left"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "top"
+            ]
+          },
+          {
+            "type": "Laser",
+            "isOnBoard": "5B",
+            "count": 1.0,
+            "orientations": [
+              "top"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Wall",
+            "isOnBoard": "",
+            "orientations": [
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "bottom",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "bottom",
+              "right"
+            ]
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "bottom",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "left"
+            ]
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "CheckPoint",
+            "isOnBoard": "5B",
+            "count": 1.0
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ]
+    ]
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 0.0
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 0.0
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] CurrentPlayer: {
+  "messageType": "CurrentPlayer",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:04 INFO  ServerCommLogger - [SENDING] CurrentPlayer: {
+  "messageType": "CurrentPlayer",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:08 INFO  ServerCommLogger - [RECEIVED] SetStartingPoint: {
+  "messageType": "SetStartingPoint",
+  "messageBody": {
+    "x": 0.0,
+    "y": 3.0,
+    "direction": "right"
+  }
+}
+2025-07-10 21:40:08 INFO  ServerCommLogger - [SENDING] StartingPointTaken: {
+  "messageType": "StartingPointTaken",
+  "messageBody": {
+    "x": 0.0,
+    "y": 3.0,
+    "direction": "right",
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:08 INFO  ServerCommLogger - [SENDING] StartingPointTaken: {
+  "messageType": "StartingPointTaken",
+  "messageBody": {
+    "x": 0.0,
+    "y": 3.0,
+    "direction": "right",
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:08 INFO  ServerCommLogger - [SENDING] CurrentPlayer: {
+  "messageType": "CurrentPlayer",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:08 INFO  ServerCommLogger - [SENDING] CurrentPlayer: {
+  "messageType": "CurrentPlayer",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [RECEIVED] SetStartingPoint: {
+  "messageType": "SetStartingPoint",
+  "messageBody": {
+    "x": 0.0,
+    "y": 6.0,
+    "direction": "right"
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] StartingPointTaken: {
+  "messageType": "StartingPointTaken",
+  "messageBody": {
+    "x": 0.0,
+    "y": 6.0,
+    "direction": "right",
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] StartingPointTaken: {
+  "messageType": "StartingPointTaken",
+  "messageBody": {
+    "x": 0.0,
+    "y": 6.0,
+    "direction": "right",
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] YourCards: {
+  "messageType": "YourCards",
+  "messageBody": {
+    "cardsInHand": [
+      "TurnLeft",
+      "UTurn",
+      "TurnLeft",
+      "MoveIII",
+      "MoveII",
+      "MoveII",
+      "Again",
+      "UTurn",
+      "MoveI"
+    ]
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] NotYourCards: {
+  "messageType": "NotYourCards",
+  "messageBody": {
+    "clientID": 1.0,
+    "cardsInHand": 9.0
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] YourCards: {
+  "messageType": "YourCards",
+  "messageBody": {
+    "cardsInHand": [
+      "TurnLeft",
+      "MoveI",
+      "MoveI",
+      "BackUp",
+      "UTurn",
+      "Again",
+      "BackUp",
+      "TurnRight",
+      "MoveII"
+    ]
+  }
+}
+2025-07-10 21:40:10 INFO  ServerCommLogger - [SENDING] NotYourCards: {
+  "messageType": "NotYourCards",
+  "messageBody": {
+    "clientID": 2.0,
+    "cardsInHand": 9.0
+  }
+}
+2025-07-10 21:40:13 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveI",
+    "register": 0.0
+  }
+}
+2025-07-10 21:40:13 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 0.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:14 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "Again",
+    "register": 1.0
+  }
+}
+2025-07-10 21:40:14 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 1.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:17 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 2.0
+  }
+}
+2025-07-10 21:40:17 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 2.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:19 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 3.0
+  }
+}
+2025-07-10 21:40:19 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 3.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:20 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveII",
+    "register": 4.0
+  }
+}
+2025-07-10 21:40:20 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 4.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:20 INFO  ServerCommLogger - [SENDING] TimerStarted: {
+  "messageType": "TimerStarted",
+  "messageBody": {}
+}
+2025-07-10 21:40:20 INFO  ServerCommLogger - [SENDING] TimerStarted: {
+  "messageType": "TimerStarted",
+  "messageBody": {}
+}
+2025-07-10 21:40:20 INFO  ServerCommLogger - [SENDING] SelectionFinished: {
+  "messageType": "SelectionFinished",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:20 INFO  ServerCommLogger - [SENDING] SelectionFinished: {
+  "messageType": "SelectionFinished",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:24 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 0.0
+  }
+}
+2025-07-10 21:40:24 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 0.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:24 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "Again",
+    "register": 1.0
+  }
+}
+2025-07-10 21:40:24 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 1.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:25 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveI",
+    "register": 2.0
+  }
+}
+2025-07-10 21:40:25 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 2.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "BackUp",
+    "register": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 3.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveI",
+    "register": 4.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 4.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "TurnLeft"
+      },
+      {
+        "clientID": 1.0,
+        "card": "MoveI"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "TurnLeft"
+      },
+      {
+        "clientID": 1.0,
+        "card": "MoveI"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 2.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 2.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 6.0
+  }
+}
+2025-07-10 21:40:26 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 6.0
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "Again"
+      },
+      {
+        "clientID": 1.0,
+        "card": "Again"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "Again"
+      },
+      {
+        "clientID": 1.0,
+        "card": "Again"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "Again"
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "Again"
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "Again"
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "Again"
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 6.0
+  }
+}
+2025-07-10 21:40:27 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 6.0
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "MoveI"
+      },
+      {
+        "clientID": 1.0,
+        "card": "TurnLeft"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "MoveI"
+      },
+      {
+        "clientID": 1.0,
+        "card": "TurnLeft"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 1.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 1.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:28 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 1.0,
+        "card": "TurnLeft"
+      },
+      {
+        "clientID": 2.0,
+        "card": "BackUp"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 1.0,
+        "card": "TurnLeft"
+      },
+      {
+        "clientID": 2.0,
+        "card": "BackUp"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "BackUp"
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "BackUp"
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 1.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 1.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:29 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 1.0,
+        "card": "MoveII"
+      },
+      {
+        "clientID": 2.0,
+        "card": "MoveI"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 1.0,
+        "card": "MoveII"
+      },
+      {
+        "clientID": 2.0,
+        "card": "MoveI"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "MoveII"
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "MoveII"
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:30 INFO  ServerCommLogger - [SENDING] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] Error: {
+  "messageType": "Error",
+  "messageBody": {
+    "error": "Client did not respond to Alive."
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 0.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 1.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 2.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 3.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 4.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 0.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 1.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 2.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 3.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 4.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ReceivedChat: {
+  "messageType": "ReceivedChat",
+  "messageBody": {
+    "message": "Round 1 completed.",
+    "from": 0.0,
+    "isPrivate": false
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ReceivedChat: {
+  "messageType": "ReceivedChat",
+  "messageBody": {
+    "message": "Round 1 completed.",
+    "from": 0.0,
+    "isPrivate": false
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ShuffleCoding: {
+  "messageType": "ShuffleCoding",
+  "messageBody": {
+    "clientID": 0.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ShuffleCoding: {
+  "messageType": "ShuffleCoding",
+  "messageBody": {
+    "clientID": 0.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] YourCards: {
+  "messageType": "YourCards",
+  "messageBody": {
+    "cardsInHand": [
+      "MoveI",
+      "TurnRight",
+      "BackUp",
+      "Again",
+      "PowerUp",
+      "BackUp",
+      "TurnRight",
+      "TurnLeft",
+      "Again"
+    ]
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] NotYourCards: {
+  "messageType": "NotYourCards",
+  "messageBody": {
+    "clientID": 1.0,
+    "cardsInHand": 9.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ShuffleCoding: {
+  "messageType": "ShuffleCoding",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] ShuffleCoding: {
+  "messageType": "ShuffleCoding",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] YourCards: {
+  "messageType": "YourCards",
+  "messageBody": {
+    "cardsInHand": [
+      "UTurn",
+      "TurnRight",
+      "Again",
+      "PowerUp",
+      "MoveII",
+      "TurnLeft",
+      "MoveIII",
+      "Again",
+      "MoveII"
+    ]
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] NotYourCards: {
+  "messageType": "NotYourCards",
+  "messageBody": {
+    "clientID": 2.0,
+    "cardsInHand": 9.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] SelectionFinished: {
+  "messageType": "SelectionFinished",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] SelectionFinished: {
+  "messageType": "SelectionFinished",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveI",
+    "register": 0.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 0.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "Again",
+    "register": 1.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 1.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 2.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 3.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] Error: {
+  "messageType": "Error",
+  "messageBody": {
+    "error": "Card TurnLeft is not in your hand!"
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [RECEIVED] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveII",
+    "register": 4.0
+  }
+}
+2025-07-10 21:40:32 INFO  ServerCommLogger - [SENDING] Error: {
+  "messageType": "Error",
+  "messageBody": {
+    "error": "Card MoveII is not in your hand!"
+  }
+}

@@ -63,7 +63,6 @@ public class Client {
     private PrintWriter writer;
 
     // 4. Game state
-    private int phase = 0;
     private final List<String> hand = new ArrayList<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
     private int currentRegister = 0;
@@ -188,7 +187,7 @@ public class Client {
         } catch (IOException e) {
             System.err.println("Disconnected from server.");
             System.err.println("Message: " + e.getMessage());
-//            e.printStackTrace(); DEBUG
+            e.printStackTrace();
             closeAll();
         }
     }
@@ -291,7 +290,7 @@ public class Client {
             if (isMe) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null) {
-                    loginCtrl.loginSuccess(finalUsername, finalFigure);
+                    loginCtrl.loginSuccess();
                 }
             }
         });
@@ -549,7 +548,7 @@ public class Client {
         errorLogger.error("[RECEIVED]  ERROR  {}", errorText);
 
         Platform.runLater(() -> {
-            if (errorText.contains("Figure already selected")) {
+            if (errorText.contains("Robot already taken.")) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
                     loginCtrl.setFigureTakenWarningShown(true);
@@ -671,16 +670,7 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.setCurrentPhaseID(phaseID);
-
-                String phaseName = switch (phaseID) {
-                    case 0 -> "Aufbauphase";
-                    case 1 -> "Upgradephase";
-                    case 2 -> "Programmierphase";
-                    case 3 -> "Aktivierungsphase";
-                    default -> "Unbekannt";
-                };
-                controller.updatePhase(phaseName);
+                controller.updatePhase(phaseID);
             }
         });
     }
@@ -1395,7 +1385,7 @@ public class Client {
      * This method is typically called to clean up resources when the client
      * disconnects or an issue occurs, ensuring no resource leaks.
      */
-    private void closeAll() {
+    public final void closeAll() {
         try {
             if (reader != null) reader.close();
             if (writer != null) writer.close();

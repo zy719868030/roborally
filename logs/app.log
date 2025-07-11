@@ -1,0 +1,1133 @@
+2025-07-10 21:39:55 INFO  de.lmu.dbs.ifi.sep25.network.ClientHandler - Setting ready state for player Player [clientID=1, robotID=0, name='A'] Register={0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY} to true
+2025-07-10 21:39:56 INFO  de.lmu.dbs.ifi.sep25.network.ClientHandler - Setting ready state for player Player [clientID=2, robotID=2, name='B'] Register={0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY} to true
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.network.Server - Creating new game with map Dizzy Highway ...
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Board - Initializing "normal" board with map type: Dizzy Highway
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Board - Board initialized.
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Board - Initializing board implementation...
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Maps.DizzyHighway - Adding Checkpoints to 5B
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Maps.DizzyHighway - Added Checkpoints to 5B: CheckPoint 1 at Position[x=12, y=3] on board 5B
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Board - Board implementation initialized.
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Board - Adding elements to board...
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Board - Added elements to board.
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.network.Server - Starting game with map Dizzy Highway
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Game - Setting initial phase to SETUP.
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Game - Set new phase and broadcasted: SETUP.
+
+2025-07-10 21:40:04 INFO  de.lmu.dbs.ifi.sep25.game.Game - SETUP player order: [Player 1, Player 2]
+2025-07-10 21:40:2025-07-10 21:40:04 INFO  PerClientLogger - [RECEIVED] GameStarted: {
+  "messageType": "GameStarted",
+  "messageBody": {2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - All players have chosen their starting positions. Enter the programming phase.
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Finished setup phase. Moving to main loop.
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Resetting round for all players.
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Resetting register for Player [clientID=1, robotID=0, name='A']. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Register has successfully been reset
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Resetting register for Player [clientID=2, robotID=2, name='B']. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Register has successfully been reset
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Starting round 1.
+
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Exiting SETUP phase.
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Set new phase and broadcasted: PROGRAMMING.
+
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Enter the programming phase and start executing handleProgrammingPhase()
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - During the dealing phase, begin dealing cards to all players.
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Deal cards to players 1
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=1, robotID=0, name='A'] dealing programming cards
+2025-07-10 21:40:10 DEBUG de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=1, robotID=0, name='A'] draws 9 cards
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=1, robotID=0, name='A'] reset register state. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Update player 1's hand: [TurnLeft, UTurn, TurnLeft, MoveIII, MoveII, MoveII, Again, UTurn, MoveI]
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - Deal cards to players 2
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=2, robotID=2, name='B'] dealing programming cards
+2025-07-10 21:40:10 DEBUG de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=2, robotID=2, name='B'] draws 9 cards
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=2, robotID=2, name='B'] reset register state. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Player - Update player 2's hand: [TurnLeft, MoveI, MoveI, BackUp, UTurn, Again, BackUp, TurnRight, MoveII]
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.game.Game - All players have been dealt their cards and are waiting for players to select cards.
+2025-07-10 21:40:13 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card MoveI in register slot 0
+2025-07-10 21:40:13 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:14 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card Again in register slot 1
+2025-07-10 21:40:14 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=Again, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:17 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card TurnLeft in register slot 2
+2025-07-10 21:40:17 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=Again, 2=TurnLeft, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:19 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card TurnLeft in register slot 3
+2025-07-10 21:40:19 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=EMPTY}
+2025-07-10 21:40:20 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card MoveII in register slot 4
+2025-07-10 21:40:20 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:20 INFO  de.lmu.dbs.ifi.sep25.network.ClientHandler - Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII} has finished their selection.
+2025-07-10 21:40:20 INFO  de.lmu.dbs.ifi.sep25.network.Server - Starting timer...
+2025-07-10 21:40:20 INFO  de.lmu.dbs.ifi.sep25.network.Server - waitingForProgramming: [2]
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 selected card TurnLeft in register slot 0
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=TurnLeft, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 selected card Again in register slot 1
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=TurnLeft, 1=Again, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:25 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 selected card MoveI in register slot 2
+2025-07-10 21:40:25 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=TurnLeft, 1=Again, 2=MoveI, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 selected card BackUp in register slot 3
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=EMPTY}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 selected card MoveI in register slot 4
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.network.ClientHandler - Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI} has finished their selection.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.network.Server - waitingForProgramming: []
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.network.Server - Timer cancelled.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - All players have completed programming. Moving to activation phase.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Entering activation phase.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Exiting PROGRAMMING phase.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Set new phase and broadcasted: ACTIVATION.
+
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Resetting hand for all players.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Starting activation phase. Current register: 0
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 0
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Current player order set: [Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}, Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}]
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Activating register 0
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 1 plays MoveI from register 0
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: MoveI for player: Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 2 plays TurnLeft from register 0
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: TurnLeft for player: Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 0 complete. Checking game end.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - No game end condition met.
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.game.Game - Register 0 completed. Moving to register 1.
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 1
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Current player order set: [Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}, Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}]
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Activating register 1
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 1 plays Again from register 1
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: Again for player: Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 2 plays Again from register 1
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: Again for player: Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 1 complete. Checking game end.
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - No game end condition met.
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.game.Game - Register 1 completed. Moving to register 2.
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 2
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Current player order set: [Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}, Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}]
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Activating register 2
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 1 plays TurnLeft from register 2
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: TurnLeft for player: Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 2 plays MoveI from register 2
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: MoveI for player: Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 2 complete. Checking game end.
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - No game end condition met.
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.game.Game - Register 2 completed. Moving to register 3.
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 3
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Current player order set: [Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}, Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}]
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Activating register 3
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 2 plays BackUp from register 3
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: BackUp for player: Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 1 plays TurnLeft from register 3
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: TurnLeft for player: Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 3 complete. Checking game end.
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - No game end condition met.
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.game.Game - Register 3 completed. Moving to register 4.
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 4
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Current player order set: [Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}, Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}]
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Activating register 4
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 2 plays MoveI from register 4
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: MoveI for player: Player [clientID=2, robotID=2, name='B'] Register={0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Player 1 plays MoveII from register 4
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Execturing card: MoveII for player: Player [clientID=1, robotID=0, name='A'] Register={0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Processing register 4 complete. Checking game end.
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - No game end condition met.
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.game.Game - Register 4 completed. Moving to register none, since this was the last register.
+2025-07-10 21:40:31 WARN  de.lmu.dbs.ifi.sep25.network.Server - Client with ID 2 did not respond to Alive. Disconnecting.
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Game - All registers processed. Entering the end of round phase.
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Resetting register for Player [clientID=1, robotID=0, name='A']. Current register: {0=MoveI, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 removed card MoveI from register slot 0
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Move 1 Space has been removed from the register: {0=EMPTY, 1=Again, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 removed card Again from register slot 1
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Again has been removed from the register: {0=EMPTY, 1=EMPTY, 2=TurnLeft, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 removed card TurnLeft from register slot 2
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Turn Left has been removed from the register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=TurnLeft, 4=MoveII}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 removed card TurnLeft from register slot 3
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Turn Left has been removed from the register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=MoveII}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 removed card MoveII from register slot 4
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Move 2 Spaces has been removed from the register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Register has successfully been reset
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Resetting register for Player [clientID=2, robotID=2, name='B']. Current register: {0=TurnLeft, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 removed card TurnLeft from register slot 0
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Turn Left has been removed from the register: {0=EMPTY, 1=Again, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 removed card Again from register slot 1
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Again has been removed from the register: {0=EMPTY, 1=EMPTY, 2=MoveI, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 removed card MoveI from register slot 2
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Move 1 Space has been removed from the register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=BackUp, 4=MoveI}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 removed card BackUp from register slot 3
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Back Up has been removed from the register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=MoveI}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 2 removed card MoveI from register slot 4
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Card Move 1 Space has been removed from the register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:31 INFO  de.lmu.dbs.ifi.sep25.game.Player - Register has successfully been reset
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Resetting round for all players.
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Resetting register for Player [clientID=1, robotID=0, name='A']. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Register has successfully been reset
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Resetting register for Player [clientID=2, robotID=2, name='B']. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Register has successfully been reset
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Starting round 2.
+
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Exiting ACTIVATION phase.
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Set new phase and broadcasted: PROGRAMMING.
+
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Enter the programming phase and start executing handleProgrammingPhase()
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - During the dealing phase, begin dealing cards to all players.
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Deal cards to players 1
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=1, robotID=0, name='A'] dealing programming cards
+2025-07-10 21:40:32 DEBUG de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=1, robotID=0, name='A'] draws 9 cards
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=1, robotID=0, name='A'] reset register state. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Update player 1's hand: [MoveI, TurnRight, BackUp, Again, PowerUp, BackUp, TurnRight, TurnLeft, Again]
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - Deal cards to players 2
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=2, robotID=2, name='B'] dealing programming cards
+2025-07-10 21:40:32 DEBUG de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=2, robotID=2, name='B'] draws 9 cards
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player [clientID=2, robotID=2, name='B'] reset register state. Current register: {0=EMPTY, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Update player 2's hand: [UTurn, TurnRight, Again, PowerUp, MoveII, TurnLeft, MoveIII, Again, MoveII]
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Game - All players have been dealt their cards and are waiting for players to select cards.
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card MoveI in register slot 0
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=EMPTY, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card Again in register slot 1
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=Again, 2=EMPTY, 3=EMPTY, 4=EMPTY}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Player 1 selected card TurnLeft in register slot 2
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.game.Player - Current register: {0=MoveI, 1=Again, 2=TurnLeft, 3=EMPTY, 4=EMPTY}
+isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "right",
+              "bottom",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "bottom",
+              "right"
+            ]
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "bottom",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "left"
+            ]
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom",
+              "left"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "top",
+              "bottom"
+            ]
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "Energy-Space",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "ConveyorBelt",
+            "isOnBoard": "5B",
+            "speed": 2.0,
+            "orientations": [
+              "left",
+              "right"
+            ]
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          },
+          {
+            "type": "CheckPoint",
+            "isOnBoard": "5B",
+            "count": 1.0
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ],
+        [
+          {
+            "type": "Empty",
+            "isOnBoard": "5B"
+          }
+        ]
+      ]
+    ]
+  }
+}
+2025-07-10 21:40:04 INFO  PerClientLogger - [RECEIVED] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 0.0
+  }
+}
+2025-07-10 21:40:04 INFO  PerClientLogger - [RECEIVED] CurrentPlayer: {
+  "messageType": "CurrentPlayer",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:05 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Update game phase from -1 to 0
+2025-07-10 21:40:05 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - [DEBUG] markCurrentPlayer aufgerufen mit clientID = 1
+2025-07-10 21:40:05 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - ClientID (ich): 2, aktueller Spieler: 1
+2025-07-10 21:40:05 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - PHASE ID AKTUELL: 0
+2025-07-10 21:40:08 INFO  PerClientLogger - [RECEIVED] StartingPointTaken: {
+  "messageType": "StartingPointTaken",
+  "messageBody": {
+    "x": 0.0,
+    "y": 3.0,
+    "direction": "right",
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:08 INFO  PerClientLogger - [RECEIVED] CurrentPlayer: {
+  "messageType": "CurrentPlayer",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:08 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - [DEBUG] markCurrentPlayer aufgerufen mit clientID = 2
+2025-07-10 21:40:08 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - ClientID (ich): 2, aktueller Spieler: 2
+2025-07-10 21:40:08 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - PHASE ID AKTUELL: 0
+2025-07-10 21:40:10 INFO  PerClientLogger - [SENDING] SetStartingPoint: {
+  "messageType": "SetStartingPoint",
+  "messageBody": {
+    "x": 0.0,
+    "y": 6.0,
+    "direction": "right"
+  }
+}
+2025-07-10 21:40:10 INFO  PerClientLogger - [RECEIVED] StartingPointTaken: {
+  "messageType": "StartingPointTaken",
+  "messageBody": {
+    "x": 0.0,
+    "y": 6.0,
+    "direction": "right",
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  PerClientLogger - [RECEIVED] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 2.0
+  }
+}
+2025-07-10 21:40:10 INFO  PerClientLogger - [RECEIVED] NotYourCards: {
+  "messageType": "NotYourCards",
+  "messageBody": {
+    "clientID": 1.0,
+    "cardsInHand": 9.0
+  }
+}
+2025-07-10 21:40:10 INFO  PerClientLogger - [RECEIVED] YourCards: {
+  "messageType": "YourCards",
+  "messageBody": {
+    "cardsInHand": [
+      "TurnLeft",
+      "MoveI",
+      "MoveI",
+      "BackUp",
+      "UTurn",
+      "Again",
+      "BackUp",
+      "TurnRight",
+      "MoveII"
+    ]
+  }
+}
+2025-07-10 21:40:10 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Update game phase from 0 to 2
+2025-07-10 21:40:13 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 0.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:14 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 1.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:17 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 2.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:19 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 3.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:20 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 4.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:20 INFO  PerClientLogger - [RECEIVED] TimerStarted: {
+  "messageType": "TimerStarted",
+  "messageBody": {}
+}
+2025-07-10 21:40:20 INFO  PerClientLogger - [RECEIVED] SelectionFinished: {
+  "messageType": "SelectionFinished",
+  "messageBody": {
+    "clientID": 1.0
+  }
+}
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Found empty register slot at index 0
+2025-07-10 21:40:24 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 0.0
+  }
+}
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'TurnLeft' for register 0
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card TurnLeft placed in register slot 0
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Found empty register slot at index 1
+2025-07-10 21:40:24 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "Again",
+    "register": 1.0
+  }
+}
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'Again' for register 1
+2025-07-10 21:40:24 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card Again placed in register slot 1
+2025-07-10 21:40:25 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Found empty register slot at index 2
+2025-07-10 21:40:25 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveI",
+    "register": 2.0
+  }
+}
+2025-07-10 21:40:25 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'MoveI' for register 2
+2025-07-10 21:40:25 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card MoveI placed in register slot 2
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Found empty register slot at index 3
+2025-07-10 21:40:26 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "BackUp",
+    "register": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'BackUp' for register 3
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card BackUp placed in register slot 3
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Found empty register slot at index 4
+2025-07-10 21:40:26 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveI",
+    "register": 4.0
+  }
+}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'MoveI' for register 4
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card MoveI placed in register slot 4
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "TurnLeft"
+      },
+      {
+        "clientID": 1.0,
+        "card": "MoveI"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler A hat Karte MoveI gespielt.
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:26 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":1,"x":1,"y":3}}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Update game phase from 2 to 3
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:26 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:26 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":1,"x":1,"y":3}}
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler B hat Karte TurnLeft gespielt.
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 2.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:26 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 6.0
+  }
+}
+2025-07-10 21:40:26 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:26 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":2,"x":0,"y":6}}
+2025-07-10 21:40:26 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Robot 0 moved to (1, 3)
+2025-07-10 21:40:27 INFO  PerClientLogger - [RECEIVED] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "Again"
+      },
+      {
+        "clientID": 1.0,
+        "card": "Again"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:27 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "Again"
+  }
+}
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler A hat Karte Again gespielt.
+2025-07-10 21:40:27 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:27 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:27 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":1,"x":1,"y":3}}
+2025-07-10 21:40:27 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "Again"
+  }
+}
+2025-07-10 21:40:27 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler B hat Karte Again gespielt.
+2025-07-10 21:40:27 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 6.0
+  }
+}
+2025-07-10 21:40:27 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:27 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":2,"x":0,"y":6}}
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 2.0,
+        "card": "MoveI"
+      },
+      {
+        "clientID": 1.0,
+        "card": "TurnLeft"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler A hat Karte TurnLeft gespielt.
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 1.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:28 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:28 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":1,"x":1,"y":3}}
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler B hat Karte MoveI gespielt.
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:28 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:28 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":2,"x":0,"y":5}}
+2025-07-10 21:40:28 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:28 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:28 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":2,"x":0,"y":5}}
+2025-07-10 21:40:28 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Robot 2 moved to (0, 5)
+2025-07-10 21:40:29 INFO  PerClientLogger - [RECEIVED] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 1.0,
+        "card": "TurnLeft"
+      },
+      {
+        "clientID": 2.0,
+        "card": "BackUp"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:29 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "BackUp"
+  }
+}
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler B hat Karte BackUp gespielt.
+2025-07-10 21:40:29 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:29 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:29 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":2,"x":0,"y":5}}
+2025-07-10 21:40:29 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "TurnLeft"
+  }
+}
+2025-07-10 21:40:29 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler A hat Karte TurnLeft gespielt.
+2025-07-10 21:40:29 INFO  PerClientLogger - [RECEIVED] PlayerTurning: {
+  "messageType": "PlayerTurning",
+  "messageBody": {
+    "clientID": 1.0,
+    "rotation": "counterclockwise"
+  }
+}
+2025-07-10 21:40:29 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:29 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:29 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":1,"x":1,"y":3}}
+2025-07-10 21:40:30 INFO  PerClientLogger - [RECEIVED] CurrentCards: {
+  "messageType": "CurrentCards",
+  "messageBody": {
+    "activeCards": [
+      {
+        "clientID": 1.0,
+        "card": "MoveII"
+      },
+      {
+        "clientID": 2.0,
+        "card": "MoveI"
+      }
+    ]
+  }
+}
+2025-07-10 21:40:30 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 2.0,
+    "card": "MoveI"
+  }
+}
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler B hat Karte MoveI gespielt.
+2025-07-10 21:40:30 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 2.0,
+    "x": 0.0,
+    "y": 5.0
+  }
+}
+2025-07-10 21:40:30 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:30 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":2,"x":0,"y":5}}
+2025-07-10 21:40:30 INFO  PerClientLogger - [RECEIVED] CardPlayed: {
+  "messageType": "CardPlayed",
+  "messageBody": {
+    "clientID": 1.0,
+    "card": "MoveII"
+  }
+}
+2025-07-10 21:40:30 INFO  de.lmu.dbs.ifi.sep25.network.Client - [GAME] Spieler A hat Karte MoveII gespielt.
+2025-07-10 21:40:30 INFO  PerClientLogger - [RECEIVED] Movement: {
+  "messageType": "Movement",
+  "messageBody": {
+    "clientID": 1.0,
+    "x": 1.0,
+    "y": 3.0
+  }
+}
+2025-07-10 21:40:30 INFO  PerClientLogger - [CLIENT] handleBodyMovement called
+2025-07-10 21:40:30 INFO  PerClientLogger - json = {"messageType":"Movement","messageBody":{"clientID":1,"x":1,"y":3}}
+2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] Error: {
+  "messageType": "Error",
+  "messageBody": {
+    "error": "Client did not respond to Alive."
+  }
+}
+2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 0.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] CardSelected: {2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 0.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 1.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 2.0,
+    "register": 2.0,
+    "filled": false
+  }
+}
+2025-07-10 21:40:31 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] ReceivedChat: {
+  "messageType": "ReceivedChat",
+  "messageBody": {
+    "message": "Round 1 completed.",
+    "from": 0.0,
+    "isPrivate": false
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] ActivePhase: {
+  "messageType": "ActivePhase",
+  "messageBody": {
+    "phase": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Update game phase from 3 to 2
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] ShuffleCoding: {
+  "messageType": "ShuffleCoding",
+  "messageBody": {
+    "clientID": 0.0
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] NotYourCards: {
+  "messageType": "NotYourCards",
+  "messageBody": {
+    "clientID": 1.0,
+    "cardsInHand": 9.0
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] ShuffleCoding: {
+  "messageType": "ShuffleCoding",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] YourCards: {
+  "messageType": "YourCards",
+  "messageBody": {
+    "cardsInHand": [
+      "UTurn",
+      "TurnRight",
+      "Again",
+      "PowerUp",
+      "MoveII",
+      "TurnLeft",
+      "MoveIII",
+      "Again",
+      "MoveII"
+    ]
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] SelectionFinished: {
+  "messageType": "SelectionFinished",
+  "messageBody": {
+    "clientID": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 0.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 1.0,
+    "filled": true
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] CardSelected: {
+  "messageType": "CardSelected",
+  "messageBody": {
+    "clientID": 1.0,
+    "register": 2.0,
+    "filled": true
+  }
+}
+mu.dbs.ifi.sep25.ui.GameController - Card MoveI placed in register slot 0
+2025-07-10 21:40:32 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "Again",
+    "register": 1.0
+  }
+}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'Again' for register 1
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card Again placed in register slot 1
+2025-07-10 21:40:32 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 2.0
+  }
+}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'TurnLeft' for register 2
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card TurnLeft placed in register slot 2
+2025-07-10 21:40:32 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "TurnLeft",
+    "register": 3.0
+  }
+}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'TurnLeft' for register 3
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card TurnLeft placed in register slot 3
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] Error: {
+  "messageType": "Error",
+  "messageBody": {
+    "error": "Card TurnLeft is not in your hand!"
+  }
+}
+2025-07-10 21:40:32 INFO  PerClientLogger - [SENDING] SelectedCard: {
+  "messageType": "SelectedCard",
+  "messageBody": {
+    "card": "MoveII",
+    "register": 4.0
+  }
+}
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - → Selected card 'MoveII' for register 4
+2025-07-10 21:40:32 INFO  de.lmu.dbs.ifi.sep25.ui.GameController - Card MoveII placed in register slot 4
+2025-07-10 21:40:32 INFO  PerClientLogger - [RECEIVED] Error: {
+  "messageType": "Error",
+  "messageBody": {
+    "error": "Card MoveII is not in your hand!"
+  }
+}

@@ -226,14 +226,10 @@ public class Player {
 
             this.readyRegister = true;
 
-            appLogger.info("{} readyRegister set to: true", getPlayerIdentifier());
-
-            // ✅ DON'T call markReadyRegister() again
-            // let whoever called setReadyRegister(true) be responsible for that
-
+//            appLogger.info("{} readyRegister set to: true", getPlayerIdentifier());
         } else {
             this.readyRegister = false;
-            appLogger.info("{} readyRegister set to: false", getPlayerIdentifier());
+//            appLogger.info("{} readyRegister set to: false", getPlayerIdentifier());
         }
     }
 
@@ -289,13 +285,11 @@ public class Player {
         ));
 
         // In der Programmierphase sehen alle Spieler ihre echten Karten zur gleichzeitigen Auswahl.
-        if (Game.getInstance().getCurrentPhase() == Game.GamePhase.ACTIVATION.getValue()) {
-            connection.broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyNotYourCards(
-                            clientID, handWithNames.size()
-                    )
-            ), connection);
-        }
+        connection.broadcastMessage(new MessageDefinitions.Message<>(
+                new MessageDefinitions.BodyNotYourCards(
+                        clientID, handWithNames.size()
+                )
+        ), connection);
     }
 
     /**
@@ -317,7 +311,7 @@ public class Player {
         appLogger.info("{} reset register state. Current register: {}", getPlayerIdentifier(), registerToString());
         setReadyRegister(false);
         updateHand();
-        appLogger.info("{} hand has been updated and sent", getPlayerIdentifier());
+//        appLogger.info("{} hand has been updated and sent", getPlayerIdentifier());
     }
 
     /**
@@ -406,9 +400,9 @@ public class Player {
                     if (register.get(registerSlot) != null) {
                         removeCardFromRegister(registerSlot);
                     }
-                    appLogger.info("Player {} selected card {} in register slot {}", clientID, cardName, registerSlot);
                     register.set(registerSlot, cardToPlay);
-                    appLogger.info("Current register: {}", registerToString());
+                    appLogger.info("Player {}: {} -> {} <> {}", clientID, cardName, registerSlot, registerToString());
+//                    appLogger.info("Current register: {}", registerToString());
                     removeFromHand(cardToPlay);
                     // Notify server that card has been selected
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
@@ -417,6 +411,7 @@ public class Player {
 
                     // automatic ready check:
                     if (register.stream().allMatch(Objects::nonNull)) {
+                        appLogger.info("{} has finished their selection.", this.toString());
                         connection.setReadyRegister();
                     }
                 } else {
@@ -456,12 +451,10 @@ public class Player {
                 RegisterCard removedCard = register.get(registerSlot);
                 if (removedCard != null) {
                     // Remove the card from the register and return it to your hand.
-                    appLogger.info("Player {} removed card {} from register slot {}", clientID,
-                            CardFactory.getCardName(removedCard), registerSlot);
+                    appLogger.info("Player {}: {} <- {} <> {}", clientID,
+                            CardFactory.getCardName(removedCard), registerSlot, registerToString());
                     register.set(registerSlot, null);
                     addToHand(removedCard);
-
-                    appLogger.info("Card {} has been removed from the register: {}", removedCard, registerToString());
 
                     // Notify server that register slot has been cleared
                     connection.broadcastMessage(new MessageDefinitions.Message<>(
@@ -516,7 +509,7 @@ public class Player {
                 new MessageDefinitions.BodyCardsYouGotNow(cardsYouGotNow))
         );
         // setReadyRegister(true) call needed to simulate push of the ready button
-        appLogger.info("Calling setReadyRegister(false) in fillRemainingRegisterSlots() method in Player.java. CALLED IN fillRemainingRegisterSlots. Current register: {}", registerToString());
+//        appLogger.info("Calling setReadyRegister(false) in fillRemainingRegisterSlots() method in Player.java. CALLED IN fillRemainingRegisterSlots. Current register: {}", registerToString());
         setReadyRegister(false);
     }
 
@@ -587,7 +580,7 @@ public class Player {
         for (int i = 0; i < register.size(); i++) {
             RegisterCard card = register.get(i);
             if (card != null) {
-                appLogger.info("{} clearing register slot {} and discarding card", getPlayerIdentifier(), i);
+//                appLogger.info("{} clearing register slot {} and discarding card", getPlayerIdentifier(), i);
                 removeCardFromRegister(i);
                 discardCardFromHand(card);
             }
@@ -597,7 +590,8 @@ public class Player {
         for (int i = 0; i < 5; i++) {
             register.set(i, null);
         }
-        appLogger.info("{} register has been reset", getPlayerIdentifier());
+
+        appLogger.info("Register has successfully been reset");
     }
 
     // UTILITY
@@ -645,7 +639,8 @@ public class Player {
      * @return a formatted string representing the Player object with its client ID, robot ID,
      * name, robot state, and the string representation of the register.
      */
-    public String toString() {return getPlayerIdentifier() + " Register=" + registerToString();
+    public String toString() {
+        return getPlayerIdentifier() + " Register=" + registerToString();
 //        return "Player{" +
 //                "clientID=" + clientID +
 //                ", robotID='" + robot.getRobotID() +

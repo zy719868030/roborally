@@ -4,7 +4,6 @@ target/
 
 # IntelliJ IDEA
 .idea/
-*.iml
 *.iws
 *.ipr
 .idea/httpRequests
@@ -81,10 +80,8 @@ $RECYCLE.BIN/
 
 # Java
 *.class
-*.log
 *.war
 *.ear
-*.zip
 *.tar.gz
 *.rar
 hs_err_pid*

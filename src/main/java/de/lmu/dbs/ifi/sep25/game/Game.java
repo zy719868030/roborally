@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch;
 public class Game {
     // Constants
     private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
-    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Game.class);
+    private static final Logger appLogger = LogManager.getLogger(Game.class);
 
     // Singleton instance
     private static Game instance;
@@ -158,8 +158,8 @@ public class Game {
             // Setup phase
             setPhase(GamePhase.SETUP);
 
-            // redundant call, but rather be safe since no harm.
-            resetPlayersRound();
+//            // redundant call, but rather be safe since no harm.
+//            resetPlayersRound();
 
             determinePlayerOrder();
             handleSetupPhase();
@@ -169,7 +169,7 @@ public class Game {
             startNewGameRound();
         });
 
-        appLogger.info("Starting game main loop.");
+//        appLogger.info("Starting game main loop.");
         mainLoop.start();
     }
 
@@ -182,16 +182,12 @@ public class Game {
         // Reset
         resetPlayersRound();
         Server.getInstance().resetReadyRegister();
+
         // Start new round
-
-        for (Player player : players) {
-            player.resetRegister();
-        }
-
         roundNumber++;
-        appLogger.info("Starting round {}.", roundNumber);
+        appLogger.info("Starting round {}.\n", roundNumber);
         setPhase(GamePhase.PROGRAMMING);
-        appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
+//        appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
         handleProgrammingPhase();
     }
 
@@ -224,7 +220,7 @@ public class Game {
 
         appLogger.info("Entering activation phase.");
         setPhase(GamePhase.ACTIVATION);
-        clearPlayerHands();
+//        clearPlayerHands();
         appLogger.info("Starting activation phase. Current register: {}", currentRegister);
         handleActivationPhase();
     }
@@ -390,12 +386,12 @@ public class Game {
         }
 
         for (currentRegister = 0; currentRegister < 5; currentRegister++) {
-            appLogger.info("Processing register {}", currentRegister);
+            appLogger.debug("Processing register {}", currentRegister);
 
             determinePlayerOrder();
             handleCurrentRegister();
 
-            appLogger.info("Processing register {} complete. Checking game end.", currentRegister);
+            appLogger.debug("Processing register {} complete. Checking game end.", currentRegister);
 
             if (checkGameEnd()) {
                 appLogger.info("Game ended during activation of register {}", currentRegister);
@@ -415,18 +411,19 @@ public class Game {
 
         appLogger.info("All registers processed. Entering the end of round phase.");
 
-        for (Player player : players) {
-            player.resetRegister();
-        }
+//        for (Player player : players) {
+//            player.resetRegister();
+//        }
 
-        try {
-            Thread.sleep(1000); // 10-second pause before starting next round
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+//        try {
+//            Thread.sleep(1000); // 10-second pause before starting next round
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
 
         // Reset the current register counter
         currentRegister = 0;
+        appLogger.info("Resetting current register to {}.", currentRegister);
 
         // TODO @lukas：Broadcast end of round message
         Server.getInstance().broadcastMessage(
@@ -646,6 +643,7 @@ public class Game {
                 if (card instanceof DamageCard damageCard) {
                     handleDamageCardEffect(damageCard, player);
                 } else {
+//                    appLogger.debug("Executing card: {} for {}", cardName, player.toString());
                     card.execute(player.getRobot(), player);
                 }
                 Position robotPosition = player.getRobot().getPosition();
@@ -661,7 +659,8 @@ public class Game {
 
                 board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
             } catch (Exception e) {
-                appLogger.error("Error executing card: " + e.getMessage(), e);
+                appLogger.error("Error executing card: {}", e.getMessage(), e);
+                errorLogger.error("Error executing card: {}", e.getMessage(), e);
             }
         }
     }
@@ -726,16 +725,17 @@ public class Game {
         appLogger.info("Resetting round for all players.");
         for (Player player : players)
             player.resetRound();
+        appLogger.debug("All players hands and registers have been reset.");
     }
 
-    /**
-     * Resets all the players hand.
-     **/
-    private void clearPlayerHands() {
-        appLogger.info("Resetting hand for all players.");
-        for (Player player : players)
-            player.resetHand();
-    }
+//    /**
+//     * Resets all the players hand.
+//     **/
+//    private void clearPlayerHands() {
+//        appLogger.info("Resetting hand for all players.");
+//        for (Player player : players)
+//            player.resetHand();
+//    }
 
     // 6. Board-related Methods
 
@@ -824,7 +824,13 @@ public class Game {
 
                             // TODO @lukas:Broadcast rotation if direction changed
                             if (oldDirection != robot.getDirection()) {
-                                final String rotation = gear.getRotationDirection().toString();
+                                // Fixed: Use the actual robot rotation direction, not the gear's rotation direction
+                                String rotation;
+                                if (gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE) {
+                                    rotation = "clockwise";  // Robot turned right (clockwise)
+                                } else {
+                                    rotation = "counterclockwise";  // Robot turned left (counterclockwise)
+                                }
 
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
@@ -834,12 +840,8 @@ public class Game {
                                         )
                                 );
 
-//                                // TODO @lukas:Animation
-//                                Server.getInstance().broadcastMessage(
-//                                        new MessageDefinitions.Message<>(
-//                                                new MessageDefinitions.BodyAnimation("Gear")
-//                                        )
-//                                );
+                                appLogger.info("Gear at " + gear.getPosition() + " rotated Robot " + robot.getClientID() +
+                                        " " + rotation);
                             }
                         }
                     }
