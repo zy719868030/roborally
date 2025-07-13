@@ -1,45 +1,28 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySendChat;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodySetStatus;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
-import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-
-
 
 
 public class LobbyController {
@@ -63,20 +46,31 @@ public class LobbyController {
     private ComboBox<String> mapChoiceBox;
     @FXML
     private Button selectMapButton;
-    @FXML private ImageView mapPreviewImage;
-    @FXML private StackPane mapPreviewContainer;
-    @FXML private VBox chatBox;
-    @FXML private VBox lobbyBox;
-    @FXML private HBox iconMenu;
-    @FXML private Button lobbyToggleButton;
-    @FXML private Button chatToggleButton;
-    @FXML private Button lobbyRestoreButton;
-    @FXML private Button chatRestoreButton;
+    @FXML
+    private ImageView mapPreviewImage;
+    @FXML
+    private StackPane mapPreviewContainer;
+    @FXML
+    private VBox chatBox;
+    @FXML
+    private VBox lobbyBox;
+    @FXML
+    private HBox iconMenu;
+    @FXML
+    private Button lobbyToggleButton;
+    @FXML
+    private Button chatToggleButton;
+    @FXML
+    private Button lobbyRestoreButton;
+    @FXML
+    private Button chatRestoreButton;
+    @FXML
+    private Label lobbyIconLabel;
+    @FXML
+    private Label chatIconLabel;
 
     private final List<Integer> readyOrder = new ArrayList<>();
     private List<String> lastReceivedMapList = null;
-
-
 
     private final ObservableList<PlayerEntry> players = FXCollections.observableArrayList();
     private Parent root;
@@ -85,12 +79,14 @@ public class LobbyController {
     private void toggleLobbyBox() {
         if (lobbyBox.isVisible()) {
             slideOut(lobbyBox);
+            lobbyIconLabel.setText("▲");
             lobbyToggleButton.setVisible(false);
             lobbyToggleButton.setManaged(false);
             lobbyRestoreButton.setVisible(true);
             lobbyRestoreButton.setManaged(true);
         } else {
             slideIn(lobbyBox);
+            lobbyIconLabel.setText("▼");
             lobbyToggleButton.setVisible(true);
             lobbyToggleButton.setManaged(true);
             lobbyRestoreButton.setVisible(false);
@@ -103,12 +99,14 @@ public class LobbyController {
     private void toggleChatBox() {
         if (chatBox.isVisible()) {
             slideOut(chatBox);
+            chatIconLabel.setText("▲");
             chatToggleButton.setVisible(false);
             chatToggleButton.setManaged(false);
             chatRestoreButton.setVisible(true);
             chatRestoreButton.setManaged(true);
         } else {
             slideIn(chatBox);
+            chatIconLabel.setText("▼");
             chatToggleButton.setVisible(true);
             chatToggleButton.setManaged(true);
             chatRestoreButton.setVisible(false);
@@ -125,18 +123,14 @@ public class LobbyController {
         iconMenu.setManaged(irgendwasMinimiert);
 
 
-
     }
-
-
-
-
-
 
     @FXML
     public void initialize() {
         ControllerRegistry.setLobbyController(this);
         playerList.setItems(players);
+      //  mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty().subtract(20));
+        //mapPreviewImage.setPreserveRatio(true);
 
 
 
@@ -195,7 +189,7 @@ public class LobbyController {
         mapChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldMap, newMap) -> {
             if (newMap != null) {
                 mapLabel.setText("Ausgewählte Karte: " + newMap);
-                loadMapPreview(newMap); // << NUR Bild laden
+                displayMapPreview(newMap);
             }
         });
 
@@ -204,12 +198,17 @@ public class LobbyController {
         if (client != null) {
             client.flushPendingPlayers();
         }
-        mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty());
-        mapPreviewImage.fitHeightProperty().bind(mapPreviewContainer.heightProperty());
+       // mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty().subtract(40));
+        //mapPreviewImage.fitHeightProperty().bind(mapPreviewContainer.heightProperty().subtract(40));
+
+        //für Buttons
+        addHoverAnimation(lobbyToggleButton);
+        addHoverAnimation(chatToggleButton);
+
     }
 
-    private void loadMapPreview(String mapName) {
-        String imageFile = "/assets/" + mapName.toLowerCase().replace(" ", "_") + ".png";
+    private void displayMapPreview(String mapName) {
+        final String imageFile = "/assets/mapPreviews/" + mapName.toLowerCase().replace(" ", "_") + ".png";
         InputStream imageStream = getClass().getResourceAsStream(imageFile);
         if (imageStream != null) {
             mapPreviewImage.setImage(new Image(imageStream));
@@ -244,7 +243,6 @@ public class LobbyController {
         return readyOrder.get(0) == myID;
     } */
 
-
     @FXML
     private void handleNotReady() {
         sendReadyStatus(false);
@@ -262,7 +260,6 @@ public class LobbyController {
             // Warten auf erneute Nachricht vom Server, falls ich wieder Mapwähler werde
         }
     }
-
 
     private void sendReadyStatus(boolean ready) {
         Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
@@ -300,8 +297,6 @@ public class LobbyController {
         System.out.println("[DEBUG] Spieler hinzugefügt: " + displayName);
     }
 
-
-
     public void showMapSelection(List<String> maps) {
         if (maps == null || maps.isEmpty()) {
             System.err.println("[WARN] showMapSelection mit leerer Map-Liste aufgerufen.");
@@ -318,8 +313,6 @@ public class LobbyController {
         mapChoiceBox.setDisable(false);
     }
 
-
-
     @FXML
     private void handleMapSelection() {
         String selectedMap = mapChoiceBox.getValue();
@@ -332,10 +325,10 @@ public class LobbyController {
 
         }
     }
-     List<String> getLastReceivedMapList() {
+
+    List<String> getLastReceivedMapList() {
         return lastReceivedMapList;
     }
-
 
     //Methode zum Verstecken, wenn Spieler z. B. unready wird
     public void hideMapSelection() {
@@ -351,19 +344,9 @@ public class LobbyController {
 
         // Lade zugehöriges Bild
         String mapName = text.replace("Ausgewählte Karte: ", "").trim();
-        String imageFile = "/assets/maps/" + mapName.toLowerCase().replace(" ", "_") + ".png";
-
-        InputStream imageStream = getClass().getResourceAsStream(imageFile);
-        if (imageStream != null) {
-            mapPreviewImage.setImage(new Image(imageStream));
-            mapPreviewImage.setVisible(true);
-            mapPreviewImage.setManaged(true);
-        } else {
-            System.err.println("[WARN] Kein Vorschaubild gefunden für: " + mapName);
-            mapPreviewImage.setVisible(false);
-            mapPreviewImage.setManaged(false);
-        }
+        displayMapPreview(mapName);
     }
+
     public void updatePlayerStatus(int clientID, boolean isReady) {
         PlayerEntry found = players.stream()
                 .filter(p -> p.getClientID() == clientID)
@@ -399,10 +382,6 @@ public class LobbyController {
         }
     }
 
-
-
-
-
     private int getFirstReadyClientID() {
         return players.stream()
                 .filter(PlayerEntry::isReady)
@@ -410,8 +389,6 @@ public class LobbyController {
                 .findFirst()
                 .orElse(-1);
     }
-
-
 
     @FXML
     private void handleSendChat() {
@@ -460,20 +437,11 @@ public class LobbyController {
         playerList.refresh();
     }
 
-
-  /*  public void displaySelectedMap(String mapName) {
-        // Diese Methode zeigt den ausgewählten Kartennamen in der Benutzeroberfläche an.
-        // Zum Beispiel kann hier ein Label aktualisiert werden, das den Namen der Karte zeigt:
-        mapLabel.setText("Ausgewählte Karte: " + mapName);
-    } */
-
-
     @FXML
     private void handleClearRecipient() {
         recipientBox.getSelectionModel().clearSelection();
         System.out.println("[DEBUG] Chat-Empfänger zurückgesetzt auf 'Alle'");
     }
-
 
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
@@ -485,7 +453,6 @@ public class LobbyController {
         notReadyButton.setVisible(isReady);
         notReadyButton.setManaged(!isReady);
     }
-
 
     public void renamePlayer(int clientID, String newName) { //@SEBAS
         for (PlayerEntry p : players) {
@@ -499,6 +466,7 @@ public class LobbyController {
 
 
     }
+
     public List<PlayerEntry> getPlayers() {
         return players.stream()
                 .map(p -> new PlayerEntry(
@@ -509,7 +477,6 @@ public class LobbyController {
                 ))
                 .toList();
     }
-
 
     private void slideOut(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
@@ -536,5 +503,19 @@ public class LobbyController {
 
     public Parent getRoot() {
         return root;
+    }
+
+    private void addHoverAnimation(Button button) {
+        button.setOnMouseEntered(e -> {
+            TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
+            tt.setToY(-3);
+            tt.play();
+        });
+
+        button.setOnMouseExited(e -> {
+            TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
+            tt.setToY(0);
+            tt.play();
+        });
     }
 }

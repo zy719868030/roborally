@@ -11,25 +11,52 @@
 <?import javafx.scene.paint.Stop?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="20" style="-fx-padding: 30; -fx-background-image: url('/assets/cover.png'); -fx-background-size: cover;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.ScrollPane?>
+<VBox alignment="CENTER" spacing="20"
+      prefWidth="800" prefHeight="600"
+      style="-fx-padding: 30; -fx-background-image: url('/assets/cover.png'); -fx-background-size: cover;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
 
 
     <TextField fx:id="nameField" promptText="Dein Name" styleClass="chat-input" />
+    <StackPane>
 
-    <ComboBox fx:id="figureBox" promptText="Spielfigur wählen" styleClass="combo-recipient" />
+            <VBox alignment="CENTER" spacing="10">
+                <Label text="Spielfigur wählen:" styleClass="status-label" />
+                <HBox spacing="10" alignment="CENTER">
+                    <Button fx:id="scrollLeftButton" text="◀" styleClass="arrow-button" />
+                    <ScrollPane fx:id="figureScrollPane"
+                                hbarPolicy="NEVER"
+                                vbarPolicy="NEVER"
+                                fitToHeight="true"
+                                prefViewportWidth="250"
+                                style="-fx-background-color: transparent;">
+                        <HBox fx:id="figureGallery" spacing="10" alignment="CENTER" />
+                    </ScrollPane>
 
-    <Button fx:id="loginButton" onAction="#handleLogin" text="Weiter zur Lobby" styleClass="senden-button">
+                    <Button fx:id="scrollRightButton" text="▶" styleClass="arrow-button" />
+                </HBox>
+                <Label fx:id="warningLabel"
+                       visible="false"
+                       managed="true"
+                       styleClass="sourcetext-neon-yellow"
+                       alignment="CENTER"/>
+            </VBox>
+
+    </StackPane>
+
+    <Button fx:id="loginButton" onAction="#handleLogin" text="Verbinden" styleClass="senden-button">
         <font>
             <Font name="Berlin Sans FB Demi Bold" size="12.0" />
         </font></Button>
     <!-- KI lOGIN -->
-    <Button onAction="#handleBotLogin" text="KI beitreten" styleClass="senden-button">
+    <Button onAction="#handleBotLogin" text="Mit KI starten" styleClass="senden-button">
         <font>
             <Font name="Berlin Sans FB Demi Bold" size="12.0" />
         </font>
     </Button>
 
-    <HBox spacing="10">
+    <HBox spacing="10" alignment="CENTER">
         <Label text="Host:">
             <textFill>
                 <RadialGradient centerX="0.5" centerY="0.5" radius="0.5">

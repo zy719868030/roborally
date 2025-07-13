@@ -44,11 +44,17 @@ public class ClientHandler implements Runnable {
     // 0. Logger
     private static final Logger appLogger = LogManager.getLogger(ClientHandler.class);
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
+    private static final Logger serverCommLogger = LogManager.getLogger("ServerCommLogger");
+    private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
 
     // 1. Constants / configuration
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
+            .create();
+
+    private final Gson gsonPretty = new GsonBuilder()
+            .setPrettyPrinting()
             .create();
 
     private Integer myID;
@@ -86,10 +92,9 @@ public class ClientHandler implements Runnable {
     }
 
     public void setGame(Game game) {
-        System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
+//        System.out.println("[DEBUG] setGame() aufgerufen für ClientHandler ID: " + myID);
         this.game = game;
     }
-
 
 
     /**
@@ -120,6 +125,9 @@ public class ClientHandler implements Runnable {
             while (!Thread.currentThread().isInterrupted() && (json = reader.readLine()) != null) {
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
+                    if (!messageType.equals("Alive")) {
+                        serverCommLogger.info("[RECEIVED] {}: {}", messageType, gsonPretty.toJson(JsonUtil.parseUnknown(json)));
+                    }
                     switch (messageType) {
                         case "Alive" -> handleBodyAlive();
                         case "HelloServer" -> handleBodyHelloServer(json);
@@ -144,11 +152,13 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             if (!Thread.currentThread().isInterrupted()) {
-                appLogger.error("Client connection failed or closed unexpectedly: " + e.getMessage());
+                appLogger.warn("Client connection failed or closed unexpectedly: " + e.getMessage());
                 sendMessage(new Message<>(new BodyError("Connection error: " + e.getMessage())));
+//                e.printStackTrace();
             }
         } finally {
-            closeAll();
+            appLogger.info("Closed client connection: {}", myID);
+//            closeAll();
         }
     }
 
@@ -218,17 +228,15 @@ public class ClientHandler implements Runnable {
 
         if (server.assignFigure(body.figure(), this)) {
             final String name = server.generateUniqueName(body.name());
-            this.player = new Player(name, body.figure(), this);
             this.myID = server.getClients().getByKey(this);
+            this.player = new Player(name, body.figure(), this);
 
             server.getNames().put(this, name);
             server.addToLobby(this);
 
-            //sendMessage(new Message<>(new BodyWelcome(myID)));
-
             broadcastMessage(new Message<>(new BodyPlayerAdded(myID, name, body.figure())));
 
-            // notify all
+            // notify client for past connected clients
             for (ClientHandler other : server.getLobby().getClients()) {
                 if (other == this) continue;
                 Integer otherID = server.getClients().getByKey(other);
@@ -241,7 +249,7 @@ public class ClientHandler implements Runnable {
             }
 
         } else {
-            sendMessage(new Message<>(new BodyError("Figure already selected.")));
+            closeAll();
         }
     }
 
@@ -259,10 +267,12 @@ public class ClientHandler implements Runnable {
         boolean ready = message.messageBody().ready();
 
         if (player == null) {
-            System.err.println("[ERROR] Player is null in handleBodySetStatus (clientID: " + myID + ")");
+            errorLogger.error("[ERROR] Player is null in handleBodySetStatus (clientID: {})", myID);
             sendMessage(new Message<>(new BodyError("Cannot change ready state: Player not initialized.")));
             return;
         }
+
+        appLogger.info("Setting ready state for player {} to {}", player.toString(), ready);
 
         player.setReady(ready);
         broadcastMessage(new Message<>(new BodyPlayerStatus(myID, ready)));
@@ -289,7 +299,6 @@ public class ClientHandler implements Runnable {
                         appLogger.info("No other player ready: is ready order empty? {} -> no map selection ongoing.", server.readyOrderIsEmpty());
                     }
                 }
-                server.unmarkReady(this);
             }
         }
     }
@@ -304,12 +313,15 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyMapSelected(String json) {
         Message<BodyMapSelected> message = JsonUtil.parseMessage(json, BodyMapSelected.class);
-        String map = message.messageBody().map();
+        String selectedMap = message.messageBody().map();
 
-        broadcastMessage(new Message<>(new BodyMapSelected(map)));
-        server.setMapSelectionOngoing(false);
-        setMapSelecting(false);
-        server.newGame(map);
+        broadcastMessage(new Message<>(new BodyMapSelected(selectedMap)));
+
+        if (game == null) {
+            server.newGame(selectedMap);
+        } else {
+            game.setBoard(selectedMap);
+        }
     }
 
     /**
@@ -400,14 +412,15 @@ public class ClientHandler implements Runnable {
         }
 
         // Broadcasts are handled in setPlayerStartingPosition
-        if (!game.setPlayerStartingPosition(player, body.x(), body.y())) {
-            sendMessage(new Message<>(new BodyError("Ungültige Startposition. Bitte wähle eine andere.")));
-        } else if (placementLatch != null) {
+        BodyError error = game.setPlayerStartingPosition(player, body.x(), body.y());
+        if (error == null && placementLatch != null) {
             placementLatch.countDown();
-        } else {
-            appLogger.error("Placement latch was not set for player {} (ID: {})", player.getName(), myID);
-            throw new IllegalStateException("Latch is not set! Probable cause for this error: Player selected staring position although not their turn.");
+            return;
+        } else if (placementLatch == null) {
+            error = new BodyError("Cannot select starting position; Not your turn!");
         }
+        errorLogger.error(error.error());
+        sendMessage(new Message<>(error));
     }
 
 
@@ -500,14 +513,11 @@ public class ClientHandler implements Runnable {
      * `broadcastMessage` method to send out a notification message.
      */
     public void setReadyRegister() {
-        appLogger.info("Calling setReadyRegister in setReadyRegister (clientID: {})", myID);
+        appLogger.info("{} has finished their selection.", player.toString());
         player.setReadyRegister(true);
         server.markReadyRegister(myID);
 
-        // Remove this unconditional timer start
-        // if (!server.getTimerStarted()) {
-        //     server.startTimer();
-        // }
+        broadcastMessage(new Message<>(new BodySelectionFinished(myID)));
     }
 
 
@@ -540,6 +550,8 @@ public class ClientHandler implements Runnable {
      */
     public void sendMessage(String message) {
         try {
+            if (!JsonUtil.parseUnknown(message).messageType().equalsIgnoreCase("Alive"))
+                serverCommLogger.info("[SENDING] {}: {}", JsonUtil.parseUnknown(message).messageType(), gsonPretty.toJson(JsonUtil.parseUnknown(message)));
             writer.println(message);
             writer.flush();
         } catch (Exception e) {
@@ -608,7 +620,6 @@ public class ClientHandler implements Runnable {
      */
     public void closeAll() {
         try {
-            server.removeClientHandler(this);
             if (reader != null)
                 reader.close();
             if (writer != null)
@@ -616,7 +627,8 @@ public class ClientHandler implements Runnable {
             if (socket != null && !socket.isClosed())
                 socket.close();
             alive.set(false);
-            System.out.println("Closed connection for client handler.");
+            server.removeClientHandler(this);
+            System.err.println("Closed connection for client handler.");
         } catch (IOException e) {
             System.err.println("Error closing resources for client: " + e.getMessage());
         }

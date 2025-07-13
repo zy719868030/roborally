@@ -13,16 +13,13 @@ import de.lmu.dbs.ifi.sep25.network.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class Game {
     // Constants
     private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
-    private static final Logger appLogger = org.apache.logging.log4j.LogManager.getLogger(Game.class);
+    private static final Logger appLogger = LogManager.getLogger(Game.class);
 
     // Singleton instance
     private static Game instance;
@@ -33,9 +30,9 @@ public class Game {
     private int roundNumber = 0;
 
     // Core game components
-    private final Board board;
+    private Board board;
+    private String selectedMap;
     private final List<Player> players;
-    private final String selectedMap;
     private final Stack<Player> currentPlayerTurn;
 
     // Card decks
@@ -69,15 +66,11 @@ public class Game {
     }
 
     /**
-     * Set Board references for all robots when initializing the game
+     * Get the index of the currently executing register.
+     * @return Current register index (0-4)
      */
-    public void initializeGame() {
-        // TODO game.initializeGame(); (in Server)
-
-        for (Player player : players) {
-            Robot robot = player.getRobot();
-            robot.setBoard(board);
-        }
+    public int getCurrentRegister() {
+        return currentRegister;
     }
 
     private void initializeUpgradeCards() {
@@ -165,8 +158,8 @@ public class Game {
             // Setup phase
             setPhase(GamePhase.SETUP);
 
-            // redundant call, but rather be safe since no harm.
-            resetPlayersRound();
+//            // redundant call, but rather be safe since no harm.
+//            resetPlayersRound();
 
             determinePlayerOrder();
             handleSetupPhase();
@@ -176,7 +169,7 @@ public class Game {
             startNewGameRound();
         });
 
-        appLogger.info("Starting game main loop.");
+//        appLogger.info("Starting game main loop.");
         mainLoop.start();
     }
 
@@ -189,16 +182,12 @@ public class Game {
         // Reset
         resetPlayersRound();
         Server.getInstance().resetReadyRegister();
+
         // Start new round
-
-        for (Player player : players) {
-            player.resetRegister();
-        }
-
         roundNumber++;
-        appLogger.info("Starting round {}.", roundNumber);
+        appLogger.info("Starting round {}.\n", roundNumber);
         setPhase(GamePhase.PROGRAMMING);
-        appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
+//        appLogger.info("Enter the programming phase and start executing handleProgrammingPhase()");
         handleProgrammingPhase();
     }
 
@@ -231,7 +220,7 @@ public class Game {
 
         appLogger.info("Entering activation phase.");
         setPhase(GamePhase.ACTIVATION);
-        clearPlayerHands();
+//        clearPlayerHands();
         appLogger.info("Starting activation phase. Current register: {}", currentRegister);
         handleActivationPhase();
     }
@@ -397,12 +386,12 @@ public class Game {
         }
 
         for (currentRegister = 0; currentRegister < 5; currentRegister++) {
-            appLogger.info("Processing register {}", currentRegister);
+            appLogger.debug("Processing register {}", currentRegister);
 
             determinePlayerOrder();
             handleCurrentRegister();
 
-            appLogger.info("Processing register {} complete. Checking game end.", currentRegister);
+            appLogger.debug("Processing register {} complete. Checking game end.", currentRegister);
 
             if (checkGameEnd()) {
                 appLogger.info("Game ended during activation of register {}", currentRegister);
@@ -413,7 +402,7 @@ public class Game {
             appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
 
             try {
-                Thread.sleep(500); // <-- Delay of 500 milliseconds between registers
+                Thread.sleep(1000); // <-- Delay of 500 milliseconds between registers
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 appLogger.warn("Activation delay interrupted");
@@ -422,18 +411,19 @@ public class Game {
 
         appLogger.info("All registers processed. Entering the end of round phase.");
 
-        for (Player player : players) {
-            player.resetRegister();
-        }
+//        for (Player player : players) {
+//            player.resetRegister();
+//        }
 
-        try {
-            Thread.sleep(1000); // 10-second pause before starting next round
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+//        try {
+//            Thread.sleep(1000); // 10-second pause before starting next round
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
 
         // Reset the current register counter
         currentRegister = 0;
+        appLogger.info("Resetting current register to {}.", currentRegister);
 
         // TODO @lukas：Broadcast end of round message
         Server.getInstance().broadcastMessage(
@@ -516,37 +506,26 @@ public class Game {
      * @param y      Y-coordinate of starting position
      * @return Returns true if starting position is successfully set, otherwise returns false
      */
-    public boolean setPlayerStartingPosition(Player player, int x, int y) {
+    public MessageDefinitions.BodyError setPlayerStartingPosition(Player player, int x, int y) {
         if (player == null) {
-            return false;
+            return new MessageDefinitions.BodyError("Player is null during starting position selection.");
         }
 
         // Check if it is in the setup phase
         if (currentPhase != GamePhase.SETUP) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Not in setup phase")
-            ));
-            return false;
+            return new MessageDefinitions.BodyError("Not in setup Phase to select starting position. Current phase " + currentPhase.toString());
         }
 
         final Position targetPos = new Position(x, y);
 
         // Check if the location is valid
         if (!board.isValidPosition(targetPos)) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Invalid position: (" + x + ", " + y + ")")
-            ));
-            return false;
+            return new MessageDefinitions.BodyError("Selected starting Position (" + x + ", " + y + ") out of bounds.");
         }
 
         // Check if this location is the starting point
-        boolean isStartPoint = board.getStartingPoints().contains(targetPos);
-
-        if (!isStartPoint) {
-            player.getConnection().sendMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyError("Position (" + x + ", " + y + ") is not a starting point")
-            ));
-            return false;
+        if (!board.getStartingPoints().contains(targetPos)) {
+            return new MessageDefinitions.BodyError("Selected position (" + x + ", " + y + ") is not a valid starting position (already occupied)");
         }
 
         // If the player has already selected a starting position, the previous position must be released.
@@ -565,8 +544,7 @@ public class Game {
         final StartPoint startPoint = (StartPoint) board.getElements(x, y).stream().filter(e -> e instanceof StartPoint).findFirst().orElse(null);
 
         if (startPoint == null) {
-            errorLogger.error("No start point found at (" + x + ", " + y + ")");
-            return false;
+            return new MessageDefinitions.BodyError("No starting position found at (" + x + ", " + y + ")");
         }
 
         // Occupy a new starting point
@@ -593,7 +571,7 @@ public class Game {
                 }, player.getConnection().getMyID())
         ));
 
-        return true;
+        return null;
     }
 
     /**
@@ -665,6 +643,7 @@ public class Game {
                 if (card instanceof DamageCard damageCard) {
                     handleDamageCardEffect(damageCard, player);
                 } else {
+//                    appLogger.debug("Executing card: {} for {}", cardName, player.toString());
                     card.execute(player.getRobot(), player);
                 }
                 Position robotPosition = player.getRobot().getPosition();
@@ -680,10 +659,12 @@ public class Game {
 
                 board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
             } catch (Exception e) {
-                appLogger.error("Error executing card: " + e.getMessage(), e);
+                appLogger.error("Error executing card: {}", e.getMessage(), e);
+                errorLogger.error("Error executing card: {}", e.getMessage(), e);
             }
         }
     }
+
     /**
      * Handles the effects of a DamageCard on a player's robot based on the card's damage type.
      *
@@ -744,16 +725,17 @@ public class Game {
         appLogger.info("Resetting round for all players.");
         for (Player player : players)
             player.resetRound();
+        appLogger.debug("All players hands and registers have been reset.");
     }
 
-    /**
-     * Resets all the players hand.
-     **/
-    private void clearPlayerHands() {
-        appLogger.info("Resetting hand for all players.");
-        for (Player player : players)
-            player.resetHand();
-    }
+//    /**
+//     * Resets all the players hand.
+//     **/
+//    private void clearPlayerHands() {
+//        appLogger.info("Resetting hand for all players.");
+//        for (Player player : players)
+//            player.resetHand();
+//    }
 
     // 6. Board-related Methods
 
@@ -774,6 +756,9 @@ public class Game {
      * <p><b>Note:</b> Robot-to-robot laser interactions are handled separately in {@code handleRobotLasers()}.
      */
     private void activateBoardElements() {
+        // 0. Set to track already moved robots
+        final Set<Robot> movedByBelt = new HashSet<>();
+
         // 1. Blue conveyor belts (fast)
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
@@ -782,8 +767,9 @@ public class Game {
                             belt.getSpeed() == Belts.BeltSpeed.FAST) {
                         // Find robot at this position and activate belt
                         Robot robot = board.getRobotAt(new Position(x, y));
-                        if (robot != null) {
+                        if (robot != null && !movedByBelt.contains(robot)) {
                             belt.applyEffect(robot, board);
+                            movedByBelt.add(robot);
                         }
                     }
                 }
@@ -797,8 +783,9 @@ public class Game {
                     if (element instanceof Belts belt &&
                             belt.getSpeed() == Belts.BeltSpeed.SLOW) {
                         Robot robot = board.getRobotAt(new Position(x, y));
-                        if (robot != null) {
+                        if (robot != null && !movedByBelt.contains(robot)) {
                             belt.applyEffect(robot, board);
+                            movedByBelt.add(robot);
                         }
                     }
                 }
@@ -837,23 +824,24 @@ public class Game {
 
                             // TODO @lukas:Broadcast rotation if direction changed
                             if (oldDirection != robot.getDirection()) {
-                                String rotation = gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE
-                                        ? "clockwise" : "counterclockwise";
+                                // Fixed: Use the actual robot rotation direction, not the gear's rotation direction
+                                String rotation;
+                                if (gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE) {
+                                    rotation = "clockwise";  // Robot turned right (clockwise)
+                                } else {
+                                    rotation = "counterclockwise";  // Robot turned left (counterclockwise)
+                                }
 
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyPlayerTurning(
-                                                        robot.getRobotID(), rotation
+                                                        robot.getClientID(), rotation
                                                 )
                                         )
                                 );
 
-                                // TODO @lukas:Animation
-                                Server.getInstance().broadcastMessage(
-                                        new MessageDefinitions.Message<>(
-                                                new MessageDefinitions.BodyAnimation("Gear")
-                                        )
-                                );
+                                appLogger.info("Gear at " + gear.getPosition() + " rotated Robot " + robot.getClientID() +
+                                        " " + rotation);
                             }
                         }
                     }
@@ -890,7 +878,7 @@ public class Game {
                                 //TODO @lukas:MessageDefinitions.BodyDrawDamage
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
-                                                new MessageDefinitions.BodyDrawDamage(robot.getRobotID(), damageCards)
+                                                new MessageDefinitions.BodyDrawDamage(robot.getClientID(), damageCards)
                                         )
                                 );
                             }
@@ -925,7 +913,7 @@ public class Game {
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
                                                     new MessageDefinitions.BodyEnergy(
-                                                            robot.getRobotID(),
+                                                            player.getClientID(),
                                                             player.getEnergy(),
                                                             "EnergySpace"
                                                     )
@@ -962,7 +950,7 @@ public class Game {
                                 Server.getInstance().broadcastMessage(
                                         new MessageDefinitions.Message<>(
                                                 new MessageDefinitions.BodyCheckPointReached(
-                                                        robot.getRobotID(), newCheckpoints
+                                                        robot.getClientID(), newCheckpoints
                                                 )
                                         )
                                 );
@@ -1231,6 +1219,17 @@ public class Game {
     }
 
     // 7. Utility and Getter Methods
+
+    public void setBoard(String newMapName) {
+        if (newMapName.equalsIgnoreCase(selectedMap)) {
+            errorLogger.warn("Tried to set board to same map as current board.");
+            return;
+        }
+
+        appLogger.info("Changing board from {} to {}",selectedMap , newMapName);
+        this.selectedMap = newMapName;
+        this.board = new Board(MapType.fromString(selectedMap));
+    }
 
     /**
      * Gets the game board.

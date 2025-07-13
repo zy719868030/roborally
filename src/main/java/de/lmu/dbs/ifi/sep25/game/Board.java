@@ -77,7 +77,11 @@ public class Board {
      *                                  or unsupported board style.
      */
     public Board(MapType mapType) {
-        switch (MapType.boardStyleFromMapType(mapType)) {
+        final String boardStyle = MapType.boardStyleFromMapType(mapType);
+
+        logger.info("Initializing \"{}\" board with map type: {}", boardStyle, mapType.toString());
+
+        switch (boardStyle) {
             case "normal" -> {
                 this.width = 13;
                 this.height = 10;
@@ -85,8 +89,6 @@ public class Board {
 
                 Floor.createFloor("StartA");
                 Floor.createFloor("5B");
-
-                logger.info("Initializing \"normal\" board with map type: " + mapType);
 
                 for (int x = 0; x < width; x++) {
                     Floor floor = (x < 3) ? Floor.getInstance("StartA") : Floor.getInstance("5B");
@@ -103,8 +105,6 @@ public class Board {
 
                 Floor.createFloor("StartA");
                 Floor.createFloor("5B");
-
-                logger.info("Initializing \"normal\" board with map type: " + mapType);
 
                 for (int x = 0; x < width; x++) {
                     Floor floor = (x > 9) ? Floor.getInstance("StartA") : Floor.getInstance("5B");

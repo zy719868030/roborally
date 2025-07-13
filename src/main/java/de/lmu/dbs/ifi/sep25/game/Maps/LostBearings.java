@@ -13,7 +13,7 @@ public class LostBearings extends GameMap {
     private final String boardId = "1A";
 
     public LostBearings() {
-        super(new Position(0, 0));
+        super(new Position(0, 4));
 
         initializeSubBoards();
         initializeBoard("StartA", Direction.EAST);

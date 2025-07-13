@@ -3,9 +3,12 @@ package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Robot;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SpecialPro extends ProgrammingCard {
-    private String specialEffect;
+    private final String specialEffect;
+    private static final Logger appLogger = LogManager.getLogger(SpecialPro.class);
 
     public SpecialPro(String description, String actionType, String specialEffect) {
         super(description, actionType);
@@ -18,14 +21,16 @@ public class SpecialPro extends ProgrammingCard {
 
     @Override
     public void execute(Robot robot, Player player) {
-        if (!canExecute(robot)) return;
+        if (!canExecute(robot)) {
+            appLogger.warn("Robot {} cannot execute special effect: {}", robot.getRobotID(), specialEffect);
+            return;
+        }
 
-        Board board = robot.getBoard();
+        final Board board = robot.getBoard();
+
+//        appLogger.debug("Executing special programmed action: {} for robot {}", actionType, robot.getRobotID());
 
         switch (specialEffect.toLowerCase()) {
-            case "again":
-                executeAgain(robot, board);
-                break;
             case "energy routine":
                 player.addEnergy(1, "Power Up");
                 System.out.println("Robot " + robot.getRobotID() + " executes Energy Routine - gained 1 energy");
@@ -36,9 +41,9 @@ public class SpecialPro extends ProgrammingCard {
                     System.out.println("Robot " + robot.getRobotID() + " executes Speed Routine - moved 3 spaces");
                 }
                 break;
-            case "repeat routine":
-                executeAgain(robot, board);
-                break;
+//            case "repeat routine":
+//                executeAgain(robot, board);
+//                break;
             case "sandbox routine":
                 executeSandboxChoice(robot, board);
                 break;
@@ -51,18 +56,6 @@ public class SpecialPro extends ProgrammingCard {
             default:
                 System.out.println("Robot " + robot.getRobotID() + " executes unknown special effect: " + specialEffect);
         }
-    }
-
-    // Again card: Repeat the action of the previous register.
-    private void executeAgain(Robot robot, Board board) {
-        // TODO Here, we need to retrieve the card from the previous register and re-execute it.
-        // Simplified implementation: Assume that the Robot class has a getPreviousCard() method.
-        System.out.println("Robot " + robot.getRobotID() + " executes Again - repeating previous action");
-        // TODO: Actual need to access the programming history of the robot
-        // Card previousCard = robot.getPreviousCard();
-        // if (previousCard != null) {
-        //     previousCard.execute(robot);
-        // }
     }
 
     // Sandbox Routine: Actions that players can choose to perform

@@ -27,7 +27,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Client {
     // 0. Logging
@@ -60,7 +63,6 @@ public class Client {
     private PrintWriter writer;
 
     // 4. Game state
-    private int phase = 0;
     private final List<String> hand = new ArrayList<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
     private int currentRegister = 0;
@@ -131,8 +133,6 @@ public class Client {
         try {
             String json;
             while ((json = reader.readLine()) != null) {
-//                System.out.println("[RECEIVED] " + json); // DEBUG
-
                 try {
                     String messageType = JsonUtil.parseUnknown(json).messageType();
                     if (ID != null && !messageType.equalsIgnoreCase("Alive")) {
@@ -187,7 +187,7 @@ public class Client {
         } catch (IOException e) {
             System.err.println("Disconnected from server.");
             System.err.println("Message: " + e.getMessage());
-//            e.printStackTrace(); DEBUG
+            e.printStackTrace();
             closeAll();
         }
     }
@@ -202,7 +202,7 @@ public class Client {
     private void handleBodyHelloClient(String json) {
         Message<BodyHelloClient> message = JsonUtil.parseMessage(json, BodyHelloClient.class);
         String protocol = message.messageBody().protocol();
-        appLogger.info("Connected using protocol: {} " + protocol);
+        appLogger.info("Connected using protocol: {} (Received HelloClient)", protocol);
 
         sendMessage(new Message<>(new BodyHelloServer("Edle Eisbecher", isAI, this.protocol)));
     }
@@ -238,7 +238,6 @@ public class Client {
         if (ID != null)
             throw new IllegalStateException("Client ID already initialized.");
         this.ID = msg.messageBody().clientID();
-        clientLogger.info("Your client ID: {}", getID());
         usernames.put(ID, "(me)");
 
         //  PlayerValues only after Welcome
@@ -291,7 +290,7 @@ public class Client {
             if (isMe) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null) {
-                    loginCtrl.loginSuccess(finalUsername, finalFigure);
+                    loginCtrl.loginSuccess();
                 }
             }
         });
@@ -401,21 +400,25 @@ public class Client {
     }
 
 
-        /**
-         * Handles the selected body map event provided in JSON format.
-         * Parses the JSON message, retrieves the selected map,
-         * and updates the LobbyController with the corresponding map information.
-         *
-         * @param json a JSON string representing the selected body map event,
-         *             expected to contain the necessary data to identify the selected map.
-         */
+    /**
+     * Handles the selected body map event provided in JSON format.
+     * Parses the JSON message, retrieves the selected map,
+     * and updates the LobbyController with the corresponding map information.
+     *
+     * @param json a JSON string representing the selected body map event,
+     *             expected to contain the necessary data to identify the selected map.
+     */
     private void handleBodyMapSelected(String json) {
         Message<MessageDefinitions.BodyMapSelected> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         selectedMap = message.messageBody().map();
 
-        clientLogger.info("[MapSelected] Map selected: " + selectedMap);
-
+        Platform.runLater(() -> {
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl != null) {
+                lobbyCtrl.setMapLabel("Ausgewählte Karte: " + selectedMap);
+            }
+        });
     }
 
     /**
@@ -460,7 +463,6 @@ public class Client {
 
                 controller.drawBoard(boardMap);
                 controller.setInitialPlayerStats(energy, checkpointsReached);
-
 
 
                 // Szene wechseln
@@ -543,22 +545,16 @@ public class Client {
     private void handleBodyError(String json) {
         Message<BodyError> msg = JsonUtil.parseMessage(json, BodyError.class);
         String errorText = msg.messageBody().error();
-        errorLogger.error("[Error] Vom Server erhalten:{} ",errorText);
+        errorLogger.error("[RECEIVED]  ERROR  {}", errorText);
 
-        if (errorText.contains("Figure already selected")) {
-            Platform.runLater(() -> {
+        Platform.runLater(() -> {
+            if (errorText.contains("Robot already taken.")) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
                     loginCtrl.setFigureTakenWarningShown(true);
                     loginCtrl.displayFigureAlreadyTaken();
                 }
-            });
-            return;
-        }
-
-        // Handle the error of placing the Again card in the first register.
-        if (errorText.contains("Again card cannot be played in the first register")) {
-            Platform.runLater(() -> {
+            } else if (errorText.contains("Again card cannot be played in the first register")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
                     gameCtrl.appendChatMessage("[ERROR] " + errorText);
@@ -566,28 +562,29 @@ public class Client {
                             "The card Again cannot be placed in the first register position!\n" +
                                     "Please select the 2nd to 5th register positions.");
                     gameCtrl.highlightRegisterSlot(0);
-                } else {
-                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
                 }
-            });
-            return;
-        }
-
-        // Handle other game rule-related errors to prevent the client from closing.
-        if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
-            Platform.runLater(() -> {
+            } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
                     gameCtrl.appendChatMessage("[ERROR] " + errorText);
                     gameCtrl.displayErrorAlert("Card operation error", errorText);
-                } else {
-                    appLogger.warn("[WARN] GameController ist null in handleBodyError");
                 }
-            });
-            return;
-        }
+            } else if (errorText.toLowerCase().contains("starting position")) {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.deselectStartingPosition();
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Starting position selection error", errorText);
+                }
+            } else {
 
-        closeAll(); // bei anderen Fehlern
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.displayErrorAlert("Server Error", errorText);
+                }
+            }
+        });
     }
 
     /****/
@@ -596,14 +593,15 @@ public class Client {
         BodyCardPlayed body = message.messageBody();
         int clientID = body.clientID();
         String card = body.card();
-        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
-        String logMessage = playerName + "hat Karte gespielt" + card;
+        String playerName = usernames.getByKeyOrDefault(clientID, null);
+//        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
+        String logMessage = "Spieler " + playerName + " hat Karte " + card + " gespielt.";
         appLogger.info("[GAME] {}", logMessage);
 
         Platform.runLater(() -> {
             GameController gameCtrl = ControllerRegistry.getGameController();
             if (gameCtrl != null) {
-                gameCtrl.appendChatMessage("[GAME]" + logMessage);
+                gameCtrl.appendChatMessage("[GAME] " + logMessage);
                 gameCtrl.showPlayedCard(clientID, card);
             } else {
                 appLogger.warn("[WARN] GameController ist null in handleBodyCardPlayed");
@@ -657,13 +655,14 @@ public class Client {
             }
         });
     }
-        /**
-         * Handles the "BodyActivePhase" message received from the server.
-         * This method processes a JSON string representing a {@code BodyActivePhase} message,
-         * extracts the phase information from the message body, and updates the client's internal state.
-         *
-         * @param json the JSON string containing the serialized {@code BodyActivePhase} message
-         */
+
+    /**
+     * Handles the "BodyActivePhase" message received from the server.
+     * This method processes a JSON string representing a {@code BodyActivePhase} message,
+     * extracts the phase information from the message body, and updates the client's internal state.
+     *
+     * @param json the JSON string containing the serialized {@code BodyActivePhase} message
+     */
     private void handleBodyActivePhase(String json) {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();
@@ -671,16 +670,7 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                controller.setCurrentPhaseID(phaseID);
-
-                String phaseName = switch (phaseID) {
-                    case 0 -> "Aufbauphase";
-                    case 1 -> "Upgradephase";
-                    case 2 -> "Programmierphase";
-                    case 3 -> "Aktivierungsphase";
-                    default -> "Unbekannt";
-                };
-                controller.updatePhase(phaseName);
+                controller.updatePhase(phaseID);
             }
         });
     }
@@ -705,6 +695,9 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
+                if (clientID == ID) {
+                    controller.deactivateStartPointClick();
+                }
                 controller.displayStartingPoint(x, y, clientID, direction);
                 //  Position merken!
                 controller.setRobotPosition(clientID, new Position(x, y));
@@ -796,7 +789,7 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
-                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
+//                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
                 controller.handleCardSelection(clientID, register, filled); // implement in GameController
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
@@ -957,6 +950,8 @@ public class Client {
                 return;
             }
 
+            controller.syncPlayerNames();
+
             if (newX < 0 || newY < 0 ||
                     (currentGameMap != null && (newX >= currentGameMap.size() ||
                             (currentGameMap.get(0) != null && newY >= currentGameMap.get(0).size())))) {
@@ -1025,7 +1020,6 @@ public class Client {
     }
 
 
-
     /**
      * Handles a message indicating that a player's robot should rotate.
      *
@@ -1087,9 +1081,6 @@ public class Client {
             }
         });
     }
-
-
-
 
 
     /**
@@ -1394,7 +1385,7 @@ public class Client {
      * This method is typically called to clean up resources when the client
      * disconnects or an issue occurs, ensuring no resource leaks.
      */
-    private void closeAll() {
+    public final void closeAll() {
         try {
             if (reader != null) reader.close();
             if (writer != null) writer.close();
@@ -1434,12 +1425,18 @@ public class Client {
         return -1; // Default/fallback
     }
 
+
     /**
      * Returns the selected map variable, stored in handleMapSelected.
+     *
      * @return selected map as string
-     * **/
+     **/
     public String getSelectedMap() {
         return selectedMap;
+    }
+
+    public ConcurrentBidirectionalMap<Integer, String> getUsernames() {
+        return usernames;
     }
 
 }

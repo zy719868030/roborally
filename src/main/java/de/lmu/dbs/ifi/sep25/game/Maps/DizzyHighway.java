@@ -93,10 +93,10 @@ public class DizzyHighway extends GameMap {
                 .forEach(pos -> elements.add(new EnergySpace(pos, boardId)));
 
         // Checkpoints
-        logger.info("Adding Checkpoints to 5B");
+//        logger.info("Adding Checkpoints to 5B");
         CheckPoints cp = new CheckPoints(new Position(12, 3), 1, boardId);
         elements.add(cp);
-        logger.info("Added Checkpoints to 5B: " + cp);
+//        logger.info("Added Checkpoints to 5B: " + cp);
 
         // Reboot
         elements.add(new Reboot(new Position(7, 3), Direction.SOUTH, boardId));
