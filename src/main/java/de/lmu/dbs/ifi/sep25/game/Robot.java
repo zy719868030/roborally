@@ -200,7 +200,7 @@ public class Robot {
             for (BoardElement element : targetElements) {
                 if (element instanceof Wall wall) {
                     // Check if wall blocks entry from the direction we're coming from
-                    if (!wall.canPassThroughFromDirection(opposite)) {
+                    if (!wall.canPassThroughFromDirection(direction)) {
                         canEnter = false;
                         break;
                     }
