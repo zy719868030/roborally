@@ -124,11 +124,32 @@ public class Robot {
                 }
             }
 
-            if (canEnter && board.getRobotAt(newPos) == null) {
-                position = newPos;
-                board.updateRobotPosition(this, position);
-                pushRobot(board, direction);
-                notifyMovement();
+//            if (canEnter && board.getRobotAt(newPos) == null) {
+//                position = newPos;
+//                board.updateRobotPosition(this, position);
+//                pushRobot(board, direction);
+//                notifyMovement();
+//            }
+            if (canEnter) {
+                Robot otherRobot = board.getRobotAt(newPos);
+                if (otherRobot != null) {
+                    // Try to push the other robot
+                    pushRobot(board, direction);
+                    // Check if the push was successful (i.e., the other robot moved)
+                    if (board.getRobotAt(newPos) == null) {
+                        // The other robot was pushed, so we can move
+                        position = newPos;
+                        board.updateRobotPosition(this, position);
+                        notifyMovement();
+                    }
+                    // If push failed (due to wall or another robot), we simply don't move
+                } else {
+                    // No robot at target position, move normally
+                    position = newPos;
+                    board.updateRobotPosition(this, position);
+                    pushRobot(board, direction);
+                    notifyMovement();
+                }
             }
         } else {
             board.handleFall(this);
@@ -179,7 +200,7 @@ public class Robot {
             for (BoardElement element : targetElements) {
                 if (element instanceof Wall wall) {
                     // Check if wall blocks entry from the direction we're coming from
-                    if (!wall.canPassThroughFromDirection(opposite.turnAround())) {
+                    if (!wall.canPassThroughFromDirection(opposite)) {
                         canEnter = false;
                         break;
                     }
@@ -189,10 +210,32 @@ public class Robot {
                 }
             }
 
-            if (canEnter && board.getRobotAt(newPos) == null) {
-                position = newPos;
-                board.updateRobotPosition(this, position);
-                pushRobot(board, opposite);
+//            if (canEnter && board.getRobotAt(newPos) == null) {
+//                position = newPos;
+//                board.updateRobotPosition(this, position);
+//                pushRobot(board, opposite);
+//                notifyMovement();
+//            }
+            if (canEnter) {
+                Robot otherRobot = board.getRobotAt(newPos);
+                if (otherRobot != null) {
+                    // Try to push the other robot
+                    pushRobot(board, opposite);
+                    // Check if the push was successful (i.e., the other robot moved)
+                    if (board.getRobotAt(newPos) == null) {
+                        // The other robot was pushed, so we can move
+                        position = newPos;
+                        board.updateRobotPosition(this, position);
+                        notifyMovement();
+                    }
+                    // If push failed (due to wall or another robot), we simply don't move
+                } else {
+                    // No robot at target position, move normally
+                    position = newPos;
+                    board.updateRobotPosition(this, position);
+                    pushRobot(board, opposite);
+                    notifyMovement();
+                }
             }
         } else {
             Logger logger = Logger.getLogger(this.getClass().getName());
