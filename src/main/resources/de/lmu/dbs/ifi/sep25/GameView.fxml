@@ -37,6 +37,7 @@
             <ProgressBar fx:id="energyBar" prefWidth="150" progress="1.0" />
             <Label fx:id="energyValue" text="5" />
         </HBox>
+        <Region prefHeight="10"/>
         <!-- Chat Minimieren -->
         <Button fx:id="chatToggleButton"
                 onAction="#toggleChatBox"

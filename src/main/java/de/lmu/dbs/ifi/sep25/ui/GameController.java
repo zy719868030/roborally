@@ -700,6 +700,13 @@ public class GameController {
             case 0 -> {
                 setPhaseLabel("🛠️ Phase: Aufbau", "phase-setup");
                 showLogoTransition();
+                if (playerStatusBox != null) {
+                    playerStatusBox.setVisible(false);
+
+                    // playedCardsBox.setVisible(false);
+                    playerStatusBox.setManaged(false);
+                    playerStatusBox.getChildren().removeIf(node -> !(node instanceof Label));
+                }
                 if (energyBox != null) {
                     energyBox.setVisible(false);
                     energyBox.setManaged(false);
@@ -722,6 +729,15 @@ public class GameController {
 
             case 2 -> { // Programming phase
                 setPhaseLabel("🤖 Phase: Programmierung", "phase-programming");
+                if (playerStatusBox != null) {
+                    playerStatusBox.setVisible(false);
+
+                    playedCardsBox.setVisible(false);
+                    playerStatusBox.setManaged(false);
+                  playerStatusBox.getChildren().removeIf(node -> !(node instanceof Label));
+
+                }
+
                 if (energyBox != null) {
                     energyBox.setVisible(false);
                     energyBox.setManaged(false);
@@ -754,6 +770,13 @@ public class GameController {
 
             case 3 -> { // Activation phase
                 setPhaseLabel("⚡ Phase: Aktivierung", "phase-activation");
+
+                if (playerStatusBox != null) {
+                    playerStatusBox.setVisible(true);
+                    playerStatusBox.setManaged(true);
+                }
+
+
                 if (energyBox != null) {
                     energyBox.setVisible(true);
                     energyBox.setManaged(true);
@@ -777,6 +800,9 @@ public class GameController {
                 if (!confirmedCards.isEmpty()) {
                     displayConfirmedCards(confirmedCards);
                 }
+
+                activationPhaseActive = true;
+                refreshPlayerStatusUI();
 
                 handCardBox.setDisable(true);
                 handCardBox.setVisible(false);
@@ -1083,17 +1109,16 @@ public class GameController {
         }
 
 
-        // 1. Rebuild register UI (DO keep this)
         registerBox.getChildren().clear();
 
         for (int i = 0; i < 5; i++) {
             Label numberLabel = new Label(String.valueOf(i + 1));
-            numberLabel.setStyle("-fx-font-size: 18px; -fx-background-color: darkorange; -fx-text-fill: white; -fx-padding: 6px; -fx-background-radius: 30px;");
-            numberLabel.setMaxSize(20, 20);
+            numberLabel.getStyleClass().add("slot-number");
 
             StackPane slot = new StackPane();
             slot.setPrefSize(60, 90);
-            slot.setStyle("-fx-border-color: gray; -fx-background-color: lightgray;");
+            slot.getStyleClass().add("register-slot");
+
             setupRegisterSlot(slot);
 
             Tooltip tooltip = new Tooltip("Bitte hier eine Programmierkarte ablegen");
@@ -1121,7 +1146,8 @@ public class GameController {
         }
 
 
-        // 2. Filter used cards
+
+// 2. Filter used cards
         List<String> adjustedHand = new ArrayList<>();
         Map<String, Integer> cardInstanceCounter = new HashMap<>();
 
@@ -1131,23 +1157,29 @@ public class GameController {
             adjustedHand.add(card + "#" + instance);
         }
 
-        // 3. Show remaining hand cards
+// 3. Show remaining hand cards
         handCardBox.getChildren().clear();
 
         for (String tagged : adjustedHand) {
-            String base = tagged.split("#")[0];       // e.g. "MoveII#1" → "MoveII"
+            String base = tagged.split("#")[0];
             ImageView view = createClickableCard(base);
-            view.setUserData(tagged);                 // userData = "MoveII#1"
-//            enableCardDragAndDrop(view);
+            view.setUserData(tagged);
+            view.setOpacity(0);
 
             handCardBox.getChildren().add(view);
+
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(200), view);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            fadeIn.play();
         }
 
         updateConfirmButtonVisibility();
         shuffleHandCards();
     }
 
-    private ImageView createClickableCard(String cardName) {
+
+        private ImageView createClickableCard(String cardName) {
         String imagePath = "/assets/cards/" + cardName + ".png";
         Image img;
         try {
@@ -1742,6 +1774,9 @@ public class GameController {
         timerLabel.setVisible(true);
         timerLabel.setManaged(true);
 
+        updateCountdownColor(secondsLeft);
+        animatePulse(timerLabel);
+
         if (countdownTimer != null) countdownTimer.stop();
 
         if (timerContainer != null) {
@@ -1753,7 +1788,7 @@ public class GameController {
         double fullLength = 2 * Math.PI * radius;
 
         timerCircle = new Circle(radius, Color.TRANSPARENT);
-        timerCircle.setStroke(Color.web("#00ff66"));
+        timerCircle.setStroke(Color.web("#00ffd0"));
         timerCircle.setStrokeWidth(strokeWidth);
         timerCircle.setStrokeType(StrokeType.CENTERED);
         timerCircle.getStrokeDashArray().add(fullLength);
@@ -1779,7 +1814,7 @@ public class GameController {
                     double offset = (fullLength * (30 - secondsLeft)) / 30;
                     timerCircle.setStrokeDashOffset(offset);
                     if (secondsLeft > 19) {
-                        timerCircle.setStroke(Color.web("#00ff66"));
+                        timerCircle.setStroke(Color.web("#00ffd0"));
                     } else if (secondsLeft > 9) {
                         timerCircle.setStroke(Color.web("#ffcc00"));
                     } else {
@@ -1836,7 +1871,7 @@ private void updateCountdownColor(int secondsLeft) {
             "-fx-effect: dropshadow(gaussian, black, 15, 0.7, 0, 0);";
 
     if (secondsLeft > 19) {
-        timerLabel.setStyle("-fx-text-fill: #00ff66;" + styleBase);
+        timerLabel.setStyle("-fx-text-fill: #00ffd0;" + styleBase);
     } else if (secondsLeft > 9) {
         timerLabel.setStyle("-fx-text-fill: #ffcc00;" + styleBase);
     } else {
@@ -3258,6 +3293,34 @@ public void showLogoTransition() {
 
 private void clearProgrammingUI() {
 }
+    public void animateHandCards(List<String> handCards) {
+        handCardBox.getChildren().clear();
+        Timeline timeline = new Timeline();
+
+        for (int i = 0; i < handCards.size(); i++) {
+            String cardName = handCards.get(i);
+            ImageView card = createClickableCard(cardName);
+            card.setOpacity(0);
+            card.setTranslateY(30);
+
+            handCardBox.getChildren().add(card);
+
+            FadeTransition fade = new FadeTransition(Duration.millis(200), card);
+            fade.setFromValue(0);
+            fade.setToValue(1);
+
+            TranslateTransition slide = new TranslateTransition(Duration.millis(200), card);
+            slide.setFromY(30);
+            slide.setToY(0);
+
+            ParallelTransition entry = new ParallelTransition(fade, slide);
+            KeyFrame kf = new KeyFrame(Duration.millis(i * 120), e -> entry.play());
+            timeline.getKeyFrames().add(kf);
+        }
+
+        timeline.play();
+    }
+
 }
 
 

@@ -890,12 +890,20 @@ public class Client {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
+                Map<Integer, List<String>> registersByClient = new HashMap<>();
+
                 for (ActiveCard card : activeCards) {
                     int clientID = card.clientID();
                     String cardName = card.card();
 
-                    controller.showActiveCard(clientID, cardName); // Visually show
-                    controller.animateRobotAction(clientID, cardName); // Basic arrow
+                    registersByClient.computeIfAbsent(clientID, k -> new ArrayList<>()).add(cardName);
+
+                    controller.showActiveCard(clientID, cardName);
+                    controller.animateRobotAction(clientID, cardName);
+                }
+
+                for (Map.Entry<Integer, List<String>> entry : registersByClient.entrySet()) {
+                    controller.updateOtherPlayerRegister(entry.getKey(), entry.getValue());
                 }
             }
         });
