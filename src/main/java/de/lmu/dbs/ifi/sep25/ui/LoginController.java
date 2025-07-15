@@ -47,7 +47,10 @@ import java.util.Set;
  */
 public class LoginController {
     private static final Logger logger = LogManager.getLogger(LoginController.class);
-
+    private final ToggleGroup figureToggleGroup = new ToggleGroup();
+    private final Set<Integer> takenFigures = new HashSet<>();
+    public String cachedName;
+    public int cachedFigure;
     @FXML
     private TextField hostField;
     @FXML
@@ -72,31 +75,26 @@ public class LoginController {
     private ScrollPane figureScrollPane;
     @FXML
     private Button scrollLeftButton, scrollRightButton;
-
-    private final ToggleGroup figureToggleGroup = new ToggleGroup();
-
     /**
      * Property zur Bindung des Spielernamens.
      */
-    private StringProperty playerName = new SimpleStringProperty();
-
+    private final StringProperty playerName = new SimpleStringProperty();
     /**
      * Property zur Bindung der ausgewählten Spielfigur.
      */
-    private ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
+    private final ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
     private Stage stage;
-    public String cachedName;
-    public int cachedFigure;
     private boolean figureTakenWarningShown = false;
-    private final Set<Integer> takenFigures = new HashSet<>();
 
-    /**
-     * Initialisiert die Login-Oberfläche:
-     * - registriert den Controller
-     * - füllt die Auswahlbox für Spielfiguren
-     * - bindet UI-Komponenten an Properties
-     */
     @FXML
+    /**
+     * Initialisiert die Login-Oberfläche.
+     * <p>
+     * Lädt die verfügbaren Roboterfiguren in die Galerie, setzt die Event-Handler für die Auswahl
+     * und Scroll-Buttons, und bindet die Eingabefelder für den Spielernamen und die Spielfigur.
+     * Stellt sicher, dass Warnhinweise bei gültiger Auswahl ausgeblendet werden.
+     * Registriert den Controller im ControllerRegistry.
+     */
     private void initialize() {
         int robotCount = 6;
 
@@ -162,9 +160,11 @@ public class LoginController {
 
     /**
      * Wird aufgerufen, wenn der Nutzer auf "Login" klickt.
-     * Validiert die Eingaben und sendet eine Login-Nachricht an den Server.
+     * Validiert die Eingaben für Name und Spielfigur, verwendet Standardwerte für Host und Port,
+     * stellt die Verbindung zum Server her und speichert die Nutzerdaten.
+     * Zeigt bei Fehlern entsprechende Warnungen an und deaktiviert den Login-Button während der Verarbeitung.
      *
-     * @param event Das zugehörige ActionEvent (nicht verwendet).
+     * @param event Das zugehörige ActionEvent.
      */
     @FXML
     private void handleLogin(ActionEvent event) {
@@ -213,6 +213,14 @@ public class LoginController {
         }
     }
 
+    /**
+     * Zeigt eine Fehlermeldung an, wenn die Auswahl ungültig ist.
+     * Setzt den Warnhinweis sichtbar, spielt eine Shake-Animation für das Eingabefeld
+     * und aktiviert den Button wieder.
+     *
+     * @param errorText Der anzuzeigende Fehlertext.
+     * @param event     Das zugehörige ActionEvent.
+     */
     private void displaySelectionError(String errorText, ActionEvent event) {
         warningLabel.setText(errorText);
         warningLabel.setVisible(true);
@@ -221,12 +229,15 @@ public class LoginController {
         ((Node) event.getSource()).setDisable(false);
     }
 
+
     /**
-     * Wird aufgerufen, wenn der Nutzer auf "KI beitreten" klickt.
-     * Stellt eine Verbindung zum Server her und meldet einen Bot-Spieler automatisch an.
-     * Die Eingabefelder werden deaktiviert, um eine manuelle Eingabe zu verhindern.
+     * Wird aufgerufen, wenn der Nutzer auf "Bot-Login" klickt.
+     * <p>
+     * Deaktiviert die Eingabefelder, wählt einen zufälligen Namen und eine zufällige Spielfigur für den Bot,
+     * verwendet Standardwerte für Host und Port, stellt die Verbindung zum Server her und sendet die Bot- und Spielerinformationen.
+     * Zeigt bei Fehlern entsprechende Warnungen an und aktiviert die Eingabefelder wieder.
      *
-     * @param event Das zugehörige ActionEvent (nicht verwendet).
+     * @param event Das zugehörige ActionEvent.
      */
     @FXML
     private void handleBotLogin(ActionEvent event) {
@@ -276,10 +287,13 @@ public class LoginController {
         }
     }
 
+
     /**
-     * Wird aufgerufen, wenn der Login erfolgreich war.
-     * Lädt die Lobby-Ansicht und wechselt dorthin.
-     *
+     * Wird nach erfolgreichem Login aufgerufen und lädt die Lobby-Oberfläche.
+     * <p>
+     * Lädt das FXML der Lobby, initialisiert den zugehörigen Controller,
+     * setzt die Szene und zeigt das Lobby-Fenster an.
+     * Bei Fehlern wird eine entsprechende Fehlermeldung angezeigt.
      */
     public void loginSuccess() {
         try {
@@ -326,14 +340,14 @@ public class LoginController {
             Button okButton = new Button("OK");
             okButton.setDefaultButton(true);
             okButton.setStyle("""
-            -fx-background-color: #e0e0e0;
-            -fx-text-fill: black;
-            -fx-font-size: 13px;
-            -fx-padding: 6 14 6 14;
-            -fx-background-radius: 6;
-            -fx-border-radius: 6;
-            -fx-cursor: hand;
-        """);
+                        -fx-background-color: #e0e0e0;
+                        -fx-text-fill: black;
+                        -fx-font-size: 13px;
+                        -fx-padding: 6 14 6 14;
+                        -fx-background-radius: 6;
+                        -fx-border-radius: 6;
+                        -fx-cursor: hand;
+                    """);
 
             okButton.setOnMouseEntered(e -> {
                 okButton.setScaleX(1.1);
@@ -351,12 +365,12 @@ public class LoginController {
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(20));
             layout.setStyle("""
-            -fx-background-color: #1a1a1a;
-            -fx-background-radius: 12;
-            -fx-border-radius: 12;
-            -fx-border-color: #b00020;
-            -fx-border-width: 2;
-        """);
+                        -fx-background-color: #1a1a1a;
+                        -fx-background-radius: 12;
+                        -fx-border-radius: 12;
+                        -fx-border-color: #b00020;
+                        -fx-border-width: 2;
+                    """);
 
             Scene scene = new Scene(layout);
             scene.setFill(Color.TRANSPARENT);
@@ -397,10 +411,20 @@ public class LoginController {
 
     }
 
+    /**
+     * Gibt zurück, ob die Warnung für eine bereits gewählte Spielfigur angezeigt wurde.
+     *
+     * @return true, wenn die Warnung angezeigt wurde, sonst false
+     */
     public boolean isFigureTakenWarningShown() {
         return figureTakenWarningShown;
     }
 
+    /**
+     * Setzt den Status, ob die Warnung für eine bereits gewählte Spielfigur angezeigt wurde.
+     *
+     * @param shown true, wenn die Warnung angezeigt werden soll, sonst false
+     */
     public void setFigureTakenWarningShown(boolean shown) {
         this.figureTakenWarningShown = shown;
     }
@@ -417,10 +441,22 @@ public class LoginController {
         alert.showAndWait();
     }
 
+    /**
+     * Setzt das aktuelle Stage-Objekt für den Controller.
+     *
+     * @param stage Das zu setzende Stage-Fenster.
+     */
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
+    /**
+     * Spielt eine Shake-Animation für das angegebene Node-Element ab.
+     * <p>
+     * Die Methode verschiebt das Element mehrfach horizontal, um einen "Shake"-Effekt zu erzeugen.
+     *
+     * @param node Das zu animierende Node-Element.
+     */
     private void shakeNode(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(50), node);
         tt.setFromX(-10);
