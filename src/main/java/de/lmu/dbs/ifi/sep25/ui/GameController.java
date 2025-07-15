@@ -1021,7 +1021,7 @@ public class GameController {
         }
     }
 
-    private void showMiniRobot(int clientID) {
+    public void showMiniRobot(int clientID) {
         try {
             int robotID = clientToRobotID.getOrDefault(clientID, 0);
             String imagePath = "/assets/robots/robot_0" + robotID + "_right.png";

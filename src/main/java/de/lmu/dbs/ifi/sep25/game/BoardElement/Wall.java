@@ -125,14 +125,7 @@ public class Wall extends BoardElement {
      * @return Returns true if it can pass through, otherwise returns false.
      */
     public boolean canPassThroughFromDirection(Direction fromDirection) {
-//        return !isDirectionBlocked(fromDirection);
-        String fromDirStr = fromDirection.toString().toLowerCase();
-        for (Direction blockedDir : blockedDirections) {
-            if (blockedDir.toString().toLowerCase().equals(fromDirStr)) {
-                return false;
-            }
-        }
-        return true;
+        return !isDirectionBlocked(fromDirection);
     }
 
     /**
@@ -144,14 +137,7 @@ public class Wall extends BoardElement {
      */
     public boolean canExitToDirection(Direction toDirection) {
         // If the wall blocks the direction to which the robot is exiting, it cannot pass
-//        return !isDirectionBlocked(toDirection);
-        String toDirStr = toDirection.toString().toLowerCase();
-        for (Direction blockedDir : blockedDirections) {
-            if (blockedDir.toString().toLowerCase().equals(toDirStr)) {
-                return false;
-            }
-        }
-        return true;
+        return !isDirectionBlocked(toDirection);
     }
 
     /**
