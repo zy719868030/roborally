@@ -74,7 +74,7 @@
         </VBox>
     </VBox>
 
-    <!-- Miniatur-Icons für Restore (z. B. Chat) – gehört hier rein -->
+    <!-- Miniatur-Icons für Restore Chat -->
     <HBox fx:id="iconMenu" spacing="5" alignment="BOTTOM_LEFT"
           visible="false" managed="false">
         <Button fx:id="chatRestoreButton"
@@ -134,7 +134,17 @@
 
 
         <!-- Handkartenbereich -->
-        <HBox fx:id="handCardBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>
+        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
+            <HBox fx:id="handCardBox" spacing="10" alignment="CENTER_LEFT"/>
+            <Button text="Sortieren"
+                    fx:id="shuffleVisualButton"
+                    onAction="#handleShuffleVisual"
+                    styleClass="senden-button"
+                    prefWidth="100" prefHeight="40"
+                    visible="false" managed="false"/>
+        </HBox>
+
+
         <!-- Register + Discard-Pile kombiniert -->
         <HBox spacing="20" alignment="CENTER">
             <!-- Ablagestapel links -->
@@ -146,6 +156,10 @@
                     <Label text="Ablage"
                            style="-fx-text-fill: #00ffff; -fx-font-size: 12px; -fx-font-weight: bold;"
                            StackPane.alignment="CENTER"/>
+                    <Label fx:id="discardCountLabel"
+                           text="0"
+                           style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;"
+                           StackPane.alignment="BOTTOM_RIGHT"/>
                 </StackPane>
 
             </VBox>
@@ -158,7 +172,6 @@
             </HBox>
         </HBox>
 
-
         <!-- Bestätigungs-Button -->
         <Button text="Bestätigen"
                 fx:id="confirmSelectionButton"
@@ -166,10 +179,8 @@
                 styleClass="senden-button"
                 prefWidth="180" prefHeight="50"/>
 
-
         <!-- Gespielte Karten -->
         <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
-
 
 
     </VBox>
