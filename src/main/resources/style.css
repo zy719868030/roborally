@@ -314,17 +314,17 @@
     -fx-alignment: center;
 }
 .phase-setup {
-    -fx-text-fill: #00ffd0; /* Cian neón */
+    -fx-text-fill: #00ffd0; /* Cian  */
     -fx-effect: dropshadow(gaussian, #00ffd0, 2, 0.3, 0, 0);
 }
 
 .phase-programming {
-    -fx-text-fill: #ffe664; /* Amarillo neón */
+    -fx-text-fill: #ffe664; /* neon */
     -fx-effect: dropshadow(gaussian, #ffe664, 2, 0.3, 0, 0);
 }
 
 .phase-activation {
-    -fx-text-fill: #ff4d94; /* Magenta / rosa neón */
+    -fx-text-fill: #ff4d94; /* rosa neon */
     -fx-effect: dropshadow(gaussian, #ff4d94, 2, 0.3, 0, 0);
 }
 .tooltip {
@@ -336,12 +336,45 @@
     -fx-padding: 10;
     -fx-effect: dropshadow(gaussian, #00ffff, 10, 0.8, 0, 0);
 }
+.energy-box {
+    -fx-background-color: rgba(0, 255, 255, 0.08);
+    -fx-padding: 6 10;
+    -fx-border-color: #00ffff;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.energy-icon {
+    -fx-font-size: 20px;
+    -fx-text-fill: limegreen;
+}
+
+.energy-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.energy-bar {
+    -fx-accent: #00ffff;
+}
+
+
 #energyBar .bar {
     -fx-background-color: linear-gradient(to right, #00ffcc, #00ffff);
+    -fx-background-radius: 8;
 }
+
+
 #energyBar .track {
     -fx-background-color: #222;
+    -fx-background-radius: 8;
 }
+
+
+
 .countdown-label {
     -fx-font-family: "Orbitron";
     -fx-font-weight: bold;
