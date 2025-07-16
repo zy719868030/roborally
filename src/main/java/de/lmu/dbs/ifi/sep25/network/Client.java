@@ -331,7 +331,7 @@ public class Client {
      * @param json A JSON string representing the message containing player renaming information,
      *             including the client's ID and the new name.
      */
-    private void handleBodyPlayerRenamed(String json) {//@SEBAS
+    private void handleBodyPlayerRenamed(String json) {
         Message<BodyPlayerRenamed> msg = JsonUtil.parseMessage(json, BodyPlayerRenamed.class);
         int clientID = msg.messageBody().clientID();
         String newName = msg.messageBody().newName();
@@ -635,7 +635,7 @@ public class Client {
      *
      * @param json JSON-String mit der Client-ID des aktiven Spielers
      */
-    private void handleBodyCurrentPlayer(String json) {//@SEBAS
+    private void handleBodyCurrentPlayer(String json) {
         Message<MessageDefinitions.BodyCurrentPlayer> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyCurrentPlayer.class);
 
@@ -767,7 +767,7 @@ public class Client {
                 controller.showShuffleAnimation(); // Optional UI effect
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyShuffleCoding");
-            }        //TODO fx display deck size | optional: animation Raneem
+            }
 
         });
     }
@@ -1076,7 +1076,6 @@ public class Client {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
                 controller.promptDamageCardSelection(count, availablePiles, selectedCards -> {
-                    // Callback cuando el usuario haya elegido
                     if (selectedCards != null && !selectedCards.isEmpty()) {
                         sendMessage(new Message<>(new MessageDefinitions.BodySelectedDamage(selectedCards)));
                         controller.appendChatMessage("[INFO] Du hast folgende Schadenskarten gewählt: " + selectedCards);
@@ -1255,10 +1254,11 @@ public class Client {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
                 controller.showEnergyChange(clientID, count, source);
+                controller.updateEnergyIfLocal(clientID, count);
+
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyEnergy");
             }
-            //TODO optional: play energy animation depending on: id -> source
         });
     }
 

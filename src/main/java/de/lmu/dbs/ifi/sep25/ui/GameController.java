@@ -2,6 +2,7 @@ package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
@@ -142,6 +143,8 @@ public class GameController {
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
     // Map: clientID -> List der ausgewählten Registerkarten (Strings)
     private final Map<Integer, List<String>> otherPlayersRegisters = new HashMap<>();
+    private final Map<Integer, Integer> clientEnergyMap = new HashMap<>();
+
 
     private int currentPhaseID = -1;
 
@@ -225,6 +228,8 @@ public class GameController {
 
         chatInput.setOnAction(e -> handleSendChat());
         addHoverAnimation(chatToggleButton);
+        Tooltip.install(energyBox, new Tooltip("Deine Energieanzeige"));
+
 
     }
 
@@ -707,7 +712,7 @@ public class GameController {
         // Phase-specific UI updates
         switch (phaseID) {
             case 0 -> {
-                setPhaseLabel("🛠️ Phase: Aufbau", "phase-setup");
+                setPhaseLabel("🔧 Phase: Aufbau", "phase-setup");
                 showLogoTransition();
                 if (playerStatusBox != null) {
                     playerStatusBox.setVisible(false);
@@ -748,14 +753,18 @@ public class GameController {
                 }
 
                 if (energyBox != null) {
-                    energyBox.setVisible(false);
-                    energyBox.setManaged(false);
+                    energyBox.setVisible(true);
+                    energyBox.setManaged(true);
                 }
+                Player currentPlayer = getCurrentPlayer();
+                if (currentPlayer != null) {
+                    updateEnergyDisplay(currentPlayer.getEnergy());
+                }
+
 
                 statusLabel.setText("🌟 Spiel läuft...");
                 statusLabel.getStyleClass().setAll("dynamic-status");
 
-                // Ensure conflicting styles are removed
                 statusLabel.getStyleClass().removeAll("status-other-turn", "another-old-style");
 
                 if (!statusLabel.getStyleClass().contains("dynamic-status")) {
@@ -870,13 +879,25 @@ public class GameController {
         if (index < 0 || index >= registerBox.getChildren().size()) return;
 
         Node cardNode = registerBox.getChildren().get(index);
-        if (!cardNode.getStyleClass().contains("card-active")) {
-            cardNode.getStyleClass().add("card-active");
+        ImageView cardImage = findImageView(cardNode);
+        if (cardImage != null && !cardImage.getStyleClass().contains("card-active")) {
+            cardImage.getStyleClass().add("card-active");
         }
 
         PauseTransition pause = new PauseTransition(Duration.seconds(2));
         pause.setOnFinished(e -> cardNode.getStyleClass().remove("card-active"));
         pause.play();
+    }
+    private ImageView findImageView(Node node) {
+        if (node instanceof ImageView) {
+            return (ImageView) node;
+        } else if (node instanceof Parent parent) {
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                ImageView result = findImageView(child);
+                if (result != null) return result;
+            }
+        }
+        return null;
     }
 
 
@@ -2377,11 +2398,19 @@ public class GameController {
      * @param source   Quelle der Energie ("EnergySpace", "Laser")
      */
     public void showEnergyChange(int clientID, int energy, String source) {
+        int myID = ClientSingleton.getInstance().getID();
         String playerName = getPlayerNameById(clientID);
-        appendChatMessage("[ENERGIE] Spieler " + playerName
-                + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")");
-        updateEnergyDisplay(energy);
+
+        if (clientID == myID) {
+            appendChatMessage("[ENERGIE] Du hast jetzt " + energy + " ⚡ (Quelle: " + source + ")");
+            updateEnergyDisplay(energy);
+        } else {
+            appendChatMessage("[ENERGIE] Spieler " + playerName
+                    + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")");
+        }
     }
+
+
 
     /**
      * Zeigt an, dass ein Spieler einen Checkpoint erreicht hat.
@@ -2522,7 +2551,7 @@ public class GameController {
                 img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
             } catch (Exception e) {
                 appLogger.warn("Fehlendes Schadensbild: {}", card);
-                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+                img = new Image(getClass().getResourceAsStream("/assets/cover_card.png"));
             }
 
             ImageView view = new ImageView(img);
@@ -2549,7 +2578,7 @@ public class GameController {
             try {
                 img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
             } catch (Exception e) {
-                img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+                img = new Image(getClass().getResourceAsStream("/assets/cover_card.png"));
             }
 
             ImageView view = new ImageView(img);
@@ -3481,6 +3510,20 @@ public class GameController {
         }
 
         timeline.play();
+    }
+    private List<Player> players = new ArrayList<>();
+
+    private Player getCurrentPlayer() {
+        return players.stream()
+                .filter(p -> p.getClientID() == currentPlayerID)
+                .findFirst()
+                .orElse(null);
+    }
+    public void updateEnergyIfLocal(int clientID, int energy) {
+        int myID = ClientSingleton.getInstance().getID();
+        if (clientID == myID) {
+            updateEnergyDisplay(energy);
+        }
     }
 
 }

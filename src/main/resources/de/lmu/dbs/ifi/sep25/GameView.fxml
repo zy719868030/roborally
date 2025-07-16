@@ -30,13 +30,26 @@
             <!-- Dynamisch gefüllt durch GameController -->
         </VBox>
         <!-- Energieleiste -->
-        <HBox fx:id="energyBox" spacing="5" alignment="CENTER_LEFT"
-              visible="false" managed="false"
-              style="-fx-padding: 5;">
-            <Label text="⚡" fx:id="energyIcon" style="-fx-font-size: 16px;" />
-            <ProgressBar fx:id="energyBar" prefWidth="150" progress="1.0" />
-            <Label fx:id="energyValue" text="5" />
+        <HBox fx:id="energyBox"
+              spacing="10"
+              alignment="CENTER_LEFT"
+              visible="false"
+              managed="false"
+              styleClass="energy-box">
+            <Label fx:id="energyIcon"
+                   text="⚡"
+                   styleClass="energy-icon" />
+
+            <ProgressBar fx:id="energyBar"
+                         prefWidth="160"
+                         prefHeight="16"
+                         styleClass="energy-bar" />
+
+            <Label fx:id="energyValue"
+                   text="5"
+                   styleClass="energy-value" />
         </HBox>
+
         <Region prefHeight="10"/>
         <!-- Chat Minimieren -->
         <Button fx:id="chatToggleButton"
