@@ -24,6 +24,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
+import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.RadialGradient;
@@ -68,9 +69,12 @@ public class GameController {
     private VBox chatBox;
     @FXML
     private HBox iconMenu;
-    @FXML private Button chatToggleButton;
-    @FXML private Button chatRestoreButton;
-    @FXML private Label chatIconLabel;
+    @FXML
+    private Button chatToggleButton;
+    @FXML
+    private Button chatRestoreButton;
+    @FXML
+    private Label chatIconLabel;
     @FXML
     private VBox leftSidebar;
     @FXML
@@ -80,6 +84,10 @@ public class GameController {
 
     @FXML
     private HBox handCardBox;
+    @FXML
+    private Button shuffleVisualButton;
+
+
     @FXML
     private HBox registerBox;
     private static final int TILE_SIZE = 60;
@@ -115,9 +123,12 @@ public class GameController {
 
 
     private int lastEnergy = -1;
-    @FXML private Label energyIcon;
-    @FXML private Label energyValue;
-    @FXML private ProgressBar energyBar;
+    @FXML
+    private Label energyIcon;
+    @FXML
+    private Label energyValue;
+    @FXML
+    private ProgressBar energyBar;
 
 
     private double scaleValue = 1.0;
@@ -127,32 +138,26 @@ public class GameController {
     private Timeline blinkTimeline;
 
 
-
-
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
     // Map: clientID -> List der ausgewählten Registerkarten (Strings)
     private final Map<Integer, List<String>> otherPlayersRegisters = new HashMap<>();
 
     private int currentPhaseID = -1;
+
     public void setCurrentPhaseID(int phaseID) {
         this.currentPhaseID = phaseID;
     }
 
 
     private final List<String> confirmedCards = new ArrayList<>();
-
     private final Map<Integer, PauseTransition> activeHighlights = new HashMap<>();
     private final List<StackPane> startPointPanes = new ArrayList<>();
+    private final List<String> discardedCards = new ArrayList<>();
 
 
     private double dragStartX, dragStartY;
     private TranslateTransition robotFloat;
-
-
-    private final List<String> discardedCards = new ArrayList<>();
-
-
     private static final int MAX_ENERGY = 10;
 
     private Circle timerCircle;
@@ -216,10 +221,14 @@ public class GameController {
             }
         });
 
+
+
         chatInput.setOnAction(e -> handleSendChat());
         addHoverAnimation(chatToggleButton);
 
     }
+
+
     private void addHoverAnimation(Button button) {
         button.setOnMouseEntered(e -> {
             TranslateTransition tt = new TranslateTransition(Duration.millis(150), button);
@@ -734,7 +743,7 @@ public class GameController {
 
                     playedCardsBox.setVisible(false);
                     playerStatusBox.setManaged(false);
-                  playerStatusBox.getChildren().removeIf(node -> !(node instanceof Label));
+                    playerStatusBox.getChildren().removeIf(node -> !(node instanceof Label));
 
                 }
 
@@ -766,10 +775,21 @@ public class GameController {
                 if (confirmSelectionButton != null) {
                     updateConfirmButtonVisibility();
                 }
+                if (shuffleVisualButton != null) {
+                    shuffleVisualButton.setVisible(true);
+                    shuffleVisualButton.setManaged(true);
+                }
+
             }
 
             case 3 -> { // Activation phase
                 setPhaseLabel("⚡ Phase: Aktivierung", "phase-activation");
+
+                if (shuffleVisualButton != null) {
+                    shuffleVisualButton.setVisible(false);
+                    shuffleVisualButton.setManaged(false);
+                }
+
 
                 if (playerStatusBox != null) {
                     playerStatusBox.setVisible(true);
@@ -794,12 +814,25 @@ public class GameController {
                 }
 
                 fadeOutCountdown();
+                stopCountdownSound();
 
                 Platform.runLater(this::clearHandUI);
 
                 if (!confirmedCards.isEmpty()) {
                     displayConfirmedCards(confirmedCards);
                 }
+                Timeline activationTimeline = new Timeline();
+
+                for (int i = 0; i < registerBox.getChildren().size(); i++) {
+                    int index = i;
+                    KeyFrame frame = new KeyFrame(Duration.seconds(index * 1.5), e -> {
+                        highlightRegisterCard(index);
+                    });
+                    activationTimeline.getKeyFrames().add(frame);
+                }
+
+                activationTimeline.play();
+
 
                 activationPhaseActive = true;
                 refreshPlayerStatusUI();
@@ -833,6 +866,19 @@ public class GameController {
         });
         Arrays.fill(registerState, null); // reset internal state
     }
+    private void highlightRegisterCard(int index) {
+        if (index < 0 || index >= registerBox.getChildren().size()) return;
+
+        Node cardNode = registerBox.getChildren().get(index);
+        if (!cardNode.getStyleClass().contains("card-active")) {
+            cardNode.getStyleClass().add("card-active");
+        }
+
+        PauseTransition pause = new PauseTransition(Duration.seconds(2));
+        pause.setOnFinished(e -> cardNode.getStyleClass().remove("card-active"));
+        pause.play();
+    }
+
 
     private void setPhaseLabel(String phaseText, String cssClass) {
         phaseLabel.setText(phaseText);
@@ -907,13 +953,12 @@ public class GameController {
      * @param cardName Der Name der gespielten Karte (z. B. "move_1", "turn_right").
      */
     public void showPlayedCard(int clientID, String cardName) {
-        // Verwende Platzhalter, wenn Bild fehlt
         String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
         Image cardImage;
         try {
             cardImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
         } catch (Exception e) {
-            cardImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
+            cardImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover_card.png")));
         }
 
         ImageView cardView = new ImageView(cardImage);
@@ -953,7 +998,7 @@ public class GameController {
             if (!statusLabel.getStyleClass().contains("dynamic-status")) {
                 statusLabel.getStyleClass().add("dynamic-status");
             }
-            playWavingAnimation(statusLabel); //
+            playWavingAnimation(statusLabel);
             // Imagen Robot)
             showMiniRobot(myID);
 
@@ -1021,7 +1066,7 @@ public class GameController {
         }
     }
 
-    public void showMiniRobot(int clientID) {
+    private void showMiniRobot(int clientID) {
         try {
             int robotID = clientToRobotID.getOrDefault(clientID, 0);
             String imagePath = "/assets/robots/robot_0" + robotID + "_right.png";
@@ -1054,7 +1099,7 @@ public class GameController {
             robotView.setFitWidth(40);
             robotView.setFitHeight(40);
             robotView.setPreserveRatio(true);
-            robotView.setUserData("robot");//verbessern
+            robotView.setUserData("robot");
 
             // Setze Roboter auf das Spielfeld (Grid)
             StackPane tile = getTileAt(x, y);
@@ -1179,14 +1224,14 @@ public class GameController {
     }
 
 
-        private ImageView createClickableCard(String cardName) {
+    private ImageView createClickableCard(String cardName) {
         String imagePath = "/assets/cards/" + cardName + ".png";
         Image img;
         try {
             img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
         } catch (Exception e) {
             logger.error("Image not found: {}", imagePath);
-            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
+            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover_card.png")));
         }
 
         ImageView view = new ImageView(img);
@@ -1316,12 +1361,12 @@ public class GameController {
         try {
             img = new Image(getClass().getResourceAsStream(imagePath));
         } catch (Exception e) {
-            img = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+            img = new Image(getClass().getResourceAsStream("/assets/cover_card.png"));
         }
 
         ImageView cardView = new ImageView(img);
-        cardView.setFitWidth(60);
-        cardView.setFitHeight(90);
+        cardView.setFitWidth(80);
+        cardView.setFitHeight(120);
         cardView.setPreserveRatio(true);
         cardView.setSmooth(true);
         cardView.setOpacity(0.7);
@@ -1548,11 +1593,11 @@ public class GameController {
             appLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
         }
 
-        // Sende "fertig" Nachricht an Server
+        // Sende Nachricht an Server
         var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
         var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
         ClientSingleton.getInstance().sendMessage(finishedMsg);
-
+        stopCountdownSound();
         appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
 
         confirmSelectionButton.setVisible(false);
@@ -1571,7 +1616,7 @@ public class GameController {
         handCardBox.getChildren().clear();
 
         for (int i = 0; i < count; i++) {
-            Image back = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
+            Image back = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover_card.png")));
 
             ImageView cardBack = new ImageView(back);
             cardBack.setFitWidth(60);
@@ -1583,7 +1628,7 @@ public class GameController {
         }
 
         String playerName = getPlayerNameById(clientID);
-        appendChatMessage("Spieler " + playerName + " hat " + count + " Karten erhalten.");
+        // appendChatMessage("Spieler " + playerName + " hat " + count + " Karten erhalten.");
     }
 
     /**
@@ -1591,10 +1636,19 @@ public class GameController {
      */
     public void showShuffleAnimation() {
         appendChatMessage("[INFO] Das Programmierdeck wurde neu gemischt.");
+        playShuffleSound();
         shuffleHandCards();
 
-        // Optional: UI-Animation hier einbauen @Raneem
     }
+
+    @FXML
+    private void handleShuffleVisual() {
+        playShuffleSound();
+        List<Node> cards = new ArrayList<>(handCardBox.getChildren());
+        Collections.shuffle(cards);
+        handCardBox.getChildren().setAll(cards);
+    }
+
 
     /**
      * Wird aufgerufen, wenn ein Spieler eine Karte für sein Register ausgewählt hat.
@@ -1826,6 +1880,8 @@ public class GameController {
 
                     if (secondsLeft <= 0) {
                         countdownTimer.stop();
+                        stopCountdownSound();
+
                         if (blinkTimeline != null) blinkTimeline.stop(); //
                         timerLabel.setOpacity(1);
                         timerLabel.setText("Zeit abgelaufen!");
@@ -1833,56 +1889,86 @@ public class GameController {
                         updateCountdownColor(secondsLeft);
                     }
 
-
                 })
         );
         countdownTimer.setCycleCount(30);
+        playCountdownSound();
         countdownTimer.play();
+
     }
 
 
-private void animatePulse(Label label) {
-    ScaleTransition zoom = new ScaleTransition(Duration.millis(200), label);
-    zoom.setFromX(1.3);
-    zoom.setFromY(1.3);
-    zoom.setToX(1.0);
-    zoom.setToY(1.0);
-    zoom.play();
-}
-private void fadeOutCountdown() {
-    FadeTransition fade = new FadeTransition(Duration.seconds(1), timerContainer);
-    fade.setFromValue(1.0);
-    fade.setToValue(0.0);
-    fade.setOnFinished(e -> {
-        timerLabel.setVisible(false);
-        timerLabel.setManaged(false);
-        ((Pane) timerLabel.getParent()).getChildren().remove(timerContainer);
-    });
-    fade.play();
-}
-private void updateCountdownColor(int secondsLeft) {
-    if (blinkTimeline != null) {
-        blinkTimeline.stop();
-        timerLabel.setOpacity(1);
+    private void animatePulse(Label label) {
+        ScaleTransition zoom = new ScaleTransition(Duration.millis(200), label);
+        zoom.setFromX(1.3);
+        zoom.setFromY(1.3);
+        zoom.setToX(1.0);
+        zoom.setToY(1.0);
+        zoom.play();
     }
-
-    String styleBase = "-fx-font-size: 60px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, black, 15, 0.7, 0, 0);";
-
-    if (secondsLeft > 19) {
-        timerLabel.setStyle("-fx-text-fill: #00ffd0;" + styleBase);
-    } else if (secondsLeft > 9) {
-        timerLabel.setStyle("-fx-text-fill: #ffcc00;" + styleBase);
-    } else {
-        timerLabel.setStyle("-fx-text-fill: #ff4444;" + styleBase);
-
-        if (secondsLeft <= 5) {
+    private void fadeOutCountdown() {
+        FadeTransition fade = new FadeTransition(Duration.seconds(1), timerContainer);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+        fade.setOnFinished(e -> {
+            timerLabel.setVisible(false);
+            timerLabel.setManaged(false);
+            ((Pane) timerLabel.getParent()).getChildren().remove(timerContainer);
+        });
+        fade.play();
+    }
+    private void updateCountdownColor(int secondsLeft) {
+        if (blinkTimeline != null) {
+            blinkTimeline.stop();
             timerLabel.setOpacity(1);
+        }
 
+        String styleBase = "-fx-font-size: 60px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-effect: dropshadow(gaussian, black, 15, 0.7, 0, 0);";
+
+        if (secondsLeft > 19) {
+            timerLabel.setStyle("-fx-text-fill: #00ffd0;" + styleBase);
+        } else if (secondsLeft > 9) {
+            timerLabel.setStyle("-fx-text-fill: #ffcc00;" + styleBase);
+        } else {
+            timerLabel.setStyle("-fx-text-fill: #ff4444;" + styleBase);
+
+            if (secondsLeft <= 5) {
+                timerLabel.setOpacity(1);
+
+            }
         }
     }
-}
+
+    private AudioClip countdownClip;
+
+    private void playCountdownSound() {
+        try {
+            countdownClip = new AudioClip(getClass().getResource("/audio/timer.wav").toExternalForm());
+            countdownClip.setCycleCount(1);
+            countdownClip.play();
+
+            PauseTransition stopSound = new PauseTransition(Duration.seconds(20));
+            stopSound.setOnFinished(e -> stopCountdownSound());
+            stopSound.play();
+
+        } catch (Exception e) {
+            System.err.println("Countdown-Sound konnte nicht geladen werden: " + e.getMessage());
+        }
+    }
+
+
+
+
+
+    private void stopCountdownSound() {
+        if (countdownClip != null && countdownClip.isPlaying()) {
+            System.out.println("stop.");
+            countdownClip.stop();
+        }
+    }
+
 
     /**
      * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
@@ -1897,6 +1983,7 @@ private void updateCountdownColor(int secondsLeft) {
         }
 
         fadeOutCountdown();
+        stopCountdownSound();
         appendChatMessage("[TIMER] Zeit ist abgelaufen.");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
@@ -1908,20 +1995,18 @@ private void updateCountdownColor(int secondsLeft) {
 
             for (PlayerEntry entry : recipientBox.getItems()) {
                 if (slowPlayers.contains(entry.getClientID())) {
-                    // Spieler visuell markieren (z. B. ✖ vor den Namen setzen)
                     entry.setName("✖ " + entry.getName());
                 }
             }
-
             // Optional: Auswahl zurücksetzen, falls vorheriger Eintrag jetzt verändert wurde
             recipientBox.getSelectionModel().clearSelection();
         }
     }
 
     /**
-     * Zeigt die vom Spieler bestätigten Karten, z. B. im Register oder Kartenbereich.
+     * Zeigt die vom Spieler bestätigten Karten im Register oder Kartenbereich.
      *
-     * @param cards Liste der Kartennamen (z. B. ["move_1", "turn_left", ...])
+     * @param cards Liste der Kartennamen
      */
     public void displayConfirmedCards(List<String> cards) {
         handCardBox.getChildren().clear();
@@ -1933,12 +2018,12 @@ private void updateCountdownColor(int secondsLeft) {
             try {
                 cardImage = new Image(getClass().getResourceAsStream(imagePath));
             } catch (Exception e) {
-                cardImage = new Image(getClass().getResourceAsStream("/assets/cover.png"));
+                cardImage = new Image(getClass().getResourceAsStream("/assets/cover_card.png"));
             }
 
             ImageView cardView = new ImageView(cardImage);
-            cardView.setFitWidth(60);
-            cardView.setFitHeight(90);
+            cardView.setFitWidth(80);
+            cardView.setFitHeight(120);
             cardView.setPreserveRatio(false);
             cardView.setSmooth(true);
 
@@ -1998,7 +2083,7 @@ private void updateCountdownColor(int secondsLeft) {
             Integer col = GridPane.getColumnIndex(node);
             Integer row = GridPane.getRowIndex(node);
 
-            // Falls col/row null (z. B. bei nicht gesetztem Index), skip
+            // Falls col/row null bei nicht gesetztem Index), skip
             if (col != null && row != null && col == x && row == y) {
                 return (StackPane) node;
             }
@@ -2010,17 +2095,15 @@ private void updateCountdownColor(int secondsLeft) {
 
 
     /**
-     * Ersetzt eine Karte in einem bestimmten Register (z. B. durch Schaden).
+     * Ersetzt eine Karte in einem bestimmten Register
      *
      * @param clientID ID des Spielers
      * @param register Register-Slot (0–4)
      * @param newCard  Name der neuen Karte
      */
     public void replaceCardInRegister(int clientID, int register, String newCard) {
-        // Placeholder: Anzeige im Chat (später grafisch auf dem Spielfeld zeigen)
         appendChatMessage("[INFO] Spieler " + clientID + " ersetzt Karte in Register " + register + " durch: " + newCard);
 
-        // TODO (optional): Animation oder visuelles Update für Register-Karte
     }
 
     /**
@@ -2208,7 +2291,7 @@ private void updateCountdownColor(int secondsLeft) {
     /**
      * Spielt eine einfache Animation basierend auf dem Animationstyp.
      *
-     * @param type Typ der Animation (z. B. "Movement", "Clockwise", "Checkpoint")
+     * @param type Typ der Animation ( "Movement", "Clockwise", "Checkpoint")
      */
     public void playAnimation(String type) {
         //appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
@@ -2291,7 +2374,7 @@ private void updateCountdownColor(int secondsLeft) {
      *
      * @param clientID Die Client-ID des Spielers
      * @param energy   Neue Energieanzahl
-     * @param source   Quelle der Energie (z. B. "EnergySpace", "Laser")
+     * @param source   Quelle der Energie ("EnergySpace", "Laser")
      */
     public void showEnergyChange(int clientID, int energy, String source) {
         String playerName = getPlayerNameById(clientID);
@@ -2342,6 +2425,12 @@ private void updateCountdownColor(int secondsLeft) {
             robotImage.setFitWidth(180);
             robotImage.setPreserveRatio(true);
 
+            TranslateTransition bounce = new TranslateTransition(Duration.seconds(0.6), robotImage);
+            bounce.setByY(-15);
+            bounce.setCycleCount(Animation.INDEFINITE);
+            bounce.setAutoReverse(true);
+            bounce.play();
+
             Label title = new Label(message);
             title.getStyleClass().add("status-label");
             title.setWrapText(true);
@@ -2370,13 +2459,25 @@ private void updateCountdownColor(int secondsLeft) {
             layout.getStyleClass().add("vbox");
 
             StackPane rootPane = new StackPane(layout);
+
+            String backgroundStyle = isWinner
+                    ? "-fx-background-color: linear-gradient(to bottom, #c8f7c5, #7ddf78);"
+                    : "-fx-background-color: linear-gradient(to bottom, #f8d7da, #f5c6cb);";
+            rootPane.setStyle(backgroundStyle);
+
             Scene scene = new Scene(rootPane, 800, 600);
             scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
             Stage stage = (Stage) root.getScene().getWindow();
             stage.setScene(scene);
+
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(700), rootPane);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            fadeIn.play();
         });
     }
+
 
 
     public void showInstructionDialog() {
@@ -2399,7 +2500,9 @@ private void updateCountdownColor(int secondsLeft) {
 
         dialog.showAndWait();
     }
-//DAMAGE CARDS
+
+
+// === DAMAGE ===
 
     /**
      * Zeigt dem Spieler die gezogenen Schadenskarten an.
@@ -2407,7 +2510,7 @@ private void updateCountdownColor(int secondsLeft) {
      * <p>Diese Methode wird aufgerufen, wenn der Server dem Spieler automatisch Schadenskarten zuweist.
      * Sie zeigt die entsprechenden Kartengrafiken im Handkartenbereich an.</p>
      *
-     * @param cards Liste der Schadenskarten (z. B. ["spam", "worm", "trojan_horse"])
+     * @param cards Liste der Schadenskarten ["spam", "worm", "trojan_horse"]
      */
     public void showDrawnDamageCards(List<String> cards) {
         handCardBox.getChildren().clear();
@@ -2423,8 +2526,8 @@ private void updateCountdownColor(int secondsLeft) {
             }
 
             ImageView view = new ImageView(img);
-            view.setFitWidth(60);
-            view.setFitHeight(90);
+            view.setFitWidth(80);
+            view.setFitHeight(120);
             view.setPreserveRatio(true);
             view.setSmooth(true);
 
@@ -2450,8 +2553,8 @@ private void updateCountdownColor(int secondsLeft) {
             }
 
             ImageView view = new ImageView(img);
-            view.setFitWidth(60);
-            view.setFitHeight(90);
+            view.setFitWidth(80);
+            view.setFitHeight(120);
             view.setPreserveRatio(true);
             view.setSmooth(true);
 
@@ -2687,35 +2790,71 @@ private void updateCountdownColor(int secondsLeft) {
     private void shuffleHandCards() {
         ObservableList<Node> cards = handCardBox.getChildren();
 
-        // Keine Aktion bei 0 oder 1 Karte
         if (cards.size() <= 1) return;
 
-        // Kopiere die aktuelle Kartenliste und mische sie zufällig
         List<Node> shuffled = new ArrayList<>(cards);
         Collections.shuffle(shuffled);
 
-        // Erstelle eine Ausblend-Animation (Fade-Out)
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(150), handCardBox);
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), handCardBox);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);
 
-        // Sobald ausgeblendet, ersetze die Karten durch die gemischte Liste und blende wieder ein
         fadeOut.setOnFinished(e -> {
             handCardBox.getChildren().setAll(shuffled);
 
-            // Einblend-Animation (Fade-In)
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(150), handCardBox);
-            fadeIn.setFromValue(0.0);
-            fadeIn.setToValue(1.0);
-            fadeIn.play();
+            for (Node card : shuffled) {
+                card.setOpacity(0);
+                card.setRotate(0);
+                card.setTranslateX(0);
+                card.setTranslateY(0);
+            }
+
+            // Delay-Effekt
+            for (int i = 0; i < shuffled.size(); i++) {
+                Node card = shuffled.get(i);
+                int delayMs = i * 120;
+
+                PauseTransition delay = new PauseTransition(Duration.millis(delayMs));
+                delay.setOnFinished(ev -> {
+                    FadeTransition fadeIn = new FadeTransition(Duration.millis(300), card);
+                    fadeIn.setFromValue(0);
+                    fadeIn.setToValue(1);
+
+                    TranslateTransition jump = new TranslateTransition(Duration.millis(400), card);
+                    jump.setFromY(-40 + Math.random() * -20);
+                    jump.setToY(0);
+                    jump.setInterpolator(Interpolator.EASE_OUT);
+
+                    RotateTransition rotate = new RotateTransition(Duration.millis(400), card);
+                    rotate.setFromAngle(-15 + Math.random() * 30);
+                    rotate.setToAngle(0);
+                    rotate.setInterpolator(Interpolator.EASE_OUT);
+
+                    ParallelTransition fullAnim = new ParallelTransition(fadeIn, jump, rotate);
+                    fullAnim.play();
+                });
+
+                delay.play();
+            }
+
+            handCardBox.setOpacity(1.0);
         });
 
-        // Starte die Animation
+        playShuffleSound();
         fadeOut.play();
 
         // Informiere den Spieler
         //appendChatMessage("[INFO] Deine Handkarten wurden gemischt.");
     }
+    private void playShuffleSound() {
+        try {
+            AudioClip clip = new AudioClip(getClass().getResource("/audio/shuffle-cards.wav").toExternalForm());
+            clip.play();
+        } catch (Exception e) {
+            System.err.println("Fehler beim Abspielen des Shuffle-Sounds: " + e.getMessage());
+        }
+    }
+
 
     /**
      * Synchronize the current player's nickname mapping.
@@ -2822,7 +2961,7 @@ private void updateCountdownColor(int secondsLeft) {
                     startMiniRobotFloatAnimation();
                 } else {
                     stopMiniRobotFloatAnimation();
-                    playerIcon.setTranslateY(0); // Asegura posición normal
+                    playerIcon.setTranslateY(0);
                 }
             } catch (Exception e) {
                 appLogger.warn("Fehler beim Anzeigen des Mini-Roboters: {}", e.getMessage());
@@ -2875,253 +3014,266 @@ private void updateCountdownColor(int secondsLeft) {
         glow.setOffsetY(0);
         robotView.setEffect(glow);
     }
-public void updateDiscardPile(String lastCardName) {
-    discardPileBox.getChildren().clear();
+    public void updateDiscardPile(String lastCardName) {
+        discardPileBox.getChildren().clear();
 
-    if (lastCardName != null) {
-        String path = "/assets/cards/" + lastCardName + ".png";
-        Image image;
-        try {
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
-        } catch (Exception e) {
-            image = new Image(getClass().getResourceAsStream("/assets/cover.png"));
-        }
-
-        ImageView view = new ImageView(image);
-        view.setFitWidth(60);
-        view.setFitHeight(90);
-        view.setPreserveRatio(true);
-        view.setSmooth(true);
-        discardPileBox.getChildren().add(view);
-    }
-}
-private void animateDiscard(ImageView cardView) {
-    TranslateTransition slide = new TranslateTransition(Duration.millis(300), cardView);
-    slide.setFromY(-50);
-    slide.setToY(0);
-    slide.setInterpolator(Interpolator.EASE_OUT);
-
-    FadeTransition fade = new FadeTransition(Duration.millis(300), cardView);
-    fade.setFromValue(0);
-    fade.setToValue(1);
-
-    ParallelTransition animation = new ParallelTransition(slide, fade);
-    animation.play();
-}
-
-public void updateOtherPlayerRegister(int clientID, List<String> registerCards) {
-    otherPlayersRegisters.put(clientID, registerCards);
-    refreshPlayerStatusUI();
-}
-private boolean activationPhaseActive = false;
-
-private void refreshPlayerStatusUI() {
-    Platform.runLater(() -> {
-        playerStatusBox.getChildren().clear();
-
-        for (Map.Entry<Integer, List<String>> entry : otherPlayersRegisters.entrySet()) {
-            int clientID = entry.getKey();
-            List<String> cards = entry.getValue();
-            String playerName = getPlayerNameById(clientID);
-
-            VBox playerBox = new VBox(2);
-            playerBox.setStyle("-fx-border-color: #33cccc; -fx-padding: 4; -fx-background-color: #e0f7f7;");
-
-            Label nameLabel = new Label(playerName);
-            nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #007777;");
-
-            HBox cardsBox = new HBox(3);
-            for (String card : cards) {
-                ImageView cardView = createCardBackOrFront(card, activationPhaseActive);
-                cardsBox.getChildren().add(cardView);
+        if (lastCardName != null) {
+            String path = "/assets/cards/" + lastCardName + ".png";
+            Image image;
+            try {
+                image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+            } catch (Exception e) {
+                image = new Image(getClass().getResourceAsStream("/assets/cover_card.png"));
             }
 
-            playerBox.getChildren().addAll(nameLabel, cardsBox);
-            playerStatusBox.getChildren().add(playerBox);
-        }
-    });
-}
-private ImageView createCardBackOrFront(String cardName, boolean showFront) {
-    Image img;
-    try {
-        if (showFront) {
-            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cards/" + cardName.toLowerCase() + ".png")));
-        } else {
-            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
-        }
-    } catch (Exception e) {
-        img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
-    }
-    ImageView iv = new ImageView(img);
-    iv.setFitWidth(40);
-    iv.setFitHeight(60);
-    iv.setPreserveRatio(true);
-    iv.setSmooth(true);
-    return iv;
-}
-public void spieleLaserAnimation(int clientID) {
-    Position startPos = robotPositions.get(clientID);
-    if (startPos == null) {
-        appLogger.warn("Keine Position für Roboter von Client {} gefunden.", clientID);
-        return;
-    }
-
-    String richtung = robotDirections.get(clientID);
-    if (richtung == null) {
-        appLogger.warn("Keine Richtung für Roboter von Client {} gefunden.", clientID);
-        return;
-    }
-
-    // Startpunkt (Pixel-Koordinaten, Mitte der Zelle)
-    double startX = startPos.x() * TILE_SIZE + TILE_SIZE / 2.0;
-    double startY = startPos.y() * TILE_SIZE + TILE_SIZE / 2.0;
-
-    // Endpunkt des Lasers berechnen (Raycast)
-    Point2D endPunkt = berechneLaserEndpunkt(startPos.x(), startPos.y(), richtung);
-
-    Line laserLinie = new Line();
-    laserLinie.setStartX(startX);
-    laserLinie.setStartY(startY);
-    laserLinie.setEndX(startX);
-    laserLinie.setEndY(startY);
-    laserLinie.setStroke(Color.RED);
-    laserLinie.setStrokeWidth(4);
-    laserLinie.setOpacity(0.8);
-    // DropShadow-Glow hinzufügen
-    DropShadow glow = new DropShadow();
-    glow.setColor(Color.RED);
-    glow.setRadius(10);
-    glow.setSpread(0.5);
-    laserLinie.setEffect(glow);
-
-    gameBoardPane.getChildren().add(laserLinie);
-
-    // Animation: Linie wächst und wird dann ausgeblendet
-    Timeline animation = new Timeline(
-            new KeyFrame(Duration.ZERO,
-                    new KeyValue(laserLinie.endXProperty(), startX),
-                    new KeyValue(laserLinie.endYProperty(), startY),
-                    new KeyValue(laserLinie.opacityProperty(), 0.8)
-            ),
-            new KeyFrame(Duration.seconds(0.3),
-                    new KeyValue(laserLinie.endXProperty(), endPunkt.getX()),
-                    new KeyValue(laserLinie.endYProperty(), endPunkt.getY())
-            ),
-            new KeyFrame(Duration.seconds(0.8),
-                    new KeyValue(laserLinie.opacityProperty(), 0.8)
-            ),
-            new KeyFrame(Duration.seconds(1.3),
-                    new KeyValue(laserLinie.opacityProperty(), 0)
-            )
-    );
-
-    animation.setOnFinished(e -> gameBoardPane.getChildren().remove(laserLinie));
-    animation.play();
-}
-
-/**
- * Berechnet den Endpunkt des Laserstrahls mit Wänden und Robotern.
- */
-private Point2D berechneLaserEndpunkt(int startX, int startY, String richtung) {
-    final int MAX_DISTANZ = 10;
-
-    int dx = 0, dy = 0;
-    switch (richtung.toLowerCase()) {
-        case "right" -> dx = 1;
-        case "left" -> dx = -1;
-        case "top" -> dy = -1;
-        case "bottom" -> dy = 1;
-        default -> {
-            appLogger.warn("Ungültige Richtung für Laser: {}", richtung);
-            return new Point2D(startX * TILE_SIZE + TILE_SIZE / 2.0, startY * TILE_SIZE + TILE_SIZE / 2.0);
+            ImageView view = new ImageView(image);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            view.setSmooth(true);
+            discardPileBox.getChildren().add(view);
         }
     }
+    private void animateDiscard(ImageView cardView) {
+        TranslateTransition slide = new TranslateTransition(Duration.millis(300), cardView);
+        slide.setFromY(-50);
+        slide.setToY(0);
+        slide.setInterpolator(Interpolator.EASE_OUT);
 
-    int x = startX;
-    int y = startY;
+        FadeTransition fade = new FadeTransition(Duration.millis(300), cardView);
+        fade.setFromValue(0);
+        fade.setToValue(1);
 
-    for (int i = 0; i < MAX_DISTANZ; i++) {
-        // Prüfe Wand vor dem nächsten Feld
-        if (hatWand(x, y, dx, dy)) {
-            break;
+        ParallelTransition animation = new ParallelTransition(slide, fade);
+        animation.play();
+    }
+    /**
+     * Aktualisiert die Registerkarten eines anderen Spielers.
+     * Nach dem Update wird die Spielerstatusanzeige aktualisiert, um
+     * den neuen Zustand sichtbar zu machen.
+     * @param clientID       Die eindeutige ID des Spielers, dessen Register aktualisiert wird.
+     * @param registerCards  Eine Liste von Karten (als Strings), die der Spieler für diese Runde programmiert hat.
+     */
+    public void updateOtherPlayerRegister(int clientID, List<String> registerCards) {
+        otherPlayersRegisters.put(clientID, registerCards);
+        refreshPlayerStatusUI();
+    }
+    private boolean activationPhaseActive = false;
+
+    private void refreshPlayerStatusUI() {
+        Platform.runLater(() -> {
+            playerStatusBox.getChildren().clear();
+
+            for (Map.Entry<Integer, List<String>> entry : otherPlayersRegisters.entrySet()) {
+                int clientID = entry.getKey();
+                List<String> cards = entry.getValue();
+                String playerName = getPlayerNameById(clientID);
+
+                VBox playerBox = new VBox(2);
+                playerBox.setStyle("-fx-border-color: #33cccc; -fx-padding: 4; -fx-background-color: #e0f7f7;");
+
+                Label nameLabel = new Label(playerName);
+                nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #007777;");
+
+                HBox cardsBox = new HBox(3);
+                for (String card : cards) {
+                    ImageView cardView = createCardBackOrFront(card, activationPhaseActive);
+                    cardsBox.getChildren().add(cardView);
+                }
+
+                playerBox.getChildren().addAll(nameLabel, cardsBox);
+                playerStatusBox.getChildren().add(playerBox);
+            }
+        });
+    }
+    private ImageView createCardBackOrFront(String cardName, boolean showFront) {
+        Image img;
+        try {
+            if (showFront) {
+                img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cards/" + cardName.toLowerCase() + ".png")));
+            } else {
+                img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover_card.png")));
+            }
+        } catch (Exception e) {
+            img = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover_card.png")));
+        }
+        ImageView iv = new ImageView(img);
+        iv.setFitWidth(40);
+        iv.setFitHeight(60);
+        iv.setPreserveRatio(true);
+        iv.setSmooth(true);
+        return iv;
+    }
+    public void spieleLaserAnimation(int clientID) {
+        Position startPos = robotPositions.get(clientID);
+        if (startPos == null) {
+            appLogger.warn("Keine Position für Roboter von Client {} gefunden.", clientID);
+            return;
         }
 
-        x += dx;
-        y += dy;
-
-        StackPane zelle = getCellAt(x, y);
-        if (zelle == null) break;
-
-        if (istRoboterAnPosition(x, y)) {
-            break;
+        String richtung = robotDirections.get(clientID);
+        if (richtung == null) {
+            appLogger.warn("Keine Richtung für Roboter von Client {} gefunden.", clientID);
+            return;
         }
+
+        // Startpunkt (Pixel-Koordinaten, Mitte der Zelle)
+        double startX = startPos.x() * TILE_SIZE + TILE_SIZE / 2.0;
+        double startY = startPos.y() * TILE_SIZE + TILE_SIZE / 2.0;
+
+        // Endpunkt des Lasers berechnen (Raycast)
+        Point2D endPunkt = berechneLaserEndpunkt(startPos.x(), startPos.y(), richtung);
+
+        Line laserLinie = new Line();
+        laserLinie.setStartX(startX);
+        laserLinie.setStartY(startY);
+        laserLinie.setEndX(startX);
+        laserLinie.setEndY(startY);
+        laserLinie.setStroke(Color.RED);
+        laserLinie.setStrokeWidth(4);
+        laserLinie.setOpacity(0.8);
+        // DropShadow-Glow hinzufügen
+        DropShadow glow = new DropShadow();
+        glow.setColor(Color.RED);
+        glow.setRadius(10);
+        glow.setSpread(0.5);
+        laserLinie.setEffect(glow);
+
+        gameBoardPane.getChildren().add(laserLinie);
+
+        // Animation: Linie wächst und wird dann ausgeblendet
+        Timeline animation = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(laserLinie.endXProperty(), startX),
+                        new KeyValue(laserLinie.endYProperty(), startY),
+                        new KeyValue(laserLinie.opacityProperty(), 0.8)
+                ),
+                new KeyFrame(Duration.seconds(0.3),
+                        new KeyValue(laserLinie.endXProperty(), endPunkt.getX()),
+                        new KeyValue(laserLinie.endYProperty(), endPunkt.getY())
+                ),
+                new KeyFrame(Duration.seconds(0.8),
+                        new KeyValue(laserLinie.opacityProperty(), 0.8)
+                ),
+                new KeyFrame(Duration.seconds(1.3),
+                        new KeyValue(laserLinie.opacityProperty(), 0)
+                )
+        );
+
+        animation.setOnFinished(e -> gameBoardPane.getChildren().remove(laserLinie));
+        animation.play();
     }
 
-    double endX = x * TILE_SIZE + TILE_SIZE / 2.0;
-    double endY = y * TILE_SIZE + TILE_SIZE / 2.0;
-    return new Point2D(endX, endY);
-}
+    /**
+     * Berechnet den Endpunkt des Laserstrahls mit Wänden und Robotern.
+     */
+    private Point2D berechneLaserEndpunkt(int startX, int startY, String richtung) {
+        final int MAX_DISTANZ = 10;
 
-/**
- * Prüft, ob zwischen Feld (x,y) und dem Feld in Richtung (dx, dy) eine Wand den Laser blockiert.
- */
-private boolean hatWand(int x, int y, int dx, int dy) {
-    // Hole die Board-Elemente an Position (x, y)
-    List<MessageDefinitions.Field> elements = getBoardElementsAt(x, y);
-    if (elements == null) return false;
+        int dx = 0, dy = 0;
+        switch (richtung.toLowerCase()) {
+            case "right" -> dx = 1;
+            case "left" -> dx = -1;
+            case "top" -> dy = -1;
+            case "bottom" -> dy = 1;
+            default -> {
+                appLogger.warn("Ungültige Richtung für Laser: {}", richtung);
+                return new Point2D(startX * TILE_SIZE + TILE_SIZE / 2.0, startY * TILE_SIZE + TILE_SIZE / 2.0);
+            }
+        }
 
-    for (MessageDefinitions.Field element : elements) {
-        if ("Wall".equals(element.type())) {
-            MessageDefinitions.FieldWall wall = (MessageDefinitions.FieldWall) element;
-            if (wandBlockiertRichtung(wall, dx, dy)) {
+        int x = startX;
+        int y = startY;
+
+        for (int i = 0; i < MAX_DISTANZ; i++) {
+            // Prüfe Wand vor dem nächsten Feld
+            if (hatWand(x, y, dx, dy)) {
+                break;
+            }
+
+            x += dx;
+            y += dy;
+
+            StackPane zelle = getCellAt(x, y);
+            if (zelle == null) break;
+
+            if (istRoboterAnPosition(x, y)) {
+                break;
+            }
+        }
+
+        double endX = x * TILE_SIZE + TILE_SIZE / 2.0;
+        double endY = y * TILE_SIZE + TILE_SIZE / 2.0;
+        return new Point2D(endX, endY);
+    }
+
+    /**
+     * Prüft, ob zwischen Feld (x,y) und dem Feld in Richtung (dx, dy) eine Wand den Laser blockiert.
+     */
+    private boolean hatWand(int x, int y, int dx, int dy) {
+        // Hole die Board-Elemente an Position (x, y)
+        List<MessageDefinitions.Field> elements = getBoardElementsAt(x, y);
+        if (elements == null) return false;
+
+        for (MessageDefinitions.Field element : elements) {
+            if ("Wall".equals(element.type())) {
+                MessageDefinitions.FieldWall wall = (MessageDefinitions.FieldWall) element;
+                if (wandBlockiertRichtung(wall, dx, dy)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Hilfsmethode, um zu prüfen, ob die Wand die Laser-Richtung blockiert.
+     */
+    private boolean wandBlockiertRichtung(MessageDefinitions.FieldWall wall, int dx, int dy) {
+        List<String> orientations = wall.orientations();
+
+        if (dx == 1 && orientations.contains("left")) return true;
+        if (dx == -1 && orientations.contains("right")) return true;
+        if (dy == 1 && orientations.contains("top")) return true;
+        if (dy == -1 && orientations.contains("bottom")) return true;
+
+        return false;
+    }
+
+    /**
+     * Prüft, ob ein Roboter an der Position (x, y) steht.
+     */
+    private boolean istRoboterAnPosition(int x, int y) {
+        for (Position pos : robotPositions.values()) {
+            if (pos.x() == x && pos.y() == y) {
                 return true;
             }
         }
+        return false;
     }
-    return false;
-}
+    private Board board;
 
-/**
- * Hilfsmethode, um zu prüfen, ob die Wand die Laser-Richtung blockiert.
- */
-private boolean wandBlockiertRichtung(MessageDefinitions.FieldWall wall, int dx, int dy) {
-    List<String> orientations = wall.orientations();
+    public void setBoard(Board board) {
+        this.board = board;
+    }
+    private List<List<List<MessageDefinitions.Field>>> boardMap;
 
-    if (dx == 1 && orientations.contains("left")) return true;
-    if (dx == -1 && orientations.contains("right")) return true;
-    if (dy == 1 && orientations.contains("top")) return true;
-    if (dy == -1 && orientations.contains("bottom")) return true;
-
-    return false;
-}
-
-/**
- * Prüft, ob ein Roboter an der Position (x, y) steht.
- */
-private boolean istRoboterAnPosition(int x, int y) {
-    for (Position pos : robotPositions.values()) {
-        if (pos.x() == x && pos.y() == y) {
-            return true;
+    public List<MessageDefinitions.Field> getBoardElementsAt(int x, int y) {
+        if (boardMap == null || x < 0 || y < 0 || x >= boardMap.size() || y >= boardMap.get(0).size()) {
+            return null;
         }
+        return boardMap.get(x).get(y);
     }
-    return false;
-}
-private Board board;
 
-public void setBoard(Board board) {
-    this.board = board;
-}
-private List<List<List<MessageDefinitions.Field>>> boardMap;
-
-public List<MessageDefinitions.Field> getBoardElementsAt(int x, int y) {
-    if (boardMap == null || x < 0 || y < 0 || x >= boardMap.size() || y >= boardMap.get(0).size()) {
-        return null;
-    }
-    return boardMap.get(x).get(y);
-}
-
-
-public void updateEnergyDisplay(int energy) {
+    /**
+     * Zeigt den aktuellen Energiewert in der UI an.
+     * <p>
+     * Setzt Text, Farbe und Fortschrittsbalken entsprechend dem Wert.
+     * Spielt eine Animation bei Änderung (Bounce bei Anstieg, Shake bei Abfall).
+     *
+     * @param energy Der neue Energiewert.
+     */
+    public void updateEnergyDisplay(int energy) {
         energyValue.setText(String.valueOf(energy));
 
         String color;
@@ -3137,7 +3289,7 @@ public void updateEnergyDisplay(int energy) {
         energyValue.setStyle("-fx-text-fill: " + color + ";");
         energyBar.setProgress(energy / (double) MAX_ENERGY);
 
-        // 🌀 Animation je nach Änderung
+        //  Animation je nach Änderung
         if (lastEnergy != -1) {
             if (energy > lastEnergy) {
                 // GESTEIGERT → Bounce
@@ -3162,137 +3314,147 @@ public void updateEnergyDisplay(int energy) {
         lastEnergy = energy;
     }
 
-public void setupDiscardPileBox() {
-    // Image of the back of a card
-    ImageView discardImage = new ImageView(new Image(Objects.requireNonNull(
-            getClass().getResourceAsStream("/assets/cover.png"))));
-    discardImage.setFitWidth(60);
-    discardImage.setFitHeight(90);
-    discardImage.setPreserveRatio(true);
+    public void setupDiscardPileBox() {
+        // Image of the back of a card
+        ImageView discardImage = new ImageView(new Image(Objects.requireNonNull(
+                getClass().getResourceAsStream("/assets/cover.png"))));
+        discardImage.setFitWidth(60);
+        discardImage.setFitHeight(90);
+        discardImage.setPreserveRatio(true);
 
-    // Counter in the top-right corner
-    discardCounter = new Label("0");
-    discardCounter.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
-    StackPane.setAlignment(discardCounter, Pos.TOP_RIGHT);
+        // Counter in the top-right corner
+        discardCounter = new Label("0");
+        discardCounter.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        StackPane.setAlignment(discardCounter, Pos.TOP_RIGHT);
 
-    discardPileBox.getChildren().addAll(discardImage, discardCounter);
+        discardPileBox.getChildren().addAll(discardImage, discardCounter);
 
-    // Click to open discard view
-    discardPileBox.setOnMouseClicked(e -> showDiscardPile());
-}
-
-public void addCardToDiscard(String cardName) {
-    discardPile.add(cardName);
-    updateDiscardCounter();
-}
-
-private void updateDiscardCounter() {
-    discardCounter.setText(String.valueOf(discardPile.size()));
-}
-
-public void showDiscardPile() {
-    Stage stage = new Stage();
-    stage.setTitle("Discard Pile");
-
-    FlowPane pane = new FlowPane();
-    pane.setPadding(new Insets(10));
-    pane.setHgap(10);
-    pane.setVgap(10);
-
-    for (String cardName : discardPile) {
-        String path = "/assets/cards/" + cardName + ".png";
-        Image image;
-        try {
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
-        } catch (Exception ex) {
-            image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover.png")));
-        }
-
-        ImageView view = new ImageView(image);
-        view.setFitWidth(60);
-        view.setFitHeight(90);
-        view.setPreserveRatio(true);
-        pane.getChildren().add(view);
+        // Click to open discard view
+        discardPileBox.setOnMouseClicked(e -> showDiscardPile());
     }
 
-    ScrollPane scrollPane = new ScrollPane(pane);
-    scrollPane.setFitToWidth(true);
+    public void addCardToDiscard(String cardName) {
+        discardPile.add(cardName);
+        updateDiscardCounter();
+    }
 
-    Scene scene = new Scene(scrollPane, 400, 300);
-    stage.setScene(scene);
-    stage.show();
-}
+    private void updateDiscardCounter() {
+        discardCounter.setText(String.valueOf(discardPile.size()));
+    }
 
-//LOGO
-public void showGameLogoAnimation() {
-    gameLogoView.setVisible(true);
-    gameLogoView.setManaged(true);
+    public void showDiscardPile() {
+        Stage stage = new Stage();
+        stage.setTitle("Discard Pile");
 
-    FadeTransition fadeIn = new FadeTransition(Duration.seconds(1.2), gameLogoView);
-    fadeIn.setFromValue(0);
-    fadeIn.setToValue(1);
-    fadeIn.setOnFinished(e -> {
-        PauseTransition wait = new PauseTransition(Duration.seconds(1.5));
-        wait.setOnFinished(ev -> {
-            FadeTransition fadeOut = new FadeTransition(Duration.seconds(1.2), gameLogoView);
-            fadeOut.setFromValue(1);
-            fadeOut.setToValue(0);
-            fadeOut.setOnFinished(event -> {
-                gameLogoView.setVisible(false);
-                gameLogoView.setManaged(false);
+        FlowPane pane = new FlowPane();
+        pane.setPadding(new Insets(10));
+        pane.setHgap(10);
+        pane.setVgap(10);
+
+        for (String cardName : discardPile) {
+            String path = "/assets/cards/" + cardName + ".png";
+            Image image;
+            try {
+                image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
+            } catch (Exception ex) {
+                image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/assets/cover_card.png")));
+            }
+
+            ImageView view = new ImageView(image);
+            view.setFitWidth(60);
+            view.setFitHeight(90);
+            view.setPreserveRatio(true);
+            pane.getChildren().add(view);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(pane);
+        scrollPane.setFitToWidth(true);
+
+        Scene scene = new Scene(scrollPane, 400, 300);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    /**
+     * Zeigt das Spiellogo mit einer einfachen Ein- und Ausblendanimation.
+     * <p>
+     * Eignet sich für diskrete Hinweise oder einfache Übergänge.
+     */
+    public void showGameLogoAnimation() {
+        gameLogoView.setVisible(true);
+        gameLogoView.setManaged(true);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.seconds(1.2), gameLogoView);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
+        fadeIn.setOnFinished(e -> {
+            PauseTransition wait = new PauseTransition(Duration.seconds(1.5));
+            wait.setOnFinished(ev -> {
+                FadeTransition fadeOut = new FadeTransition(Duration.seconds(1.2), gameLogoView);
+                fadeOut.setFromValue(1);
+                fadeOut.setToValue(0);
+                fadeOut.setOnFinished(event -> {
+                    gameLogoView.setVisible(false);
+                    gameLogoView.setManaged(false);
+                });
+                fadeOut.play();
             });
-            fadeOut.play();
+            wait.play();
         });
-        wait.play();
-    });
-    fadeIn.play();
-}
+        fadeIn.play();
+    }
+    /**
+     * Zeigt das Spiellogo mit einer aufwendigen Übergangsanimation.
+     * <p>
+     * Das Logo erscheint aus dem unteren Bildschirmbereich, skaliert sich hoch
+     * und verblasst nach einer kurzen Pause wieder.
+     *  für den Spielstart oder Übergänge zwischen Phasen.
+     */
+    public void showLogoTransition() {
+        gameLogoView.setVisible(true);
+        gameLogoView.setManaged(true);
 
-public void showLogoTransition() {
-    gameLogoView.setVisible(true);
-    gameLogoView.setManaged(true);
+        gameLogoView.setOpacity(0);
+        gameLogoView.setScaleX(0.2);
+        gameLogoView.setScaleY(0.2);
+        gameLogoView.setTranslateZ(-300);
 
-    gameLogoView.setOpacity(0);
-    gameLogoView.setScaleX(0.2);
-    gameLogoView.setScaleY(0.2);
-    gameLogoView.setTranslateZ(-300);
+        TranslateTransition move = new TranslateTransition(Duration.millis(1200), gameLogoView);
+        move.setFromY(200);
+        move.setToY(0);
 
-    TranslateTransition move = new TranslateTransition(Duration.millis(1200), gameLogoView);
-    move.setFromY(200);
-    move.setToY(0);
+        ScaleTransition scale = new ScaleTransition(Duration.millis(1200), gameLogoView);
+        scale.setFromX(0.2);
+        scale.setFromY(0.2);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
 
-    ScaleTransition scale = new ScaleTransition(Duration.millis(1200), gameLogoView);
-    scale.setFromX(0.2);
-    scale.setFromY(0.2);
-    scale.setToX(1.0);
-    scale.setToY(1.0);
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(1000), gameLogoView);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
 
-    FadeTransition fadeIn = new FadeTransition(Duration.millis(1000), gameLogoView);
-    fadeIn.setFromValue(0);
-    fadeIn.setToValue(1);
+        PauseTransition hold = new PauseTransition(Duration.seconds(2));
 
-    PauseTransition hold = new PauseTransition(Duration.seconds(2));
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(800), gameLogoView);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> {
+            gameLogoView.setVisible(false);
+            gameLogoView.setManaged(false);
+        });
 
-    FadeTransition fadeOut = new FadeTransition(Duration.millis(800), gameLogoView);
-    fadeOut.setFromValue(1);
-    fadeOut.setToValue(0);
-    fadeOut.setOnFinished(e -> {
-        gameLogoView.setVisible(false);
-        gameLogoView.setManaged(false);
-    });
+        SequentialTransition sequence = new SequentialTransition(
+                new ParallelTransition(move, scale, fadeIn),
+                hold,
+                fadeOut
+        );
 
-    SequentialTransition sequence = new SequentialTransition(
-            new ParallelTransition(move, scale, fadeIn),
-            hold,
-            fadeOut
-    );
-
-    sequence.play();
-}
+        sequence.play();
+    }
 
 
-private void clearProgrammingUI() {
-}
+    private void clearProgrammingUI() {
+    }
     public void animateHandCards(List<String> handCards) {
         handCardBox.getChildren().clear();
         Timeline timeline = new Timeline();

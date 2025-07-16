@@ -366,7 +366,7 @@
     -fx-padding: 6;
     -fx-effect: dropshadow(gaussian, #00ffd0, 6, 0.5, 0, 0);
 }
-}
+
 .robot-choice {
     -fx-background-color: transparent;
     -fx-background-radius: 8;
@@ -417,6 +417,12 @@
     -fx-effect: dropshadow(gaussian, #F5A623, 10, 0.3, 0, 0);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
+}
+.card-active {
+    -fx-border-color: #ffe664;
+    -fx-border-width: 3;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, #ffe664, 12, 0.6, 0, 0);
 }
 
 
