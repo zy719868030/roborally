@@ -344,6 +344,7 @@ public class Robot {
                 .findFirst()
                 .orElse(null);
         if (player != null) {
+            System.out.println("收到就是看看");
             player.resetRegister();
         }
         System.out.println("Robot " + robotID + " programming has been cancelled for this round.");

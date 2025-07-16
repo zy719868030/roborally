@@ -372,7 +372,7 @@ public class Board {
      */
     public void updateRobotPosition(Robot robot, Position newPosition) {
         // Added to clear fallen status when robot returns to board
-        fallenRobots.remove(robot);
+//        fallenRobots.remove(robot);
         // Added falling mechanic check to handle robots going off-board
         if (newPosition != null && !isValidPosition(newPosition)) {
             handleFall(robot);
@@ -543,6 +543,7 @@ public class Board {
         // Place robot on reboot position
         robot.setPosition(rebootPos);
         updateRobotPosition(robot, rebootPos);
+        robot.notifyMovement();
 
         // Set direction (TODO should allow player to choose, but for now use default NORTH)
         robot.setDirection(Direction.NORTH);
