@@ -373,6 +373,23 @@ public class Board {
     public void updateRobotPosition(Robot robot, Position newPosition) {
         // Added to clear fallen status when robot returns to board
 //        fallenRobots.remove(robot);
+        // Check if robot has fallen - if so, don't process normal position updates
+        if (fallenRobots.contains(robot) && (newPosition == null || newPosition.equals(new Position(-1, -1)))) {
+            // Robot is fallen and being moved to void position - allow this
+            robotToPosition.remove(robot);
+            Position oldPosition = robotToPosition.get(robot);
+            if (oldPosition != null) {
+                robotPositions.remove(oldPosition);
+            }
+            return;
+        }
+
+        // Clear fallen status when robot returns to board (during reboot)
+        if (fallenRobots.contains(robot) && newPosition != null && isValidPosition(newPosition)) {
+            fallenRobots.remove(robot);
+            logger.info("Robot {} returned to board at position {}", robot.getRobotID(), newPosition);
+        }
+
         // Added falling mechanic check to handle robots going off-board
         if (newPosition != null && !isValidPosition(newPosition)) {
             handleFall(robot);
@@ -459,14 +476,14 @@ public class Board {
 
     // Handles robots falling off the 12x12 grid
     public void handleFall(Robot robot) {
-        // Set position to VOID_POINT (-1, -1)
-//        robot.setPosition(VOID_POINT);
-//        // Remove from board mappings
-//        Position oldPosition = robotToPosition.get(robot);
-//        if (oldPosition != null) {
-//            robotPositions.remove(oldPosition);
-//        }
-//        robotToPosition.remove(robot);
+        // Remove from board mappings
+        Position oldPosition = robotToPosition.get(robot);
+        if (oldPosition != null) {
+            robotPositions.remove(oldPosition);
+        }
+        // Set position to VOID_POINT (-1, -1) to indicate it's off the board
+        robot.setPosition(VOID_POINT);
+        robotToPosition.remove(robot);
         // Add to fallen robots list
         fallenRobots.add(robot);
         // Apply damage and cancel programming
@@ -481,12 +498,13 @@ public class Board {
                 .orElse(null);
         if (player != null) {
             player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyReboot(robot.getRobotID())
+                    new MessageDefinitions.BodyReboot(robot.getClientID())
             ));
+            logger.info("Sent BodyReboot message for robot {}, waiting for direction selection", robot.getRobotID());
         }
 
         // Reboot the robot
-        rebootRobot(robot);
+//        rebootRobot(robot);
     }
 
     public boolean hasRobotFallen(Robot robot) {
@@ -533,8 +551,10 @@ public class Board {
                                 updateRobotPosition(r, newPos);
                                 r.notifyMovement();
                             }
+                            break;
                         } else {
                             logger.error("Cannot push robots from reboot position - no valid space found");
+                            break;
                         }
                     }
                 }
@@ -546,7 +566,7 @@ public class Board {
         robot.notifyMovement();
 
         // Set direction (TODO should allow player to choose, but for now use default NORTH)
-        robot.setDirection(Direction.NORTH);
+//        robot.setDirection(Direction.NORTH);
 
         // Add 2 SPAM damage cards (as per rules)
         Player player = Game.getInstance().getPlayers().stream()
@@ -560,7 +580,6 @@ public class Board {
                     new MessageDefinitions.BodyMovement(player.getConnection().getMyID(), rebootPos.x(), rebootPos.y())
             ));
         }
-
 //        System.out.println("Reboot robot " + robot.getPosition().x() + " " + robot.getPosition().y());
         logger.info("Robot {} rebooted to {}", robot.getRobotID(), rebootPos);
 

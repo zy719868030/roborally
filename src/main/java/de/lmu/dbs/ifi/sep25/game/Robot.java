@@ -93,6 +93,14 @@ public class Robot {
     // Moves the robot forward one space, checking Board for validity
     public void moveForward(Board board) {
         if (isPoweredDown) return;
+
+        // Check if robot has fallen off the board
+        if (board.hasRobotFallen(this)) {
+            Logger logger = Logger.getLogger(this.getClass().getName());
+            logger.info("Robot {" + clientID + "} cannot move - has fallen off the board");
+            return;
+        }
+
         // Check if current position has walls blocking exit in movement direction
         List<BoardElement> currentElements = board.getElements(position.x(), position.y());
         for (BoardElement element : currentElements) {
@@ -133,7 +141,8 @@ public class Robot {
         } else {
             board.handleFall(this);
             Logger logger = Logger.getLogger(this.getClass().getName());
-            logger.info("Robot " + clientID + " attempted to move backward off the board at position " + position + ". Movement prevented.");
+            logger.info("Robot " + clientID + " attempted to move forward off the board at position " + position +
+                    ". Movement prevented.");
         }
     }
 
@@ -159,8 +168,15 @@ public class Robot {
     // Moves the robot backward one space
     public void moveBackward(Board board) {
         if (isPoweredDown) return;
-        Direction opposite = direction.turnAround();
 
+        // Check if robot has fallen off the board
+        if (board.hasRobotFallen(this)) {
+            Logger logger = Logger.getLogger(this.getClass().getName());
+            logger.info("Robot {" + clientID + "} cannot move - has fallen off the board");
+            return;
+        }
+
+        Direction opposite = direction.turnAround();
         // Check if current position has walls blocking exit in backward direction
         List<BoardElement> currentElements = board.getElements(position.x(), position.y());
         for (BoardElement element : currentElements) {
@@ -195,6 +211,7 @@ public class Robot {
                 position = newPos;
                 board.updateRobotPosition(this, position);
                 pushRobot(board, opposite);
+                notifyMovement();
             }
         } else {
             board.handleFall(this);
@@ -344,7 +361,6 @@ public class Robot {
                 .findFirst()
                 .orElse(null);
         if (player != null) {
-            System.out.println("收到就是看看");
             player.resetRegister();
         }
         System.out.println("Robot " + robotID + " programming has been cancelled for this round.");
@@ -395,7 +411,7 @@ public class Robot {
                     .orElse(null);
             if (player != null) {
                 player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReboot(robotID)
+                        new MessageDefinitions.BodyReboot(this.clientID)
                 ));
             }
             setDirection(Direction.NORTH);
