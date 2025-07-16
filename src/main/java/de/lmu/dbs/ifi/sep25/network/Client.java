@@ -472,6 +472,10 @@ public class Client {
                     scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
                     stage.setScene(scene);
                     stage.show();
+                    stage.setWidth(1400);
+                    stage.setHeight(1000);
+                    stage.setMinWidth(600);
+                    stage.setMinHeight(400);
                     stage.setTitle("Robo Rally Game");
                     controller.setPlayersFromLobby(ControllerRegistry.getLobbyController().getPlayers());
 

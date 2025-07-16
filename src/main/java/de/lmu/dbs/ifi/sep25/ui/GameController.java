@@ -13,6 +13,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -138,9 +139,17 @@ public class GameController {
     private Timeline blinkTimeline;
 
 
+    private double currentZoom = 1.0;
+    private final double ZOOM_STEP = 0.25;
+    private final double MAX_ZOOM = 2.0;
+    private final double MIN_ZOOM = 0.5;
+
+
+    @FXML private Group zoomContent;
+    @FXML private StackPane scrollContentWrapper;
+
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
-    // Map: clientID -> List der ausgewählten Registerkarten (Strings)
     private final Map<Integer, List<String>> otherPlayersRegisters = new HashMap<>();
 
     private int currentPhaseID = -1;
@@ -225,6 +234,33 @@ public class GameController {
 
         chatInput.setOnAction(e -> handleSendChat());
         addHoverAnimation(chatToggleButton);
+        Platform.runLater(() -> {
+            Bounds viewportBounds = gameBoardScrollPane.getViewportBounds();
+            Bounds boardBounds = zoomWrapper.getLayoutBounds();
+
+            double scaleX = (viewportBounds.getWidth() - 20) / boardBounds.getWidth();
+            double scaleY = (viewportBounds.getHeight() - 20) / boardBounds.getHeight();
+
+            double targetScale = Math.min(Math.min(scaleX, scaleY), 1.0);
+            double minReadableScale = 0.85;
+
+            scaleValue = Math.max(targetScale, minReadableScale);
+            zoomWrapper.setMouseTransparent(false);
+            zoomWrapper.setPickOnBounds(false);
+
+            zoomContent.setMouseTransparent(false);
+            zoomContent.setPickOnBounds(false);
+
+            scrollContentWrapper.setMouseTransparent(false);
+            scrollContentWrapper.setPickOnBounds(false);
+
+
+            zoomWrapper.setScaleX(scaleValue);
+            zoomWrapper.setScaleY(scaleValue);
+
+            gameBoardScrollPane.setHvalue(gameBoardScrollPane.getHmax() / 2);
+            gameBoardScrollPane.setVvalue(gameBoardScrollPane.getVmax() / 2);
+        });
 
     }
 
@@ -1031,13 +1067,10 @@ public class GameController {
                     });
                 }
 
-                case 1 -> {
+                case 1, 2 -> {
 
                 }
 
-                case 2 -> {
-
-                }
             }
         } else {
             String name = getPlayerNameById(clientID);
@@ -3483,6 +3516,27 @@ public class GameController {
         timeline.play();
     }
 
+
+    @FXML
+    private void handleZoomIn() {
+        if (currentZoom < MAX_ZOOM) {
+            currentZoom += ZOOM_STEP;
+            applyZoom();
+        }
+    }
+
+    @FXML
+    private void handleZoomOut() {
+        if (currentZoom > MIN_ZOOM) {
+            currentZoom -= ZOOM_STEP;
+            applyZoom();
+        }
+    }
+
+    private void applyZoom() {
+        zoomWrapper.setScaleX(currentZoom);
+        zoomWrapper.setScaleY(currentZoom);
+    }
 }
 
 

@@ -10,6 +10,7 @@ import javafx.animation.TranslateTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
@@ -203,7 +204,7 @@ public class LobbyController {
         iconMenu.setManaged(false);
 
 
-// Listener für Kartenwechsel in der ComboBox
+        // Listener für Kartenwechsel in der ComboBox
         mapChoiceBox.getSelectionModel().selectedItemProperty().addListener((obs, oldMap, newMap) -> {
             if (newMap != null) {
                 mapLabel.setText("Ausgewählte Karte: " + newMap);
@@ -257,7 +258,7 @@ public class LobbyController {
         statusLabel.setText("Du bist bereit.");
         updateReadyButtons(true);
         int myID = ClientSingleton.getInstance().getID();
-        updatePlayerStatus(myID, true);  // <<< Status in der PlayerList setzen
+        updatePlayerStatus(myID, true);  //Status in der PlayerList setzen
 
         if (!lobbyBox.getStyleClass().contains("lobby-box-ready")) {
             lobbyBox.getStyleClass().add("lobby-box-ready");
@@ -283,9 +284,7 @@ public class LobbyController {
 
         // Prüfe: Bin ich gerade der Map-Wähler?
         if (!selectMapButton.isDisabled()) {
-            // Ich bin (oder war) Map-Wähler → Mapauswahl ausblenden
             hideMapSelection();
-            // Warten auf erneute Nachricht vom Server, falls ich wieder Mapwähler werde
         }
     }
 

@@ -310,6 +310,10 @@ public class LoginController {
             scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
             stage.setScene(scene);
             stage.setTitle("Lobby");
+            stage.setWidth(1200);
+            stage.setHeight(900);
+            stage.setMinWidth(1200);
+            stage.setMinHeight(900);
             stage.show();
 
         } catch (Exception e) {
