@@ -484,6 +484,10 @@ public class Game {
 
         // Fire robot lasers
         handleRobotLasers();
+
+        // IMPORTANT: Handle any robots that have fallen and are waiting for reboot
+        // This should happen at the end of each register, not immediately when they fall
+        handlePendingReboots();
     }
 
 
@@ -572,6 +576,39 @@ public class Game {
         ));
 
         return null;
+    }
+
+    /**
+     * Handles robots that have fallen and are waiting for direction selection and reboot.
+     * This method should be called at the end of each register to process any pending reboots.
+     */
+    private void handlePendingReboots() {
+        // Get all fallen robots that haven't been processed yet
+        List<Robot> fallenRobots = new ArrayList<>();
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            if (board.hasRobotFallen(robot)) {
+                fallenRobots.add(robot);
+            }
+        }
+
+        if (!fallenRobots.isEmpty()) {
+            appLogger.info("Processing {} fallen robots for reboot", fallenRobots.size());
+
+            // Wait for all reboot direction selections to complete
+            // In a real implementation, you might want to add a timeout here
+            for (Robot robot : fallenRobots) {
+                Player player = players.stream()
+                        .filter(p -> p.getRobot() == robot)
+                        .findFirst()
+                        .orElse(null);
+
+                if (player != null) {
+                    // The reboot will be triggered when the client sends BodyRebootDirection
+                    appLogger.info("Waiting for reboot direction from player {}", player.getClientID());
+                }
+            }
+        }
     }
 
     /**
@@ -1074,7 +1111,7 @@ public class Game {
         // Broadcast reboot message
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReboot(robot.getRobotID())
+                        new MessageDefinitions.BodyReboot(robot.getClientID())
                 )
         );
 
@@ -1092,7 +1129,7 @@ public class Game {
         Server.getInstance().broadcastMessage(
                 new MessageDefinitions.Message<>(
                         new MessageDefinitions.BodyMovement(
-                                robot.getRobotID(),
+                                robot.getClientID(),
                                 rebootPos.x(),
                                 rebootPos.y()
                         )

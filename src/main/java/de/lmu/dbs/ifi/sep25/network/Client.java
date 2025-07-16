@@ -1170,6 +1170,8 @@ public class Client {
     public void handleBodyReboot(String json) {
         Message<BodyReboot> message = JsonUtil.parseMessage(json, BodyReboot.class);
         BodyReboot body = message.messageBody();
+        int robotID = body.clientID(); // Note: this is actually robotID, not clientID
+        clientLogger.info("Received BodyReboot for robotID: {}, my ID: {}", robotID, ID);
         rebootingInProgress = body.clientID(); // Mark that a reboot is pending
 
         // Zeige Reboot-Animation/Info im Spiel
@@ -1180,8 +1182,15 @@ public class Client {
             }
         });
 
+        // Check if this is MY robot that needs to reboot
+        // Need to compare with my clientID, not robotID
+        boolean isMyRobot = body.clientID().equals(ID);
+
+        clientLogger.info("Is my robot rebooting? {} (robotID: {}, myID: {})", isMyRobot, robotID, ID);
+
         // Wenn der eigene Roboter rebooted wird → Richtung auswählen lassen
-        if (body.clientID().equals(ID)) {
+        if (isMyRobot) {
+            clientLogger.info("My robot is rebooting - asking for direction");
             Platform.runLater(() -> {
                 GameController controller = ControllerRegistry.getGameController();
                 if (controller != null) {
@@ -1190,6 +1199,7 @@ public class Client {
                     });
                 } else {
                     // Fallback falls kein Controller verfügbar
+                    clientLogger.warn("GameController not available, using default direction");
                     sendMessage(new Message<>(new BodyRebootDirection("top")));
                 }
             });

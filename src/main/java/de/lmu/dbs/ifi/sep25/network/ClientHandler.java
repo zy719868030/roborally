@@ -481,7 +481,25 @@ public class ClientHandler implements Runnable {
      */
     private void handleBodyRebootDirection(String json) {
         String direction = JsonUtil.parseMessage(json, BodyRebootDirection.class).messageBody().direction();
+        appLogger.info("Received reboot direction '{}' from player {}", direction, myID);
+
+        // Set the robot's direction first
         player.getRobot().setDirection(Direction.fromString(direction));
+
+        // Now actually reboot the robot to the reboot position
+        // Only reboot if the robot has actually fallen
+        if (Game.getInstance().getBoard().hasRobotFallen(player.getRobot())) {
+            appLogger.info("Rebooting robot {} with chosen direction {}",
+                    player.getRobot().getRobotID(), direction);
+            Game.getInstance().getBoard().rebootRobot(player.getRobot());
+            appLogger.info("Robot {} successfully rebooted to position {}",
+                    player.getRobot().getRobotID(),
+                    player.getRobot().getPosition());
+        } else {
+            appLogger.warn("Received reboot direction for robot {} that hasn't fallen",
+                    player.getRobot().getRobotID());
+        }
+
         broadcastMessage(new Message<>(new BodyRebootDirection(direction)), this);
     }
 
