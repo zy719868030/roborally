@@ -152,7 +152,10 @@ public class StartPoint extends BoardElement {
      */
     @Override
     public boolean canPassThrough(Robot robot) {
-        return !occupied;
+        // During normal gameplay, starting points should not block movement
+        // The occupied status is only relevant during the setup phase
+        return true;
+//        return !occupied;
     }
 
     /**
