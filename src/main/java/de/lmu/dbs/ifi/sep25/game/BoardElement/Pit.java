@@ -95,18 +95,18 @@ public class Pit extends BoardElement {
      * @param board The game board.
      */
     private void rebootRobot(Robot robot, Board board) {
+        // Use a unified respawn damage method
+        board.addRebootDamage(robot);
         // Causes 2 points of SPAM damage to the robot.
-        robot.takeDamage(2);
-
+//        robot.takeDamage(2);
         //Cancel the robot's remaining programming for the current round.
-        robot.cancelProgramming();
+//        robot.cancelProgramming();
 
         //Move the robot to the restart point.
         Position rebootPosition = board.getRebootPosition();
         if (rebootPosition != null) {
             robot.setPosition(rebootPosition);
             board.updateRobotPosition(robot, rebootPosition);
-
             System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
         } else {
             System.err.println("Error: No reboot position found on the board!");
