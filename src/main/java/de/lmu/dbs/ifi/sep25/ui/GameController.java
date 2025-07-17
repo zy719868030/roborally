@@ -2390,7 +2390,8 @@ public class GameController {
         directionIndicator.setTranslateY(-25);
 
 //        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
-        StackPane rebootTile = getCellAt(7, 3); // Beispielposition – später echte Roboterposition verwenden
+        // Beispielposition – TODO: später echte Roboterposition verwenden
+        StackPane rebootTile = getCellAt(7, 3);
         if (rebootTile != null) {
             rebootTile.getChildren().add(directionIndicator);
 
