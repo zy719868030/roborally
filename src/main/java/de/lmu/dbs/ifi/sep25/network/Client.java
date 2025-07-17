@@ -970,10 +970,24 @@ public class Client {
 
 
             Position oldPos = controller.getRobotPosition(clientID);
-            if (oldPos == null) {
-                errorLogger.warn("[WARN] Keine alte Roboterposition bekannt für Client {}", clientID);
+//            if (oldPos == null) {
+//                errorLogger.warn("[WARN] Keine alte Roboterposition bekannt für Client {}", clientID);
+//                return;
+//            }
+
+            //  // Special case: Robot restarts from outside the board (reboot situation)
+            if (oldPos == null || oldPos.x() == -1 || oldPos.y() == -1) {
+                clientLogger.info("Robot {} is being placed/rebooted to ({}, {})", clientID, newX, newY);
+                controller.moveRobotTo(clientID, newX, newY);
+
+                // Ensure that the robot is set in the correct direction.
+                String direction = controller.getRobotDirection(clientID);
+                if (direction != null) {
+                    controller.updateRobotDirection(clientID, direction);
+                }
                 return;
             }
+
 
             int dx = newX - oldPos.x();
             int dy = newY - oldPos.y();
@@ -987,6 +1001,7 @@ public class Client {
 
             if (moveDir == null) {
                 errorLogger.warn("[WARN] Ungültige Bewegungsrichtung von ({},{}) nach ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                controller.moveRobotTo(clientID, newX, newY);
                 return;
             }
 
@@ -994,6 +1009,7 @@ public class Client {
             if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.get(0).size() ||
                     oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.get(0).size()) {
                 errorLogger.warn("[WARN] Ungültige Kartenkoordinaten: alt ({},{}) neu ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                controller.moveRobotTo(clientID, newX, newY);
                 return;
             }
 
@@ -1215,24 +1231,44 @@ public class Client {
     public void handleBodyRebootDirection(String json) {
         Message<BodyRebootDirection> message = JsonUtil.parseMessage(json, BodyRebootDirection.class);
         String direction = message.messageBody().direction();
+        clientLogger.info("Received reboot direction confirmation from server: {}", direction);
 
+//        // Send the previously saved reboot movement
+//        if (rebootPosition != null) {
+//            sendMessageSelf(new Message<>(rebootPosition));
+//            rebootPosition = null;
+//        }
 
-        // Send the previously saved reboot movement
-        if (rebootPosition != null) {
-            sendMessageSelf(new Message<>(rebootPosition));
-            rebootPosition = null;
+        // Update local robot direction records
+        if (rebootingInProgress != -1) {
+            final int currentRebootingClient = rebootingInProgress;
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.updateRobotDirection(currentRebootingClient, direction);
+                    controller.showRebootDirection(direction);
+                    controller.appendChatMessage("[INFO] The robot has been restarted in the direction " + direction);
+                    Position currentPos = controller.getRobotPosition(rebootingInProgress);
+                    if (currentPos != null && currentPos.x() >= 0 && currentPos.y() >= 0) {
+                        controller.moveRobotTo(rebootingInProgress, currentPos.x(), currentPos.y());
+                    }
+                }
+            });
+
+            // Clear the status of the restart in progress
+            rebootingInProgress = -1;
         }
 
-        // Optional: display a reboot animation
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showRebootDirection(direction);
-            }
-        });
+//        // Optional: display a reboot animation
+//        Platform.runLater(() -> {
+//            GameController controller = ControllerRegistry.getGameController();
+//            if (controller != null) {
+//                controller.showRebootDirection(direction);
+//            }
+//        });
 
         // Optionally notify via animation message
-        sendMessageSelf(new Message<>(new BodyAnimation("Reboot")));
+//        sendMessageSelf(new Message<>(new BodyAnimation("Reboot")));
     }
 
     /**
@@ -1455,6 +1491,22 @@ public class Client {
 
     public ConcurrentBidirectionalMap<Integer, String> getUsernames() {
         return usernames;
+    }
+
+    /**
+     * Get the client ID of the robot currently being restarted.
+     *
+     * @return The client ID of the robot being restarted. If none, return -1.
+     */
+    public int getRebootingInProgress() {
+        return rebootingInProgress;
+    }
+
+    /**
+     * Clear the status of the restart in progress.
+     */
+    public void clearRebootingInProgress() {
+        this.rebootingInProgress = -1;
     }
 
 }
