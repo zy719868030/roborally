@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCard;
 import de.lmu.dbs.ifi.sep25.card.DamageCard.DamageCardPool;
-import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.game.Game;
-import de.lmu.dbs.ifi.sep25.game.Player;
-import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
@@ -492,6 +489,15 @@ public class ClientHandler implements Runnable {
             appLogger.info("Rebooting robot {} with chosen direction {}",
                     player.getRobot().getRobotID(), direction);
             Game.getInstance().getBoard().rebootRobot(player.getRobot());
+
+            // Send Movement message to confirm robot position
+            Position rebootPos = player.getRobot().getPosition();
+            broadcastMessage(new Message<>(new BodyMovement(
+                    player.getRobot().getClientID(),
+                    rebootPos.x(),
+                    rebootPos.y()
+            )));
+
             appLogger.info("Robot {} successfully rebooted to position {}",
                     player.getRobot().getRobotID(),
                     player.getRobot().getPosition());
@@ -500,7 +506,7 @@ public class ClientHandler implements Runnable {
                     player.getRobot().getRobotID());
         }
 
-        broadcastMessage(new Message<>(new BodyRebootDirection(direction)), this);
+        broadcastMessage(new Message<>(new BodyRebootDirection(direction)));
     }
 
 

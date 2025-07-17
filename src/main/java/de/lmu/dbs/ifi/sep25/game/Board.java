@@ -487,8 +487,8 @@ public class Board {
         // Add to fallen robots list
         fallenRobots.add(robot);
         // Apply damage and cancel programming
-        robot.takeDamage(2);
-        robot.cancelProgramming();
+//        robot.takeDamage(2);
+//        robot.cancelProgramming();
         logger.info("Robot {} fell off the board and is at VOID_POINT (-1, -1)", robot.getRobotID());
 
         // Send Reboot message before rebooting
@@ -497,6 +497,7 @@ public class Board {
                 .findFirst()
                 .orElse(null);
         if (player != null) {
+            addRebootDamage(robot);
             player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
                     new MessageDefinitions.BodyReboot(robot.getClientID())
             ));
@@ -569,20 +570,38 @@ public class Board {
 //        robot.setDirection(Direction.NORTH);
 
         // Add 2 SPAM damage cards (as per rules)
-        Player player = Game.getInstance().getPlayers().stream()
-                .filter(p -> p.getRobot() == robot)
-                .findFirst()
-                .orElse(null);
-        if (player != null) {
-            robot.addDamageCard(DamageCard.DamageType.SPAM);
-            robot.addDamageCard(DamageCard.DamageType.SPAM);
-            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
-                    new MessageDefinitions.BodyMovement(player.getConnection().getMyID(), rebootPos.x(), rebootPos.y())
-            ));
-        }
+//        Player player = Game.getInstance().getPlayers().stream()
+//                .filter(p -> p.getRobot() == robot)
+//                .findFirst()
+//                .orElse(null);
+//        if (player != null) {
+//            robot.addDamageCard(DamageCard.DamageType.SPAM);
+//            robot.addDamageCard(DamageCard.DamageType.SPAM);
+//            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+//                    new MessageDefinitions.BodyMovement(player.getConnection().getMyID(), rebootPos.x(), rebootPos.y())
+//            ));
+//        }
 //        System.out.println("Reboot robot " + robot.getPosition().x() + " " + robot.getPosition().y());
         logger.info("Robot {} rebooted to {}", robot.getRobotID(), rebootPos);
 
+    }
+
+    /**
+     * Uniform handling of damage and programming cancellation upon rebirth.
+     * According to official rules: 2 damage points + 2 SPAM damage cards + cancellation of remaining programming.
+     */
+    public void addRebootDamage(Robot robot) {
+        // Add 2 damage points
+        robot.takeDamage(2);
+
+        // Add 2 SPAM damage cards to discard pile
+        robot.addDamageCard(DamageCard.DamageType.SPAM);
+        robot.addDamageCard(DamageCard.DamageType.SPAM);
+
+        // Cancel remaining programming for this round
+        robot.cancelProgramming();
+
+        logger.info("Robot {} received reboot damage: 2 points + 2 SPAM cards", robot.getRobotID());
     }
 
     /**

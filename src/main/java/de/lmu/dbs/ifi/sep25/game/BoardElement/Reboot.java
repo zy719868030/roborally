@@ -76,8 +76,13 @@ public class Reboot extends BoardElement {
 
     @Override
     public void activate(Robot robot) {
+        //WORM card-triggered rebirth uses a unified method
+        Board board = robot.getBoard();
+        if (board != null) {
+            board.addRebootDamage(robot);
+        }
         // Causes two points of SPAM damage when restarting.
-        robot.takeDamage(2);
+//        robot.takeDamage(2);
     }
 
     @Override
@@ -104,10 +109,9 @@ public class Reboot extends BoardElement {
         if (rebootPosition != null) {
             // Set robot position to restart point
             robot.setPosition(rebootPosition);
-
+            board.updateRobotPosition(robot, rebootPosition);
             // Reset robot programming (cancel remaining registers for current round)
-            robot.cancelProgramming();
-
+//            robot.cancelProgramming();
             System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
         } else {
             System.err.println("Error: No reboot position found on the board!");

@@ -1,9 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
-import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.game.Position;
-import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.*;
@@ -230,17 +227,26 @@ public class PushPanel extends BoardElement {
      * @param board The game board.
      */
     private void rebootRobot(Robot robot, Board board) {
-        robot.takeDamage(2);
-        robot.cancelProgramming();
+        // Use a unified respawn damage method
+        board.addRebootDamage(robot);
+//        robot.takeDamage(2);
+//        robot.cancelProgramming();
 
-        Position rebootPosition = board.getRebootPosition();
-        if (rebootPosition != null) {
-            robot.setPosition(rebootPosition);
-            board.updateRobotPosition(robot, rebootPosition);
-
-            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
-        } else {
-            System.err.println("Error: No reboot position found on the board!");
+//        Position rebootPosition = board.getRebootPosition();
+//        if (rebootPosition != null) {
+//            robot.setPosition(rebootPosition);
+//            board.updateRobotPosition(robot, rebootPosition);
+        Player player = Game.getInstance().getPlayers().stream()
+                .filter(p -> p.getRobot() == robot)
+                .findFirst()
+                .orElse(null);
+        if (player != null) {
+            player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyReboot(robot.getClientID())
+            ));
+//            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
+//        } else {
+//            System.err.println("Error: No reboot position found on the board!");
         }
     }
 
