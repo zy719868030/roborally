@@ -53,6 +53,8 @@ public class GameController {
     private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
     private static final Logger appLogger = LogManager.getLogger(GameController.class);
     private static final Logger errorLogger = LogManager.getLogger(GameController.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
+
     @FXML
     public HBox energyBox;
     public ImageView gameLogoView;
@@ -102,7 +104,6 @@ public class GameController {
 
     private Timeline countdownTimer;
     private int secondsLeft = 30;
-    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
     @FXML
     private StackPane discardPileBox;
 
@@ -287,7 +288,16 @@ public class GameController {
         gameBoardPane.setPrefWidth(columns * TILE_SIZE);
         gameBoardPane.setPrefHeight(rows * TILE_SIZE);
     }
-
+    /**
+     * Adds a new player to the internal player mappings and the chat recipient list,
+     * excluding the local client. If the player is already present in the recipient box,
+     * they won't be added again.
+     *
+     * @param clientID the unique ID of the client to add
+     * @param name     the player's display name (optional, must not be blank)
+     * @param figure   the ID of the figure (robot) associated with this player
+     * @param ready    whether the player is marked as ready
+     */
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         clientToRobotID.put(clientID, figure);
 
@@ -297,7 +307,7 @@ public class GameController {
         }
 
         if (ClientSingleton.getInstance().getID() == clientID)
-            return; // Sich selbst nicht hinzufügen
+            return;
 
         boolean exists = recipientBox.getItems().stream()
                 .anyMatch(p -> p.getClientID() == clientID);
@@ -678,7 +688,10 @@ public class GameController {
     public int getCurrentPhaseID() {
         return currentPhaseID;
     }
-
+    /**
+     * Updates the game phase to the specified ID
+     * @param phaseID the new phase ID to set
+     */
     public void updatePhase(int phaseID) {
         final int previousPhase = getCurrentPhaseID();
 
@@ -875,6 +888,12 @@ public class GameController {
         });
         Arrays.fill(registerState, null); // reset internal state
     }
+    /**
+     * Highlights the register card at the specified index by applying
+     * a temporary visual effect. The highlight lasts for 2 seconds.
+     *
+     * @param index the index of the register card to highlight
+     */
     private void highlightRegisterCard(int index) {
         if (index < 0 || index >= registerBox.getChildren().size()) return;
 
@@ -928,10 +947,9 @@ public class GameController {
     }
 
     /**
-     * Zeigt oder versteckt das Chat-Fenster.
-     * Blendet das Icon-Menü entsprechend ein oder aus.
+     * Shows or hides the chat window.
+     * Also shows or hides the icon menu accordingly.
      */
-
     @FXML
     private void toggleChatBox() {
         if (chatBox.isVisible()) {
@@ -968,10 +986,10 @@ public class GameController {
     }
 
     /**
-     * Zeigt eine gespielte Karte visuell im Kartenbereich an.
+     * Visually displays a played card in the played cards area.
      *
-     * @param clientID Die ID des Spielers, der die Karte gespielt hat.
-     * @param cardName Der Name der gespielten Karte (z. B. "move_1", "turn_right").
+     * @param clientID the ID of the player who played the card
+     * @param cardName the name of the played card
      */
     public void showPlayedCard(int clientID, String cardName) {
         String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
@@ -994,7 +1012,13 @@ public class GameController {
         }
     }
 
-
+    /**
+     * Marks the given client ID as the current active player.
+     * Updates the game state, status label, and UI elements accordingly.
+     * If the current client is active, it enables interaction for the current phase.
+     *
+     * @param clientID the ID of the player whose turn it is
+     */
     public void markCurrentPlayer(int clientID) {
         int phaseID = getCurrentPhaseID();
 
@@ -1004,7 +1028,7 @@ public class GameController {
             return;
 
         }
-        this.currentPlayerID = clientID; // Immer setzen
+        this.currentPlayerID = clientID;
         int myID = ClientSingleton.getInstance().getID();
 
         appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
@@ -1086,7 +1110,11 @@ public class GameController {
             }
         }
     }
-
+    /**
+     * Displays a small robot icon representing the given client ID
+     * in the player icon area. Applies a glow effect based on the robot ID.
+     * @param clientID the ID of the client whose robot should be shown
+     */
     private void showMiniRobot(int clientID) {
         try {
             int robotID = clientToRobotID.getOrDefault(clientID, 0);
@@ -1103,12 +1131,12 @@ public class GameController {
 
 
     /**
-     * Zeigt die Startposition eines Roboters im Spielfeld an.
+     * Displays the starting position of a robot on the game board.
      *
-     * @param x         X-Koordinate auf dem Spielfeld
-     * @param y         Y-Koordinate auf dem Spielfeld
-     * @param clientID  Die Client-ID des Spielers
-     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
+     * @param x         the X-coordinate on the game board
+     * @param y         the Y-coordinate on the game board
+     * @param clientID  the client ID of the player
+     * @param direction the orientation of the robot (e.g., "right", "left", "top", "bottom")
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         int robotID = clientToRobotID.get(clientID);
@@ -1135,11 +1163,12 @@ public class GameController {
     }
 
     /**
-     * Holt das StackPane an der gegebenen Spielfeldposition.
+     * Returns the StackPane at the given board position.
+     * If none exists, a new one is created and added to the grid.
      *
-     * @param x X-Koordinate
-     * @param y Y-Koordinate
-     * @return Das StackPane an der Position oder neu erstellt
+     * @param x the X-coordinate on the board
+     * @param y the Y-coordinate on the board
+     * @return the StackPane at the specified position, or a newly created one
      */
     private StackPane getTileAt(int x, int y) {
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
@@ -1154,14 +1183,15 @@ public class GameController {
 
 
     /**
-     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
+     * Displays the player's hand cards in the user interface.
      *
-     * <p>Diese Methode:
+     * <p>This method performs the following:
      * <ul>
-     *   <li>Prüft, ob Karten vorhanden sind.</li>
-     *   <li>Leert und initialisiert die Registerfelder (Slots 1–5).</li>
-     *   <li>Zeigt die Karten in der Handkarten-Box an.</li>
-     *   <li>Fügt jeder Karte ein Klick-Ereignis hinzu, um sie ins Register zu verschieben.</li>
+     *   <li>Checks whether any cards are available.</li>
+     *   <li>Clears and initializes the register slots (slots 1–5).</li>
+     *   <li>Displays the cards in the hand card box.</li>
+     *   <li>Adds a click event to each card to allow moving it into the register.</li>
+     * </ul>
      */
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
@@ -1318,6 +1348,11 @@ public class GameController {
         return view;
     }
 
+    /**
+     * Finds the index of the next empty register slot.
+     *
+     * @return the index of the first empty slot, or -1 if all slots are filled
+     */
     private int findNextEmptyRegisterSlot() {
         for (int i = 0; i < registerState.length; i++) {
             if (registerState[i] == null) {
@@ -1329,8 +1364,8 @@ public class GameController {
     }
 
     /**
-     * Ermittelt den Slot-Index basierend auf dem StackPane in der UI.
-     * Wird beim Drag & Drop verwendet.
+     * Determines the slot index based on the given StackPane in the UI.
+     * Used during drag and drop operations.
      */
     private int findRegisterSlotIndex(StackPane pane) {
         for (int i = 0; i < registerBox.getChildren().size(); i++) {
@@ -1432,7 +1467,7 @@ public class GameController {
     }
 
     /**
-     * Initialisiert einen Register-Slot zur Annahme von Karten per Drag & Drop.
+     * Initializes a register slot to accept cards via drag and drop.
      */
     private void setupRegisterSlot(StackPane pane) {
         pane.setOnDragOver(event -> {
@@ -1581,7 +1616,7 @@ public class GameController {
     }
 
     /**
-     * Bestätigt die ausgewählten Karten und sendet sie an den Server.
+     * Confirms the selected cards and sends them to the server.
      */
     @FXML
     private void handleConfirmSelection() {
@@ -1614,7 +1649,6 @@ public class GameController {
             appLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
         }
 
-        // Sende Nachricht an Server
         var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
         var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
         ClientSingleton.getInstance().sendMessage(finishedMsg);
@@ -1628,10 +1662,10 @@ public class GameController {
 
 
     /**
-     * Zeigt für einen anderen Spieler Kartenrückseiten an.
+     * Displays card backs for another player.
      *
-     * @param clientID Spieler-ID
-     * @param count    Anzahl der Karten
+     * @param clientID the ID of the player
+     * @param count    the number of cards to display
      */
     public void displayHiddenCardsForPlayer(int clientID, int count) {
         handCardBox.getChildren().clear();
@@ -1653,7 +1687,7 @@ public class GameController {
     }
 
     /**
-     * Zeigt eine optionale Animation oder Nachricht an, dass das Deck gemischt wurde.
+     * Displays an optional animation or message indicating that the deck has been shuffled.
      */
     public void showShuffleAnimation() {
         appendChatMessage("[INFO] Das Programmierdeck wurde neu gemischt.");
@@ -1661,7 +1695,11 @@ public class GameController {
         shuffleHandCards();
 
     }
-
+    /**
+     * Handles the visual shuffle action triggered by the user.
+     * <p>
+     * Plays a shuffle sound and randomly rearranges the cards in the hand card box.
+     */
     @FXML
     private void handleShuffleVisual() {
         playShuffleSound();
@@ -1672,10 +1710,15 @@ public class GameController {
 
 
     /**
-     * Wird aufgerufen, wenn ein Spieler eine Karte für sein Register ausgewählt hat.
+     * Called when a player selects or deselects a card for their register.
+     * <p>
+     * If the player is the local client and the register is being cleared,
+     * this method handles the card removal, including restoring it to the hand
+     * if it was not part of a manual or swap-related deselection.
      *
-     * @param clientID Die ID des Spielers
-     * @param filled   Ob das Register des Spielers vollständig ist
+     * @param clientID the ID of the player performing the selection
+     * @param register the index of the register slot affected
+     * @param filled   whether the register is currently filled (true = added, false = removed)
      */
     public void handleCardSelection(int clientID, int register, boolean filled) {
         final boolean isSelf = clientID == ClientSingleton.getInstance().getID();
@@ -1809,9 +1852,9 @@ public class GameController {
 
 
     /**
-     * Hebt hervor, dass ein Spieler sein Programm abgeschlossen hat.
+     * Highlights that a player has completed their program.
      *
-     * @param clientID Die ID des Spielers
+     * @param clientID the ID of the player
      */
     public void markPlayerReady(int clientID) {
         boolean isSelf = clientID == ClientSingleton.getInstance().getID();
@@ -1826,20 +1869,10 @@ public class GameController {
 
 
     /**
-     * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
-     *
-     * <p>Die Methode zeigt die verbleibende Zeit im `timerLabel` an und blendet das Label aus,
-     * wenn der Countdown abgelaufen ist. Der Timer wird in 1-Sekunden-Intervallen aktualisiert.</p>
-     *
-     * <p>Funktionsweise:</p>
-     * <ul>
-     *   <li>Setzt die verbleibende Zeit (`secondsLeft`) auf 30 Sekunden.</li>
-     *   <li>Zeigt das `timerLabel` an und aktualisiert es jede Sekunde.</li>
-     *   <li>Stoppt einen eventuell laufenden Timer, bevor ein neuer gestartet wird.</li>
-     *   <li>Blendet das `timerLabel` aus, wenn die Zeit abgelaufen ist.</li>
-     * </ul>
-     *
-     * <p>Diese Methode wird verwendet, um zeitgesteuerte Aktionen in der Benutzeroberfläche zu ermöglichen.</p>
+     * Starts a 30-second countdown timer and updates the timer label in the UI.
+     * <p>
+     * The label is updated every second and hidden when the time runs out.
+     * Any running timer is stopped before a new one starts.
      */
     public void startCountdown() {
 
@@ -1903,7 +1936,7 @@ public class GameController {
                         countdownTimer.stop();
                         stopCountdownSound();
 
-                        if (blinkTimeline != null) blinkTimeline.stop(); //
+                        if (blinkTimeline != null) blinkTimeline.stop();
                         timerLabel.setOpacity(1);
                         timerLabel.setText("Zeit abgelaufen!");
                         fadeOutCountdown();
@@ -1970,7 +2003,7 @@ public class GameController {
             countdownClip.setCycleCount(1);
             countdownClip.play();
 
-            PauseTransition stopSound = new PauseTransition(Duration.seconds(20));
+            PauseTransition stopSound = new PauseTransition(Duration.seconds(25));
             stopSound.setOnFinished(e -> stopCountdownSound());
             stopSound.play();
 
@@ -1978,8 +2011,6 @@ public class GameController {
             System.err.println("Countdown-Sound konnte nicht geladen werden: " + e.getMessage());
         }
     }
-
-
 
 
 
@@ -1992,10 +2023,9 @@ public class GameController {
 
 
     /**
-     * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
-     *
-     * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
-     * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
+     * Indicates that the timer has expired and marks players who were too slow.
+     * <p>
+     * Called when the countdown ends to notify users and handle incomplete actions.
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
         if (!timerLabel.isVisible()) {
@@ -2025,9 +2055,9 @@ public class GameController {
     }
 
     /**
-     * Zeigt die vom Spieler bestätigten Karten im Register oder Kartenbereich.
+     * Displays the cards that the player has confirmed, replacing the hand card area.
      *
-     * @param cards Liste der Kartennamen
+     * @param cards the list of confirmed card names
      */
     public void displayConfirmedCards(List<String> cards) {
         handCardBox.getChildren().clear();
