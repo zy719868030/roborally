@@ -167,7 +167,11 @@ public class Robot {
      */
     // Moves the robot backward one space
     public void moveBackward(Board board) {
-        if (isPoweredDown) return;
+        if (isPoweredDown) {
+//            Logger logger = Logger.getLogger(this.getClass().getName());
+//            logger.info("Robot {" + clientID + " } cannot move backward - is powered down");
+            return;
+        }
 
         // Check if robot has fallen off the board
         if (board.hasRobotFallen(this)) {
@@ -177,11 +181,19 @@ public class Robot {
         }
 
         Direction opposite = direction.turnAround();
+//        Logger logger = Logger.getLogger(this.getClass().getName());
+//        logger.info("Robot {"+clientID+"} at position {"+ position +"} facing {" + direction +"} attempting to move " +
+//                "backward (direction:"+ opposite);
+
+
         // Check if current position has walls blocking exit in backward direction
         List<BoardElement> currentElements = board.getElements(position.x(), position.y());
+//        logger.info("Robot {"+clientID+"} current position elements: {"+currentElements.size());
         for (BoardElement element : currentElements) {
             if (element instanceof Wall wall) {
+//                logger.info("Robot {"+clientID+"} found wall at current position blocking directions: {"+wall.getBlockedDirections()+"}");
                 if (!wall.canExitToDirection(opposite)) {
+//                    logger.info("Robot {"+clientID+"} BLOCKED by wall - cannot exit current cell in direction {"+ opposite+"}");
                     // Cannot exit current cell due to wall
                     return;
                 }
@@ -189,34 +201,48 @@ public class Robot {
         }
 
         Position newPos = position.move(opposite);
+//        logger.info("Robot {"+clientID+"} calculated new position: {"+newPos+"}");
         if (board.isValidPosition(newPos)) {
+            Robot robotAtTarget = board.getRobotAt(newPos);
+            if (robotAtTarget != null) {
+//                logger.info("Robot {"+clientID+"} BLOCKED - target position {"+newPos+"} is occupied by Robot " +
+//                        "{"+robotAtTarget.getRobotID()+"}");
+                return;
+            }
+
             List<BoardElement> targetElements = board.getElements(newPos.x(), newPos.y());
+//            logger.info("Robot {"+clientID+"} target position elements: {"+targetElements.size()+"}");
             boolean canEnter = true;
 
             // Check walls in target cell
             for (BoardElement element : targetElements) {
                 if (element instanceof Wall wall) {
+//                    logger.info("Robot {"+clientID+"} found wall at target position blocking directions: {"+wall.getBlockedDirections()+"}");
                     // Check if wall blocks entry from the direction we're coming from
                     if (!wall.canPassThroughFromDirection(opposite.turnAround())) {
+//                        logger.info("Robot {"+clientID+"} BLOCKED by wall at target - cannot enter from direction {"+opposite.turnAround()+"}");
                         canEnter = false;
                         break;
                     }
                 } else if (!element.canPassThrough(this)) {
+//                    logger.info("Robot {"+clientID+"} BLOCKED by element at target: {"+element.getType()+"}");
                     canEnter = false;
                     break;
                 }
             }
 
-            if (canEnter && board.getRobotAt(newPos) == null) {
+            if (canEnter) {
+//                logger.info("Robot {"+clientID+"} SUCCESSFULLY moving backward from {"+position+"} to {"+newPos+"}");
                 position = newPos;
                 board.updateRobotPosition(this, position);
                 pushRobot(board, opposite);
                 notifyMovement();
+//            } else {
+//                logger.info("Robot {"+clientID+"} BLOCKED - cannot enter target position {"+newPos+"}");
             }
         } else {
+//            logger.info("Robot {"+clientID+"} would fall off board - target position {"+newPos+"} is invalid, triggering reboot");
             board.handleFall(this);
-            Logger logger = Logger.getLogger(this.getClass().getName());
-            logger.info("Robot " + clientID + " attempted to move backward off the board at position " + position + ". Movement prevented.");
         }
     }
 
