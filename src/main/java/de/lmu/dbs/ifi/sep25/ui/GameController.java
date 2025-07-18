@@ -137,8 +137,8 @@ public class GameController {
     private final double SCALE_DELTA = 1.1;
     private final List<String> discardPile = new ArrayList<>();
     private static final double NORMAL_ROBOT_SIZE = 40.0;
-    private static final double MY_ROBOT_SIZE = 60.0;
-    private static final double MY_ROBOT_SCALE = 1.5;
+    private static final double MY_ROBOT_SIZE = 56.0;
+    private static final double MY_ROBOT_SCALE = 1.4;
     private Label discardCounter;
     private Timeline blinkTimeline;
 
@@ -2283,36 +2283,40 @@ public class GameController {
 
                     //Insert direction indicator
                     Label directionIndicator = new Label(switch (newDirection) {
-                        case "top" -> "↑";
-                        case "right" -> "→";
-                        case "bottom" -> "↓";
-                        case "left" -> "←";
+                        case "top" -> "▲";
+                        case "right" -> "▶";
+                        case "bottom" -> "▼";
+                        case "left" -> "◀";
                         default -> "?";
                     });
 
                     directionIndicator.setStyle(
-                            "-fx-font-size: 16px; " +
+                            "-fx-font-size: 22px; " +
                                     "-fx-font-weight: bold; " +
-                                    "-fx-text-fill: #ffcc00; " +
-                                    "-fx-background-color: linear-gradient(#303030, #505050); " +
-                                    "-fx-background-radius: 5px; " +
-                                    "-fx-border-color: #ffcc00; " +
-                                    "-fx-border-width: 1px; " +
-                                    "-fx-border-radius: 5px; " +
-                                    "-fx-padding: 3px 6px; " +
-                                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);"
+                                    "-fx-text-fill: #00ffff; " +
+                                    "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e); " +
+                                    "-fx-border-color: #ff0080; " +
+                                    "-fx-border-width: 2px; " +
+                                    "-fx-border-radius: 6px; " +
+                                    "-fx-background-radius: 6px; " +
+                                    "-fx-padding: 6px 10px; " +
+                                    "-fx-effect: dropshadow(gaussian, #00ffff, 12, 0.8, 0, 0), " +
+                                    "innershadow(gaussian, #ff0080, 3, 0.4, 0, 0);"
                     );
-                    directionIndicator.setTranslateY(-25);
+                    directionIndicator.setTranslateY(-30);
                     cell.getChildren().add(directionIndicator);
-                    ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
+
+                    ScaleTransition appear = new ScaleTransition(Duration.millis(250), directionIndicator);
                     appear.setFromX(0.5);
                     appear.setFromY(0.5);
                     appear.setToX(1.0);
                     appear.setToY(1.0);
+                    appear.setInterpolator(Interpolator.EASE_OUT);
                     appear.play();
-                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(2));
                     delay.setOnFinished(e -> {
-                        FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
+                        FadeTransition fade = new FadeTransition(Duration.millis(600), directionIndicator);
                         fade.setFromValue(1.0);
                         fade.setToValue(0.0);
                         fade.setOnFinished(event -> cell.getChildren().remove(directionIndicator));
@@ -2407,27 +2411,28 @@ public class GameController {
 
         // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
         Label directionIndicator = new Label(switch (direction.toLowerCase()) {
-            case "top" -> "↑";
-            case "bottom" -> "↓";
-            case "left" -> "←";
-            case "right" -> "→";
+            case "top" -> "▲";
+            case "bottom" -> "▼";
+            case "left" -> "◀";
+            case "right" -> "▶";
             default -> "?";
         });
 
         // Create directional arrows in the same style as in the rotateRobot method.
         directionIndicator.setStyle(
-                "-fx-font-size: 16px; " +
+                "-fx-font-size: 24px; " +
                         "-fx-font-weight: bold; " +
-                        "-fx-text-fill: #ffcc00; " +
-                        "-fx-background-color: linear-gradient(#303030, #505050); " +
-                        "-fx-background-radius: 5px; " +
-                        "-fx-border-color: #ffcc00; " +
-                        "-fx-border-width: 1px; " +
-                        "-fx-border-radius: 5px; " +
-                        "-fx-padding: 3px 6px; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);"
+                        "-fx-text-fill: #00ffff; " +
+                        "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e); " +
+                        "-fx-border-color: #ff0080; " +
+                        "-fx-border-width: 2px; " +
+                        "-fx-border-radius: 8px; " +
+                        "-fx-background-radius: 8px; " +
+                        "-fx-padding: 8px 12px; " +
+                        "-fx-effect: dropshadow(gaussian, #00ffff, 15, 0.8, 0, 0), " +
+                        "innershadow(gaussian, #ff0080, 4, 0.5, 0, 0);"
         );
-        directionIndicator.setTranslateY(-25);
+        directionIndicator.setTranslateY(-35);
 
 //        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
         // Beispielposition – TODO: später echte Roboterposition verwenden
