@@ -420,6 +420,7 @@ public class GameController {
                 case "PushPanel" -> {
                     MessageDefinitions.FieldPushPanel pushPanel = (MessageDefinitions.FieldPushPanel) element;
                     String key = "PushPanel_" + String.join("_", pushPanel.registers().stream().map(String::valueOf).toList());
+//                    double rotation = convertDirectionToRotation(pushPanel.orientations().getFirst()) + 180;
                     addImage(pane, key, convertDirectionToRotation(pushPanel.orientations().getFirst()));
                 }
 
