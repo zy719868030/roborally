@@ -252,8 +252,10 @@ public class Board {
         if (fallenRobots.contains(robot)) return;
         if (x >= 0 && x < width && y >= 0 && y < height) {
             grid[x][y].applyEffects(robot, this);
+            if (fallenRobots.contains(robot)) return;
             //List<BoardElement> elementsAt = getElements(x, y);
             for (BoardElement element : grid[x][y].getElements()) {
+                if (fallenRobots.contains(robot)) break;
                 String animationType = mapElementToAnimationType(element.getType()); // Check mapping below
                 if (animationType != null) {
                     Player player = Game.getInstance().getPlayers().stream()

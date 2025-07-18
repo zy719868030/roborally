@@ -38,8 +38,11 @@ public class Tile {
     }
 
     public void applyEffects(Robot robot, Board board) {
+        if (board.hasRobotFallen(robot)) return;
         for (BoardElement element : elements) {
-            element.activate(robot);
+//            element.activate(robot);
+            element.applyEffect(robot, board);
+            if (board.hasRobotFallen(robot)) break;
         }
     }
 
