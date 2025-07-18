@@ -96,7 +96,7 @@ public class DeathTrap extends GameMap {
         elements.add(new PushPanel(new Position(8, 1), Direction.WEST, List.of(1, 3, 5), boardId));
         elements.add(new PushPanel(new Position(2, 2), Direction.EAST, List.of(2, 4), boardId));
         elements.add(new PushPanel(new Position(7, 2), Direction.SOUTH, List.of(2, 4), boardId));
-        elements.add(new PushPanel(new Position(4, 3), Direction.NORTH, List.of(1, 3, 5), boardId));
+        elements.add(new PushPanel(new Position(4, 3), Direction.NORTH, List.of(2, 4), boardId));
         elements.add(new PushPanel(new Position(6, 4), Direction.SOUTH, List.of(1, 3, 5), boardId));
         elements.add(new PushPanel(new Position(3, 5), Direction.NORTH, List.of(1, 3, 5), boardId));
         elements.add(new PushPanel(new Position(4, 5), Direction.SOUTH, List.of(2, 4), boardId));
