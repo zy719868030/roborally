@@ -14,7 +14,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -140,17 +139,9 @@ public class GameController {
     private Timeline blinkTimeline;
 
 
-    private double currentZoom = 1.0;
-    private final double ZOOM_STEP = 0.25;
-    private final double MAX_ZOOM = 2.0;
-    private final double MIN_ZOOM = 0.5;
-
-
-    @FXML private Group zoomContent;
-    @FXML private StackPane scrollContentWrapper;
-
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
+    // Map: clientID -> List der ausgewählten Registerkarten (Strings)
     private final Map<Integer, List<String>> otherPlayersRegisters = new HashMap<>();
     private final Map<Integer, Integer> clientEnergyMap = new HashMap<>();
 
@@ -239,33 +230,6 @@ public class GameController {
         addHoverAnimation(chatToggleButton);
         Tooltip.install(energyBox, new Tooltip("Deine Energieanzeige"));
 
-        Platform.runLater(() -> {
-            Bounds viewportBounds = gameBoardScrollPane.getViewportBounds();
-            Bounds boardBounds = zoomWrapper.getLayoutBounds();
-
-            double scaleX = (viewportBounds.getWidth() - 20) / boardBounds.getWidth();
-            double scaleY = (viewportBounds.getHeight() - 20) / boardBounds.getHeight();
-
-            double targetScale = Math.min(Math.min(scaleX, scaleY), 1.0);
-            double minReadableScale = 0.85;
-
-            scaleValue = Math.max(targetScale, minReadableScale);
-            zoomWrapper.setMouseTransparent(false);
-            zoomWrapper.setPickOnBounds(false);
-
-            zoomContent.setMouseTransparent(false);
-            zoomContent.setPickOnBounds(false);
-
-            scrollContentWrapper.setMouseTransparent(false);
-            scrollContentWrapper.setPickOnBounds(false);
-
-
-            zoomWrapper.setScaleX(scaleValue);
-            zoomWrapper.setScaleY(scaleValue);
-
-            gameBoardScrollPane.setHvalue(gameBoardScrollPane.getHmax() / 2);
-            gameBoardScrollPane.setVvalue(gameBoardScrollPane.getVmax() / 2);
-        });
 
     }
 
@@ -1088,10 +1052,13 @@ public class GameController {
                     });
                 }
 
-                case 1, 2 -> {
+                case 1 -> {
 
                 }
 
+                case 2 -> {
+
+                }
             }
         } else {
             String name = getPlayerNameById(clientID);
@@ -2177,9 +2144,18 @@ public class GameController {
 //            appLogger.info("clientToRobotID: {}", clientToRobotID.toString());
             appLogger.info("Robot {} moved to ({}, {})", robotID, x, y);
 
-            final String direction = robotDirections.get(clientID);
-            if (direction == null)
-                throw new IllegalStateException("Direction for clientID " + clientID + " not found in robotDirections map.");
+            // Get or set the robot's direction
+            String direction = robotDirections.get(clientID);
+            if (direction == null) {
+                // If there is no direction record, use the default direction.
+                direction = "right";
+                robotDirections.put(clientID, direction);
+                appLogger.warn("Direction for clientID {} not found, using default: {}", clientID, direction);
+            }
+
+//            final String direction = robotDirections.get(clientID);
+//            if (direction == null)
+//                throw new IllegalStateException("Direction for clientID " + clientID + " not found in robotDirections map.");
             final String imagePath = "/assets/robots/robot_0" + robotID + "_" + direction + ".png";
             final Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
             ImageView robotView = new ImageView(robotImg);
@@ -2382,8 +2358,15 @@ public class GameController {
     public void showRebootDirection(String direction) {
         appendChatMessage("[INFO] Reboot-Richtung: " + direction);
 
+//        // Update the direction for all robots during the restart process
+//        int rebootingClientID = ClientSingleton.getInstance().getRebootingInProgress();
+//        if (rebootingClientID != -1) {
+//            robotDirections.put(rebootingClientID, direction);
+//            appLogger.info("Set the restart direction of the robot {} to: {}", rebootingClientID, direction);
+//        }
+
         // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
-        Label arrow = new Label(switch (direction.toLowerCase()) {
+        Label directionIndicator = new Label(switch (direction.toLowerCase()) {
             case "top" -> "↑";
             case "bottom" -> "↓";
             case "left" -> "←";
@@ -2391,16 +2374,43 @@ public class GameController {
             default -> "?";
         });
 
-        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
-        StackPane centerTile = getCellAt(5, 5); // Beispielposition – später echte Roboterposition verwenden
+        // Create directional arrows in the same style as in the rotateRobot method.
+        directionIndicator.setStyle(
+                "-fx-font-size: 16px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-text-fill: #ffcc00; " +
+                        "-fx-background-color: linear-gradient(#303030, #505050); " +
+                        "-fx-background-radius: 5px; " +
+                        "-fx-border-color: #ffcc00; " +
+                        "-fx-border-width: 1px; " +
+                        "-fx-border-radius: 5px; " +
+                        "-fx-padding: 3px 6px; " +
+                        "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);"
+        );
+        directionIndicator.setTranslateY(-25);
 
-        if (centerTile != null) {
-            centerTile.getChildren().add(arrow);
+//        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
+        // Beispielposition – TODO: später echte Roboterposition verwenden
+        StackPane rebootTile = getCellAt(7, 3);
+        if (rebootTile != null) {
+            rebootTile.getChildren().add(directionIndicator);
 
-            // Pfeil nach kurzer Zeit entfernen
-            PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
-            pause.setOnFinished(e -> centerTile.getChildren().remove(arrow));
-            pause.play();
+            ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
+            appear.setFromX(0.5);
+            appear.setFromY(0.5);
+            appear.setToX(1.0);
+            appear.setToY(1.0);
+            appear.play();
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+            delay.setOnFinished(e -> {
+                FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+                fade.setOnFinished(event -> rebootTile.getChildren().remove(directionIndicator));
+                fade.play();
+            });
+            delay.play();
         }
     }
 
@@ -3559,26 +3569,52 @@ public class GameController {
         }
     }
 
-
-    @FXML
-    private void handleZoomIn() {
-        if (currentZoom < MAX_ZOOM) {
-            currentZoom += ZOOM_STEP;
-            applyZoom();
-        }
+    /**
+     * Get the robot's current direction.
+     *
+     * @param clientID Client ID.
+     * @return The robot's direction string. If not found, return null.
+     */
+    public String getRobotDirection(int clientID) {
+        return robotDirections.get(clientID);
     }
 
-    @FXML
-    private void handleZoomOut() {
-        if (currentZoom > MIN_ZOOM) {
-            currentZoom -= ZOOM_STEP;
-            applyZoom();
-        }
-    }
+    /**
+     * Update the robot's direction (mainly used for setting the direction after rebooting)
+     *
+     * @param clientID Client ID
+     * @param direction New direction
+     */
+    public void updateRobotDirection(int clientID, String direction) {
+        robotDirections.put(clientID, direction);
+        appLogger.info("Updated robot direction for client {} to: {}", clientID, direction);
 
-    private void applyZoom() {
-        zoomWrapper.setScaleX(currentZoom);
-        zoomWrapper.setScaleY(currentZoom);
+        // If the robot is on the board, update its visual representation.
+        Position pos = robotPositions.get(clientID);
+        if (pos != null && pos.x() >= 0 && pos.y() >= 0) {
+            StackPane cell = getCellAt(pos.x(), pos.y());
+            if (cell != null) {
+                cell.getChildren().removeIf(n -> n instanceof ImageView && "robot".equals(n.getUserData()));
+
+                // Add new robot image (with correct orientation)
+                try {
+                    Integer robotID = clientToRobotID.get(clientID);
+                    if (robotID != null) {
+                        String imagePath = "/assets/robots/robot_0" + robotID + "_" + direction + ".png";
+                        Image robotImg = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
+                        ImageView robotView = new ImageView(robotImg);
+                        robotView.setFitWidth(40);
+                        robotView.setFitHeight(40);
+                        robotView.setPreserveRatio(true);
+                        robotView.setUserData("robot");
+                        cell.getChildren().add(robotView);
+                        appLogger.info("Updated robot visual to direction: {}", direction);
+                    }
+                } catch (Exception e) {
+                    appLogger.error("Unable to update robot direction image: {}", e.getMessage());
+                }
+            }
+        }
     }
 }
 

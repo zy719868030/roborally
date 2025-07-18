@@ -75,9 +75,9 @@ public class LobbyController {
     private Parent root;
 
     /**
-     * Wechselt die Sichtbarkeit der Lobby-Box.
-     * Blendet die Lobby-Box aus oder ein, passt die zugehörigen Buttons und Icons an
-     * und aktualisiert die Sichtbarkeit des Icon-Menüs.
+     * Toggles the visibility of the lobby box.
+     * Hides or shows the lobby box, adjusts the corresponding buttons and icons,
+     * and updates the visibility of the icon menu.
      */
     @FXML
     private void toggleLobbyBox() {
@@ -100,9 +100,9 @@ public class LobbyController {
     }
 
     /**
-     * Wechselt die Sichtbarkeit der Chat-Box.
-     * Blendet die Chat-Box aus oder ein, passt die zugehörigen Buttons und Icons an
-     * und aktualisiert die Sichtbarkeit des Icon-Menüs.
+     * Toggles the visibility of the chat box.
+     * Hides or shows the chat box, adjusts the corresponding buttons and icons,
+     * and updates the visibility of the icon menu.
      */
     @FXML
     private void toggleChatBox() {
@@ -125,9 +125,9 @@ public class LobbyController {
     }
 
     /**
-     * Aktualisiert die Sichtbarkeit des Icon-Menüs.
-     * Zeigt das Icon-Menü an, wenn entweder die Chat-Box oder die Lobby-Box minimiert ist,
-     * andernfalls wird es ausgeblendet.
+     * Updates the visibility of the icon menu.
+     * Shows the icon menu if either the chat box or the lobby box is minimized,
+     * otherwise hides it.
      */
     private void updateIconMenuVisibility() {
         boolean irgendwasMinimiert =
@@ -140,10 +140,10 @@ public class LobbyController {
     }
 
     /**
-     * Initialisiert die Lobby-Oberfläche.
-     * Setzt die Spieler- und Empfängerlisten, konfiguriert die Anzeigeelemente,
-     * richtet Listener für die Kartenwahl ein und registriert den Controller.
-     * Stellt sicher, dass die UI-Elemente korrekt angezeigt und verwaltet werden.
+     * Initializes the lobby UI.
+     * Sets up the player and recipient lists, configures display elements,
+     * sets up listeners for map selection, and registers the controller.
+     * Ensures that UI elements are displayed and managed correctly.
      */
     @FXML
     public void initialize() {
@@ -227,11 +227,11 @@ public class LobbyController {
     }
 
     /**
-     * Zeigt eine Vorschau der ausgewählten Karte an.
-     * Lädt das entsprechende Vorschaubild basierend auf dem Kartennamen und zeigt es an.
-     * Falls kein Bild gefunden wird, wird eine Warnung ausgegeben und das Vorschaubild ausgeblendet.
+     * Displays a preview of the selected map.
+     * Loads the corresponding preview image based on the map name and displays it.
+     * If no image is found, a warning is issued and the preview is hidden.
      *
-     * @param mapName Name der Karte, für die die Vorschau angezeigt werden soll.
+     * @param mapName Name of the map for which the preview should be shown.
      */
     private void displayMapPreview(String mapName) {
         final String imageFile = "/assets/mapPreviews/" + mapName.toLowerCase().replace(" ", "_") + ".png";
@@ -248,9 +248,9 @@ public class LobbyController {
     }
 
     /**
-     * Setzt den eigenen Status auf "bereit".
-     * Sendet die Bereitschaft an den Server, aktualisiert die Anzeige und die Buttons,
-     * und markiert den Spieler in der Lobby als bereit.
+     * Sets the player's status to "ready".
+     * Sends readiness to the server, updates the display and buttons,
+     * and marks the player as ready in the lobby.
      */
     @FXML
     private void handleReady() {
@@ -267,10 +267,10 @@ public class LobbyController {
     }
 
     /**
-     * Setzt den eigenen Status auf "nicht bereit".
-     * Sendet die Nicht-Bereitschaft an den Server, aktualisiert die Anzeige und die Buttons,
-     * entfernt die Markierung "bereit" in der Lobby und blendet ggf. die Mapauswahl aus,
-     * falls der Spieler Map-Wähler war.
+     * Sets the player's status to "not ready".
+     * Sends not-ready status to the server, updates the display and buttons,
+     * removes the "ready" mark in the lobby, and hides the map selection
+     * if the player was the map chooser.
      */
     @FXML
     private void handleNotReady() {
@@ -289,11 +289,11 @@ public class LobbyController {
     }
 
     /**
-     * Sendet den aktuellen Bereitschaftsstatus an den Server.
-     * Erstellt eine Status-Nachricht und überträgt sie, sofern ein Client vorhanden ist.
-     * Gibt eine Fehlermeldung aus, falls kein Client verfügbar ist.
+     * Sends the current readiness status to the server.
+     * Creates a status message and transmits it if a client is present.
+     * Prints an error if no client is available.
      *
-     * @param ready true, wenn der Spieler bereit ist; false, wenn nicht.
+     * @param ready true if the player is ready; false otherwise.
      */
     private void sendReadyStatus(boolean ready) {
         Message<BodySetStatus> msg = new Message<>(new BodySetStatus(ready));
@@ -307,15 +307,15 @@ public class LobbyController {
     }
 
     /**
-     * Fügt einen neuen Spieler zur Lobby hinzu.
-     * Erstellt einen `PlayerEntry` mit den übergebenen Parametern und fügt ihn der Spieler-Liste hinzu,
-     * sofern noch kein Spieler mit dieser ID existiert. Der eigene Spielername wird mit "(du)" markiert.
-     * Zusätzlich wird der Spieler der Empfänger-ComboBox hinzugefügt, falls es sich nicht um den eigenen Spieler handelt.
+     * Adds a new player to the lobby.
+     * Creates a `PlayerEntry` with the given parameters and adds it to the player list,
+     * if no player with this ID exists yet. The own player name is marked with "(you)".
+     * Additionally, the player is added to the recipient ComboBox if it is not the own player.
      *
-     * @param clientID Die eindeutige ID des Spielers.
-     * @param name     Der Name des Spielers.
-     * @param figure   Die Figuren-ID des Spielers.
-     * @param ready    Gibt an, ob der Spieler bereit ist.
+     * @param clientID The unique ID of the player.
+     * @param name     The name of the player.
+     * @param figure   The figure ID of the player.
+     * @param ready    Whether the player is ready.
      */
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         int myID = ClientSingleton.getInstance().getID();
@@ -357,9 +357,9 @@ public class LobbyController {
     }
 
     /**
-     * Verarbeitet die Auswahl einer Karte durch den Spieler.
-     * Sendet die ausgewählte Karte als Nachricht an den Server,
-     * sofern eine gültige Auswahl getroffen wurde.
+     * Processes the selection of a map by the player.
+     * Sends the selected map as a message to the server,
+     * if a valid selection was made.
      */
     @FXML
     private void handleMapSelection() {
@@ -373,20 +373,20 @@ public class LobbyController {
     }
 
     /**
-     * Gibt die zuletzt empfangene Liste der verfügbaren Karten zurück.
-     * Diese Liste wird aktualisiert, wenn neue Karten vom Server empfangen werden.
+     * Returns the last received list of available maps.
+     * This list is updated when new maps are received from the server.
      *
-     * @return Liste der zuletzt empfangenen Karten oder {@code null}, falls keine vorhanden ist.
+     * @return List of last received maps or {@code null} if none exist.
      */
     List<String> getLastReceivedMapList() {
         return lastReceivedMapList;
     }
 
     /**
-     * Blendet die Mapauswahl aus.
-     * Setzt die Sichtbarkeit und Verwaltung der Mapauswahl-Box auf unsichtbar,
-     * deaktiviert den Auswahl-Button und die Karten-ComboBox.
-     * Wird z.\u200bB. aufgerufen, wenn der Spieler nicht mehr bereit ist.
+     * Hides the map selection.
+     * Sets the visibility and management of the map selection box to invisible,
+     * disables the selection button and the map ComboBox.
+     * Called e.g. when the player is no longer ready.
      */
     public void hideMapSelection() {
         mapSelectionBox.setVisible(false);
@@ -396,10 +396,10 @@ public class LobbyController {
     }
 
     /**
-     * Setzt den Text des Karten-Labels und zeigt die zugehörige Karten-Vorschau an.
-     * Extrahiert den Kartennamen aus dem übergebenen Text und lädt das entsprechende Vorschaubild.
+     * Sets the text of the map label and shows the corresponding map preview.
+     * Extracts the map name from the given text and loads the corresponding preview image.
      *
-     * @param text Der anzuzeigende Text, z.\u200bB. "Ausgewählte Karte: NameDerKarte".
+     * @param text The text to display, e.g. "Selected map: MapName".
      */
     public void setMapLabel(String text) {
         mapLabel.setText(text);
@@ -410,14 +410,14 @@ public class LobbyController {
     }
 
     /**
-     * Aktualisiert den Bereitschaftsstatus eines Spielers in der Lobby.
-     * Setzt den Status des Spielers, passt die Reihenfolge der bereiten Spieler an
-     * und prüft, ob der eigene Spieler nun als Erster bereit ist.
-     * Falls ja, wird die Mapauswahl angezeigt, andernfalls ausgeblendet.
-     * Aktualisiert die Anzeige der Spieler-Liste.
+     * Updates the readiness status of a player in the lobby.
+     * Sets the player's status, adjusts the order of ready players,
+     * and checks if the own player is now first.
+     * If so, shows the map selection, otherwise hides it.
+     * Updates the display of the player list.
      *
-     * @param clientID Die ID des Spielers, dessen Status geändert wird.
-     * @param isReady  Gibt an, ob der Spieler bereit ist.
+     * @param clientID The ID of the player whose status is changed.
+     * @param isReady  Whether the player is ready.
      */
     public void updatePlayerStatus(int clientID, boolean isReady) {
         PlayerEntry found = players.stream()
@@ -454,10 +454,10 @@ public class LobbyController {
 
 
     /**
-     * Verarbeitet das Senden einer Chatnachricht.
-     * Liest die Nachricht aus dem Eingabefeld, prüft auf leeren Inhalt und sendet sie an den ausgewählten Empfänger.
-     * Die Nachricht wird an den Server übertragen und im Chatbereich angezeigt.
-     * Nach dem Senden wird das Eingabefeld geleert.
+     * Processes sending a chat message.
+     * Reads the message from the input field, checks for empty content, and sends it to the selected recipient.
+     * The message is transmitted to the server and displayed in the chat area.
+     * After sending, the input field is cleared.
      */
     @FXML
     private void handleSendChat() {
@@ -482,12 +482,12 @@ public class LobbyController {
     }
 
     /**
-     * Aktualisiert die Spieler-Liste in der Lobby.
-     * Setzt die übergebene Liste als neue Spieler-Liste, entfernt alle bisherigen Einträge
-     * und fügt die neuen Spieler hinzu. Der eigene Spieler wird nicht zur Empfänger-ComboBox hinzugefügt.
-     * Aktualisiert die Anzeige der Spieler-Liste.
+     * Updates the player list in the lobby.
+     * Sets the given list as the new player list, removes all previous entries,
+     * and adds the new players. The own player is not added to the recipient ComboBox.
+     * Updates the display of the player list.
      *
-     * @param newPlayers Die neue Liste der Spieler, die angezeigt werden soll.
+     * @param newPlayers The new list of players to display.
      */
     @FXML
     public void updatePlayerList(java.util.List<PlayerEntry> newPlayers) {
@@ -514,21 +514,21 @@ public class LobbyController {
     }
 
     /**
-     * Fügt eine Chatnachricht im Chatbereich hinzu.
-     * Die übergebene Nachricht wird mit einem Zeilenumbruch an das Textfeld angehängt.
+     * Adds a chat message to the chat area.
+     * The given message is appended to the text field with a line break.
      *
-     * @param message Die anzuzeigende Chatnachricht.
+     * @param message The chat message to display.
      */
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
     }
 
     /**
-     * Aktualisiert die Sichtbarkeit und Verwaltung der Bereitschafts-Buttons.
-     * Zeigt den "Bereit"-Button an, wenn der Spieler nicht bereit ist,
-     * und den "Nicht bereit"-Button, wenn der Spieler bereit ist.
+     * Updates the visibility and management of the ready buttons.
+     * Shows the "Ready" button if the player is not ready,
+     * and the "Not Ready" button if the player is ready.
      *
-     * @param isReady Gibt an, ob der Spieler bereit ist.
+     * @param isReady Whether the player is ready.
      */
     private void updateReadyButtons(boolean isReady) {
         readyButton.setVisible(!isReady);
@@ -538,13 +538,13 @@ public class LobbyController {
     }
 
     /**
-     * Ändert den Namen eines Spielers in der Lobby.
-     * Sucht den Spieler anhand der übergebenen ID und setzt den neuen Namen.
-     * Falls es sich um den eigenen Spieler handelt, wird "(du)" angehängt.
-     * Aktualisiert die Anzeige der Spieler-Liste nach der Umbenennung.
+     * Changes the name of a player in the lobby.
+     * Searches for the player by the given ID and sets the new name.
+     * If it is the own player, appends "(you)".
+     * Updates the display of the player list after renaming.
      *
-     * @param clientID Die ID des Spielers, dessen Name geändert werden soll.
-     * @param newName  Der neue Name, der gesetzt werden soll.
+     * @param clientID The ID of the player whose name should be changed.
+     * @param newName  The new name to set.
      */
     public void renamePlayer(int clientID, String newName) {
         for (PlayerEntry p : players) {
@@ -560,11 +560,11 @@ public class LobbyController {
     }
 
     /**
-     * Gibt eine Liste aller Spieler in der Lobby zurück.
-     * Erstellt für jeden Spieler ein neues `PlayerEntry`-Objekt, wobei der Zusatz "(du)" aus dem Namen entfernt wird.
-     * Die zurückgegebene Liste enthält die aktuellen Daten aller Spieler.
+     * Returns a list of all players in the lobby.
+     * Creates a new `PlayerEntry` object for each player, removing the "(you)" suffix from the name.
+     * The returned list contains the current data of all players.
      *
-     * @return Liste der Spieler in der Lobby ohne Namenszusatz "(du)".
+     * @return List of players in the lobby without the "(you)" name suffix.
      */
     public List<PlayerEntry> getPlayers() {
         return players.stream()
@@ -578,11 +578,10 @@ public class LobbyController {
     }
 
     /**
-     * Blendet ein UI-Element mit einer Slide-Out-Animation aus.
-     * Verschiebt das übergebene Node-Objekt nach unten und setzt nach Abschluss der Animation
-     * die Sichtbarkeit und Verwaltung auf unsichtbar.
+     * Hides a UI element with a slide-out animation.
+     * Moves the given Node object down and sets its visibility and management to invisible after the animation.
      *
-     * @param node Das UI-Element, das ausgeblendet werden soll.
+     * @param node The UI element to hide.
      */
     private void slideOut(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
@@ -595,11 +594,11 @@ public class LobbyController {
     }
 
     /**
-     * Blendet ein UI-Element mit einer Slide-In-Animation ein.
-     * Setzt das übergebene Node-Objekt sichtbar und verwaltet,
-     * und animiert es von unten nach oben in die Ausgangsposition.
+     * Shows a UI element with a slide-in animation.
+     * Sets the given Node object to visible and managed,
+     * and animates it from bottom to top to its original position.
      *
-     * @param node Das UI-Element, das eingeblendet werden soll.
+     * @param node The UI element to show.
      */
     private void slideIn(Node node) {
         node.setVisible(true);
@@ -611,31 +610,30 @@ public class LobbyController {
     }
 
     /**
-     * Gibt das aktuell gesetzte Root-Element der Lobby-Oberfläche zurück.
+     * Returns the currently set root element of the lobby UI.
      *
-     * @return Das gespeicherte Root-Element.
+     * @return The stored root element.
      */
     public Parent getRoot() {
         return root;
     }
 
     /**
-     * Setzt das Root-Element der Lobby-Oberfläche.
-     * Wird verwendet, um das übergeordnete Parent-Element zu speichern,
-     * z.\u200bB. für spätere Zugriffe oder Anpassungen.
+     * Sets the root element of the lobby UI.
+     * Used to store the parent element for later access or adjustments.
      *
-     * @param root Das Root-Element, das gesetzt werden soll.
+     * @param root The root element to set.
      */
     public void setRoot(Parent root) {
         this.root = root;
     }
 
     /**
-     * Fügt einer Schaltfläche eine Hover-Animation hinzu.
-     * Beim Überfahren mit der Maus wird die Schaltfläche leicht nach oben verschoben,
-     * beim Verlassen der Maus kehrt sie in die Ausgangsposition zurück.
+     * Adds a hover animation to a button.
+     * When hovered, the button is slightly moved up,
+     * when the mouse leaves, it returns to its original position.
      *
-     * @param button Die Schaltfläche, der die Animation hinzugefügt werden soll.
+     * @param button The button to which the animation should be added.
      */
     private void addHoverAnimation(Button button) {
         button.setOnMouseEntered(e -> {

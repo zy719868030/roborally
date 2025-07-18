@@ -40,10 +40,10 @@ import java.util.Set;
 
 
 /**
- * Controller für die Login-Oberfläche.
+ * Controller for the login UI.
  * <p>
- * Verarbeitet Benutzereingaben für Name und Spielfigur,
- * sendet Login-Nachrichten an den Server und wechselt bei Erfolg zur Lobby-Ansicht.
+ * Processes user input for name and figure,
+ * sends login messages to the server, and switches to the lobby view on success.
  */
 public class LoginController {
     private static final Logger logger = LogManager.getLogger(LoginController.class);
@@ -56,12 +56,12 @@ public class LoginController {
     @FXML
     private TextField portField;
     /**
-     * Eingabefeld für den Spielernamen.
+     * Input field for the player name.
      */
     @FXML
     private TextField nameField;
     /**
-     * Auswahlfeld für die Spielfigur (Index 0–5).
+     * Selection field for the figure (index 0–5).
      */
     @FXML
     private ComboBox<Integer> figureBox;
@@ -76,11 +76,11 @@ public class LoginController {
     @FXML
     private Button scrollLeftButton, scrollRightButton;
     /**
-     * Property zur Bindung des Spielernamens.
+     * Property for binding the player name.
      */
     private final StringProperty playerName = new SimpleStringProperty();
     /**
-     * Property zur Bindung der ausgewählten Spielfigur.
+     * Property for binding the selected figure.
      */
     private final ObjectProperty<Integer> selectedFigure = new SimpleObjectProperty<>();
     private Stage stage;
@@ -88,12 +88,12 @@ public class LoginController {
 
     @FXML
     /**
-     * Initialisiert die Login-Oberfläche.
+     * Initializes the login UI.
      * <p>
-     * Lädt die verfügbaren Roboterfiguren in die Galerie, setzt die Event-Handler für die Auswahl
-     * und Scroll-Buttons, und bindet die Eingabefelder für den Spielernamen und die Spielfigur.
-     * Stellt sicher, dass Warnhinweise bei gültiger Auswahl ausgeblendet werden.
-     * Registriert den Controller im ControllerRegistry.
+     * Loads the available robot figures into the gallery, sets up event handlers for selection
+     * and scroll buttons, and binds the input fields for player name and figure.
+     * Ensures that warnings are hidden when a valid selection is made.
+     * Registers the controller in the ControllerRegistry.
      */
     private void initialize() {
         int robotCount = 6;
@@ -159,12 +159,12 @@ public class LoginController {
     }
 
     /**
-     * Wird aufgerufen, wenn der Nutzer auf "Login" klickt.
-     * Validiert die Eingaben für Name und Spielfigur, verwendet Standardwerte für Host und Port,
-     * stellt die Verbindung zum Server her und speichert die Nutzerdaten.
-     * Zeigt bei Fehlern entsprechende Warnungen an und deaktiviert den Login-Button während der Verarbeitung.
+     * Called when the user clicks "Login".
+     * Validates the inputs for name and figure, uses default values for host and port,
+     * connects to the server, and stores the user data.
+     * Shows appropriate warnings on errors and disables the login button during processing.
      *
-     * @param event Das zugehörige ActionEvent.
+     * @param event The associated ActionEvent.
      */
     @FXML
     private void handleLogin(ActionEvent event) {
@@ -214,12 +214,12 @@ public class LoginController {
     }
 
     /**
-     * Zeigt eine Fehlermeldung an, wenn die Auswahl ungültig ist.
-     * Setzt den Warnhinweis sichtbar, spielt eine Shake-Animation für das Eingabefeld
-     * und aktiviert den Button wieder.
+     * Shows an error message if the selection is invalid.
+     * Sets the warning label visible, plays a shake animation for the input field,
+     * and re-enables the button.
      *
-     * @param errorText Der anzuzeigende Fehlertext.
-     * @param event     Das zugehörige ActionEvent.
+     * @param errorText The error text to display.
+     * @param event     The associated ActionEvent.
      */
     private void displaySelectionError(String errorText, ActionEvent event) {
         warningLabel.setText(errorText);
@@ -231,13 +231,13 @@ public class LoginController {
 
 
     /**
-     * Wird aufgerufen, wenn der Nutzer auf "Bot-Login" klickt.
+     * Called when the user clicks "Bot Login".
      * <p>
-     * Deaktiviert die Eingabefelder, wählt einen zufälligen Namen und eine zufällige Spielfigur für den Bot,
-     * verwendet Standardwerte für Host und Port, stellt die Verbindung zum Server her und sendet die Bot- und Spielerinformationen.
-     * Zeigt bei Fehlern entsprechende Warnungen an und aktiviert die Eingabefelder wieder.
+     * Disables the input fields, selects a random name and figure for the bot,
+     * uses default values for host and port, connects to the server, and sends the bot and player information.
+     * Shows appropriate warnings on errors and re-enables the input fields.
      *
-     * @param event Das zugehörige ActionEvent.
+     * @param event The associated ActionEvent.
      */
     @FXML
     private void handleBotLogin(ActionEvent event) {
@@ -289,11 +289,11 @@ public class LoginController {
 
 
     /**
-     * Wird nach erfolgreichem Login aufgerufen und lädt die Lobby-Oberfläche.
+     * Called after a successful login and loads the lobby UI.
      * <p>
-     * Lädt das FXML der Lobby, initialisiert den zugehörigen Controller,
-     * setzt die Szene und zeigt das Lobby-Fenster an.
-     * Bei Fehlern wird eine entsprechende Fehlermeldung angezeigt.
+     * Loads the FXML of the lobby, initializes the corresponding controller,
+     * sets the scene, and shows the lobby window.
+     * Shows an error message if loading fails.
      */
     public void loginSuccess() {
         try {
@@ -323,8 +323,8 @@ public class LoginController {
     }
 
     /**
-     * Wird vom Client aufgerufen, wenn die gewählte Figur schon belegt ist.
-     * Zeigt einen Warnhinweis an und reaktiviert die Eingabe.
+     * Called by the client if the selected figure is already taken.
+     * Shows a warning and re-enables the input.
      */
     public void displayFigureAlreadyTaken() {
 
@@ -416,27 +416,27 @@ public class LoginController {
     }
 
     /**
-     * Gibt zurück, ob die Warnung für eine bereits gewählte Spielfigur angezeigt wurde.
+     * Returns whether the warning for an already selected figure was shown.
      *
-     * @return true, wenn die Warnung angezeigt wurde, sonst false
+     * @return true if the warning was shown, false otherwise
      */
     public boolean isFigureTakenWarningShown() {
         return figureTakenWarningShown;
     }
 
     /**
-     * Setzt den Status, ob die Warnung für eine bereits gewählte Spielfigur angezeigt wurde.
+     * Sets the status whether the warning for an already selected figure was shown.
      *
-     * @param shown true, wenn die Warnung angezeigt werden soll, sonst false
+     * @param shown true if the warning should be shown, false otherwise
      */
     public void setFigureTakenWarningShown(boolean shown) {
         this.figureTakenWarningShown = shown;
     }
 
     /**
-     * Zeigt eine Fehlernachricht in einem Dialogfenster an.
+     * Shows an error message in a dialog window.
      *
-     * @param text Der anzuzeigende Text.
+     * @param text The text to display.
      */
     private void showAlert(String text) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -446,20 +446,20 @@ public class LoginController {
     }
 
     /**
-     * Setzt das aktuelle Stage-Objekt für den Controller.
+     * Sets the current stage object for the controller.
      *
-     * @param stage Das zu setzende Stage-Fenster.
+     * @param stage The stage window to set.
      */
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
     /**
-     * Spielt eine Shake-Animation für das angegebene Node-Element ab.
+     * Plays a shake animation for the given node element.
      * <p>
-     * Die Methode verschiebt das Element mehrfach horizontal, um einen "Shake"-Effekt zu erzeugen.
+     * The method moves the element horizontally several times to create a "shake" effect.
      *
-     * @param node Das zu animierende Node-Element.
+     * @param node The node element to animate.
      */
     private void shakeNode(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(50), node);
