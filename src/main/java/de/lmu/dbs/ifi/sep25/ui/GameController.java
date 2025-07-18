@@ -1161,6 +1161,7 @@ public class GameController {
             tile.getChildren().add(robotView);
 
             robotPositions.put(clientID, new Position(x, y));
+            applyMyRobotHighlight(robotView, clientID);
 
         } catch (Exception e) {
             appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
@@ -2216,6 +2217,7 @@ public class GameController {
 
             // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
+            applyMyRobotHighlight(robotView, clientID);
 
             String playerName = getPlayerNameById(clientID);
             appendChatMessage("[BEWEGUNG] Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.");
@@ -2274,6 +2276,7 @@ public class GameController {
                     newRobot.setPreserveRatio(true);
                     newRobot.setUserData("robot");
                     cell.getChildren().add(newRobot);
+                    applyMyRobotHighlight(newRobot, clientID);
 
                     //Insert direction indicator
                     Label directionIndicator = new Label(switch (newDirection) {
@@ -3635,6 +3638,35 @@ public class GameController {
     }
 
     /**
+     * Füge deinem Roboter einen Hervorhebungseffekt hinzu.
+     * @param robotView ImageView des Roboters
+     * @param clientID Client-ID
+     */
+    private void applyMyRobotHighlight(ImageView robotView, int clientID) {
+        int myID = ClientSingleton.getInstance().getID();
+
+        if (clientID == myID) {
+            DropShadow highlight = new DropShadow();
+            highlight.setColor(Color.CYAN);
+            highlight.setRadius(15);
+            highlight.setSpread(0.8);
+            highlight.setOffsetX(0);
+            highlight.setOffsetY(0);
+            robotView.setStyle("-fx-border-color: cyan; -fx-border-width: 3; -fx-border-radius: 5;");
+            robotView.setEffect(highlight);
+
+            robotView.getStyleClass().add("my-robot");
+        } else {
+            robotView.setStyle("");
+            robotView.getStyleClass().remove("my-robot");
+            Integer robotID = clientToRobotID.get(clientID);
+            if (robotID != null) {
+                applyRobotGlow(robotView, robotID);
+            }
+        }
+    }
+
+    /**
      * Update the robot's direction (mainly used for setting the direction after rebooting)
      *
      * @param clientID Client ID
@@ -3663,6 +3695,7 @@ public class GameController {
                         robotView.setPreserveRatio(true);
                         robotView.setUserData("robot");
                         cell.getChildren().add(robotView);
+                        applyMyRobotHighlight(robotView, clientID);
                         appLogger.info("Updated robot visual to direction: {}", direction);
                     }
                 } catch (Exception e) {
