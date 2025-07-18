@@ -486,4 +486,15 @@
     -fx-padding: 20;
 }
 
+.my-robot {
+    -fx-border-color: cyan;
+    -fx-border-width: 3px;
+    -fx-border-radius: 5px;
+    -fx-effect: dropshadow(gaussian, cyan, 15, 0.8, 0, 0);
+}
 
+
+.my-robot-enlarged {
+    -fx-effect: dropshadow(gaussian, cyan, 18, 0.7, 0, 0);
+    -fx-view-order: -1;
+}

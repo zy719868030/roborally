@@ -136,6 +136,9 @@ public class GameController {
     private double scaleValue = 1.0;
     private final double SCALE_DELTA = 1.1;
     private final List<String> discardPile = new ArrayList<>();
+    private static final double NORMAL_ROBOT_SIZE = 40.0;
+    private static final double MY_ROBOT_SIZE = 60.0;
+    private static final double MY_ROBOT_SCALE = 1.5;
     private Label discardCounter;
     private Timeline blinkTimeline;
 
@@ -1161,7 +1164,7 @@ public class GameController {
             tile.getChildren().add(robotView);
 
             robotPositions.put(clientID, new Position(x, y));
-            applyMyRobotHighlight(robotView, clientID);
+            applyMyRobotSpecialEffects(robotView, clientID);
 
         } catch (Exception e) {
             appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
@@ -2217,7 +2220,7 @@ public class GameController {
 
             // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
-            applyMyRobotHighlight(robotView, clientID);
+            applyMyRobotSpecialEffects(robotView, clientID);
 
             String playerName = getPlayerNameById(clientID);
             appendChatMessage("[BEWEGUNG] Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.");
@@ -2276,7 +2279,7 @@ public class GameController {
                     newRobot.setPreserveRatio(true);
                     newRobot.setUserData("robot");
                     cell.getChildren().add(newRobot);
-                    applyMyRobotHighlight(newRobot, clientID);
+                    applyMyRobotSpecialEffects(newRobot, clientID);
 
                     //Insert direction indicator
                     Label directionIndicator = new Label(switch (newDirection) {
@@ -3638,27 +3641,37 @@ public class GameController {
     }
 
     /**
-     * Füge deinem Roboter einen Hervorhebungseffekt hinzu.
-     * @param robotView ImageView des Roboters
-     * @param clientID Client-ID
+     * Set special size and highlight effects for your robot.
+     * @param robotView The robot's ImageView.
+     * @param clientID Client ID.
      */
-    private void applyMyRobotHighlight(ImageView robotView, int clientID) {
+    private void applyMyRobotSpecialEffects(ImageView robotView, int clientID) {
         int myID = ClientSingleton.getInstance().getID();
 
         if (clientID == myID) {
+            robotView.setFitWidth(MY_ROBOT_SIZE);
+            robotView.setFitHeight(MY_ROBOT_SIZE);
+            robotView.setTranslateX(0);
+            robotView.setTranslateY(0);
             DropShadow highlight = new DropShadow();
             highlight.setColor(Color.CYAN);
-            highlight.setRadius(15);
-            highlight.setSpread(0.8);
+            highlight.setRadius(18);
+            highlight.setSpread(0.7);
             highlight.setOffsetX(0);
             highlight.setOffsetY(0);
-            robotView.setStyle("-fx-border-color: cyan; -fx-border-width: 3; -fx-border-radius: 5;");
+//            robotView.setStyle("-fx-border-color: cyan; -fx-border-width: 3; -fx-border-radius: 5;");
             robotView.setEffect(highlight);
 
             robotView.getStyleClass().add("my-robot");
+            robotView.getStyleClass().add("my-robot-enlarged");
+            robotView.setViewOrder(-1.0);
         } else {
-            robotView.setStyle("");
-            robotView.getStyleClass().remove("my-robot");
+            robotView.setFitWidth(NORMAL_ROBOT_SIZE);
+            robotView.setFitHeight(NORMAL_ROBOT_SIZE);
+            robotView.setTranslateX(0);
+            robotView.setTranslateY(0);
+            robotView.setViewOrder(0.0);
+            robotView.getStyleClass().remove("my-robot-enlarged");
             Integer robotID = clientToRobotID.get(clientID);
             if (robotID != null) {
                 applyRobotGlow(robotView, robotID);
@@ -3695,7 +3708,7 @@ public class GameController {
                         robotView.setPreserveRatio(true);
                         robotView.setUserData("robot");
                         cell.getChildren().add(robotView);
-                        applyMyRobotHighlight(robotView, clientID);
+                        applyMyRobotSpecialEffects(robotView, clientID);
                         appLogger.info("Updated robot visual to direction: {}", direction);
                     }
                 } catch (Exception e) {
