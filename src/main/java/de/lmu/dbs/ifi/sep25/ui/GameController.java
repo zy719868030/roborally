@@ -1,7 +1,10 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Laser;
 import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Maps.GameMap;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
@@ -31,8 +34,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.StrokeType;
+import javafx.scene.shape.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -43,7 +45,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
-import javafx.scene.shape.Line;
+
 import javafx.animation.FadeTransition;
 import javafx.geometry.Point2D;
 
@@ -61,6 +63,8 @@ public class GameController {
     public ImageView gameLogoView;
     @FXML
     private GridPane gameBoardPane;
+    @FXML
+    private Pane laserLayer;
     @FXML
     private TextArea chatArea;
     @FXML
@@ -327,6 +331,8 @@ public class GameController {
         gameBoardPane.setManaged(true);
         gameBoardPane.setPrefWidth(columns * TILE_SIZE);
         gameBoardPane.setPrefHeight(rows * TILE_SIZE);
+
+        drawStaticLasers(boardMap);
     }
     /**
      * Adds a new player to the internal player mappings and the chat recipient list,
@@ -2490,24 +2496,77 @@ public class GameController {
             delay.play();
         }
     }
-
+    /**
+     * Displays a dialog allowing the player to choose the reboot direction
+     * for their robot after falling off the board.
+     * <p>
+     * The dialog shows four arrow buttons (↑ ↓ ← →), each representing a possible direction.
+     * When the player clicks on one of the buttons, the selected direction
+     * (as a string: "top", "bottom", "left", "right") is passed to the provided callback.
+     *
+     * @param callback A Consumer that receives the chosen direction as a string.
+     */
     public void askRebootDirection(Consumer<String> callback) {
-        // Öffne ein einfaches Dialog-Fenster mit 4 Buttons oder ChoiceBox
-        List<String> directions = List.of("top", "right", "bottom", "left");
+        Label title = new Label("Reboot-Richtung wählen");
+        title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 18px; -fx-font-weight: bold;");
 
-        ChoiceDialog<String> dialog = new ChoiceDialog<>("top", directions);
+        Label instruction = new Label("Klicke auf eine Richtung, in die dein Roboter neu ausgerichtet werden soll:");
+        instruction.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        Button btnUp = createDirectionButton("↑", "top");
+        Button btnDown = createDirectionButton("↓", "bottom");
+        Button btnLeft = createDirectionButton("←", "left");
+        Button btnRight = createDirectionButton("→", "right");
+
+        HBox centerRow = new HBox(20, btnLeft, btnRight);
+        centerRow.setAlignment(Pos.CENTER);
+        VBox arrowBox = new VBox(15, btnUp, centerRow, btnDown);
+        arrowBox.setAlignment(Pos.CENTER);
+
+        VBox content = new VBox(25, title, instruction, arrowBox);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: rgba(20,20,30,0.95); -fx-padding: 30; -fx-background-radius: 12;");
+
+        Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Roboter neu ausrichten");
-        dialog.setHeaderText("Wähle eine neue Ausrichtung für deinen Roboter");
-        dialog.setContentText("Ausrichtung:");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().lookupButton(ButtonType.CLOSE).setVisible(false); // Ocultar botón default
 
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            callback.accept(result.get());
-        } else {
-            // Wenn der Dialog geschlossen wurde oder abgebrochen → Standard
+        btnUp.setOnAction(e -> {
             callback.accept("top");
-        }
+            dialog.close();
+        });
+        btnDown.setOnAction(e -> {
+            callback.accept("bottom");
+            dialog.close();
+        });
+        btnLeft.setOnAction(e -> {
+            callback.accept("left");
+            dialog.close();
+        });
+        btnRight.setOnAction(e -> {
+            callback.accept("right");
+            dialog.close();
+        });
+
+        dialog.showAndWait();
     }
+    private Button createDirectionButton(String arrow, String direction) {
+        Button btn = new Button(arrow);
+        btn.setUserData(direction);
+        btn.setPrefSize(60, 60);
+        btn.setStyle("""
+        -fx-font-size: 24px;
+        -fx-font-weight: bold;
+        -fx-text-fill: black;
+        -fx-background-color: #00ffd0;
+        -fx-background-radius: 10px;
+        -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 6, 0.6, 0, 1);
+    """);
+        return btn;
+    }
+
 
 
     /**
@@ -3553,11 +3612,11 @@ public class GameController {
         fadeIn.play();
     }
     /**
-     * Zeigt das Spiellogo mit einer aufwendigen Übergangsanimation.
+     * Displays the game logo with an elaborate transition animation.
      * <p>
-     * Das Logo erscheint aus dem unteren Bildschirmbereich, skaliert sich hoch
-     * und verblasst nach einer kurzen Pause wieder.
-     *  für den Spielstart oder Übergänge zwischen Phasen.
+     * The logo appears from the bottom of the screen, scales up,
+     * and fades out again after a short pause.
+     * Useful for game start or transitions between phases.
      */
     public void showLogoTransition() {
         gameLogoView.setVisible(true);
@@ -3886,10 +3945,109 @@ public class GameController {
             }
         }
     }
+    /**
+     * Draws animated lasers on the board based on hardcoded positions
+     * for specific maps like "Dizzy Highway", "Extra Crispy", and "Lost Bearings".
+     *
+     * This method clears the laser layer and redraws lasers in predefined positions
+     * with direction, length, and color according to the selected map.
+     *
+     * @param boardMap The board structure (unused here, but typically contains field layout).
+     */
+    private void drawStaticLasers(List<List<List<MessageDefinitions.Field>>> boardMap) {
+        laserLayer.getChildren().clear();
+
+        String selectedMapName = ClientSingleton.getInstance().getSelectedMap();
+        if (selectedMapName == null) return;
+
+        switch (selectedMapName) {
+            case "Dizzy Highway" -> {
+                createAnimatedLaser(10, 8, Direction.WEST, 1.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(11, 5, Direction.EAST, 1.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(9, 6, Direction.NORTH, 1.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(12, 7, Direction.SOUTH, 1.5, selectedMapName);//richtig
+            }
+
+            case "Extra Crispy" -> {
+                createAnimatedLaser(10, 8, Direction.EAST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(11, 8, Direction.WEST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(10, 5, Direction.EAST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(11, 5, Direction.WEST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(12, 2, Direction.EAST, 1.5, selectedMapName);//richtig
+                createAnimatedLaser(14, 2, Direction.WEST, 1.5, selectedMapName);//richtig
+                createAnimatedLaser(7, 11, Direction.EAST, 1.5, selectedMapName);//richtig
+                createAnimatedLaser(9, 11, Direction.WEST, 1.5, selectedMapName);//richtig
+            }
+
+
+            case "Lost Bearings" -> {
+                createAnimatedLaser(12, 5, Direction.WEST, 3.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(9, 8, Direction.EAST, 3.5, selectedMapName);//RICHTIG
+            }
+
+            default -> {
+                System.out.println("No laser configuration defined for: " + selectedMapName);
+            }
+
+
+
+
+        }
+    }
+
+    /**
+     * Creates an animated laser beam effect from a given board cell.
+     * The laser is drawn as a line starting from the center of the tile (x, y)
+     * and extending in the specified direction for a certain length.
+     * The animation simulates the beam expanding and fading over time.
+     */
+    private void createAnimatedLaser(int x, int y, Direction direction, double lengthInTiles, String mapName) {
+        double startX = x * TILE_SIZE + TILE_SIZE / 1.0+0.5;
+        double startY = y * TILE_SIZE + TILE_SIZE / 1.0+0.5;
+
+        double endX = startX;
+        double endY = startY;
+
+        double length = TILE_SIZE * lengthInTiles;
+
+        switch (direction) {
+            case NORTH -> endY -= length;
+            case SOUTH -> endY += length;
+            case WEST  -> endX -= length;
+            case EAST  -> endX += length;
+        }
+
+        Line laser = new Line(startX, startY, startX, startY);
+
+        Color laserColor = switch (mapName) {
+            case "Dizzy Highway" -> Color.WHITE;
+            case "Extra Crispy"  -> Color.ORANGE;
+            case "Death Trap"    -> Color.RED;
+            default              -> Color.YELLOW;
+        };
+
+        laser.setStroke(laserColor);
+        laser.setStrokeWidth(4);
+        laser.setOpacity(0.8);
+        laser.setStrokeLineCap(StrokeLineCap.ROUND);
+
+        laserLayer.getChildren().add(laser);
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(laser.endXProperty(), startX),
+                        new KeyValue(laser.endYProperty(), startY),
+                        new KeyValue(laser.opacityProperty(), 1.0)
+                ),
+                new KeyFrame(Duration.millis(4000),
+                        new KeyValue(laser.endXProperty(), endX),
+                        new KeyValue(laser.endYProperty(), endY),
+                        new KeyValue(laser.opacityProperty(), 0.0)
+                )
+        );
+
+        timeline.setCycleCount(Animation.INDEFINITE);
+        timeline.play();
+    }
 }
-
-
-
-
-
 
