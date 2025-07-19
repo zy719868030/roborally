@@ -2401,9 +2401,9 @@ public class GameController {
     }
 
     /**
-     * Spielt eine einfache Animation basierend auf dem Animationstyp.
+     * Plays a  animation based on the specified animation type.
      *
-     * @param type Typ der Animation ( "Movement", "Clockwise", "Checkpoint")
+     * @param type the type of animation ("Movement", "Clockwise", "Checkpoint")
      */
     public void playAnimation(String type) {
         //appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
@@ -2417,25 +2417,92 @@ public class GameController {
 
 
     /**
-     * Zeigt eine visuelle Nachricht oder Platzhalter an, dass ein Spieler rebootet wurde.
+     * Displays a visual message or placeholder indicating that a player has been rebooted.
      *
-     * @param clientID ID des Spielers
+     * @param clientID the ID of the player who has been rebooted
      */
     public void showReboot(int clientID) {
-        // Optional: Spielername ermitteln – hier als Platzhalter
         final String playerName = getPlayerNameById(clientID);
-
-        // Nachricht im Chat anzeigen
         appendChatMessage("[REBOOT] Spieler " + playerName + " wurde rebootet.");
 
-        // TODO: Hier könnte man auch eine Reboot-Animation zeigen
-        // oder ein Symbol auf dem Spielfeld darstellen
+        Position pos = robotPositions.get(clientID);
+        if (pos == null) return;
+
+        StackPane cell = getCellAt(pos.x(), pos.y());
+        if (cell == null) return;
+        boolean isCurrentClient = (clientID == ClientSingleton.getInstance().getID());
+
+        ScaleTransition zoom = new ScaleTransition(Duration.millis(300), cell);
+        zoom.setFromX(1.0);
+        zoom.setFromY(1.0);
+        zoom.setToX(1.2);
+        zoom.setToY(1.2);
+        zoom.setAutoReverse(true);
+        zoom.setCycleCount(2);
+        zoom.play();
+
+        for (Node node : cell.getChildren()) {
+            if (node instanceof ImageView img && "robot".equals(img.getUserData())) {
+
+                TranslateTransition shake = new TranslateTransition(Duration.millis(80), img);
+                shake.setFromX(-5);
+                shake.setToX(5);
+                shake.setCycleCount(6);
+                shake.setAutoReverse(true);
+
+                Label rebootLabel = new Label("REBOOT!");
+                rebootLabel.getStyleClass().add("reboot-label");
+                rebootLabel.setTranslateY(-35);
+
+                cell.getChildren().add(rebootLabel);
+
+                FadeTransition fade = new FadeTransition(Duration.seconds(1.2), rebootLabel);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+                fade.setOnFinished(e -> cell.getChildren().remove(rebootLabel));
+
+                shake.play();
+                fade.play();
+
+                break;
+            }
+        }
+        if (isCurrentClient) {
+            showBigRebootOverlay();
+
+
+        }
+    }
+    public void showBigRebootOverlay() {
+        Label rebootOverlay = new Label("REBOOT!");
+        rebootOverlay.setStyle("""
+        -fx-font-size: 64px;
+        -fx-text-fill: yellow;
+        -fx-font-weight: bold;
+        -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
+    """);
+
+        StackPane.setAlignment(rebootOverlay, Pos.CENTER);
+        zoomWrapper.getChildren().add(rebootOverlay);
+
+        ScaleTransition scale = new ScaleTransition(Duration.millis(300), rebootOverlay);
+        scale.setFromX(0.6);
+        scale.setFromY(0.6);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.play();
+
+        FadeTransition fade = new FadeTransition(Duration.seconds(2), rebootOverlay);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+        fade.setOnFinished(e -> zoomWrapper.getChildren().remove(rebootOverlay));
+        fade.play();
     }
 
     /**
-     * Zeigt eine visuelle Reboot-Ausrichtung für den Spieler an.
+     * Displays a visual reboot orientation for the player.
      *
-     * @param direction Die vom Spieler gewählte Richtung ("up", "down", "left", "right")
+     * @param direction The direction chosen by the player ("up", "down", "left", "right")
      */
     public void showRebootDirection(String direction) {
         appendChatMessage("[INFO] Reboot-Richtung: " + direction);
@@ -2447,7 +2514,6 @@ public class GameController {
 //            appLogger.info("Set the restart direction of the robot {} to: {}", rebootingClientID, direction);
 //        }
 
-        // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
         Label directionIndicator = new Label(switch (direction.toLowerCase()) {
             case "top" -> "▲";
             case "bottom" -> "▼";
@@ -2473,27 +2539,30 @@ public class GameController {
         directionIndicator.setTranslateY(-35);
 
 //        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
-        // Beispielposition – TODO: später echte Roboterposition verwenden
-        StackPane rebootTile = getCellAt(7, 3);
-        if (rebootTile != null) {
-            rebootTile.getChildren().add(directionIndicator);
+        int rebootingClientID = ClientSingleton.getInstance().getRebootingInProgress();
+        Position pos = robotPositions.get(rebootingClientID);
+        if (pos != null) {
+            StackPane rebootTile = getCellAt(pos.x(), pos.y());
+            if (rebootTile != null) {
+                rebootTile.getChildren().add(directionIndicator);
 
-            ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
-            appear.setFromX(0.5);
-            appear.setFromY(0.5);
-            appear.setToX(1.0);
-            appear.setToY(1.0);
-            appear.play();
+                ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
+                appear.setFromX(0.5);
+                appear.setFromY(0.5);
+                appear.setToX(1.0);
+                appear.setToY(1.0);
+                appear.play();
 
-            PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
-            delay.setOnFinished(e -> {
-                FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
-                fade.setFromValue(1.0);
-                fade.setToValue(0.0);
-                fade.setOnFinished(event -> rebootTile.getChildren().remove(directionIndicator));
-                fade.play();
-            });
-            delay.play();
+                PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                delay.setOnFinished(e -> {
+                    FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
+                    fade.setFromValue(1.0);
+                    fade.setToValue(0.0);
+                    fade.setOnFinished(event -> rebootTile.getChildren().remove(directionIndicator));
+                    fade.play();
+                });
+                delay.play();
+            }
         }
     }
     /**
@@ -2570,11 +2639,11 @@ public class GameController {
 
 
     /**
-     * Zeigt die Energieänderung für einen bestimmten Spieler an.
+     * Displays the energy change for a specific player.
      *
-     * @param clientID Die Client-ID des Spielers
-     * @param energy   Neue Energieanzahl
-     * @param source   Quelle der Energie ("EnergySpace", "Laser")
+     * @param clientID The client ID of the player
+     * @param energy   The new amount of energy
+     * @param source   The source of the energy ("EnergySpace", "Laser")
      */
     public void showEnergyChange(int clientID, int energy, String source) {
         int myID = ClientSingleton.getInstance().getID();
@@ -2605,10 +2674,10 @@ public class GameController {
     }
 
     /**
-     * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
+     * Displays a victory or defeat screen with a robot image and a button to exit the game.
      *
-     * @param isWinner       true, wenn der Spieler selbst gewonnen hat
-     * @param winnerClientId Client-ID des Gewinner-Spielers
+     * @param isWinner       true if the player themselves won
+     * @param winnerClientId Client ID of the winning player
      */
     public void showGameResult(boolean isWinner, int winnerClientId) {
         Platform.runLater(() -> {
