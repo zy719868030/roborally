@@ -14,6 +14,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -136,16 +137,28 @@ public class GameController {
     private double scaleValue = 1.0;
     private final double SCALE_DELTA = 1.1;
     private final List<String> discardPile = new ArrayList<>();
+    private static final double NORMAL_ROBOT_SIZE = 40.0;
+    private static final double MY_ROBOT_SIZE = 56.0;
+    private static final double MY_ROBOT_SCALE = 1.4;
     private Label discardCounter;
     private Timeline blinkTimeline;
 
 
+    private double currentZoom = 1.0;
+    private final double ZOOM_STEP = 0.25;
+    private final double MAX_ZOOM = 2.0;
+    private final double MIN_ZOOM = 0.5;
+
+
+    @FXML private Group zoomContent;
+    @FXML private StackPane scrollContentWrapper;
+
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
-    // Map: clientID -> List der ausgewählten Registerkarten (Strings)
     private final Map<Integer, List<String>> otherPlayersRegisters = new HashMap<>();
     private final Map<Integer, Integer> clientEnergyMap = new HashMap<>();
 
+    private boolean tooltipSystemEnabled = true;
 
     private int currentPhaseID = -1;
 
@@ -231,6 +244,33 @@ public class GameController {
         addHoverAnimation(chatToggleButton);
         Tooltip.install(energyBox, new Tooltip("Deine Energieanzeige"));
 
+        Platform.runLater(() -> {
+            Bounds viewportBounds = gameBoardScrollPane.getViewportBounds();
+            Bounds boardBounds = zoomWrapper.getLayoutBounds();
+
+            double scaleX = (viewportBounds.getWidth() - 20) / boardBounds.getWidth();
+            double scaleY = (viewportBounds.getHeight() - 20) / boardBounds.getHeight();
+
+            double targetScale = Math.min(Math.min(scaleX, scaleY), 1.0);
+            double minReadableScale = 0.85;
+
+            scaleValue = Math.max(targetScale, minReadableScale);
+            zoomWrapper.setMouseTransparent(false);
+            zoomWrapper.setPickOnBounds(false);
+
+            zoomContent.setMouseTransparent(false);
+            zoomContent.setPickOnBounds(false);
+
+            scrollContentWrapper.setMouseTransparent(false);
+            scrollContentWrapper.setPickOnBounds(false);
+
+
+            zoomWrapper.setScaleX(scaleValue);
+            zoomWrapper.setScaleY(scaleValue);
+
+            gameBoardScrollPane.setHvalue(gameBoardScrollPane.getHmax() / 2);
+            gameBoardScrollPane.setVvalue(gameBoardScrollPane.getVmax() / 2);
+        });
 
     }
 
@@ -394,6 +434,7 @@ public class GameController {
                 case "PushPanel" -> {
                     MessageDefinitions.FieldPushPanel pushPanel = (MessageDefinitions.FieldPushPanel) element;
                     String key = "PushPanel_" + String.join("_", pushPanel.registers().stream().map(String::valueOf).toList());
+//                    double rotation = convertDirectionToRotation(pushPanel.orientations().getFirst()) + 180;
                     addImage(pane, key, convertDirectionToRotation(pushPanel.orientations().getFirst()));
                 }
 
@@ -433,6 +474,7 @@ public class GameController {
         }
 
         pane.requestLayout();
+        setupBoardElementTooltips(pane, elements);
         return pane;
     }
 
@@ -1076,13 +1118,10 @@ public class GameController {
                     });
                 }
 
-                case 1 -> {
+                case 1, 2 -> {
 
                 }
 
-                case 2 -> {
-
-                }
             }
         } else {
             String name = getPlayerNameById(clientID);
@@ -1155,6 +1194,7 @@ public class GameController {
             tile.getChildren().add(robotView);
 
             robotPositions.put(clientID, new Position(x, y));
+            applyMyRobotSpecialEffects(robotView, clientID);
 
         } catch (Exception e) {
             appLogger.error("Roboter konnte nicht angezeigt werden an ({}, {})", x, y);
@@ -2212,6 +2252,7 @@ public class GameController {
 
             // Update tracked position
             robotPositions.put(clientID, new Position(x, y));
+            applyMyRobotSpecialEffects(robotView, clientID);
 
             String playerName = getPlayerNameById(clientID);
             appendChatMessage("[BEWEGUNG] Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.");
@@ -2270,39 +2311,44 @@ public class GameController {
                     newRobot.setPreserveRatio(true);
                     newRobot.setUserData("robot");
                     cell.getChildren().add(newRobot);
+                    applyMyRobotSpecialEffects(newRobot, clientID);
 
                     //Insert direction indicator
                     Label directionIndicator = new Label(switch (newDirection) {
-                        case "top" -> "↑";
-                        case "right" -> "→";
-                        case "bottom" -> "↓";
-                        case "left" -> "←";
+                        case "top" -> "▲";
+                        case "right" -> "▶";
+                        case "bottom" -> "▼";
+                        case "left" -> "◀";
                         default -> "?";
                     });
 
                     directionIndicator.setStyle(
-                            "-fx-font-size: 16px; " +
+                            "-fx-font-size: 22px; " +
                                     "-fx-font-weight: bold; " +
-                                    "-fx-text-fill: #ffcc00; " +
-                                    "-fx-background-color: linear-gradient(#303030, #505050); " +
-                                    "-fx-background-radius: 5px; " +
-                                    "-fx-border-color: #ffcc00; " +
-                                    "-fx-border-width: 1px; " +
-                                    "-fx-border-radius: 5px; " +
-                                    "-fx-padding: 3px 6px; " +
-                                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);"
+                                    "-fx-text-fill: #00ffff; " +
+                                    "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e); " +
+                                    "-fx-border-color: #ff0080; " +
+                                    "-fx-border-width: 2px; " +
+                                    "-fx-border-radius: 6px; " +
+                                    "-fx-background-radius: 6px; " +
+                                    "-fx-padding: 6px 10px; " +
+                                    "-fx-effect: dropshadow(gaussian, #00ffff, 12, 0.8, 0, 0), " +
+                                    "innershadow(gaussian, #ff0080, 3, 0.4, 0, 0);"
                     );
-                    directionIndicator.setTranslateY(-25);
+                    directionIndicator.setTranslateY(-30);
                     cell.getChildren().add(directionIndicator);
-                    ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
+
+                    ScaleTransition appear = new ScaleTransition(Duration.millis(250), directionIndicator);
                     appear.setFromX(0.5);
                     appear.setFromY(0.5);
                     appear.setToX(1.0);
                     appear.setToY(1.0);
+                    appear.setInterpolator(Interpolator.EASE_OUT);
                     appear.play();
-                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(2));
                     delay.setOnFinished(e -> {
-                        FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
+                        FadeTransition fade = new FadeTransition(Duration.millis(600), directionIndicator);
                         fade.setFromValue(1.0);
                         fade.setToValue(0.0);
                         fade.setOnFinished(event -> cell.getChildren().remove(directionIndicator));
@@ -2397,27 +2443,28 @@ public class GameController {
 
         // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
         Label directionIndicator = new Label(switch (direction.toLowerCase()) {
-            case "top" -> "↑";
-            case "bottom" -> "↓";
-            case "left" -> "←";
-            case "right" -> "→";
+            case "top" -> "▲";
+            case "bottom" -> "▼";
+            case "left" -> "◀";
+            case "right" -> "▶";
             default -> "?";
         });
 
         // Create directional arrows in the same style as in the rotateRobot method.
         directionIndicator.setStyle(
-                "-fx-font-size: 16px; " +
+                "-fx-font-size: 24px; " +
                         "-fx-font-weight: bold; " +
-                        "-fx-text-fill: #ffcc00; " +
-                        "-fx-background-color: linear-gradient(#303030, #505050); " +
-                        "-fx-background-radius: 5px; " +
-                        "-fx-border-color: #ffcc00; " +
-                        "-fx-border-width: 1px; " +
-                        "-fx-border-radius: 5px; " +
-                        "-fx-padding: 3px 6px; " +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 1);"
+                        "-fx-text-fill: #00ffff; " +
+                        "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e); " +
+                        "-fx-border-color: #ff0080; " +
+                        "-fx-border-width: 2px; " +
+                        "-fx-border-radius: 8px; " +
+                        "-fx-background-radius: 8px; " +
+                        "-fx-padding: 8px 12px; " +
+                        "-fx-effect: dropshadow(gaussian, #00ffff, 15, 0.8, 0, 0), " +
+                        "innershadow(gaussian, #ff0080, 4, 0.5, 0, 0);"
         );
-        directionIndicator.setTranslateY(-25);
+        directionIndicator.setTranslateY(-35);
 
 //        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
         // Beispielposition – TODO: später echte Roboterposition verwenden
@@ -3599,6 +3646,27 @@ public class GameController {
         }
     }
 
+
+    @FXML
+    private void handleZoomIn() {
+        if (currentZoom < MAX_ZOOM) {
+            currentZoom += ZOOM_STEP;
+            applyZoom();
+        }
+    }
+
+    @FXML
+    private void handleZoomOut() {
+        if (currentZoom > MIN_ZOOM) {
+            currentZoom -= ZOOM_STEP;
+            applyZoom();
+        }
+    }
+
+    private void applyZoom() {
+        zoomWrapper.setScaleX(currentZoom);
+        zoomWrapper.setScaleY(currentZoom);
+    }
     /**
      * Get the robot's current direction.
      *
@@ -3607,6 +3675,177 @@ public class GameController {
      */
     public String getRobotDirection(int clientID) {
         return robotDirections.get(clientID);
+    }
+
+    /**
+     * Set special size and highlight effects for your robot.
+     * @param robotView The robot's ImageView.
+     * @param clientID Client ID.
+     */
+    private void applyMyRobotSpecialEffects(ImageView robotView, int clientID) {
+        int myID = ClientSingleton.getInstance().getID();
+
+        if (clientID == myID) {
+            robotView.setFitWidth(MY_ROBOT_SIZE);
+            robotView.setFitHeight(MY_ROBOT_SIZE);
+            robotView.setTranslateX(0);
+            robotView.setTranslateY(0);
+            DropShadow highlight = new DropShadow();
+            highlight.setColor(Color.CYAN);
+            highlight.setRadius(18);
+            highlight.setSpread(0.7);
+            highlight.setOffsetX(0);
+            highlight.setOffsetY(0);
+//            robotView.setStyle("-fx-border-color: cyan; -fx-border-width: 3; -fx-border-radius: 5;");
+            robotView.setEffect(highlight);
+
+            robotView.getStyleClass().add("my-robot");
+            robotView.getStyleClass().add("my-robot-enlarged");
+            robotView.setViewOrder(-1.0);
+        } else {
+            robotView.setFitWidth(NORMAL_ROBOT_SIZE);
+            robotView.setFitHeight(NORMAL_ROBOT_SIZE);
+            robotView.setTranslateX(0);
+            robotView.setTranslateY(0);
+            robotView.setViewOrder(0.0);
+            robotView.getStyleClass().remove("my-robot-enlarged");
+            Integer robotID = clientToRobotID.get(clientID);
+            if (robotID != null) {
+                applyRobotGlow(robotView, robotID);
+            }
+        }
+    }
+
+    /**
+     * Map element tooltip system - distinguish between element names and descriptions
+     */
+    private void setupBoardElementTooltips(StackPane pane, List<MessageDefinitions.Field> elements) {
+        if (!tooltipSystemEnabled || elements == null || elements.isEmpty()) return;
+        List<MessageDefinitions.Field> specialElements = elements.stream()
+                .filter(this::isSpecialElement)
+                .toList();
+
+        if (specialElements.isEmpty()) return;
+        StringBuilder tooltipText = new StringBuilder();
+
+        for (int i = 0; i < specialElements.size(); i++) {
+            MessageDefinitions.Field element = specialElements.get(i);
+            String info = getCompactElementInfo(element);
+            String effect = getCompactElementEffect(element);
+
+            if (!info.isEmpty()) {
+                tooltipText.append("▶ ").append(info);
+                if (!effect.isEmpty()) {
+                    tooltipText.append("\n  ").append(effect);
+                }
+                if (i < specialElements.size() - 1) {
+                    tooltipText.append("\n-------------------------------------------------------------\n");
+                }
+            }
+        }
+
+        if (tooltipText.length() > 0) {
+            Tooltip tooltip = new Tooltip(tooltipText.toString());
+            tooltip.setStyle(
+                    "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e); " +
+                            "-fx-text-fill: #ffffff; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-font-family: 'Segoe UI', Arial, sans-serif; " +
+                            "-fx-border-color: #00ffff; " +
+                            "-fx-border-width: 2px; " +
+                            "-fx-border-radius: 8px; " +
+                            "-fx-background-radius: 8px; " +
+                            "-fx-padding: 8px 12px; " +
+                            "-fx-effect: dropshadow(gaussian, #00ffff, 10, 0.6, 0, 0);"
+            );
+
+            tooltip.setShowDelay(Duration.millis(300));
+            tooltip.setHideDelay(Duration.millis(100));
+            Tooltip.install(pane, tooltip);
+        }
+    }
+
+    /**
+     * Determine whether it is a special element that needs to display information.
+     */
+    private boolean isSpecialElement(MessageDefinitions.Field element) {
+        return switch (element.type()) {
+            case "ConveyorBelt", "Wall", "PushPanel", "RestartPoint",
+                 "Antenna", "CheckPoint", "Gear", "Energy-Space",
+                 "Pit", "Laser", "StartPoint" -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Get the name (title) of the element.
+     */
+    private String getCompactElementInfo(MessageDefinitions.Field element) {
+        return switch (element.type()) {
+            case "ConveyorBelt" -> {
+                MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
+                yield conveyor.speed() == 2 ? "Blaues Förderband" : "Grünes Förderband";
+            }
+            case "Wall" -> "Wand";
+            case "PushPanel" -> {
+                MessageDefinitions.FieldPushPanel panel = (MessageDefinitions.FieldPushPanel) element;
+                yield "Schubpanel (Register: " + panel.registers() + ")";
+            }
+            case "RestartPoint" -> "Neustart-Punkt";
+            case "Antenna" -> "Antenne";
+            case "CheckPoint" -> {
+                MessageDefinitions.FieldCheckPoint cp = (MessageDefinitions.FieldCheckPoint) element;
+                yield "Checkpoint " + cp.count();
+            }
+            case "Gear" -> {
+                MessageDefinitions.FieldGear gear = (MessageDefinitions.FieldGear) element;
+                boolean clockwise = gear.orientations().getFirst().equalsIgnoreCase("clockwise");
+                yield clockwise ? "Zahnrad (Uhrzeigersinn)" : "Zahnrad (Gegen Uhrzeigersinn)";
+            }
+            case "Energy-Space" -> {
+                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
+                Integer count = es.getCount();
+                yield (count != null && count > 0) ? "Energiefeld (+1)" : "Energiefeld (-1)";
+            }
+            case "Pit" -> "Grube";
+            case "Laser" -> {
+                MessageDefinitions.FieldLaser laser = (MessageDefinitions.FieldLaser) element;
+                yield "Laser (Stärke " + laser.count() + ")";
+            }
+            case "StartPoint" -> "Startposition";
+            default -> "?" + element.type();
+        };
+    }
+
+    /**
+     * Function description for obtaining elements
+     */
+    private String getCompactElementEffect(MessageDefinitions.Field element) {
+        return switch (element.type()) {
+            case "ConveyorBelt" -> {
+                MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
+                yield conveyor.speed() == 2 ?
+                        "Bewegt Roboter 2 Felder in Pfeilrichtung" :
+                        "Bewegt Roboter 1 Feld in Pfeilrichtung";
+            }
+            case "Wall" -> "Blockiert Bewegung und Laserstrahlen komplett";
+            case "PushPanel" -> "Schiebt Roboter weg, wenn das angegebene Register aktiviert wird";
+            case "RestartPoint" -> "Hier spawnen Roboter nach einem Reboot neu";
+            case "Antenna" -> "Bestimmt die Spielerreihenfolge für die nächste Runde";
+            case "CheckPoint" -> "Muss in der richtigen Reihenfolge erreicht werden, um zu gewinnen";
+            case "Gear" -> "Dreht den Roboter am Ende jeder Runde automatisch";
+            case "Energy-Space" -> {
+                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
+                Integer count = es.getCount();
+                yield (count != null && count > 0) ?
+                        "Gibt dem Roboter zusätzliche Energie" :
+                        "Entzieht dem Roboter Energie";
+            }
+            case "Pit" -> "Roboter fallen hinein und müssen rebootet werden";
+            case "Laser" -> "Verursacht Schaden - Roboter erhalten Spam-Karten";
+            case "StartPoint" -> "Kann als Startposition für das Spiel gewählt werden";
+            default -> "";
+        };
     }
 
     /**
@@ -3638,6 +3877,7 @@ public class GameController {
                         robotView.setPreserveRatio(true);
                         robotView.setUserData("robot");
                         cell.getChildren().add(robotView);
+                        applyMyRobotSpecialEffects(robotView, clientID);
                         appLogger.info("Updated robot visual to direction: {}", direction);
                     }
                 } catch (Exception e) {

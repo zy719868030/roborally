@@ -291,7 +291,8 @@ public class PushPanel extends BoardElement {
      */
     @Override
     public MessageDefinitions.FieldPushPanel toField() {
-        return new MessageDefinitions.FieldPushPanel(boardId, List.of(direction.toString()), activeRegisters);
+        Direction displayDirection = direction.turnAround();
+        return new MessageDefinitions.FieldPushPanel(boardId, List.of(displayDirection.toString()), activeRegisters);
     }
 
 //    /**

@@ -88,6 +88,10 @@
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-effect: dropshadow(gaussian, #00ffd0, 4, 0.3, 0, 0);
     -fx-cursor: hand;
+    -sfx-background-insets: 0;
+    -sfx-padding: 8 8;
+    -sfx-opacity: 1.0;
+
 }
 
 .senden-button:hover {
@@ -457,8 +461,40 @@
     -fx-border-radius: 10;
     -fx-effect: dropshadow(gaussian, #ffe664, 12, 0.6, 0, 0);
 }
+.zoom-button {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-color: linear-gradient(to bottom, #aaffaa, #44ff44);
+    -fx-text-fill: black;
+    -fx-background-radius: 25;
+    -fx-border-color: #00ff88;
+    -fx-border-width: 2;
+    -fx-border-radius: 25;
+    -fx-effect: dropshadow(gaussian, #00ff88, 12, 0.6, 0, 0);
+    -fx-cursor: hand;
+    -fx-padding: 8;
+    -fx-font-family: "Orbitron", sans-serif;
+    -fx-transition: all 0.3s ease;
+}
+.zoom-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #ccffcc, #66ff66);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, #66ffcc, 14, 0.8, 0, 0);
+}
+#zoomWrapper {
+    -fx-padding: 20;
+}
+
+.my-robot {
+    -fx-border-color: cyan;
+    -fx-border-width: 3px;
+    -fx-border-radius: 5px;
+    -fx-effect: dropshadow(gaussian, cyan, 15, 0.8, 0, 0);
+}
 
 
-
-
-
+.my-robot-enlarged {
+    -fx-effect: dropshadow(gaussian, cyan, 18, 0.7, 0, 0);
+    -fx-view-order: -1;
+}

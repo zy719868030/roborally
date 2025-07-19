@@ -27,7 +27,7 @@
               style="-fx-background-color: #33cccc22; -fx-padding: 10; -fx-border-radius: 8; -fx-background-radius: 8;"
               prefWidth="220" maxHeight="300">
             <Label text="Spielerstatus" style="-fx-font-weight: bold; -fx-text-fill: #007777; -fx-font-size: 14px;" />
-            <!-- Dynamisch gefüllt durch GameController -->
+
         </VBox>
         <!-- Energieleiste -->
         <HBox fx:id="energyBox"
@@ -108,94 +108,118 @@
     </HBox>
 
     <!-- === Rechte Seite: Spielfeld & Kartenbereich === -->
-    <VBox spacing="10" alignment="TOP_CENTER">
+    <StackPane alignment="TOP_LEFT" HBox.hgrow="ALWAYS">
 
-        <!--  PHASE-ANZEIGE -->
-        <Label fx:id="phaseLabel"
-               text="Phase: Vorbereitung"
-               styleClass="status-label"/>
+        <VBox spacing="10" alignment="TOP_CENTER" HBox.hgrow="ALWAYS">
+            <!-- Phase & Timer -->
+            <Label fx:id="phaseLabel" text="Phase: Vorbereitung" styleClass="status-label"/>
+            <Label fx:id="timerLabel" text="Zeit: 30s" styleClass="countdown-label" visible="false" managed="false"/>
 
-        <!--  TIMER LABEL -->
-        <Label fx:id="timerLabel"
-               text="Zeit: 30s"
-               styleClass="countdown-label"
-               visible="false"
-               managed="false"/> <!-- damit auch kein Platz reserviert wird -->
-        <!-- Spielfeld -->
-        <ScrollPane fx:id="gameBoardScrollPane"
-                    fitToWidth="false"
-                    fitToHeight="false"
-                    style="-fx-background-color: transparent;">
-            <Group>
-                <StackPane fx:id="zoomWrapper" style="-fx-background-color: transparent;">
-                    <GridPane fx:id="gameBoardPane" hgap="0" vgap="0"/>
-                    <!-- ROBOLOGO  -->
-                    <ImageView fx:id="gameLogoView"
-                               fitHeight="250" fitWidth="600"
-                               visible="false" managed="false"
-                               preserveRatio="true"
-                               StackPane.alignment="CENTER"
-                               styleClass="logo-glow">
+            <!-- Spielfeld -->
+            <ScrollPane fx:id="gameBoardScrollPane"
+                        fitToWidth="false"
+                        fitToHeight="false"
+                        style="-fx-background-color: transparent;"
+                        prefViewportWidth="1000"
+                        prefViewportHeight="800"
+                        VBox.vgrow="NEVER">
+                <StackPane fx:id="scrollContentWrapper" alignment="CENTER">
+                    <StackPane fx:id="zoomWrapper"
+                               alignment="CENTER"
+                               style="-fx-background-color: transparent;"
+                               minWidth="1200"
+                               minHeight="900">
+
+                      <Group fx:id="zoomContent">
+                        <GridPane fx:id="gameBoardPane"
+                                  hgap="0"
+                                  vgap="0"
+                                  alignment="CENTER"
+                                  maxWidth="-1"/>
+                      </Group>
+                        <ImageView fx:id="gameLogoView"
+                                   fitHeight="250" fitWidth="600"
+                                   visible="false" managed="false"
+                                   preserveRatio="true"
+                                   StackPane.alignment="CENTER"
+                                   styleClass="logo-glow">
+                            <image>
+                                <Image url="/assets/roborally_log.png"/>
+                            </image>
+                        </ImageView>
+
+                    </StackPane>
+                </StackPane>
+            </ScrollPane>
+
+            <HBox spacing="10" alignment="CENTER" style="-fx-padding: 10;">
+                <HBox fx:id="handCardBox" spacing="10" alignment="CENTER"/>
+                <Button text="Sortieren"
+                        fx:id="shuffleVisualButton"
+                        onAction="#handleShuffleVisual"
+                        styleClass="senden-button"
+                        prefWidth="100" prefHeight="40"
+                        visible="false" managed="false"/>
+            </HBox>
+
+            <!-- Register + Ablage -->
+            <HBox spacing="20" alignment="CENTER">
+                <VBox alignment="CENTER" spacing="5">
+                    <StackPane fx:id="discardPileBox" prefWidth="60" prefHeight="90"
+                               style="-fx-padding: 5; -fx-border-color: gray; -fx-background-color: #222;">
+                        <Label text="Ablage"
+                               style="-fx-text-fill: #00ffff; -fx-font-size: 12px; -fx-font-weight: bold;"
+                               StackPane.alignment="CENTER"/>
+                        <Label fx:id="discardCountLabel" text="0"
+                               style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;"
+                               StackPane.alignment="BOTTOM_RIGHT"/>
+                    </StackPane>
+                </VBox>
+
+                <HBox fx:id="registerBox" spacing="10" alignment="CENTER" style="-fx-padding: 10;"/>
+            </HBox>
+
+            <!-- Bestätigen -->
+            <Button text="Bestätigen" fx:id="confirmSelectionButton"
+                    onAction="#handleConfirmSelection"
+                    styleClass="senden-button"
+                    prefWidth="180" prefHeight="50"/>
+
+            <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
+        </VBox>
+
+        <HBox spacing="6" alignment="TOP_LEFT" StackPane.alignment="TOP_LEFT" style="-fx-padding: 10;" pickOnBounds="false">
+            <Button fx:id="zoomInButton"
+                    onAction="#handleZoomIn"
+                    styleClass="senden-button"
+                    prefWidth="20" prefHeight="20"
+                    maxWidth="40" maxHeight="40"
+                    pickOnBounds="true">
+                <graphic>
+                    <ImageView fitHeight="40" fitWidth="40" preserveRatio="true" mouseTransparent="true">
                         <image>
-                            <Image url="/assets/roborally_log.png"/>
+                            <Image url="/assets/icon_loupe_in.png"/>
                         </image>
                     </ImageView>
-                </StackPane>
-            </Group>
-        </ScrollPane>
+                </graphic>
+            </Button>
 
-
-
-        <!-- Handkartenbereich -->
-        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
-            <HBox fx:id="handCardBox" spacing="10" alignment="CENTER_LEFT"/>
-            <Button text="Sortieren"
-                    fx:id="shuffleVisualButton"
-                    onAction="#handleShuffleVisual"
+            <Button fx:id="zoomOutButton"
+                    onAction="#handleZoomOut"
                     styleClass="senden-button"
-                    prefWidth="100" prefHeight="40"
-                    visible="false" managed="false"/>
+                    prefWidth="20" prefHeight="20"
+                    maxWidth="40" maxHeight="40"
+                    pickOnBounds="true">
+                <graphic>
+                    <ImageView fitHeight="40" fitWidth="40" preserveRatio="true" mouseTransparent="true">
+                        <image>
+                            <Image url="/assets/icon_loupe_out.png"/>
+                        </image>
+                    </ImageView>
+                </graphic>
+            </Button>
+
         </HBox>
 
-
-        <!-- Register + Discard-Pile kombiniert -->
-        <HBox spacing="20" alignment="CENTER">
-            <!-- Ablagestapel links -->
-            <VBox alignment="CENTER" spacing="5">
-                <StackPane fx:id="discardPileBox"
-                           prefWidth="60" prefHeight="90"
-                           style="-fx-padding: 5; -fx-border-color: gray; -fx-background-color: #222;">
-
-                    <Label text="Ablage"
-                           style="-fx-text-fill: #00ffff; -fx-font-size: 12px; -fx-font-weight: bold;"
-                           StackPane.alignment="CENTER"/>
-                    <Label fx:id="discardCountLabel"
-                           text="0"
-                           style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;"
-                           StackPane.alignment="BOTTOM_RIGHT"/>
-                </StackPane>
-
-            </VBox>
-
-            <!-- Register-Bereich für 5 ausgewählte Karten -->
-            <HBox fx:id="registerBox"
-                  spacing="10"
-                  alignment="CENTER"
-                  style="-fx-padding: 10;">
-            </HBox>
-        </HBox>
-
-        <!-- Bestätigungs-Button -->
-        <Button text="Bestätigen"
-                fx:id="confirmSelectionButton"
-                onAction="#handleConfirmSelection"
-                styleClass="senden-button"
-                prefWidth="180" prefHeight="50"/>
-
-        <!-- Gespielte Karten -->
-        <HBox fx:id="playedCardsBox" spacing="5" alignment="CENTER" style="-fx-padding: 5;"/>
-
-
-    </VBox>
-
+    </StackPane>
 </HBox>

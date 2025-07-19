@@ -92,19 +92,18 @@ public class DeathTrap extends GameMap {
 
 
         // PushPanel
-        elements.add(new PushPanel(new Position(1, 1), Direction.NORTH, List.of(1, 3, 5), boardId));
-        elements.add(new PushPanel(new Position(8, 1), Direction.EAST, List.of(1, 3, 5), boardId));
-        elements.add(new PushPanel(new Position(4, 3), Direction.SOUTH, List.of(1, 3, 5), boardId));
-        elements.add(new PushPanel(new Position(6, 4), Direction.NORTH, List.of(1, 3, 5), boardId));
-        elements.add(new PushPanel(new Position(1, 8), Direction.WEST, List.of(1, 3, 5), boardId));
-        elements.add(new PushPanel(new Position(8, 8), Direction.SOUTH, List.of(1, 3, 5), boardId));
-        elements.add(new PushPanel(new Position(3, 5), Direction.SOUTH, List.of(1, 3, 5), boardId));
-
-        elements.add(new PushPanel(new Position(2, 2), Direction.WEST, List.of(2, 4), boardId));
-        elements.add(new PushPanel(new Position(7, 2), Direction.NORTH, List.of(2, 4), boardId));
-        elements.add(new PushPanel(new Position(4, 5), Direction.NORTH, List.of(2, 4), boardId));
-        elements.add(new PushPanel(new Position(2, 7), Direction.SOUTH, List.of(2, 4), boardId));
-        elements.add(new PushPanel(new Position(7, 7), Direction.EAST, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(1, 1), Direction.SOUTH, List.of(1, 3, 5), boardId));
+        elements.add(new PushPanel(new Position(8, 1), Direction.WEST, List.of(1, 3, 5), boardId));
+        elements.add(new PushPanel(new Position(2, 2), Direction.EAST, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(7, 2), Direction.SOUTH, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(4, 3), Direction.NORTH, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(6, 4), Direction.SOUTH, List.of(1, 3, 5), boardId));
+        elements.add(new PushPanel(new Position(3, 5), Direction.NORTH, List.of(1, 3, 5), boardId));
+        elements.add(new PushPanel(new Position(4, 5), Direction.SOUTH, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(2, 7), Direction.NORTH, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(1, 8), Direction.EAST, List.of(1, 3, 5), boardId));
+        elements.add(new PushPanel(new Position(7, 7), Direction.WEST, List.of(2, 4), boardId));
+        elements.add(new PushPanel(new Position(8, 8), Direction.NORTH, List.of(1, 3, 5), boardId));
 
     }
 }

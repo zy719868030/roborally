@@ -1,8 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
-import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.Position;
-import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 /**
@@ -95,6 +93,7 @@ public class Pit extends BoardElement {
      * @param board The game board.
      */
     private void rebootRobot(Robot robot, Board board) {
+        board.handleFall(robot);
         // Use a unified respawn damage method
         board.addRebootDamage(robot);
         // Causes 2 points of SPAM damage to the robot.
@@ -103,14 +102,14 @@ public class Pit extends BoardElement {
 //        robot.cancelProgramming();
 
         //Move the robot to the restart point.
-        Position rebootPosition = board.getRebootPosition();
-        if (rebootPosition != null) {
-            robot.setPosition(rebootPosition);
-            board.updateRobotPosition(robot, rebootPosition);
-            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
-        } else {
-            System.err.println("Error: No reboot position found on the board!");
-        }
+//        Position rebootPosition = board.getRebootPosition();
+//        if (rebootPosition != null) {
+//            robot.setPosition(rebootPosition);
+//            board.updateRobotPosition(robot, rebootPosition);
+//            System.out.println("Robot " + robot.getRobotID() + " has been rebooted at " + rebootPosition);
+//        } else {
+//            System.err.println("Error: No reboot position found on the board!");
+//        }
     }
 
     /**

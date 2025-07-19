@@ -834,6 +834,7 @@ public class Game {
             for (int x = 0; x < board.getWidth(); x++) {
                 for (BoardElement element : board.getElements(x, y)) {
                     if (element instanceof PushPanel panel) {
+                        panel.setCurrentRegister(currentRegister);
                         // Check if the panel activates in the current register
                         if (panel.isActiveInCurrentRegister()) {
                             Robot robot = board.getRobotAt(new Position(x, y));
