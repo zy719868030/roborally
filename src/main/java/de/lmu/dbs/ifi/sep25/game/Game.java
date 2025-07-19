@@ -693,11 +693,24 @@ public class Game {
                                 )
                         )
                 );
-
-                board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
+                handleImmediateEffects(player.getRobot(), robotPosition);
+//                board.applyEffects(player.getRobot(), robotPosition.x(), robotPosition.y());
             } catch (Exception e) {
                 appLogger.error("Error executing card: {}", e.getMessage(), e);
                 errorLogger.error("Error executing card: {}", e.getMessage(), e);
+            }
+        }
+    }
+
+    private void handleImmediateEffects(Robot robot, Position position) {
+        List<BoardElement> elements = board.getElements(position.x(), position.y());
+        for (BoardElement element : elements) {
+            if (element instanceof Pit ||
+                    element instanceof PushPanel ||
+                    element instanceof EnergySpace ||
+                    element instanceof CheckPoints) {
+                element.applyEffect(robot, board);
+                if (board.hasRobotFallen(robot)) break;
             }
         }
     }
