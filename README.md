@@ -1,93 +1,186 @@
-# Edle Eisbecher
+# Edle Eisbecher - RoboRally Spiel
 
+## 🎮 Spielbeschreibung
 
+**Edle Eisbecher** ist eine JavaFX-Implementierung des klassischen Brettspiels **RoboRally**. Das Spiel simuliert ein futuristisches Rennen, bei dem Spieler ihre Roboter durch programmierte Befehle über ein gefährliches Spielfeld steuern müssen.
 
-## Getting started
+### 🎯 Spielziel
+Das Ziel ist es, als erster Spieler alle Checkpoints auf der Karte **in der richtigen Reihenfolge** zu erreichen. Dabei müssen Sie Ihren Roboter durch verschiedene Hindernisse, Laser, Förderbänder und andere Gefahren navigieren. 
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+**Wichtige Regeln:**
+- Roboter starten mit 5 Energie
+- Maximal 10 Energie möglich
+- Bei 10 Schadenskarten muss der Roboter neu starten
+- Roboter können sich gegenseitig blockieren
+- Checkpoints müssen in numerischer Reihenfolge erreicht werden
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## 🚀 Installation und Start
 
-## Add your files
+### Voraussetzungen
+- Java 24 oder höher
+- Maven 3.6 oder höher
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### Installation
+```bash
+# Repository klonen
+git clone [repository-url]
+cd "Edle Eisbecher"
 
+# Dependencies installieren
+mvn clean install
 ```
-cd existing_repo
-git remote add origin https://gitlab2.cip.ifi.lmu.de/dbs_sep/dbs_sep2025/edle-eisbecher.git
-git branch -M main
-git push -uf origin main
+
+### Spiel starten
+
+#### Server starten
+```bash
+# Server auf Port 12345 starten 
+java -jar target/ee-1.0-SNAPSHOT.jar --server
 ```
 
-## Integrate with your tools
+#### Client starten
+```bash
+# Client starten
+java -jar target/ee-1.0-SNAPSHOT.jar
+```
 
-- [ ] [Set up project integrations](https://gitlab2.cip.ifi.lmu.de/dbs_sep/dbs_sep2025/edle-eisbecher/-/settings/integrations)
+## Spielmechaniken
 
-## Collaborate with your team
+### Spielphasen
+Das Spiel läuft in mehreren Phasen ab:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+1. **Setup-Phase**: Spieler wählen ihre Roboter-Figur und Position
+2. **Programmier-Phase**: Spieler bekommen 9 Programmierkarten und ordnen 5 davon im eigenen Register für die nächste Runde
+3. **Aktivierungs-Phase**: Die gewählten Karten werden nacheinander ausgeführt (Register 1-5)
+4. **Cleanup-Phase**: Karten werden aufgenommen, Schadenskarten werden verarbeitet
 
-## Test and Deploy
+### Kartenarten
 
-Use the built-in continuous integration in GitLab.
+#### Programmierkarten
+- **Bewegungskarten**: Move I (1 Feld), Move II (2 Felder), Move III (3 Felder), BackUp (1 Feld rückwärts)
+- **Drehkarten**: TurnLeft (90° links), TurnRight (90° rechts), UTurn (180°)
+- **Spezialkarten**: Again (wiederholt vorherige Karte), PowerUp (Energie +1)
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### Schadenskarten
+- **Spam**: Wird in ein Register gesteckt und blockiert die Programmierung
+- **Virus**: Verbreitet sich auf alle Roboter in Reichweite (6 Felder)
+- **Wurm**: Zwingt den Roboter zum Neustart (zurück zum Startpunkt)
+- **Trojaner**: Fügt zwei Spam-Karten zu
 
-***
+### Spielfeldelemente
 
-# Editing this README
+#### Gefährliche Elemente
+- **Laser**: Fügen Schaden zu
+- **Pits**: Lassen Roboter abstürzen
+- **Wände**: Blockieren Bewegung
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+#### Mechanische Elemente
+- **Förderbänder**: 
+  - **Grüne Förderbänder**: Bewegen Roboter 1 Feld in Richtung Pfeil
+  - **Blaue Förderbänder**: Bewegen Roboter 2 Felder in Richtung Pfeil
+- **Zahnräder**: 
+  - **Grüne Zahnräder**: Drehen Roboter 90° im Uhrzeigersinn
+  - **Rote Zahnräder**: Drehen Roboter 90° gegen den Uhrzeigersinn
+- **Druckplatten**: Bewegen Roboter basierend auf aktueller Register-Nummer
 
-## Suggestions for a good README
+#### Hilfreiche Elemente
+- **Energie-Felder**: Geben Energie zurück (max. 10 Energie)
+- **Checkpoints**: Müssen in Reihenfolge erreicht werden
+- **Antenne**: Bestimmt Spielerreihenfolge bei Gleichständen
+- **Neustart-Punkte**: Roboter landen hier nach Absturz
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Verfügbare Karten
+- **Death Trap**: Gefährliche Karte mit vielen Hindernissen und Pits
+- **Dizzy Highway**: Standard-Karte mit vielen Förderbändern
+- **Extra Crispy**: Karte mit vielen Lasern und Feuer-Elementen
+- **Lost Bearings**: Komplexe Karte mit vielen Zahnrädern
 
-## Name
-Choose a self-explaining name for your project.
+## Testanleitung für Tester
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### Grundlegende Tests
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+#### 1. Verbindungstest
+- [ ] Server startet ohne Fehler
+- [ ] Client kann sich mit Server verbinden
+- [ ] Mehrere Clients können gleichzeitig verbunden sein
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+#### 2. Lobby-Test
+- [ ] Spieler können Namen eingeben
+- [ ] Spieler können Roboter-Figur auswählen
+- [ ] Spieler können "Bereit" Status setzen
+- [ ] Chat-Funktion funktioniert
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+#### 3. Spielstart-Test
+- [ ] Spiel startet wenn alle Spieler bereit sind
+- [ ] Kartenauswahl funktioniert (9 Karten ziehen, 5 programmieren)
+- [ ] Spieler erhalten ihre Handkarten
+- [ ] Energie wird korrekt zugewiesen (5 Energie zu Beginn)
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+#### 4. Spielmechanik-Test
+- [ ] Programmierkarten werden korrekt ausgeführt (Register 1-5)
+- [ ] Bewegung funktioniert in alle Richtungen
+- [ ] Kollisionen werden korrekt behandelt (Roboter blockieren sich)
+- [ ] Schadenskarten werden angewendet
+- [ ] Energie-System funktioniert (max. 10 Energie)
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Erweiterte Tests
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+#### 5. Spielfeldelemente-Test
+- [ ] Laser fügen Schaden zu (1 Schadenskarte pro Laser)
+- [ ] Förderbänder bewegen Roboter (grün: 1 Feld, blau: 2 Felder)
+- [ ] Zahnräder drehen Roboter (grün: im Uhrzeigersinn, rot: gegen Uhrzeigersinn)
+- [ ] Pits lassen Roboter abstürzen (zurück zum Neustart-Punkt)
+- [ ] Checkpoints werden korrekt erkannt (müssen in Reihenfolge erreicht werden)
+- [ ] Energie-Felder geben Energie zurück
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+#### 6. Netzwerk-Test
+- [ ] Spiel funktioniert über Netzwerk
+- [ ] Verbindungsabbrüche werden behandelt
+- [ ] Nachrichten werden korrekt übertragen
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+#### 7. UI-Test
+- [ ] Spielfeld wird korrekt angezeigt
+- [ ] Karten werden visuell dargestellt
+- [ ] Animationen funktionieren
+- [ ] Chat-Interface ist benutzerfreundlich
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Fehlerszenarien testen
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+#### 8. Fehlerbehandlung
+- [ ] Ungültige Kartenauswahl wird abgelehnt
+- [ ] Netzwerkfehler werden behandelt
+- [ ] Spieler-Austritt wird korrekt verarbeitet
+- [ ] Server-Neustart funktioniert
 
-## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+##  Logging
+
+Das Spiel verwendet Log4j2 für Logging. Logs werden in folgenden Dateien gespeichert:
+- `logs/heartbeat-YYYY-MM-DD.log.gz`: Netzwerk-Herzschlag-Logs
+- `logs/`: Weitere Debug- und Fehler-Logs
+
+##  Entwicklung
+
+### Projektstruktur
+```
+src/main/java/de/lmu/dbs/ifi/sep25/
+├── card/           # Karten-Logik
+├── game/           # Spielmechaniken
+├── network/        # Netzwerk-Kommunikation
+├── ui/             # Benutzeroberfläche
+└── utils/          # Hilfsfunktionen
+```
+
+### Technologien
+- **JavaFX**: Benutzeroberfläche
+- **Maven**: Build-System
+- **Log4j2**: Logging
+- **Gson**: JSON-Serialisierung
+- **JUnit**: Unit-Tests
+
+
+
+---
+
+**Viel Spaß beim Testen! 🎮**
