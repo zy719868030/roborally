@@ -633,6 +633,16 @@ public class Player {
     }
 
     /**
+     * Get the player's programming card deck.
+     * Used for the damage card mechanism: when injured, damage cards are placed in the discard pile and mixed with programming cards during the next shuffle.
+     *
+     * @return The player's programming card deck (Deck<RegisterCard>).
+     */
+    public Deck<RegisterCard> getProgrammingDeck() {
+        return programmingDeck;
+    }
+
+    /**
      * Returns a string representation of the Player object, providing detailed information
      * about the player's attributes including client ID, robot details, name, and register contents.
      *

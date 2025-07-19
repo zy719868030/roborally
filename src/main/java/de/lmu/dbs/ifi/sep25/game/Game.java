@@ -1062,7 +1062,7 @@ public class Game {
 
             // Continue until we hit a wall, the board edge, or a robot
             while (board.isValidPosition(nextPos)) {
-                // Check if there's a wall blocking the laser
+                // Check if there's a wall or antenna blocking the laser
                 boolean blocked = false;
                 for (BoardElement element : board.getElements(nextPos.x(), nextPos.y())) {
                     if (element instanceof Wall wall) {
@@ -1070,6 +1070,9 @@ public class Game {
                             blocked = true;
                             break;
                         }
+                    } else if (element instanceof Antenna) {
+                        blocked = true;
+                        break;
                     }
                 }
 
@@ -1082,6 +1085,7 @@ public class Game {
                 if (targetRobot != null) {
                     // Deal damage to the robot
                     targetRobot.takeDamage(1);
+                    targetRobot.addDamageCard(DamageCard.DamageType.SPAM);
 
                     // TODO @lukas：Broadcast laser hit message
                     Server.getInstance().broadcastMessage(
