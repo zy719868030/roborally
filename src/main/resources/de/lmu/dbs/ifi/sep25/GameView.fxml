@@ -137,6 +137,12 @@
                                   alignment="CENTER"
                                   maxWidth="-1"/>
                       </Group>
+                        <Pane fx:id="laserLayer"
+                              pickOnBounds="false"
+                              mouseTransparent="true"
+                              minWidth="1200"
+                              minHeight="900"
+                              StackPane.alignment="TOP_LEFT" />
                         <ImageView fx:id="gameLogoView"
                                    fitHeight="250" fitWidth="600"
                                    visible="false" managed="false"
