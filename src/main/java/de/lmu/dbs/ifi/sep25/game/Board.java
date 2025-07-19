@@ -63,8 +63,12 @@ public class Board {
         String getBoardId() {
             return boardId;
         }
-    }
 
+
+    public int getMinX() {
+        return minX;
+    }
+}
 
     /**
      * Constructs a Board object and initializes it based on the given map type.
@@ -683,5 +687,5 @@ public class Board {
         return reboot;
     }
 
-}
+    }
 

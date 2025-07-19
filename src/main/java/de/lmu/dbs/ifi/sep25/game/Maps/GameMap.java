@@ -18,6 +18,20 @@ public abstract class GameMap {
     public GameMap(Position antennaPosition) {
         this.antennaPosition = antennaPosition;
     }
+// No longer used. Kept for legacy reference.
+
+
+    public static GameMap load(String mapName) {
+        return switch (mapName) {
+            case "Dizzy Highway" -> new DizzyHighway();
+            case "Extra Crispy" -> new ExtraCrispy();
+            case "Lost Bearings" -> new LostBearings();
+            case "Death Trap" -> new DeathTrap();
+            default -> throw new IllegalArgumentException("Unknown map name: " + mapName);
+        };
+
+    }
+
 
     public List<BoardElement> getElements() {
         return new ArrayList<>(elements);

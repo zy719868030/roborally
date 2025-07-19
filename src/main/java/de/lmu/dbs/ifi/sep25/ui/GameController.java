@@ -1,7 +1,10 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
+import de.lmu.dbs.ifi.sep25.game.BoardElement.Laser;
 import de.lmu.dbs.ifi.sep25.game.Direction;
+import de.lmu.dbs.ifi.sep25.game.Maps.GameMap;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
@@ -31,8 +34,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.StrokeType;
+import javafx.scene.shape.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -43,7 +45,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
-import javafx.scene.shape.Line;
+
 import javafx.animation.FadeTransition;
 import javafx.geometry.Point2D;
 
@@ -54,11 +56,15 @@ public class GameController {
     private static final Logger messageLogger = LogManager.getLogger("MessageLogger");
     private static final Logger appLogger = LogManager.getLogger(GameController.class);
     private static final Logger errorLogger = LogManager.getLogger(GameController.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
+
     @FXML
     public HBox energyBox;
     public ImageView gameLogoView;
     @FXML
     private GridPane gameBoardPane;
+    @FXML
+    private Pane laserLayer;
     @FXML
     private TextArea chatArea;
     @FXML
@@ -103,7 +109,6 @@ public class GameController {
 
     private Timeline countdownTimer;
     private int secondsLeft = 30;
-    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(GameController.class);
     @FXML
     private StackPane discardPileBox;
 
@@ -326,8 +331,19 @@ public class GameController {
         gameBoardPane.setManaged(true);
         gameBoardPane.setPrefWidth(columns * TILE_SIZE);
         gameBoardPane.setPrefHeight(rows * TILE_SIZE);
-    }
 
+        drawStaticLasers(boardMap);
+    }
+    /**
+     * Adds a new player to the internal player mappings and the chat recipient list,
+     * excluding the local client. If the player is already present in the recipient box,
+     * they won't be added again.
+     *
+     * @param clientID the unique ID of the client to add
+     * @param name     the player's display name (optional, must not be blank)
+     * @param figure   the ID of the figure (robot) associated with this player
+     * @param ready    whether the player is marked as ready
+     */
     public void addPlayer(int clientID, String name, int figure, boolean ready) {
         clientToRobotID.put(clientID, figure);
 
@@ -337,7 +353,7 @@ public class GameController {
         }
 
         if (ClientSingleton.getInstance().getID() == clientID)
-            return; // Sich selbst nicht hinzufügen
+            return;
 
         boolean exists = recipientBox.getItems().stream()
                 .anyMatch(p -> p.getClientID() == clientID);
@@ -720,7 +736,10 @@ public class GameController {
     public int getCurrentPhaseID() {
         return currentPhaseID;
     }
-
+    /**
+     * Updates the game phase to the specified ID
+     * @param phaseID the new phase ID to set
+     */
     public void updatePhase(int phaseID) {
         final int previousPhase = getCurrentPhaseID();
 
@@ -917,6 +936,12 @@ public class GameController {
         });
         Arrays.fill(registerState, null); // reset internal state
     }
+    /**
+     * Highlights the register card at the specified index by applying
+     * a temporary visual effect. The highlight lasts for 2 seconds.
+     *
+     * @param index the index of the register card to highlight
+     */
     private void highlightRegisterCard(int index) {
         if (index < 0 || index >= registerBox.getChildren().size()) return;
 
@@ -970,10 +995,9 @@ public class GameController {
     }
 
     /**
-     * Zeigt oder versteckt das Chat-Fenster.
-     * Blendet das Icon-Menü entsprechend ein oder aus.
+     * Shows or hides the chat window.
+     * Also shows or hides the icon menu accordingly.
      */
-
     @FXML
     private void toggleChatBox() {
         if (chatBox.isVisible()) {
@@ -1010,10 +1034,10 @@ public class GameController {
     }
 
     /**
-     * Zeigt eine gespielte Karte visuell im Kartenbereich an.
+     * Visually displays a played card in the played cards area.
      *
-     * @param clientID Die ID des Spielers, der die Karte gespielt hat.
-     * @param cardName Der Name der gespielten Karte (z. B. "move_1", "turn_right").
+     * @param clientID the ID of the player who played the card
+     * @param cardName the name of the played card
      */
     public void showPlayedCard(int clientID, String cardName) {
         String imagePath = "/assets/cards/" + cardName.toLowerCase() + ".png";
@@ -1036,7 +1060,13 @@ public class GameController {
         }
     }
 
-
+    /**
+     * Marks the given client ID as the current active player.
+     * Updates the game state, status label, and UI elements accordingly.
+     * If the current client is active, it enables interaction for the current phase.
+     *
+     * @param clientID the ID of the player whose turn it is
+     */
     public void markCurrentPlayer(int clientID) {
         int phaseID = getCurrentPhaseID();
 
@@ -1046,7 +1076,7 @@ public class GameController {
             return;
 
         }
-        this.currentPlayerID = clientID; // Immer setzen
+        this.currentPlayerID = clientID;
         int myID = ClientSingleton.getInstance().getID();
 
         appLogger.info("[DEBUG] markCurrentPlayer aufgerufen mit clientID = {}", clientID);
@@ -1125,7 +1155,11 @@ public class GameController {
             }
         }
     }
-
+    /**
+     * Displays a small robot icon representing the given client ID
+     * in the player icon area. Applies a glow effect based on the robot ID.
+     * @param clientID the ID of the client whose robot should be shown
+     */
     private void showMiniRobot(int clientID) {
         try {
             int robotID = clientToRobotID.getOrDefault(clientID, 0);
@@ -1142,12 +1176,12 @@ public class GameController {
 
 
     /**
-     * Zeigt die Startposition eines Roboters im Spielfeld an.
+     * Displays the starting position of a robot on the game board.
      *
-     * @param x         X-Koordinate auf dem Spielfeld
-     * @param y         Y-Koordinate auf dem Spielfeld
-     * @param clientID  Die Client-ID des Spielers
-     * @param direction Die Ausrichtung des Roboters (z. B. "right", "left", "top", "botom")
+     * @param x         the X-coordinate on the game board
+     * @param y         the Y-coordinate on the game board
+     * @param clientID  the client ID of the player
+     * @param direction the orientation of the robot (e.g., "right", "left", "top", "bottom")
      */
     public void displayStartingPoint(int x, int y, int clientID, String direction) {
         int robotID = clientToRobotID.get(clientID);
@@ -1175,11 +1209,12 @@ public class GameController {
     }
 
     /**
-     * Holt das StackPane an der gegebenen Spielfeldposition.
+     * Returns the StackPane at the given board position.
+     * If none exists, a new one is created and added to the grid.
      *
-     * @param x X-Koordinate
-     * @param y Y-Koordinate
-     * @return Das StackPane an der Position oder neu erstellt
+     * @param x the X-coordinate on the board
+     * @param y the Y-coordinate on the board
+     * @return the StackPane at the specified position, or a newly created one
      */
     private StackPane getTileAt(int x, int y) {
         for (javafx.scene.Node node : gameBoardPane.getChildren()) {
@@ -1194,14 +1229,15 @@ public class GameController {
 
 
     /**
-     * Zeigt die Handkarten des Spielers in der Benutzeroberfläche an.
+     * Displays the player's hand cards in the user interface.
      *
-     * <p>Diese Methode:
+     * <p>This method performs the following:
      * <ul>
-     *   <li>Prüft, ob Karten vorhanden sind.</li>
-     *   <li>Leert und initialisiert die Registerfelder (Slots 1–5).</li>
-     *   <li>Zeigt die Karten in der Handkarten-Box an.</li>
-     *   <li>Fügt jeder Karte ein Klick-Ereignis hinzu, um sie ins Register zu verschieben.</li>
+     *   <li>Checks whether any cards are available.</li>
+     *   <li>Clears and initializes the register slots (slots 1–5).</li>
+     *   <li>Displays the cards in the hand card box.</li>
+     *   <li>Adds a click event to each card to allow moving it into the register.</li>
+     * </ul>
      */
     public void displayHandCards(List<String> cardNames) {
         if (cardNames == null || cardNames.isEmpty()) {
@@ -1358,6 +1394,11 @@ public class GameController {
         return view;
     }
 
+    /**
+     * Finds the index of the next empty register slot.
+     *
+     * @return the index of the first empty slot, or -1 if all slots are filled
+     */
     private int findNextEmptyRegisterSlot() {
         for (int i = 0; i < registerState.length; i++) {
             if (registerState[i] == null) {
@@ -1369,8 +1410,8 @@ public class GameController {
     }
 
     /**
-     * Ermittelt den Slot-Index basierend auf dem StackPane in der UI.
-     * Wird beim Drag & Drop verwendet.
+     * Determines the slot index based on the given StackPane in the UI.
+     * Used during drag and drop operations.
      */
     private int findRegisterSlotIndex(StackPane pane) {
         for (int i = 0; i < registerBox.getChildren().size(); i++) {
@@ -1472,7 +1513,7 @@ public class GameController {
     }
 
     /**
-     * Initialisiert einen Register-Slot zur Annahme von Karten per Drag & Drop.
+     * Initializes a register slot to accept cards via drag and drop.
      */
     private void setupRegisterSlot(StackPane pane) {
         pane.setOnDragOver(event -> {
@@ -1621,7 +1662,7 @@ public class GameController {
     }
 
     /**
-     * Bestätigt die ausgewählten Karten und sendet sie an den Server.
+     * Confirms the selected cards and sends them to the server.
      */
     @FXML
     private void handleConfirmSelection() {
@@ -1654,7 +1695,6 @@ public class GameController {
             appLogger.info("→ Karte ausgewählt: {} in Slot {}", cardName, i);
         }
 
-        // Sende Nachricht an Server
         var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
         var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
         ClientSingleton.getInstance().sendMessage(finishedMsg);
@@ -1668,10 +1708,10 @@ public class GameController {
 
 
     /**
-     * Zeigt für einen anderen Spieler Kartenrückseiten an.
+     * Displays card backs for another player.
      *
-     * @param clientID Spieler-ID
-     * @param count    Anzahl der Karten
+     * @param clientID the ID of the player
+     * @param count    the number of cards to display
      */
     public void displayHiddenCardsForPlayer(int clientID, int count) {
         handCardBox.getChildren().clear();
@@ -1693,7 +1733,7 @@ public class GameController {
     }
 
     /**
-     * Zeigt eine optionale Animation oder Nachricht an, dass das Deck gemischt wurde.
+     * Displays an optional animation or message indicating that the deck has been shuffled.
      */
     public void showShuffleAnimation() {
         appendChatMessage("[INFO] Das Programmierdeck wurde neu gemischt.");
@@ -1701,7 +1741,11 @@ public class GameController {
         shuffleHandCards();
 
     }
-
+    /**
+     * Handles the visual shuffle action triggered by the user.
+     * <p>
+     * Plays a shuffle sound and randomly rearranges the cards in the hand card box.
+     */
     @FXML
     private void handleShuffleVisual() {
         playShuffleSound();
@@ -1712,10 +1756,15 @@ public class GameController {
 
 
     /**
-     * Wird aufgerufen, wenn ein Spieler eine Karte für sein Register ausgewählt hat.
+     * Called when a player selects or deselects a card for their register.
+     * <p>
+     * If the player is the local client and the register is being cleared,
+     * this method handles the card removal, including restoring it to the hand
+     * if it was not part of a manual or swap-related deselection.
      *
-     * @param clientID Die ID des Spielers
-     * @param filled   Ob das Register des Spielers vollständig ist
+     * @param clientID the ID of the player performing the selection
+     * @param register the index of the register slot affected
+     * @param filled   whether the register is currently filled (true = added, false = removed)
      */
     public void handleCardSelection(int clientID, int register, boolean filled) {
         final boolean isSelf = clientID == ClientSingleton.getInstance().getID();
@@ -1849,9 +1898,9 @@ public class GameController {
 
 
     /**
-     * Hebt hervor, dass ein Spieler sein Programm abgeschlossen hat.
+     * Highlights that a player has completed their program.
      *
-     * @param clientID Die ID des Spielers
+     * @param clientID the ID of the player
      */
     public void markPlayerReady(int clientID) {
         boolean isSelf = clientID == ClientSingleton.getInstance().getID();
@@ -1866,20 +1915,10 @@ public class GameController {
 
 
     /**
-     * Startet einen Countdown-Timer von 30 Sekunden und aktualisiert dabei ein Label in der Benutzeroberfläche.
-     *
-     * <p>Die Methode zeigt die verbleibende Zeit im `timerLabel` an und blendet das Label aus,
-     * wenn der Countdown abgelaufen ist. Der Timer wird in 1-Sekunden-Intervallen aktualisiert.</p>
-     *
-     * <p>Funktionsweise:</p>
-     * <ul>
-     *   <li>Setzt die verbleibende Zeit (`secondsLeft`) auf 30 Sekunden.</li>
-     *   <li>Zeigt das `timerLabel` an und aktualisiert es jede Sekunde.</li>
-     *   <li>Stoppt einen eventuell laufenden Timer, bevor ein neuer gestartet wird.</li>
-     *   <li>Blendet das `timerLabel` aus, wenn die Zeit abgelaufen ist.</li>
-     * </ul>
-     *
-     * <p>Diese Methode wird verwendet, um zeitgesteuerte Aktionen in der Benutzeroberfläche zu ermöglichen.</p>
+     * Starts a 30-second countdown timer and updates the timer label in the UI.
+     * <p>
+     * The label is updated every second and hidden when the time runs out.
+     * Any running timer is stopped before a new one starts.
      */
     public void startCountdown() {
 
@@ -1943,7 +1982,7 @@ public class GameController {
                         countdownTimer.stop();
                         stopCountdownSound();
 
-                        if (blinkTimeline != null) blinkTimeline.stop(); //
+                        if (blinkTimeline != null) blinkTimeline.stop();
                         timerLabel.setOpacity(1);
                         timerLabel.setText("Zeit abgelaufen!");
                         fadeOutCountdown();
@@ -2010,7 +2049,7 @@ public class GameController {
             countdownClip.setCycleCount(1);
             countdownClip.play();
 
-            PauseTransition stopSound = new PauseTransition(Duration.seconds(20));
+            PauseTransition stopSound = new PauseTransition(Duration.seconds(25));
             stopSound.setOnFinished(e -> stopCountdownSound());
             stopSound.play();
 
@@ -2018,8 +2057,6 @@ public class GameController {
             System.err.println("Countdown-Sound konnte nicht geladen werden: " + e.getMessage());
         }
     }
-
-
 
 
 
@@ -2032,10 +2069,9 @@ public class GameController {
 
 
     /**
-     * Zeigt an, dass der Timer abgelaufen ist, und markiert Spieler, die zu langsam waren.
-     *
-     * <p>Diese Methode wird aufgerufen, wenn der Countdown-Timer endet. Sie informiert die Benutzer
-     * über das Ende des Timers und markiert Spieler, die ihre Aktionen nicht rechtzeitig abgeschlossen haben.</p>
+     * Indicates that the timer has expired and marks players who were too slow.
+     * <p>
+     * Called when the countdown ends to notify users and handle incomplete actions.
      */
     public void showTimerEnded(List<Integer> slowPlayers) {
         if (!timerLabel.isVisible()) {
@@ -2065,9 +2101,9 @@ public class GameController {
     }
 
     /**
-     * Zeigt die vom Spieler bestätigten Karten im Register oder Kartenbereich.
+     * Displays the cards that the player has confirmed, replacing the hand card area.
      *
-     * @param cards Liste der Kartennamen
+     * @param cards the list of confirmed card names
      */
     public void displayConfirmedCards(List<String> cards) {
         handCardBox.getChildren().clear();
@@ -2365,9 +2401,9 @@ public class GameController {
     }
 
     /**
-     * Spielt eine einfache Animation basierend auf dem Animationstyp.
+     * Plays a  animation based on the specified animation type.
      *
-     * @param type Typ der Animation ( "Movement", "Clockwise", "Checkpoint")
+     * @param type the type of animation ("Movement", "Clockwise", "Checkpoint")
      */
     public void playAnimation(String type) {
         //appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
@@ -2381,25 +2417,92 @@ public class GameController {
 
 
     /**
-     * Zeigt eine visuelle Nachricht oder Platzhalter an, dass ein Spieler rebootet wurde.
+     * Displays a visual message or placeholder indicating that a player has been rebooted.
      *
-     * @param clientID ID des Spielers
+     * @param clientID the ID of the player who has been rebooted
      */
     public void showReboot(int clientID) {
-        // Optional: Spielername ermitteln – hier als Platzhalter
         final String playerName = getPlayerNameById(clientID);
-
-        // Nachricht im Chat anzeigen
         appendChatMessage("[REBOOT] Spieler " + playerName + " wurde rebootet.");
 
-        // TODO: Hier könnte man auch eine Reboot-Animation zeigen
-        // oder ein Symbol auf dem Spielfeld darstellen
+        Position pos = robotPositions.get(clientID);
+        if (pos == null) return;
+
+        StackPane cell = getCellAt(pos.x(), pos.y());
+        if (cell == null) return;
+        boolean isCurrentClient = (clientID == ClientSingleton.getInstance().getID());
+
+        ScaleTransition zoom = new ScaleTransition(Duration.millis(300), cell);
+        zoom.setFromX(1.0);
+        zoom.setFromY(1.0);
+        zoom.setToX(1.2);
+        zoom.setToY(1.2);
+        zoom.setAutoReverse(true);
+        zoom.setCycleCount(2);
+        zoom.play();
+
+        for (Node node : cell.getChildren()) {
+            if (node instanceof ImageView img && "robot".equals(img.getUserData())) {
+
+                TranslateTransition shake = new TranslateTransition(Duration.millis(80), img);
+                shake.setFromX(-5);
+                shake.setToX(5);
+                shake.setCycleCount(6);
+                shake.setAutoReverse(true);
+
+                Label rebootLabel = new Label("REBOOT!");
+                rebootLabel.getStyleClass().add("reboot-label");
+                rebootLabel.setTranslateY(-35);
+
+                cell.getChildren().add(rebootLabel);
+
+                FadeTransition fade = new FadeTransition(Duration.seconds(1.2), rebootLabel);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+                fade.setOnFinished(e -> cell.getChildren().remove(rebootLabel));
+
+                shake.play();
+                fade.play();
+
+                break;
+            }
+        }
+        if (isCurrentClient) {
+            showBigRebootOverlay();
+
+
+        }
+    }
+    public void showBigRebootOverlay() {
+        Label rebootOverlay = new Label("REBOOT!");
+        rebootOverlay.setStyle("""
+        -fx-font-size: 64px;
+        -fx-text-fill: yellow;
+        -fx-font-weight: bold;
+        -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
+    """);
+
+        StackPane.setAlignment(rebootOverlay, Pos.CENTER);
+        zoomWrapper.getChildren().add(rebootOverlay);
+
+        ScaleTransition scale = new ScaleTransition(Duration.millis(300), rebootOverlay);
+        scale.setFromX(0.6);
+        scale.setFromY(0.6);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.play();
+
+        FadeTransition fade = new FadeTransition(Duration.seconds(2), rebootOverlay);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+        fade.setOnFinished(e -> zoomWrapper.getChildren().remove(rebootOverlay));
+        fade.play();
     }
 
     /**
-     * Zeigt eine visuelle Reboot-Ausrichtung für den Spieler an.
+     * Displays a visual reboot orientation for the player.
      *
-     * @param direction Die vom Spieler gewählte Richtung ("up", "down", "left", "right")
+     * @param direction The direction chosen by the player ("up", "down", "left", "right")
      */
     public void showRebootDirection(String direction) {
         appendChatMessage("[INFO] Reboot-Richtung: " + direction);
@@ -2411,7 +2514,6 @@ public class GameController {
 //            appLogger.info("Set the restart direction of the robot {} to: {}", rebootingClientID, direction);
 //        }
 
-        // Optional: Richtungssymbol visuell anzeigen (Platzhalter-Animation)
         Label directionIndicator = new Label(switch (direction.toLowerCase()) {
             case "top" -> "▲";
             case "bottom" -> "▼";
@@ -2437,55 +2539,111 @@ public class GameController {
         directionIndicator.setTranslateY(-35);
 
 //        arrow.setStyle("-fx-font-size: 28px; -fx-text-fill: blue;");
-        // Beispielposition – TODO: später echte Roboterposition verwenden
-        StackPane rebootTile = getCellAt(7, 3);
-        if (rebootTile != null) {
-            rebootTile.getChildren().add(directionIndicator);
+        int rebootingClientID = ClientSingleton.getInstance().getRebootingInProgress();
+        Position pos = robotPositions.get(rebootingClientID);
+        if (pos != null) {
+            StackPane rebootTile = getCellAt(pos.x(), pos.y());
+            if (rebootTile != null) {
+                rebootTile.getChildren().add(directionIndicator);
 
-            ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
-            appear.setFromX(0.5);
-            appear.setFromY(0.5);
-            appear.setToX(1.0);
-            appear.setToY(1.0);
-            appear.play();
+                ScaleTransition appear = new ScaleTransition(Duration.millis(200), directionIndicator);
+                appear.setFromX(0.5);
+                appear.setFromY(0.5);
+                appear.setToX(1.0);
+                appear.setToY(1.0);
+                appear.play();
 
-            PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
-            delay.setOnFinished(e -> {
-                FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
-                fade.setFromValue(1.0);
-                fade.setToValue(0.0);
-                fade.setOnFinished(event -> rebootTile.getChildren().remove(directionIndicator));
-                fade.play();
-            });
-            delay.play();
+                PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                delay.setOnFinished(e -> {
+                    FadeTransition fade = new FadeTransition(Duration.seconds(1), directionIndicator);
+                    fade.setFromValue(1.0);
+                    fade.setToValue(0.0);
+                    fade.setOnFinished(event -> rebootTile.getChildren().remove(directionIndicator));
+                    fade.play();
+                });
+                delay.play();
+            }
         }
     }
-
+    /**
+     * Displays a dialog allowing the player to choose the reboot direction
+     * for their robot after falling off the board.
+     * <p>
+     * The dialog shows four arrow buttons (↑ ↓ ← →), each representing a possible direction.
+     * When the player clicks on one of the buttons, the selected direction
+     * (as a string: "top", "bottom", "left", "right") is passed to the provided callback.
+     *
+     * @param callback A Consumer that receives the chosen direction as a string.
+     */
     public void askRebootDirection(Consumer<String> callback) {
-        // Öffne ein einfaches Dialog-Fenster mit 4 Buttons oder ChoiceBox
-        List<String> directions = List.of("top", "right", "bottom", "left");
+        Label title = new Label("Reboot-Richtung wählen");
+        title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 18px; -fx-font-weight: bold;");
 
-        ChoiceDialog<String> dialog = new ChoiceDialog<>("top", directions);
+        Label instruction = new Label("Klicke auf eine Richtung, in die dein Roboter neu ausgerichtet werden soll:");
+        instruction.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        Button btnUp = createDirectionButton("↑", "top");
+        Button btnDown = createDirectionButton("↓", "bottom");
+        Button btnLeft = createDirectionButton("←", "left");
+        Button btnRight = createDirectionButton("→", "right");
+
+        HBox centerRow = new HBox(20, btnLeft, btnRight);
+        centerRow.setAlignment(Pos.CENTER);
+        VBox arrowBox = new VBox(15, btnUp, centerRow, btnDown);
+        arrowBox.setAlignment(Pos.CENTER);
+
+        VBox content = new VBox(25, title, instruction, arrowBox);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: rgba(20,20,30,0.95); -fx-padding: 30; -fx-background-radius: 12;");
+
+        Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Roboter neu ausrichten");
-        dialog.setHeaderText("Wähle eine neue Ausrichtung für deinen Roboter");
-        dialog.setContentText("Ausrichtung:");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().lookupButton(ButtonType.CLOSE).setVisible(false); // Ocultar botón default
 
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            callback.accept(result.get());
-        } else {
-            // Wenn der Dialog geschlossen wurde oder abgebrochen → Standard
+        btnUp.setOnAction(e -> {
             callback.accept("top");
-        }
+            dialog.close();
+        });
+        btnDown.setOnAction(e -> {
+            callback.accept("bottom");
+            dialog.close();
+        });
+        btnLeft.setOnAction(e -> {
+            callback.accept("left");
+            dialog.close();
+        });
+        btnRight.setOnAction(e -> {
+            callback.accept("right");
+            dialog.close();
+        });
+
+        dialog.showAndWait();
     }
+    private Button createDirectionButton(String arrow, String direction) {
+        Button btn = new Button(arrow);
+        btn.setUserData(direction);
+        btn.setPrefSize(60, 60);
+        btn.setStyle("""
+        -fx-font-size: 24px;
+        -fx-font-weight: bold;
+        -fx-text-fill: black;
+        -fx-background-color: #00ffd0;
+        -fx-background-radius: 10px;
+        -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 6, 0.6, 0, 1);
+    """);
+        return btn;
+    }
+
 
 
     /**
-     * Zeigt die Energieänderung für einen bestimmten Spieler an.
+     * Displays the energy change for a specific player.
      *
-     * @param clientID Die Client-ID des Spielers
-     * @param energy   Neue Energieanzahl
-     * @param source   Quelle der Energie ("EnergySpace", "Laser")
+     * @param clientID The client ID of the player
+     * @param energy   The new amount of energy
+     * @param source   The source of the energy ("EnergySpace", "Laser")
      */
     public void showEnergyChange(int clientID, int energy, String source) {
         int myID = ClientSingleton.getInstance().getID();
@@ -2516,10 +2674,10 @@ public class GameController {
     }
 
     /**
-     * Zeigt eine Sieges- oder Niederlageanzeige mit grünem Hintergrund und Button zum Hauptmenü.
+     * Displays a victory or defeat screen with a robot image and a button to exit the game.
      *
-     * @param isWinner       true, wenn der Spieler selbst gewonnen hat
-     * @param winnerClientId Client-ID des Gewinner-Spielers
+     * @param isWinner       true if the player themselves won
+     * @param winnerClientId Client ID of the winning player
      */
     public void showGameResult(boolean isWinner, int winnerClientId) {
         Platform.runLater(() -> {
@@ -3523,11 +3681,11 @@ public class GameController {
         fadeIn.play();
     }
     /**
-     * Zeigt das Spiellogo mit einer aufwendigen Übergangsanimation.
+     * Displays the game logo with an elaborate transition animation.
      * <p>
-     * Das Logo erscheint aus dem unteren Bildschirmbereich, skaliert sich hoch
-     * und verblasst nach einer kurzen Pause wieder.
-     *  für den Spielstart oder Übergänge zwischen Phasen.
+     * The logo appears from the bottom of the screen, scales up,
+     * and fades out again after a short pause.
+     * Useful for game start or transitions between phases.
      */
     public void showLogoTransition() {
         gameLogoView.setVisible(true);
@@ -3856,10 +4014,109 @@ public class GameController {
             }
         }
     }
+    /**
+     * Draws animated lasers on the board based on hardcoded positions
+     * for specific maps like "Dizzy Highway", "Extra Crispy", and "Lost Bearings".
+     *
+     * This method clears the laser layer and redraws lasers in predefined positions
+     * with direction, length, and color according to the selected map.
+     *
+     * @param boardMap The board structure (unused here, but typically contains field layout).
+     */
+    private void drawStaticLasers(List<List<List<MessageDefinitions.Field>>> boardMap) {
+        laserLayer.getChildren().clear();
+
+        String selectedMapName = ClientSingleton.getInstance().getSelectedMap();
+        if (selectedMapName == null) return;
+
+        switch (selectedMapName) {
+            case "Dizzy Highway" -> {
+                createAnimatedLaser(10, 8, Direction.WEST, 1.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(11, 5, Direction.EAST, 1.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(9, 6, Direction.NORTH, 1.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(12, 7, Direction.SOUTH, 1.5, selectedMapName);//richtig
+            }
+
+            case "Extra Crispy" -> {
+                createAnimatedLaser(10, 8, Direction.EAST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(11, 8, Direction.WEST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(10, 5, Direction.EAST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(11, 5, Direction.WEST, 1.0, selectedMapName);//richtig
+                createAnimatedLaser(12, 2, Direction.EAST, 1.5, selectedMapName);//richtig
+                createAnimatedLaser(14, 2, Direction.WEST, 1.5, selectedMapName);//richtig
+                createAnimatedLaser(7, 11, Direction.EAST, 1.5, selectedMapName);//richtig
+                createAnimatedLaser(9, 11, Direction.WEST, 1.5, selectedMapName);//richtig
+            }
+
+
+            case "Lost Bearings" -> {
+                createAnimatedLaser(12, 5, Direction.WEST, 3.5, selectedMapName);//RICHTIG
+                createAnimatedLaser(9, 8, Direction.EAST, 3.5, selectedMapName);//RICHTIG
+            }
+
+            default -> {
+                System.out.println("No laser configuration defined for: " + selectedMapName);
+            }
+
+
+
+
+        }
+    }
+
+    /**
+     * Creates an animated laser beam effect from a given board cell.
+     * The laser is drawn as a line starting from the center of the tile (x, y)
+     * and extending in the specified direction for a certain length.
+     * The animation simulates the beam expanding and fading over time.
+     */
+    private void createAnimatedLaser(int x, int y, Direction direction, double lengthInTiles, String mapName) {
+        double startX = x * TILE_SIZE + TILE_SIZE / 1.0+0.5;
+        double startY = y * TILE_SIZE + TILE_SIZE / 1.0+0.5;
+
+        double endX = startX;
+        double endY = startY;
+
+        double length = TILE_SIZE * lengthInTiles;
+
+        switch (direction) {
+            case NORTH -> endY -= length;
+            case SOUTH -> endY += length;
+            case WEST  -> endX -= length;
+            case EAST  -> endX += length;
+        }
+
+        Line laser = new Line(startX, startY, startX, startY);
+
+        Color laserColor = switch (mapName) {
+            case "Dizzy Highway" -> Color.WHITE;
+            case "Extra Crispy"  -> Color.ORANGE;
+            case "Death Trap"    -> Color.RED;
+            default              -> Color.YELLOW;
+        };
+
+        laser.setStroke(laserColor);
+        laser.setStrokeWidth(4);
+        laser.setOpacity(0.8);
+        laser.setStrokeLineCap(StrokeLineCap.ROUND);
+
+        laserLayer.getChildren().add(laser);
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(laser.endXProperty(), startX),
+                        new KeyValue(laser.endYProperty(), startY),
+                        new KeyValue(laser.opacityProperty(), 1.0)
+                ),
+                new KeyFrame(Duration.millis(4000),
+                        new KeyValue(laser.endXProperty(), endX),
+                        new KeyValue(laser.endYProperty(), endY),
+                        new KeyValue(laser.opacityProperty(), 0.0)
+                )
+        );
+
+        timeline.setCycleCount(Animation.INDEFINITE);
+        timeline.play();
+    }
 }
-
-
-
-
-
 
