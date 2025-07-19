@@ -58,6 +58,87 @@ public class Belts extends BoardElement {
     }
 
     /**
+     * Improved rotation application logic
+     * Rotate according to the robot's actual source direction
+     */
+    private void applyConveyorRotation(Robot robot) {
+        appLogger.info("=== ROTATION APPLIED === Robot {} at position ({}, {}) being rotated by belt",
+                robot.getRobotID(), position.x(), position.y());
+        appLogger.info("Belt configuration - OutDir: {}, InDirs: {}, isRotating: {}",
+                outDirections.isEmpty() ? "NONE" : outDirections.get(0).getName(),
+                inDirections.stream().map(Direction::getName).collect(Collectors.toList()),
+                isRotating);
+
+        if (inDirections.isEmpty() || outDirections.isEmpty()) {
+            appLogger.info("No rotation: missing in/out directions");
+            return;
+        }
+
+        Direction currentDirection = robot.getDirection();
+        Direction outDir = outDirections.get(0);
+
+        // Attempt to determine the direction from which the robot is coming, based on the robot's current orientation and conveyor belt configuration.
+        Direction rotationInDir = null;
+        for (Direction inDir : inDirections) {
+            if (isNinetyDegreeTurn(inDir, outDir)) {
+                rotationInDir = inDir;
+                break;
+            }
+        }
+
+        if (rotationInDir == null) {
+            appLogger.info("No rotation: no valid turning configuration found");
+            return;
+        }
+
+        // Determine the direction of rotation
+        boolean isCounterClockwise = isCounterClockwiseTurn(rotationInDir, outDir);
+        Direction newDirection;
+        if (isCounterClockwise) {
+            newDirection = currentDirection.turnLeft();
+            appLogger.info("Applying counter-clockwise rotation based on belt config {}->{}: {} -> {}",
+                    rotationInDir.getName(), outDir.getName(),
+                    currentDirection.getName(), newDirection.getName());
+        } else {
+            newDirection = currentDirection.turnRight();
+            appLogger.info("Applying clockwise rotation based on belt config {}->{}: {} -> {}",
+                    rotationInDir.getName(), outDir.getName(),
+                    currentDirection.getName(), newDirection.getName());
+        }
+
+        robot.setDirection(newDirection);
+        appLogger.info("Robot {} rotated from {} to {} by rotating conveyor belt at position ({}, {})",
+                robot.getRobotID(), currentDirection.getName(), newDirection.getName(),
+                position.x(), position.y());
+    }
+
+
+    /**
+     * Check whether there is a 90-degree turn from the entrance to the exit.
+     *
+     * @param inDir Entrance direction.
+     * @param outDir Exit direction.
+     * @return true If there is a 90-degree turn.
+     */
+    private boolean isNinetyDegreeTurn(Direction inDir, Direction outDir) {
+        return inDir.turnLeft().equals(outDir) || inDir.turnRight().equals(outDir);
+    }
+
+    /**
+     * Check whether the turn from the entrance to the exit is a counterclockwise 90-degree turn.
+     *
+     * @param inDir Entrance direction
+     * @param outDir Exit direction
+     * @return true If it is a counterclockwise turn.
+     */
+    private boolean isCounterClockwiseTurn(Direction inDir, Direction outDir) {
+        return (inDir == Direction.NORTH && outDir == Direction.WEST) ||
+                (inDir == Direction.WEST && outDir == Direction.SOUTH) ||
+                (inDir == Direction.SOUTH && outDir == Direction.EAST) ||
+                (inDir == Direction.EAST && outDir == Direction.NORTH);
+    }
+
+    /**
      * Constructs a new Belts instance representing a conveyor belt with the specified properties.
      *
      * @param position     the position of the conveyor belt on the board, cannot be null.
@@ -78,12 +159,30 @@ public class Belts extends BoardElement {
         this.outDirections = List.of(outDirection);
         this.inDirections = new ArrayList<>(inDirections);
         // If the export direction and import direction are different, it is a rotating conveyor belt.
-        this.isRotating = !inDirections.isEmpty() &&
-                !outDirections.getFirst().equals(inDirections.getFirst().turnAround());
+        this.isRotating = calculateIsRotating();
         this.isOnBoard = false;
         this.boardId = boardId;
         //this.boardId = "";
         this.setBoardId(boardId);
+    }
+
+    /**
+     * Calculate whether the conveyor belt is a rotating conveyor belt.
+     * When any of the entrance directions forms a 90-degree turn with the exit direction, the conveyor belt is a rotating conveyor belt.
+     */
+    private boolean calculateIsRotating() {
+        if (inDirections.isEmpty() || outDirections.isEmpty()) {
+            return false;
+        }
+
+        Direction outDir = outDirections.get(0);
+        for (Direction inDir : inDirections) {
+            if (isNinetyDegreeTurn(inDir, outDir)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public BeltSpeed getSpeed() {
@@ -184,12 +283,11 @@ public class Belts extends BoardElement {
             return;
         }
 
-
         // If it is a rotating conveyor belt, rotate the robot first.
-        Position currentPos = robot.getPosition();
-        if (isRotating) {
-            rotateRobot(robot);
-        }
+//        Position currentPos = robot.getPosition();
+//        if (isRotating) {
+//            rotateRobot(robot);
+//        }
         // Move the robot according to the speed of the conveyor belt.
         moveRobotOnBelt(robot, board, speed.getValue());
     }
@@ -259,21 +357,37 @@ public class Belts extends BoardElement {
                 }
             }
 
+            // Move robot to next position
+            robot.setPosition(nextPos);
+            board.updateRobotPosition(robot, nextPos);
+            currentPos = nextPos;
+
+
+            // Check if there's a conveyor belt at the new position
             Belts nextBelt = findBeltAt(board, nextPos);
-            if (nextBelt != null && isValidBeltMovement(outDir, nextBelt)) {
-                robot.setPosition(nextPos);
-                board.updateRobotPosition(robot, nextPos);
-                currentPos = nextPos;
-                outDir = nextBelt.getMainOutDirection();
+            if (nextBelt != null) {
+
+                // Check if the movement from current belt to next belt is valid
+                if (isValidBeltMovement(outDir, nextBelt)) {
+                    // Apply rotation if the next belt is rotating - 只有传送带移动才触发旋转
+                    if (nextBelt.isRotating()) {
+                        nextBelt.applyConveyorRotation(robot);
+                    }
+
+                    // Continue with the next belt's direction for subsequent steps
+                    outDir = nextBelt.getMainOutDirection();
+                } else {
+                    // Still apply rotation if this belt is rotating - 只有传送带移动才触发旋转
+                    if (nextBelt.isRotating()) {
+                        nextBelt.applyConveyorRotation(robot);
+                    }
+                    break; // Stop belt movement
+                }
             } else {
-                robot.setPosition(nextPos);
-                board.updateRobotPosition(robot, nextPos);
-                currentPos = nextPos;
-                break; // Stop belt movement
+                break; // Stop belt movement - no more belts to continue on
             }
         }
-
-        // After belt movement is done, apply effects like gear rotation
+    // After belt movement is done, apply effects like gear rotation
 //        board.applyEffects(robot, currentPos.x(), currentPos.y());
     }
 
