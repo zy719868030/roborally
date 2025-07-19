@@ -3843,36 +3843,36 @@ public class GameController {
         return switch (element.type()) {
             case "ConveyorBelt" -> {
                 MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
-                yield conveyor.speed() == 2 ? "Blaues Förderband" : "Grünes Förderband";
+                yield conveyor.speed() == 2 ? "Blaues Förderband:" : "Grünes Förderband:";
             }
-            case "Wall" -> "Wand";
+            case "Wall" -> "Wand:";
             case "PushPanel" -> {
                 MessageDefinitions.FieldPushPanel panel = (MessageDefinitions.FieldPushPanel) element;
-                yield "Schubpanel (Register: " + panel.registers() + ")";
+                yield "Schubpanel (Register: " + panel.registers() + "):";
             }
-            case "RestartPoint" -> "Neustart-Punkt";
-            case "Antenna" -> "Antenne";
+            case "RestartPoint" -> "Neustart-Punkt:";
+            case "Antenna" -> "Antenne:";
             case "CheckPoint" -> {
                 MessageDefinitions.FieldCheckPoint cp = (MessageDefinitions.FieldCheckPoint) element;
-                yield "Checkpoint " + cp.count();
+                yield "Checkpoint " + cp.count() + ":";
             }
             case "Gear" -> {
                 MessageDefinitions.FieldGear gear = (MessageDefinitions.FieldGear) element;
                 boolean clockwise = gear.orientations().getFirst().equalsIgnoreCase("clockwise");
-                yield clockwise ? "Zahnrad (Uhrzeigersinn)" : "Zahnrad (Gegen Uhrzeigersinn)";
+                yield clockwise ? "Zahnrad (Uhrzeigersinn):" : "Zahnrad (Gegen Uhrzeigersinn):";
             }
             case "Energy-Space" -> {
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
                 Integer count = es.getCount();
-                yield (count != null && count > 0) ? "Energiefeld (+1)" : "Energiefeld (-1)";
+                yield (count != null && count > 0) ? "Energiefeld (+1):" : "Energiefeld (-1):";
             }
-            case "Pit" -> "Grube";
+            case "Pit" -> "Grube:";
             case "Laser" -> {
                 MessageDefinitions.FieldLaser laser = (MessageDefinitions.FieldLaser) element;
-                yield "Laser (Stärke " + laser.count() + ")";
+                yield "Laser (Stärke " + laser.count() + "):";
             }
-            case "StartPoint" -> "Startposition";
-            default -> "?" + element.type();
+            case "StartPoint" -> "Startposition:";
+            default -> "?" + element.type()+ ":";
         };
     }
 

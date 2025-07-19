@@ -241,6 +241,24 @@ public class Belts extends BoardElement {
                 return;
             }
 
+            // Wall barrier inspection
+            List<BoardElement> currentElements = board.getElements(currentPos.x(), currentPos.y());
+            for (BoardElement element : currentElements) {
+                if (element instanceof Wall wall) {
+                    if (!wall.canExitToDirection(outDir)) {
+                        return;
+                    }
+                }
+            }
+            List<BoardElement> targetElements = board.getElements(nextPos.x(), nextPos.y());
+            for (BoardElement element : targetElements) {
+                if (element instanceof Wall wall) {
+                    if (!wall.canPassThroughFromDirection(outDir.turnAround())) {
+                        return;
+                    }
+                }
+            }
+
             Belts nextBelt = findBeltAt(board, nextPos);
             if (nextBelt != null && isValidBeltMovement(outDir, nextBelt)) {
                 robot.setPosition(nextPos);
@@ -256,7 +274,7 @@ public class Belts extends BoardElement {
         }
 
         // After belt movement is done, apply effects like gear rotation
-        board.applyEffects(robot, currentPos.x(), currentPos.y());
+//        board.applyEffects(robot, currentPos.x(), currentPos.y());
     }
 
     /**

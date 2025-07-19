@@ -159,6 +159,36 @@
     -fx-background-color: #004f4f; /* Abdunkelung beim Überfahren */
     -fx-text-fill: #00ffd0;
 }
+
+/* ScrollPane Styling für Lobby */
+.root-background {
+    -fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e);
+}
+
+/* ScrollPane Styling */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar {
+    -fx-background-color: rgba(0, 255, 208, 0.3);
+}
+
+.scroll-pane .scroll-bar .thumb {
+    -fx-background-color: #00ffd0;
+    -fx-background-radius: 10;
+}
+
+.scroll-pane .scroll-bar .track {
+    -fx-background-color: rgba(0, 255, 208, 0.1);
+    -fx-background-radius: 10;
+}
+
 .lobby-list {
     -fx-background-color: rgba(20, 20, 30, 0.8);
     -fx-control-inner-background: rgba(20, 20, 30, 0.8);
@@ -272,11 +302,6 @@
     -fx-border-radius: 10;
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, #00ffd0, 8, 0.4, 0, 0);
-}
-
-.scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
 }
 
 .stack-pane {

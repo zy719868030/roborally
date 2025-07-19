@@ -455,17 +455,27 @@ public class Robot {
     public void addDamageCard(DamageCard.DamageType type) {
         DamageCard damageCard = DamageCardPool.getInstance().getDamageCard(type);
         if (damageCard != null) {
-            // Add to personal discard pile or hand
-            this.personalDeck.discard(damageCard);
-            System.out.println("Robot " + robotID + " receives damage card: " + damageCard.getDamageType());
-            if (type == DamageCard.DamageType.SPAM && Game.getInstance().getCurrentPhase() == 3) {
-                Player player = Game.getInstance().getPlayers().stream()
-                        .filter(p -> p.getRobot() == this)
-                        .findFirst()
-                        .orElse(null);
-                if (player != null) {
+            Player player = Game.getInstance().getPlayers().stream()
+                    .filter(p -> p.getRobot() == this)
+                    .findFirst()
+                    .orElse(null);
+            if (player != null) {
+                // Add the damage card to the player's programming deck discard pile (not the robot's personal deck).
+                player.getProgrammingDeck().discard(damageCard);
+                System.out.println("Robot " + robotID + " receives damage card: " + damageCard.getDamageType());
+                if (player.getConnection() != null) {
+                    String cardName = damageCard.getDamageType().name(); // "SPAM", "VIRUS", etc.
+                    List<String> cards = List.of(cardName);
+
+                    player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyDrawDamage(this.clientID, cards)
+                    ));
+                }
+                if (type == DamageCard.DamageType.SPAM && Game.getInstance().getCurrentPhase() == 3) {
                     player.replaceDamageCard(0); // Replace first register slot for SPAM
                 }
+            } else {
+                System.err.println("Error: Could not find player for robot " + robotID);
             }
         }
     }

@@ -1079,7 +1079,7 @@ public class Client {
             GameController controller = ControllerRegistry.getGameController();
             if (controller != null) {
                 controller.showDrawnDamageCards(cards);
-                controller.appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten gezogen.");
+//                controller.appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten erhalten.");
             } else {
                 errorLogger.error("[WARN] GameController ist null in handleBodyDrawDamage");
             }
