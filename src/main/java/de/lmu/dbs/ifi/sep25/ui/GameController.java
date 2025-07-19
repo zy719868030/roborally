@@ -157,6 +157,7 @@ public class GameController {
     private final Map<Integer, List<String>> otherPlayersRegisters = new HashMap<>();
     private final Map<Integer, Integer> clientEnergyMap = new HashMap<>();
 
+    private boolean tooltipSystemEnabled = true;
 
     private int currentPhaseID = -1;
 
@@ -463,6 +464,7 @@ public class GameController {
         }
 
         pane.requestLayout();
+        setupBoardElementTooltips(pane, elements);
         return pane;
     }
 
@@ -3682,6 +3684,138 @@ public class GameController {
                 applyRobotGlow(robotView, robotID);
             }
         }
+    }
+
+    /**
+     * Map element tooltip system - distinguish between element names and descriptions
+     */
+    private void setupBoardElementTooltips(StackPane pane, List<MessageDefinitions.Field> elements) {
+        if (!tooltipSystemEnabled || elements == null || elements.isEmpty()) return;
+        List<MessageDefinitions.Field> specialElements = elements.stream()
+                .filter(this::isSpecialElement)
+                .toList();
+
+        if (specialElements.isEmpty()) return;
+        StringBuilder tooltipText = new StringBuilder();
+
+        for (int i = 0; i < specialElements.size(); i++) {
+            MessageDefinitions.Field element = specialElements.get(i);
+            String info = getCompactElementInfo(element);
+            String effect = getCompactElementEffect(element);
+
+            if (!info.isEmpty()) {
+                tooltipText.append("▶ ").append(info);
+                if (!effect.isEmpty()) {
+                    tooltipText.append("\n  ").append(effect);
+                }
+                if (i < specialElements.size() - 1) {
+                    tooltipText.append("\n-------------------------------------------------------------\n");
+                }
+            }
+        }
+
+        if (tooltipText.length() > 0) {
+            Tooltip tooltip = new Tooltip(tooltipText.toString());
+            tooltip.setStyle(
+                    "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e); " +
+                            "-fx-text-fill: #ffffff; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-font-family: 'Segoe UI', Arial, sans-serif; " +
+                            "-fx-border-color: #00ffff; " +
+                            "-fx-border-width: 2px; " +
+                            "-fx-border-radius: 8px; " +
+                            "-fx-background-radius: 8px; " +
+                            "-fx-padding: 8px 12px; " +
+                            "-fx-effect: dropshadow(gaussian, #00ffff, 10, 0.6, 0, 0);"
+            );
+
+            tooltip.setShowDelay(Duration.millis(300));
+            tooltip.setHideDelay(Duration.millis(100));
+            Tooltip.install(pane, tooltip);
+        }
+    }
+
+    /**
+     * Determine whether it is a special element that needs to display information.
+     */
+    private boolean isSpecialElement(MessageDefinitions.Field element) {
+        return switch (element.type()) {
+            case "ConveyorBelt", "Wall", "PushPanel", "RestartPoint",
+                 "Antenna", "CheckPoint", "Gear", "Energy-Space",
+                 "Pit", "Laser", "StartPoint" -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Get the name (title) of the element.
+     */
+    private String getCompactElementInfo(MessageDefinitions.Field element) {
+        return switch (element.type()) {
+            case "ConveyorBelt" -> {
+                MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
+                yield conveyor.speed() == 2 ? "Blaues Förderband" : "Grünes Förderband";
+            }
+            case "Wall" -> "Wand";
+            case "PushPanel" -> {
+                MessageDefinitions.FieldPushPanel panel = (MessageDefinitions.FieldPushPanel) element;
+                yield "Schubpanel (Register: " + panel.registers() + ")";
+            }
+            case "RestartPoint" -> "Neustart-Punkt";
+            case "Antenna" -> "Antenne";
+            case "CheckPoint" -> {
+                MessageDefinitions.FieldCheckPoint cp = (MessageDefinitions.FieldCheckPoint) element;
+                yield "Checkpoint " + cp.count();
+            }
+            case "Gear" -> {
+                MessageDefinitions.FieldGear gear = (MessageDefinitions.FieldGear) element;
+                boolean clockwise = gear.orientations().getFirst().equalsIgnoreCase("clockwise");
+                yield clockwise ? "Zahnrad (Uhrzeigersinn)" : "Zahnrad (Gegen Uhrzeigersinn)";
+            }
+            case "Energy-Space" -> {
+                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
+                Integer count = es.getCount();
+                yield (count != null && count > 0) ? "Energiefeld (+1)" : "Energiefeld (-1)";
+            }
+            case "Pit" -> "Grube";
+            case "Laser" -> {
+                MessageDefinitions.FieldLaser laser = (MessageDefinitions.FieldLaser) element;
+                yield "Laser (Stärke " + laser.count() + ")";
+            }
+            case "StartPoint" -> "Startposition";
+            default -> "?" + element.type();
+        };
+    }
+
+    /**
+     * Function description for obtaining elements
+     */
+    private String getCompactElementEffect(MessageDefinitions.Field element) {
+        return switch (element.type()) {
+            case "ConveyorBelt" -> {
+                MessageDefinitions.FieldConveyorBelt conveyor = (MessageDefinitions.FieldConveyorBelt) element;
+                yield conveyor.speed() == 2 ?
+                        "Bewegt Roboter 2 Felder in Pfeilrichtung" :
+                        "Bewegt Roboter 1 Feld in Pfeilrichtung";
+            }
+            case "Wall" -> "Blockiert Bewegung und Laserstrahlen komplett";
+            case "PushPanel" -> "Schiebt Roboter weg, wenn das angegebene Register aktiviert wird";
+            case "RestartPoint" -> "Hier spawnen Roboter nach einem Reboot neu";
+            case "Antenna" -> "Bestimmt die Spielerreihenfolge für die nächste Runde";
+            case "CheckPoint" -> "Muss in der richtigen Reihenfolge erreicht werden, um zu gewinnen";
+            case "Gear" -> "Dreht den Roboter am Ende jeder Runde automatisch";
+            case "Energy-Space" -> {
+                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
+                Integer count = es.getCount();
+                yield (count != null && count > 0) ?
+                        "Gibt dem Roboter zusätzliche Energie" :
+                        "Entzieht dem Roboter Energie";
+            }
+            case "Pit" -> "Roboter fallen hinein und müssen rebootet werden";
+            case "Laser" -> "Verursacht Schaden - Roboter erhalten Spam-Karten";
+            case "StartPoint" -> "Kann als Startposition für das Spiel gewählt werden";
+            default -> "";
+        };
     }
 
     /**
