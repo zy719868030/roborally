@@ -24,6 +24,8 @@ import javafx.util.Duration;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.application.Platform;
+import javafx.stage.Stage;
 
 
 public class LobbyController {
@@ -152,6 +154,14 @@ public class LobbyController {
         //  mapPreviewImage.fitWidthProperty().bind(mapPreviewContainer.widthProperty().subtract(20));
         //mapPreviewImage.setPreserveRatio(true);
 
+        // Set minimum window size to prevent UI elements from being compressed
+        Platform.runLater(() -> {
+            Stage stage = (Stage) playerList.getScene().getWindow();
+            if (stage != null) {
+                stage.setMinWidth(1000);
+                stage.setMinHeight(700);
+            }
+        });
 
         playerList.setCellFactory(listView -> new ListCell<>() {
             @Override
@@ -237,7 +247,15 @@ public class LobbyController {
         final String imageFile = "/assets/mapPreviews/" + mapName.toLowerCase().replace(" ", "_") + ".png";
         InputStream imageStream = getClass().getResourceAsStream(imageFile);
         if (imageStream != null) {
-            mapPreviewImage.setImage(new Image(imageStream));
+            Image image = new Image(imageStream);
+            mapPreviewImage.setImage(image);
+            
+            // Set size constraints to ensure the image fits properly
+            mapPreviewImage.setFitWidth(780);
+            mapPreviewImage.setFitHeight(580);
+            mapPreviewImage.setPreserveRatio(true);
+            mapPreviewImage.setSmooth(true);
+            
             mapPreviewImage.setVisible(true);
             mapPreviewImage.setManaged(true);
         } else {
@@ -534,7 +552,7 @@ public class LobbyController {
         readyButton.setVisible(!isReady);
         readyButton.setManaged(!isReady);
         notReadyButton.setVisible(isReady);
-        notReadyButton.setManaged(!isReady);
+        notReadyButton.setManaged(isReady);
     }
 
     /**
