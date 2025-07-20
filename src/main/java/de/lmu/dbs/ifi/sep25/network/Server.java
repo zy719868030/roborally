@@ -32,7 +32,7 @@ public class Server {
     private final String protocol = "Version 1.0";
 
     // 2. Core data / state
-    private final AtomicInteger clientIDCounter = new AtomicInteger(1);
+    private final AtomicInteger clientIDCounter = new AtomicInteger(1); 
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> clients = new ConcurrentBidirectionalMap<>();
     private final ConcurrentMap<ClientHandler, Boolean> isAI = new ConcurrentHashMap<>();
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();

@@ -1,10 +1,7 @@
 package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.BoardElement;
-import de.lmu.dbs.ifi.sep25.game.BoardElement.Laser;
 import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.game.Maps.GameMap;
 import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
@@ -16,6 +13,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -34,7 +32,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.*;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeType;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -45,9 +46,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
-
-import javafx.animation.FadeTransition;
-import javafx.geometry.Point2D;
 
 import static java.util.Map.entry;
 
@@ -835,6 +833,7 @@ public class GameController {
                 Platform.runLater(() -> {
                     clearHandUI();
                     clearRegisterUI();
+                    confirmedCards.clear();
                 });
 
                 handCardBox.setDisable(false);

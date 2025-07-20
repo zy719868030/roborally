@@ -402,7 +402,7 @@ public class Game {
             appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
 
             try {
-                Thread.sleep(1000); // <-- Delay of 500 milliseconds between registers
+                Thread.sleep(1000); // <-- Delay of x millis
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 appLogger.warn("Activation delay interrupted");
@@ -777,15 +777,6 @@ public class Game {
             player.resetRound();
         appLogger.debug("All players hands and registers have been reset.");
     }
-
-//    /**
-//     * Resets all the players hand.
-//     **/
-//    private void clearPlayerHands() {
-//        appLogger.info("Resetting hand for all players.");
-//        for (Player player : players)
-//            player.resetHand();
-//    }
 
     // 6. Board-related Methods
 
