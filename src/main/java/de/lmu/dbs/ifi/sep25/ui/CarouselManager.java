@@ -13,7 +13,12 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import org.apache.logging.log4j.Logger;
-
+/**
+ * Manages a horizontally scrollable carousel of robot toggle buttons in a JavaFX UI.
+ * <p>
+ * It handles the creation of visual clones to allow seamless looping, synchronizes
+ * toggle selection with scrolling, and allows navigation between available robots.
+ */
 public class CarouselManager {
     private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(CarouselManager.class);
 
@@ -24,6 +29,14 @@ public class CarouselManager {
     private static final int COPIES = 3;
     private boolean internalSelectionChange = false;
 
+    /**
+     * Constructs a new CarouselManager.
+     *
+     * @param scrollPane  the ScrollPane that displays the carousel content
+     * @param gallery     the HBox containing the robot toggle buttons
+     * @param group       the ToggleGroup managing selection of robots
+     * @param robotCount  the number of unique robots
+     */
     public CarouselManager(ScrollPane scrollPane, HBox gallery, ToggleGroup group, int robotCount) {
         this.scrollPane = scrollPane;
         this.gallery = gallery;
@@ -34,6 +47,10 @@ public class CarouselManager {
         initSelectionSync();
     }
 
+    /**
+     * Initializes the carousel by duplicating its content {@code COPIES} times
+     * for a smooth looping visual effect.
+     */
     private void initCarousel() {
         ObservableList<Node> original = FXCollections.observableArrayList(gallery.getChildren());
         gallery.getChildren().clear();
@@ -65,6 +82,9 @@ public class CarouselManager {
         });
     }
 
+    /**
+     * Initializes the synchronization between selection and scrolling.
+     */
     private void initSelectionSync() {
         group.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && !internalSelectionChange) {
@@ -74,6 +94,11 @@ public class CarouselManager {
         });
     }
 
+    /**
+     * Scrolls the carousel to center the robot with the given ID.
+     *
+     * @param id the ID of the robot to scroll to
+     */
     private void scrollToRobot(int id) {
         for (int i = robotCount; i < gallery.getChildren().size() - robotCount; i++) {
             ToggleButton btn = (ToggleButton) gallery.getChildren().get(i);
@@ -85,6 +110,11 @@ public class CarouselManager {
         wrapToCenterCopy(id);
     }
 
+    /**
+     * Centers the given node horizontally within the scroll pane.
+     *
+     * @param node the node to center
+     */
     private void centerNode(Node node) {
         Bounds viewport = scrollPane.getViewportBounds();
         Bounds content = gallery.getBoundsInLocal();
@@ -95,6 +125,12 @@ public class CarouselManager {
         scrollPane.setHvalue(clamp(target, 0, 1));
     }
 
+    /**
+     * Ensures the centered copy of the selected robot remains in view,
+     * adjusting scroll position if needed.
+     *
+     * @param id the selected robot ID
+     */
     private void wrapToCenterCopy(int id) {
         double h = scrollPane.getHvalue();
         double third = 1.0 / COPIES;
@@ -116,15 +152,31 @@ public class CarouselManager {
         internalSelectionChange = false;
     }
 
+    /**
+     * Clamps a double value between a minimum and maximum.
+     *
+     * @param val the value to clamp
+     * @param min minimum allowed value
+     * @param max maximum allowed value
+     * @return clamped value
+     */
     private double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
 
+    /**
+     * Gets the currently selected robot ID.
+     *
+     * @return selected robot ID, or 0 if none selected
+     */
     private int getSelectedId() {
         Toggle selected = group.getSelectedToggle();
         return selected != null ? (int) selected.getUserData() : 0;
     }
 
+    /**
+     * Selects the next available robot (not disabled).
+     */
     public void selectNext() {
         int id = getSelectedId();
         for (int i = 1; i <= robotCount; i++) {
@@ -136,6 +188,9 @@ public class CarouselManager {
         }
     }
 
+    /**
+     * Selects the previous available robot (not disabled).
+     */
     public void selectPrevious() {
         int id = getSelectedId();
         for (int i = 1; i <= robotCount; i++) {
@@ -147,6 +202,12 @@ public class CarouselManager {
         }
     }
 
+    /**
+     * Checks if the robot with the given ID is already taken (i.e., button is disabled).
+     *
+     * @param id robot ID
+     * @return {@code true} if taken, {@code false} otherwise
+     */
     private boolean isRobotTaken(int id) {
         for (Toggle toggle : group.getToggles()) {
             if ((int) toggle.getUserData() == id) {
@@ -155,6 +216,12 @@ public class CarouselManager {
         }
         return false;
     }
+
+    /**
+     * Selects the robot with the specified ID and scrolls to it.
+     *
+     * @param id the ID of the robot to select
+     */
     public void selectRobot(int id) {
         internalSelectionChange = true;
         try {

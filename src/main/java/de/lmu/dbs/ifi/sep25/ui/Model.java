@@ -31,10 +31,24 @@ public class Model {
         textFieldContent.set("");
     }
 
+    /**
+     * Returns the observable list containing the list content.
+     * <p>
+     * This list can be bound to UI elements like ListView to reflect changes automatically.
+     *
+     * @return An {@code ObservableList<String>} representing the list content.
+     */
     public ObservableList<String> getListContentProperty() {
         return listContent;
     }
 
+    /**
+     * Returns the {@code StringProperty} bound to the text field content.
+     * <p>
+     * Useful for data binding in JavaFX to keep UI and data in sync.
+     *
+     * @return The {@code StringProperty} representing the text field content.
+     */
     public StringProperty getTextFieldContent(){
         return textFieldContent;
     }

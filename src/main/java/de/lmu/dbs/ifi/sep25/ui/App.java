@@ -10,55 +10,76 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
-
 /**
- * Main class to start the application
+ * Main JavaFX application class responsible for initializing and launching the GUI.
+ * <p>
+ * It supports switching between FXML-based and programmatic view creation via the
+ * {@code CREATE_VIEW_FROM_FXML} flag and enables CSS hot-reloading using {@code CSSFX}.
  */
 public class App extends Application {
 
     /**
-     * {@code true} - the view is created with fxml code<p>
-     * {@code false} - the view is created with java code ({@link DemoView})
+     * {@code true} - the view is created using FXML ({@code demo.fxml}) <br>
+     * {@code false} - the view is created programmatically using {@link DemoView}.
      */
     private static final boolean CREATE_VIEW_FROM_FXML = false;
 
+    /**
+     * Launches the JavaFX application.
+     *
+     * @param args command-line arguments passed to the application
+     */
     public static void main(String[] args) {
         System.out.println("Execution order");
         launch(args);
     }
 
+    /**
+     * Initializes the application before the UI is shown.
+     * <p>
+     * This method is called once before {@link #start(Stage)} and is used to perform setup tasks,
+     * such as enabling CSS hot-reloading via {@code CSSFX}.
+     */
     @Override
     public void init() {
-        // do some preparation
         System.out.println("1: init()");
-
-        // enable hot reloading for CSS changes
-        CSSFX.start();
+        CSSFX.start(); // Enable CSS hot reload
     }
 
+    /**
+     * Starts the JavaFX application by setting up the stage and scene.
+     *
+     * @param primaryStage the primary stage for this application
+     * @throws IOException if the FXML or other resources cannot be loaded
+     */
     @Override
     public void start(Stage primaryStage) throws IOException {
-        // initialize the GUI
         System.out.println("2: start()");
 
-        // setting stage title and icon
         primaryStage.setTitle("Demo");
         primaryStage.getIcons().add(loadIcon());
 
-        // loading scene into primaryStage
         Scene scene = loadScene();
         primaryStage.setScene(scene);
-
-        // showing the stage on screen
         primaryStage.show();
     }
 
+    /**
+     * Stops the application and performs cleanup.
+     * <p>
+     * Called when the application is about to shut down.
+     */
     @Override
     public void stop() {
-        // do some manual cleanup
         System.out.println("3: stop()");
     }
 
+    /**
+     * Loads the JavaFX {@link Scene}, either from FXML or programmatically.
+     *
+     * @return the constructed {@link Scene}
+     * @throws IOException if loading from FXML fails
+     */
     private Scene loadScene() throws IOException {
         Parent root;
         if (CREATE_VIEW_FROM_FXML) {
@@ -69,9 +90,13 @@ public class App extends Application {
         return new Scene(root);
     }
 
+    /**
+     * Loads the application icon from the resources.
+     *
+     * @return the loaded {@link Image}
+     */
     private Image loadIcon() {
         URL url = getClass().getResource("/demo-icon.png");
         return new Image(Objects.requireNonNull(url).toString());
     }
 }
-
