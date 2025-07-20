@@ -12,14 +12,14 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
  */
 public class EnergySpace extends BoardElement {
     private int energyCount;
-    private boolean collected;
     private String boardId;
     private boolean isOnBoard;
 
+
     public EnergySpace() {
         super();
+        // According to official standards, each Energy Space initially contains 1 energy block.
         this.energyCount = 1;
-        this.collected = false;
         this.isOnBoard = false;
         this.boardId = "";
     }
@@ -32,34 +32,14 @@ public class EnergySpace extends BoardElement {
     public EnergySpace(Position position, String boardId) {
         super(position, boardId);
         this.energyCount = 1;
-        this.collected = false;
-        //this.isOnBoard = false;
-        //this.boardId = "";
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
     }
 
-    /**
-     * Constructor with position and energy count parameters.
-     *
-     * @param position Position in energy space.
-     * @param energyCount Number of energy cubes.
-     */
-    /*
-    public EnergySpace(Position position, int energyCount) {
-        super(position);
-        this.energyCount = energyCount;
-        this.collected = false;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-    */
 
     public EnergySpace(Position position, int energyCount, String boardId) {
         super(position, boardId);
         this.energyCount = energyCount;
-        this.collected = false;
-        //this.setBoardId(boardId);
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
     }
@@ -82,7 +62,7 @@ public class EnergySpace extends BoardElement {
     }
 
     public int getEnergyCount() {
-        return collected ? 0 : energyCount;
+        return energyCount;
     }
 
     public void setEnergyCount(int energyCount) {
@@ -90,34 +70,52 @@ public class EnergySpace extends BoardElement {
     }
 
     /**
-     * Check whether the energy space has been collected.
+     * Collect energy according to register rules.
      *
-     * @return Returns true if the energy has been collected, otherwise returns false.
+     * @param registerIndex Register index (0-4, corresponding to registers 1-5).
+     * @return Actual amount of energy collected.
      */
-    public boolean isCollected() {
-        return collected;
-    }
-
-    /**
-     * Collect energy cubes in the energy space.
-     *
-     * @return Number of energy cubes collected.
-     */
-    public int collectEnergy() {
-        if (collected) {
+    public int collectEnergyForRegister(int registerIndex) {
+        if (registerIndex < 0 || registerIndex > 4) {
             return 0;
         }
 
-        collected = true;
-        return energyCount;
+        // Registers 1-4 (Index 0-3)
+        if (registerIndex <= 3) {
+            if (energyCount > 0) {
+                energyCount--;
+                return 1;
+            } else {
+                return 0;
+            }
+        } else { // Register 5 (Index 4)
+            // Regardless of whether there are energy blocks on the grid, 1 energy can be obtained from the “energy bank.”
+            // Note: Does not change the grid's energyCount.
+            return 1;
+        }
     }
 
     /**
-     * Resets the energy space so that it can be collected again.
-     * This is usually called when the game is reset.
+     * Check whether energy can be collected in the specified register.
+     */
+    public boolean canCollectEnergyInRegister(int registerIndex) {
+        if (registerIndex < 0 || registerIndex > 4) {
+            return false;
+        }
+
+        if (registerIndex <= 3) {
+            return energyCount > 0;
+        } else {
+            return true;
+        }
+    }
+
+
+    /**
+     * Resets the energy space to its initial state.
      */
     public void reset() {
-        collected = false;
+        this.energyCount = 1;
     }
 
     @Override
@@ -135,31 +133,42 @@ public class EnergySpace extends BoardElement {
     }
 
     /**
-     * Apply energy space effect to robot
-     * Collect energy cubes when robot finishes moving and stays on energy space
+     * Apply energy space effect to robot based on current register
      *
      * @param robot Robot staying on energy space
      * @param board Game board
+     * @param registerIndex Current register index (0-4 for registers 1-5)
+     * @return Amount of energy collected
+     */
+    public int applyEffectWithRegister(Robot robot, Board board, int registerIndex) {
+        activate(robot);
+
+        int energyCollected = collectEnergyForRegister(registerIndex);
+
+        if (energyCollected > 0) {
+            System.out.println("Robot " + robot.getRobotID() + " collected " + energyCollected +
+                    " energy cube(s) from energy space at " + position +
+                    " during register " + (registerIndex + 1) +
+                    ". Remaining energy count: " + energyCount);
+        }
+
+        return energyCollected;
+    }
+
+    /**
+     * To maintain backward compatibility, the original applyEffect method is retained.
+     * However, this method does not know the current register, so it can only be processed according to the rules for registers 1-4.
      */
     @Override
     public void applyEffect(Robot robot, Board board) {
-        activate(robot);
-
-        // If there are energy cubes in the energy space, the robot can collect them.
-        if (!collected) {
-            int energy = collectEnergy();
-            System.out.println("Robot " + robot.getRobotID() + " collected " + energy +
-                    " energy cube(s) from energy space at " + position +
-                    ". Energy should be added to the player.");
-        }
+        applyEffectWithRegister(robot, board, 0);
     }
 
     @Override
     public String toString() {
         return "EnergySpace at " + position +
                 (isOnBoard ? " on board " + boardId : " not on any board") +
-                ", energy cubes: " + (collected ? 0 : energyCount) +
-                (collected ? " (collected)" : "");
+                ", energy cubes: " + energyCount;
     }
 
     /**
@@ -171,6 +180,6 @@ public class EnergySpace extends BoardElement {
      */
     @Override
     public MessageDefinitions.FieldEnergySpace toField() {
-        return new MessageDefinitions.FieldEnergySpace(boardId, energyCount);
+        return new MessageDefinitions.FieldEnergySpace(boardId, getEnergyCount());
     }
 }

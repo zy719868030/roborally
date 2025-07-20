@@ -957,21 +957,12 @@ public class Game {
 
                             if (player != null) {
                                 int oldEnergy = player.getEnergy();
-                                energySpace.applyEffect(robot, board);
+                                int energyCollected = energySpace.applyEffectWithRegister(robot, board, currentRegister);
+                                if (energyCollected > 0) {
+                                    player.addEnergy(energyCollected, "EnergySpace");
 
-                                // TODO @lukas：If energy increased, broadcast energy update
-                                if (player.getEnergy() > oldEnergy) {
-                                    Server.getInstance().broadcastMessage(
-                                            new MessageDefinitions.Message<>(
-                                                    new MessageDefinitions.BodyEnergy(
-                                                            player.getClientID(),
-                                                            player.getEnergy(),
-                                                            "EnergySpace"
-                                                    )
-                                            )
-                                    );
-
-                                    //TODO @lukas：Animation
+                                    // Broadcast energy update message (broadcast already handled internally by addEnergy method)
+                                    // Animation message
                                     Server.getInstance().broadcastMessage(
                                             new MessageDefinitions.Message<>(
                                                     new MessageDefinitions.BodyAnimation("EnergySpace")

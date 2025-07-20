@@ -3933,7 +3933,8 @@ public class GameController {
             case "Energy-Space" -> {
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
                 Integer count = es.getCount();
-                yield (count != null && count > 0) ? "Energiefeld (+1):" : "Energiefeld (-1):";
+                yield "Energiefeld:";
+//                yield (count != null && count > 0) ? "Energiefeld (+1):" : "Energiefeld (-1):";
             }
             case "Pit" -> "Grube:";
             case "Laser" -> {
@@ -3962,12 +3963,22 @@ public class GameController {
             case "Antenna" -> "Bestimmt die Spielerreihenfolge für die nächste Runde";
             case "CheckPoint" -> "Muss in der richtigen Reihenfolge erreicht werden, um zu gewinnen";
             case "Gear" -> "Dreht den Roboter am Ende jeder Runde automatisch";
+//            case "Energy-Space" -> {
+//                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
+//                Integer count = es.getCount();
+//                yield (count != null && count > 0) ?
+//                        "Gibt dem Roboter zusätzliche Energie" :
+//                        "Entzieht dem Roboter Energie";
+//            }
             case "Energy-Space" -> {
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
                 Integer count = es.getCount();
-                yield (count != null && count > 0) ?
-                        "Gibt dem Roboter zusätzliche Energie" :
-                        "Entzieht dem Roboter Energie";
+                // Display different information based on count
+                if (count != null && count > 0) {
+                    yield "Gibt dem Roboter zusätzliche Energie (noch " + count + " verfügbar)";
+                } else {
+                    yield "Energiefeld ist leer (nur in Register 5 nutzbar)";
+                }
             }
             case "Pit" -> "Roboter fallen hinein und müssen rebootet werden";
             case "Laser" -> "Verursacht Schaden - Roboter erhalten Spam-Karten";
