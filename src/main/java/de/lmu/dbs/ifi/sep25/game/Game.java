@@ -707,7 +707,7 @@ public class Game {
         for (BoardElement element : elements) {
             if (element instanceof Pit ||
                     element instanceof PushPanel ||
-                    element instanceof EnergySpace ||
+//                    element instanceof EnergySpace ||
                     element instanceof CheckPoints) {
                 element.applyEffect(robot, board);
                 if (board.hasRobotFallen(robot)) break;
@@ -937,23 +937,36 @@ public class Game {
                     if (element instanceof EnergySpace energySpace) {
                         Robot robot = board.getRobotAt(new Position(x, y));
                         if (robot != null) {
-                            // Get player for this robot
-                            Player player = null;
-                            for (Player p : players) {
-                                if (p.getRobot() == robot) {
-                                    player = p;
-                                    break;
-                                }
-                            }
-
-                            if (player != null) {
-                                energySpace.applyEffect(robot, board);
-                            }
+                            // Directly call the applyEffect method, which already contains the register logic.
+                            energySpace.applyEffect(robot, board);
                         }
                     }
                 }
             }
         }
+//        for (int y = 0; y < board.getHeight(); y++) {
+//            for (int x = 0; x < board.getWidth(); x++) {
+//                for (BoardElement element : board.getElements(x, y)) {
+//                    if (element instanceof EnergySpace energySpace) {
+//                        Robot robot = board.getRobotAt(new Position(x, y));
+//                        if (robot != null) {
+//                            // Get player for this robot
+//                            Player player = null;
+//                            for (Player p : players) {
+//                                if (p.getRobot() == robot) {
+//                                    player = p;
+//                                    break;
+//                                }
+//                            }
+//
+//                            if (player != null) {
+//                                energySpace.applyEffect(robot, board);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         // 7. Checkpoints
         for (int y = 0; y < board.getHeight(); y++) {

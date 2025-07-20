@@ -1,5 +1,7 @@
 package de.lmu.dbs.ifi.sep25.network;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -161,6 +163,7 @@ public class MessageDefinitions {
     }
 
     public static class FieldEnergySpace extends Field {
+//        @SerializedName("count")
         private final Integer count;
 
         /**
@@ -169,6 +172,7 @@ public class MessageDefinitions {
         public FieldEnergySpace(String isOnBoard, Integer count) {
             super(isOnBoard);
             this.count = count;
+            System.out.println("[CONSTRUCTOR] FieldEnergySpace({"+isOnBoard+"}, {"+count+"}) called");
 
         }
         public Integer getCount() {
@@ -178,6 +182,12 @@ public class MessageDefinitions {
         public Integer count() {
             return count;
         }
+
+//        @Override
+//        public String type() {
+//            return "Energy-Space";
+//        }
+
     }
 
     public static class FieldWall extends Field {

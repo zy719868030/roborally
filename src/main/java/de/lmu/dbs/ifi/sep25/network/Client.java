@@ -429,6 +429,8 @@ public class Client {
      * @param json The JSON string representing the game started message.
      */
     private void handleBodyGameStarted(String json) {
+        appLogger.info("[CLIENT DEBUG] Received GameStarted JSON: {}", json);
+
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
 
@@ -437,6 +439,21 @@ public class Client {
         if (boardMap == null || boardMap.isEmpty()) {
             errorLogger.error("[GameStarted] Empfangenes boardMap ist null oder leer!");
             return;
+        }
+
+        appLogger.info("[CLIENT DEBUG] BoardMap size: {}x{}", boardMap.size(), boardMap.get(0).size());
+        for (int x = 0; x < boardMap.size(); x++) {
+            for (int y = 0; y < boardMap.get(x).size(); y++) {
+                List<Field> fields = boardMap.get(x).get(y);
+                if (fields != null) {
+                    for (Field field : fields) {
+                        if ("Energy-Space".equals(field.type())) {
+                            MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) field;
+                            appLogger.info("[CLIENT DEBUG] Found EnergySpace at ({},{}) with count: {}", x, y, es.getCount());
+                        }
+                    }
+                }
+            }
         }
 
         // Energie und Checkpoints initialisieren

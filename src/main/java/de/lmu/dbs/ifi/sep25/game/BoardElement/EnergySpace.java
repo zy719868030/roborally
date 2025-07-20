@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
+import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
@@ -101,16 +102,35 @@ public class EnergySpace extends BoardElement {
      */
     public void applyEffect(Robot robot) {
         activate(robot);
-        if (energyCount > 0) {
-            appLogger.info("{} collected {} energy cube(s) from energy space at {}. Remaining energy count: {}", robot.toString(), energyCount, position, energyCount == 0 ? "unchanged" : energyCount);
+        Game gameInstance = Game.getInstance();
+        int currentRegister = gameInstance.getCurrentRegister();
+
+        boolean canCollectEnergy = false;
+
+        // Registers 1-4 (indexes 0-3): Collection is only possible when count > 0.
+        if (currentRegister >= 0 && currentRegister <= 3) {
+            if (energyCount > 0) {
+                energyCount--;
+                canCollectEnergy = true;
+                appLogger.info("{} collected 1 energy cube from energy space at {} in register {}. Remaining energy count: {}",
+                        robot.toString(), position, currentRegister + 1, energyCount);
+            } else {
+                appLogger.info("No energy left in this energy space for robot {} in register {}", robot.toString(), currentRegister + 1);
+            }
+            // Register 5 (index 4): Regardless of the grid count, energy can be obtained from the “energy bank.”
+        } else if (currentRegister == 4) {
+            canCollectEnergy = true;
+            appLogger.info("{} collected 1 energy cube from energy bank at {} in register 5. Grid count remains: {}",
+                    robot.toString(), position, energyCount);
+        }
+
+        if (canCollectEnergy) {
             robot.getPlayer().addEnergy(1, "EnergySpace");
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
                             new MessageDefinitions.BodyAnimation("EnergySpace")
                     )
             );
-        } else {
-            appLogger.info("No energy left in this energy space.");
         }
     }
 
@@ -130,6 +150,15 @@ public class EnergySpace extends BoardElement {
      */
     @Override
     public MessageDefinitions.FieldEnergySpace toField() {
-        return new MessageDefinitions.FieldEnergySpace(boardId, getEnergyCount());
+        int currentCount = getEnergyCount();
+        appLogger.info("EnergySpace.toField() called: position={}, energyCount={}, boardId={}", position, currentCount, boardId);
+
+        // Ensure that the correct parameter order and values are passed
+        MessageDefinitions.FieldEnergySpace field = new MessageDefinitions.FieldEnergySpace(boardId, currentCount);
+        appLogger.info("Created FieldEnergySpace with count: {}", field.count());
+//        return new MessageDefinitions.FieldEnergySpace(boardId, getEnergyCount());
+        appLogger.info("FieldEnergySpace type: {}", field.type());
+        appLogger.info("FieldEnergySpace isOnBoard: {}", field.isOnBoard());
+        return field;
     }
 }

@@ -686,6 +686,17 @@ public class GameController {
             case "Energy-Space":
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
                 Integer count = es.getCount();
+                appLogger.info("Client rendering EnergySpace: element={}, count={}, element.count()={}",
+                        es, count, es.count());
+
+                // Add more detailed debugging information
+                if (count == null) {
+                    appLogger.warn("EnergySpace count is NULL!");
+                } else if (count == 0) {
+                    appLogger.warn("EnergySpace count is ZERO!");
+                } else {
+                    appLogger.info("EnergySpace count is: {}", count);
+                }
                 return count != null && count > 0 ? "energyspace_green" : "energyspace_red";
             case "CheckPoint":
                 return "checkpoint" + ((MessageDefinitions.FieldCheckPoint) element).count().toString();

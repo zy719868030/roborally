@@ -454,7 +454,10 @@ public class Board {
      * @return A JSON string representing the serialized board as a message.
      */
     public String getSerializedBoardAsMessage() {
-        return mapGson.toJson(new MessageDefinitions.Message<>(new MessageDefinitions.BodyGameStarted(5, toSerializableMap())));
+        String result = mapGson.toJson(new MessageDefinitions.Message<>(new MessageDefinitions.BodyGameStarted(5, toSerializableMap())));
+        System.out.println("[BOARD] Serialized board message: {"+result+"}");
+        return result;
+//        return mapGson.toJson(new MessageDefinitions.Message<>(new MessageDefinitions.BodyGameStarted(5, toSerializableMap())));
     }
 
     /**
