@@ -608,7 +608,15 @@ public class Client {
         });
     }
 
-    /****/
+    /**
+     * Handles a BodyCardPlayed message received from the server.
+     * <p>
+     * Parses the incoming JSON message, extracts the player and card information,
+     * logs the event, and updates the game UI to display the played card and a chat message.
+     * This method ensures that UI updates are performed on the JavaFX application thread.
+     *
+     * @param json the JSON string containing the BodyCardPlayed message
+     */
     private void handleBodyCardPlayed(String json) {
         Message<BodyCardPlayed> message = JsonUtil.parseMessage(json, BodyCardPlayed.class);
         BodyCardPlayed body = message.messageBody();
@@ -629,7 +637,15 @@ public class Client {
             }
         });
     }
-
+    /**
+     * Waits for the GameController instance to become available.
+     * <p>
+     * Tries to retrieve the GameController from the ControllerRegistry, retrying up to
+     * {@code maxRetries} times with a delay between attempts. If the controller is not
+     * available after all retries, returns {@code null}.
+     *
+     * @return the GameController instance if available, or {@code null} if not found after retries
+     */
     private GameController waitForGameController() {
         int maxRetries = 10;
         int delayMillis = 100;

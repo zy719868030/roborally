@@ -685,11 +685,19 @@ public class ClientHandler implements Runnable {
     public int getMyID() {
         return myID;
     }
-
+    /**
+     * Checks if the client is currently in the map selection phase.
+     *
+     * @return {@code true} if the client is selecting a map, {@code false} otherwise
+     */
     public boolean isMapSelecting() {
         return mapSelecting;
     }
-
+    /**
+     * Sets whether the client is currently in the map selection phase.
+     *
+     * @param mapSelecting {@code true} if the client should be in map selection mode, {@code false} otherwise
+     */
     public void setMapSelecting(boolean mapSelecting) {
         this.mapSelecting = mapSelecting;
     }
