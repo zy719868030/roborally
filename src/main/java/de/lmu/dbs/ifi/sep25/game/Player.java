@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game;
 
+import de.lmu.dbs.ifi.sep25.card.Card;
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.card.UpgradeCard.UpgradeCard;
@@ -496,8 +497,24 @@ public class Player {
                     new MessageDefinitions.BodyShuffleCoding(this.getRobot().getRobotID())
             ));
         }
-        addToHand(programmingDeck.draw());
-        return hand.getLast();
+        RegisterCard card;
+        if (!programmingDeck.isEmpty()) {
+            card = programmingDeck.draw();
+        } else {
+            // Draw from the robot's personal deck (mainly damage cards)
+            Deck<Card> personalDeck = robot.getPersonalDeck();
+            if (personalDeck.isEmpty()) {
+                personalDeck.reset();
+            }
+            card = (RegisterCard) personalDeck.draw();
+        }
+
+        if (card != null) {
+            addToHand(card);
+        }
+        return card;
+//        addToHand(programmingDeck.draw());
+//        return hand.getLast();
     }
 
     /**
