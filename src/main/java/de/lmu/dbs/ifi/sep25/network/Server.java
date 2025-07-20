@@ -32,7 +32,7 @@ public class Server {
     private final String protocol = "Version 1.0";
 
     // 2. Core data / state
-    private final AtomicInteger clientIDCounter = new AtomicInteger(1); 
+    private final AtomicInteger clientIDCounter = new AtomicInteger(1);
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> clients = new ConcurrentBidirectionalMap<>();
     private final ConcurrentMap<ClientHandler, Boolean> isAI = new ConcurrentHashMap<>();
     private final ConcurrentBidirectionalMap<ClientHandler, Integer> figures = new ConcurrentBidirectionalMap<>();
@@ -332,7 +332,7 @@ public class Server {
      */
     public boolean assignFigure(Integer figure, ClientHandler handler) {
         synchronized (availableFigures) {
-            appLogger.debug(availableFigures.toString());
+//            appLogger.debug(availableFigures.toString());
             if (!availableFigures.contains(figure)) {
                 handler.sendMessage(new Message<>(new BodyError("Robot already taken. Please select another figure.")));
                 return false;
@@ -441,7 +441,6 @@ public class Server {
         }
     }
 
-
     /**
      * Marks the specified client as ready.
      * If all clients in the lobby are ready and the game is initialized, the game is started.
@@ -450,11 +449,10 @@ public class Server {
      */
     public synchronized void markReady(ClientHandler handler) {
         readyOrder.add(handler);
-//        appLogger.info("Added client {} to ready order. ({} clients in queue now.) {}", handler.getMyID(), readyOrder.size(), readyOrder.stream().map(ClientHandler::getMyID).toList());  DEBUG
+        appLogger.debug("Added client {} to ready order. {}\n", handler.getMyID(), readyOrder.stream().map(ClientHandler::getMyID).toList());
 
-//        appLogger.info("Snapshot of ready order: {}", readyOrder);
-        snapshotReadyOrder.clear();
-        snapshotReadyOrder.addAll(readyOrder);
+//        appLogger.debug("[ready] Snapshot of ready order: {}", readyOrder.stream().map(c -> c.getPlayer().toString()).toList());
+        updateSnapshot();
 
         if (lobby.size() >= minPlayer && lobby.allReady() && game != null) {
             startGame();
@@ -469,14 +467,13 @@ public class Server {
     public synchronized void unmarkReady(ClientHandler handler) {
         if (readyOrder.contains(handler)) {
             readyOrder.remove(handler);
-            appLogger.info("Removed client {} from ready order. ({} clients in queue now.)", handler.getMyID(), readyOrder.size());
+            appLogger.debug("Removed client {} from ready order. {} \n", handler.getMyID(), readyOrder.stream().map(ClientHandler::getMyID).toList());
         } else {
             appLogger.info("Client {} was not in ready order.", handler.getMyID());
         }
 
-//        appLogger.info("Snapshot of ready order: {}", readyOrder);
-        snapshotReadyOrder.clear();
-        snapshotReadyOrder.addAll(readyOrder);
+//        appLogger.debug("[unready] Snapshot of ready order: {}", readyOrder.stream().map(ClientHandler::getMyID).toList());
+        updateSnapshot();
     }
 
     /**
@@ -489,17 +486,14 @@ public class Server {
     public synchronized ClientHandler getFirstReadyClient() {
         Iterator<ClientHandler> iterator = readyOrder.iterator();
         if (!iterator.hasNext()) {
-            appLogger.error("No clients marked as ready. Cannot get first ready client. Returned null.");
+            appLogger.warn("No clients marked as ready. Cannot get first ready client. Returned null.");
             return null;
         }
-        // update snapshot
-//        appLogger.info("Snapshot of ready order: {}", readyOrder);
-        snapshotReadyOrder.clear();
-        snapshotReadyOrder.addAll(readyOrder);
 
-        ClientHandler first = iterator.next();
-        iterator.remove();
-        return first;
+//        appLogger.debug("[get] Snapshot of ready order: {}", readyOrder.stream().map(ClientHandler::getMyID).toList());
+        updateSnapshot();
+
+        return iterator.next();
     }
 
     /**
@@ -512,6 +506,14 @@ public class Server {
     }
 
     /**
+     * Updates the snapshot
+     * **/
+    public synchronized void updateSnapshot() {
+        snapshotReadyOrder.clear();
+        snapshotReadyOrder.addAll(readyOrder);
+    }
+
+    /**
      * Returns an immutable snapshot of the current ready order of clients.
      * <p>
      * This snapshot reflects the state of the ready order at the moment before the last
@@ -521,7 +523,7 @@ public class Server {
      * @return an unmodifiable list representing the ready order of clients at snapshot time
      */
     public synchronized List<ClientHandler> getSnapshotReadyOrder() {
-//        appLogger.info("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList()); DEBUG
+//        appLogger.debug("Snapshot of ready order: {}", snapshotReadyOrder.stream().map(ClientHandler::getMyID).toList());
         return List.copyOf(snapshotReadyOrder);
     }
 
@@ -623,7 +625,6 @@ public class Server {
             game.checkAndAdvanceFromProgrammingPhase();
         }
     }
-
 
     /**
      * Retrieves a copy of the list of ready client IDs and resets the ready register for the next round.

@@ -233,7 +233,7 @@ public class Game {
             // Setup phase
             setPhase(GamePhase.SETUP);
 
-//            // redundant call, but rather be safe since no harm.
+//            // redundant call, but rather be safe; since no harm.
 //            resetPlayersRound();
 
             determinePlayerOrder();
