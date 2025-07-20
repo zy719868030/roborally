@@ -947,19 +947,7 @@ public class Game {
                             }
 
                             if (player != null) {
-                                int oldEnergy = player.getEnergy();
-                                int energyCollected = energySpace.applyEffectWithRegister(robot, board, currentRegister);
-                                if (energyCollected > 0) {
-                                    player.addEnergy(energyCollected, "EnergySpace");
-
-                                    // Broadcast energy update message (broadcast already handled internally by addEnergy method)
-                                    // Animation message
-                                    Server.getInstance().broadcastMessage(
-                                            new MessageDefinitions.Message<>(
-                                                    new MessageDefinitions.BodyAnimation("EnergySpace")
-                                            )
-                                    );
-                                }
+                                energySpace.applyEffect(robot, board);
                             }
                         }
                     }

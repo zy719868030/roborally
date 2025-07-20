@@ -734,6 +734,7 @@ public class GameController {
     public int getCurrentPhaseID() {
         return currentPhaseID;
     }
+
     /**
      * Updates the game phase to the specified ID
      * @param phaseID the new phase ID to set

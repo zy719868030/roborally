@@ -1,9 +1,11 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
-import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.network.Server;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Represents the energy space elements on the game board.
@@ -11,6 +13,9 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
  * Once the energy cubes are collected, the energy space will remain empty until the game ends.
  */
 public class EnergySpace extends BoardElement {
+    private static final Logger appLogger = LogManager.getLogger(EnergySpace.class);
+
+
     private int energyCount;
     private String boardId;
     private boolean isOnBoard;
@@ -35,7 +40,6 @@ public class EnergySpace extends BoardElement {
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
     }
-
 
     public EnergySpace(Position position, int energyCount, String boardId) {
         super(position, boardId);
@@ -70,48 +74,6 @@ public class EnergySpace extends BoardElement {
     }
 
     /**
-     * Collect energy according to register rules.
-     *
-     * @param registerIndex Register index (0-4, corresponding to registers 1-5).
-     * @return Actual amount of energy collected.
-     */
-    public int collectEnergyForRegister(int registerIndex) {
-        if (registerIndex < 0 || registerIndex > 4) {
-            return 0;
-        }
-
-        // Registers 1-4 (Index 0-3)
-        if (registerIndex <= 3) {
-            if (energyCount > 0) {
-                energyCount--;
-                return 1;
-            } else {
-                return 0;
-            }
-        } else { // Register 5 (Index 4)
-            // Regardless of whether there are energy blocks on the grid, 1 energy can be obtained from the “energy bank.”
-            // Note: Does not change the grid's energyCount.
-            return 1;
-        }
-    }
-
-    /**
-     * Check whether energy can be collected in the specified register.
-     */
-    public boolean canCollectEnergyInRegister(int registerIndex) {
-        if (registerIndex < 0 || registerIndex > 4) {
-            return false;
-        }
-
-        if (registerIndex <= 3) {
-            return energyCount > 0;
-        } else {
-            return true;
-        }
-    }
-
-
-    /**
      * Resets the energy space to its initial state.
      */
     public void reset() {
@@ -136,32 +98,20 @@ public class EnergySpace extends BoardElement {
      * Apply energy space effect to robot based on current register
      *
      * @param robot Robot staying on energy space
-     * @param board Game board
-     * @param registerIndex Current register index (0-4 for registers 1-5)
-     * @return Amount of energy collected
      */
-    public int applyEffectWithRegister(Robot robot, Board board, int registerIndex) {
+    public void applyEffect(Robot robot) {
         activate(robot);
-
-        int energyCollected = collectEnergyForRegister(registerIndex);
-
-        if (energyCollected > 0) {
-            System.out.println("Robot " + robot.getRobotID() + " collected " + energyCollected +
-                    " energy cube(s) from energy space at " + position +
-                    " during register " + (registerIndex + 1) +
-                    ". Remaining energy count: " + energyCount);
+        if (energyCount > 0) {
+            appLogger.info("{} collected {} energy cube(s) from energy space at {}. Remaining energy count: {}", robot.toString(), energyCount, position, energyCount == 0 ? "unchanged" : energyCount);
+            robot.getPlayer().addEnergy(1, "EnergySpace");
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyAnimation("EnergySpace")
+                    )
+            );
+        } else {
+            appLogger.info("No energy left in this energy space.");
         }
-
-        return energyCollected;
-    }
-
-    /**
-     * To maintain backward compatibility, the original applyEffect method is retained.
-     * However, this method does not know the current register, so it can only be processed according to the rules for registers 1-4.
-     */
-    @Override
-    public void applyEffect(Robot robot, Board board) {
-        applyEffectWithRegister(robot, board, 0);
     }
 
     @Override
@@ -176,7 +126,7 @@ public class EnergySpace extends BoardElement {
      * FieldEnergySpace representation for use in message definitions.
      *
      * @return A new instance of {@code MessageDefinitions.FieldEnergySpace}
-     *         containing the board ID and energy count of this EnergySpace.
+     * containing the board ID and energy count of this EnergySpace.
      */
     @Override
     public MessageDefinitions.FieldEnergySpace toField() {

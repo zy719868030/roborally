@@ -946,8 +946,8 @@ public class Client {
      * @param json JSON string containing the new coordinates and client ID
      */
     public void handleBodyMovement(String json) {
-        clientLogger.info("[CLIENT] handleBodyMovement called");
-        clientLogger.info("json = {}", json);
+//        clientLogger.info("[CLIENT] handleBodyMovement called");
+//        clientLogger.info("json = {}", json);
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
         BodyMovement body = message.messageBody();
 
