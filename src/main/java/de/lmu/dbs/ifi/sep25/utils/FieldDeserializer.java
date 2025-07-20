@@ -15,7 +15,7 @@ public class FieldDeserializer implements JsonDeserializer<MessageDefinitions.Fi
         JsonObject obj = json.getAsJsonObject();
         String type = obj.get("type").getAsString();
 
-        appLogger.debug("[DESERIALIZER] Processing field type: {}", type);
+//        appLogger.debug("[DESERIALIZER] Processing field type: {}", type);
 
         return switch (type) {
             case "Empty" -> context.deserialize(obj, MessageDefinitions.FieldEmpty.class);
@@ -25,12 +25,6 @@ public class FieldDeserializer implements JsonDeserializer<MessageDefinitions.Fi
             case "Gear" -> context.deserialize(obj, MessageDefinitions.FieldGear.class);
             case "Pit" -> context.deserialize(obj, MessageDefinitions.FieldPit.class);
             case "Energy-Space" -> context.deserialize(obj, MessageDefinitions.FieldEnergySpace.class);
-//            case "Energy-Space" -> {
-//                appLogger.info("Deserializing Energy-Space: {}", obj.toString());
-//                MessageDefinitions.FieldEnergySpace result = context.deserialize(obj, MessageDefinitions.FieldEnergySpace.class);
-//                appLogger.info("Deserialized FieldEnergySpace: count={}", result.getCount());
-//                yield result;
-//            }
             case "Wall" -> context.deserialize(obj, MessageDefinitions.FieldWall.class);
             case "Laser" -> context.deserialize(obj, MessageDefinitions.FieldLaser.class);
             case "Antenna" -> context.deserialize(obj, MessageDefinitions.FieldAntenna.class);

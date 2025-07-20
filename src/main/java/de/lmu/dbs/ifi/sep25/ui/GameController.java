@@ -685,18 +685,7 @@ public class GameController {
                 return "Pit";
             case "Energy-Space":
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
-                Integer count = es.getCount();
-                appLogger.info("Client rendering EnergySpace: element={}, count={}, element.count()={}",
-                        es, count, es.count());
-
-                // Add more detailed debugging information
-                if (count == null) {
-                    appLogger.warn("EnergySpace count is NULL!");
-                } else if (count == 0) {
-                    appLogger.warn("EnergySpace count is ZERO!");
-                } else {
-                    appLogger.info("EnergySpace count is: {}", count);
-                }
+                Integer count = es.count();
                 return count != null && count > 0 ? "energyspace_green" : "energyspace_red";
             case "CheckPoint":
                 return "checkpoint" + ((MessageDefinitions.FieldCheckPoint) element).count().toString();
@@ -842,10 +831,14 @@ public class GameController {
                     statusLabel.getStyleClass().add("dynamic-status");
                 }
 
+                Arrays.fill(registerState, null);
+                manuallyClearedSlots.clear();
+                swapProtectedSlots.clear();
+                confirmedCards.clear();
+                
                 Platform.runLater(() -> {
                     clearHandUI();
                     clearRegisterUI();
-                    confirmedCards.clear();
                 });
 
                 handCardBox.setDisable(false);
@@ -945,8 +938,8 @@ public class GameController {
                 }
             }
         });
-        Arrays.fill(registerState, null); // reset internal state
     }
+
     /**
      * Highlights the register card at the specified index by applying
      * a temporary visual effect. The highlight lasts for 2 seconds.
@@ -3966,9 +3959,7 @@ public class GameController {
             }
             case "Energy-Space" -> {
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
-                Integer count = es.getCount();
                 yield "Energiefeld:";
-//                yield (count != null && count > 0) ? "Energiefeld (+1):" : "Energiefeld (-1):";
             }
             case "Pit" -> "Grube:";
             case "Laser" -> {
@@ -3997,16 +3988,9 @@ public class GameController {
             case "Antenna" -> "Bestimmt die Spielerreihenfolge für die nächste Runde";
             case "CheckPoint" -> "Muss in der richtigen Reihenfolge erreicht werden, um zu gewinnen";
             case "Gear" -> "Dreht den Roboter am Ende jeder Runde automatisch";
-//            case "Energy-Space" -> {
-//                MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
-//                Integer count = es.getCount();
-//                yield (count != null && count > 0) ?
-//                        "Gibt dem Roboter zusätzliche Energie" :
-//                        "Entzieht dem Roboter Energie";
-//            }
             case "Energy-Space" -> {
                 MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) element;
-                Integer count = es.getCount();
+                Integer count = es.count();
                 // Display different information based on count
                 if (count != null && count > 0) {
                     yield "Gibt dem Roboter zusätzliche Energie (noch " + count + " verfügbar)";

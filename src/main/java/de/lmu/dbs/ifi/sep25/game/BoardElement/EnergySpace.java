@@ -58,22 +58,6 @@ public class EnergySpace extends BoardElement {
     }
 
     /**
-     * Constructor with position and energy count parameters.
-     *
-     * @param position Position in energy space.
-     * @param energyCount Number of energy cubes.
-     */
-    /*
-    public EnergySpace(Position position, int energyCount) {
-        super(position);
-        this.energyCount = energyCount;
-        this.collected = false;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-    */
-
-    /**
      * Constructs an energy space at the specified position with a custom energy count.
      *
      * <p>This constructor allows for energy spaces with varying amounts of energy.
@@ -267,14 +251,7 @@ public class EnergySpace extends BoardElement {
     @Override
     public MessageDefinitions.FieldEnergySpace toField() {
         int currentCount = getEnergyCount();
-        appLogger.info("EnergySpace.toField() called: position={}, energyCount={}, boardId={}", position, currentCount, boardId);
-
-        // Ensure that the correct parameter order and values are passed
-        MessageDefinitions.FieldEnergySpace field = new MessageDefinitions.FieldEnergySpace(boardId, currentCount);
-        appLogger.info("Created FieldEnergySpace with count: {}", field.count());
-//        return new MessageDefinitions.FieldEnergySpace(boardId, getEnergyCount());
-        appLogger.info("FieldEnergySpace type: {}", field.type());
-        appLogger.info("FieldEnergySpace isOnBoard: {}", field.isOnBoard());
-        return field;
+//        appLogger.info("EnergySpace.toField() called: position={}, energyCount={}, boardId={}", position, currentCount, boardId);
+        return new MessageDefinitions.FieldEnergySpace(boardId, currentCount);
     }
 }

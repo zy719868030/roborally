@@ -286,7 +286,8 @@ public class Server {
                         System.err.println("Client did not respond to Alive. Disconnecting...");
                         heartbeatLogger.info("Client with ID {} did not respond to Alive. Disconnecting.", clients.getByKey(client));
                         client.sendMessage(new Message<>(new BodyError("Client did not respond to Alive.")));
-                        client.closeAll();
+                        appLogger.warn("Client with ID {} did not respond to Alive. Skipping disconnect.", clients.getByKey(client));
+//                        client.closeAll();
                     }
                 }
 
@@ -615,6 +616,7 @@ public class Server {
 
         waitingForProgramming.remove(clientID);
         appLogger.info("waitingForProgramming: {}", waitingForProgramming);
+        broadcastMessage(new Message<>(new BodySelectionFinished(clientID)));
 
         if (waitingForProgramming.isEmpty()) {
             cancelTimer();
