@@ -1102,12 +1102,23 @@ public class GameController {
 
                     startPointPanes.forEach(pane -> {
                         Circle yellow = (Circle) pane.getProperties().get("yellowGlow");
-                        if (yellow != null)
+                        if (yellow != null) {
                             yellow.setFill(new RadialGradient(
                                     0, 0, 0.5, 0.5, 1.0, true, CycleMethod.NO_CYCLE,
                                     new Stop(0.0, Color.rgb(255, 223, 0, 0.4)),
                                     new Stop(1.0, Color.TRANSPARENT)
                             ));
+
+                            FadeTransition blink = new FadeTransition(Duration.millis(1000), yellow);
+                            blink.setFromValue(1.0);
+                            blink.setToValue(0.3);
+                            blink.setCycleCount(Animation.INDEFINITE);
+                            blink.setAutoReverse(true);
+                            blink.play();
+
+                            // Optional: store to stop later
+                            pane.getProperties().put("blinkTransition", blink);
+                        }
 
                         Circle overlay = (Circle) pane.getUserData();
                         pane.setOnMouseClicked(e -> handleStartPointClick(pane));
