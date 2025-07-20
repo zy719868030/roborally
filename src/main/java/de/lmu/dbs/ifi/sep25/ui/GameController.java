@@ -1344,7 +1344,12 @@ public class GameController {
 
 
     private ImageView createClickableCard(String cardName) {
-        String imagePath = "/assets/cards/" + cardName + ".png";
+        String imagePath;
+        if (isDamageCard(cardName)) {
+            imagePath = "/assets/cards/damage_cards/" + cardName.toLowerCase() + ".png";
+        } else {
+            imagePath = "/assets/cards/" + cardName + ".png";
+        }
         Image img;
         try {
             img = new Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
@@ -1414,6 +1419,13 @@ public class GameController {
         });
 
         return view;
+    }
+
+    private boolean isDamageCard(String cardName) {
+        return "Spam".equalsIgnoreCase(cardName) ||
+                "Worm".equalsIgnoreCase(cardName) ||
+                "Virus".equalsIgnoreCase(cardName) ||
+                "Trojan".equalsIgnoreCase(cardName);
     }
 
     /**
