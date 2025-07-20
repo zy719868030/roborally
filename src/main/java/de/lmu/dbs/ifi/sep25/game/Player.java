@@ -18,25 +18,77 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * Represents a player in the RoboRally game, managing their robot, cards, energy,
+ * and game state throughout the game session.
+ * 
+ * <p>The Player class serves as the central entity that connects a human player
+ * or AI to the game world. It manages all player-specific game elements including
+ * the robot, programming cards, energy system, upgrades, and network communication.</p>
+ *
+ * 
+ * <p>The class implements comprehensive card management with damage integration,
+ * where damage cards are mixed with programming cards in the discard pile and
+ * shuffled back into the deck, affecting the player's programming options.</p>
+ * 
+ * <p>Network communication is handled through the ClientHandler connection,
+ * allowing real-time synchronization of player state with the game server
+ * and other clients.</p>
+ *
+ */
 public class Player {
+    
+    /** Network connection handler for client-server communication */
     private final ClientHandler connection;
+    
+    /** Player's display name in the game */
     private final String name;
+    
+    /** The robot controlled by this player */
     private final Robot robot;
+    
+    /** Unique client identifier for network communication */
     private final Integer clientID;
+    
+    /** Current energy points available for upgrades and special actions */
     private int energy = 5;
+    
+    /** Flag indicating if the player is ready for the current game phase */
     private boolean ready = false;
+    
+    /** Flag indicating if the player has completed their register programming */
     private boolean readyRegister = false;
 
+    /** Programming register with 5 slots (0-4) for action cards */
     private final List<RegisterCard> register = new ArrayList<>(5);
+    
+    /** Permanent upgrades (yellow) that persist across rounds */
     private final List<UpgradeCard> permanentUpgrades = new ArrayList<>();
+    
+    /** Temporary upgrades (red) that expire after use */
     private final List<UpgradeCard> temporaryUpgrades = new ArrayList<>();
+    
+    /** Current hand of programming cards available for selection */
     private final List<RegisterCard> hand = new ArrayList<>();
+    
+    /** Deck of programming cards with draw/discard functionality */
     private final Deck<RegisterCard> programmingDeck;
+    
+    /** Logger for application-level messages and debugging */
     private static final Logger appLogger = LogManager.getLogger(Player.class);
 
-
-    // INITIALIZATION
-
+    /**
+     * Constructs a new Player with the specified name, robot ID, and network connection.
+     * 
+     * <p>This constructor initializes a complete player with all necessary game components,
+     * including a robot, programming deck, and network communication setup. The player
+     * starts with default energy, empty registers, and a full programming deck.</p>
+     *
+     * @param name the player's display name
+     * @param robotID the unique identifier for the player's robot
+     * @param connection the network connection handler for client communication
+     * @throws IllegalArgumentException if any parameter is null or invalid
+     */
     public Player(String name, int robotID, ClientHandler connection) {
         this.name = name;
         this.clientID = connection.getMyID();
@@ -65,22 +117,34 @@ public class Player {
     // GETTERS
 
     /**
-     * Getter connection
-     *
-     * @return associated server connection
-     **/
+     * Gets the network connection handler for this player.
+     * @return the associated server connection handler
+     */
     public ClientHandler getConnection() {
         return connection;
     }
 
+    /**
+     * Gets the robot controlled by this player.
+     * @return the robot controlled by this player
+     */
     public Robot getRobot() {
         return robot;
     }
 
+    /**
+     * Gets the unique client identifier for this player.
+     * @return the unique client identifier
+     */
     public Integer getClientID() {
         return clientID;
     }
 
+    /**
+     * Gets a defensive copy of the player's programming register.
+
+     * @return a new ArrayList containing all cards in the programming register
+     */
     public List<RegisterCard> getRegister() {
         return new ArrayList<>(register);
     }
@@ -88,48 +152,80 @@ public class Player {
     /**
      * Retrieves the card located in the specified register slot.
      *
-     * @param registerSlot the index of the register slot to retrieve the card from
-     * @return the {@code RegisterCard} at the specified register slot, or {@code null} if the slot is empty
+     * @param registerSlot the index of the register slot to retrieve the card from (0-4)
+     * @return the RegisterCard at the specified register slot, or null if the slot is empty
      */
     public RegisterCard getRegisterCard(int registerSlot) {
         return register.get(registerSlot);
     }
 
     /**
-     * Returns a copy of the player hand.
+     * Returns a defensive copy of the player's current hand.
      *
-     * @return List of RegisterCard objects, representing a copy of the players actual hand
-     **/
+     * @return a new ArrayList containing all cards in the player's hand
+     */
     public List<RegisterCard> getHand() {
         return new ArrayList<>(hand);
     }
 
+    /**
+     * Gets the current discard pile from the programming deck.
+
+     * @return a list of all cards in the discard pile
+     */
     public List<RegisterCard> getDiscardPile() {
         return programmingDeck.getDiscardPile();
     }
 
+    /**
+     * Gets the player's display name.
+
+     * @return the player's display name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Checks if the player is ready for the current game phase.
+     *
+     * @return true if the player is ready, false otherwise
+     */
     public boolean isReady() {
         return ready;
     }
 
+    /**
+     * Checks if the player has completed their register programming.
+     *
+     * @return true if the player has completed register programming, false otherwise
+     */
     public boolean isReadyRegister() {
         return readyRegister;
     }
 
+    /**
+     * Gets the player's current energy points.
+     * 
+     * <p>This method returns the number of energy points the player currently
+     * has available. Energy points are the currency used for purchasing
+     * upgrades and performing special actions in the game.</p>
+     *
+     * @return the current number of energy points
+     */
     public int getEnergy() {
         return energy;
     }
 
     /**
      * Gets the number of checkpoints this player has successfully reached.
-     * This method delegates to the game's checkpoints to find the highest checkpoint
-     * reached by this player's robot.
+     * 
+     * <p>This method calculates and returns the highest checkpoint number
+     * that the player's robot has reached on the game board. Checkpoints
+     * are the victory condition in RoboRally, and reaching all checkpoints
+     * in order results in winning the game.</p>
      *
-     * @return the number of checkpoints reached by the player
+     * @return the number of checkpoints reached by the player (0 if none reached)
      */
     public int getReachedCheckpoints() {
         // Assuming we can access the game instance from the player
@@ -186,6 +282,16 @@ public class Player {
 //            ));
 //        }
 //    }
+    /**
+     * Sets the reboot direction for the player's robot when it has fallen.
+     * 
+     * <p>This method is called when a robot has fallen into a pit and needs
+     * to be rebooted. It sets the direction the robot will face when it
+     * respawns at the reboot point.</p>
+     *
+     * 
+     * @param direction the direction string for the robot's reboot orientation
+     */
     public void setRebootDirection(String direction) {
         if (Game.getInstance().getCurrentPhase() != 3) {
             connection.sendMessage(new MessageDefinitions.Message<>(
@@ -206,10 +312,26 @@ public class Player {
         ));
     }
 
+    /**
+     * Sets the general readiness state of the player.
+
+     * 
+     * @param ready the new readiness state to set
+     */
     public void setReady(boolean ready) {
         this.ready = ready;
     }
 
+    /**
+     * Sets the register programming readiness state with synchronization and validation.
+     * 
+     * <p>This method manages the player's register programming completion state
+     * with comprehensive validation and synchronization to ensure proper game flow.
+     * The method is synchronized to prevent concurrent modifications that could
+     * lead to inconsistent state.</p>
+     * 
+     * @param ready the new register readiness state to set
+     */
     public synchronized void setReadyRegister(boolean ready) {
         Game game = Server.getInstance().getGame();
 
@@ -235,14 +357,35 @@ public class Player {
 
     // ENERGY
 
+    /**
+     * Adds energy points to the player's current energy total.
+     * 
+     * <p>This method increases the player's energy points by the specified amount
+     * and broadcasts the energy change to all clients. Energy points are the
+     * currency used for purchasing upgrades and performing special actions.</p>
+     *
+     * 
+     * @param amount the number of energy points to add
+     * @param source a string describing the source of the energy gain (e.g., "EnergySpace", "PowerUp")
+     */
     public void addEnergy(int amount, String source) {
-
         this.energy += amount;
         connection.broadcastMessage(new MessageDefinitions.Message<>(
                 new MessageDefinitions.BodyEnergy(clientID, energy, source)
         ));
     }
 
+    /**
+     * Attempts to consume energy points for a specific cost.
+     * 
+     * <p>This method checks if the player has sufficient energy points to cover
+     * the specified cost and, if so, deducts the energy and broadcasts the change.
+     * If insufficient energy is available, no energy is consumed and the method
+     * returns false.</p>
+     * 
+     * @param cost the number of energy points required for the action
+     * @return true if sufficient energy was available and consumed, false otherwise
+     */
     public boolean consumeEnergy(int cost) {
         if (energy >= cost) {
             energy -= cost;
@@ -257,24 +400,38 @@ public class Player {
     // CARDS & HAND
 
     /**
-     * Adds a card to the hand and sends the new hand to the clients.
-     **/
+     * Adds a card to the player's hand.
+     * 
+     * <p>This method adds a programming card to the player's current hand.
+     * The card becomes available for selection during the programming phase
+     * and can be placed into register slots or discarded as needed.</p>
+     *
+     * 
+     * @param card the RegisterCard to add to the hand
+     */
     public void addToHand(RegisterCard card) {
         hand.add(card);
 //        updateHand();
     }
 
     /**
-     * Removes a card from the hand and updates the clients.
-     **/
+     * Removes a card from the player's hand.
+     * 
+     * @param card the RegisterCard to remove from the hand
+     */
     public void removeFromHand(RegisterCard card) {
         hand.remove(card);
 //        updateHand();
     }
 
     /**
-     * Sends the current hand to the server.
-     **/
+     * Sends the current hand to the client and broadcasts hand information to other players.
+     * 
+     * <p>This method synchronizes the client's view of the player's hand with the
+     * server state and provides other players with information about the hand size
+     * for game balance and strategy purposes.</p>
+     *
+     */
     public void updateHand() {
         final List<String> handWithNames = hand.stream().map(CardFactory::getCardName).toList();
         appLogger.info("Update player {}'s hand: {}", clientID, handWithNames);
@@ -293,7 +450,13 @@ public class Player {
     }
 
     /**
-     * Deal cards to player at the start of a programming phase
+     * Deals programming cards to the player at the start of a programming phase.
+     * 
+     * <p>This method prepares the player for the programming phase by clearing
+     * their current hand and drawing new cards based on their robot's damage level.
+     * The number of cards drawn is affected by damage, with damaged robots receiving
+     * fewer programming options.</p>
+     *
      */
     public void dealProgrammingCards() {
         appLogger.info("{} dealing programming cards", getPlayerIdentifier());
@@ -315,10 +478,14 @@ public class Player {
     }
 
     /**
-     * Draws a card from the programming deck. Adds the card to hand and updates clients.
+     * Draws a card from the programming deck and adds it to the player's hand.
+     * 
+     * <p>This method draws a single card from the player's programming deck and
+     * adds it to their hand. If the deck is empty, it automatically resets the
+     * deck by shuffling the discard pile back into the deck.</p>
      *
-     * @return the card drawn and added to hand.
-     **/
+     * @return the card drawn and added to the hand
+     */
     public RegisterCard drawCard() {
         if (programmingDeck.isEmpty()) {
             programmingDeck.reset();
@@ -333,7 +500,14 @@ public class Player {
 
     /**
      * Discards a card from the hand and adds it to the discard pile.
-     **/
+     * 
+     * <p>This method removes a card from the player's hand and adds it to the
+     * discard pile. The card is no longer available for use in the current round
+     * but will be shuffled back into the deck when the deck is reset.</p>
+     *
+     *
+     * @param card the RegisterCard to discard from the hand
+     */
     public void discardCardFromHand(RegisterCard card) {
         if (card != null) {
             // Only check your hand for this card during the non-active phase.
@@ -350,20 +524,7 @@ public class Player {
 
     /**
      * Selects a card by its name and places it into the specified register slot.
-     * <p>
-     * This method accepts a string representation of a card name and uses the CardFactory
-     * to find the corresponding card object in the player's hand. If a matching card is found,
-     * it will be removed from the hand and placed in the specified register slot. If all register
-     * slots are filled, the player will be marked as ready for the next phase.
-     * <p>
-     * If the provided card name is null or an empty string, the specified register slot will be cleared.
-     * <p>
-     * This method includes various error checks, including:
-     * <ul>
-     *     <li>Verifying that the player has not already completed register selection</li>
-     *     <li>Verifying that the register slot is within valid range (0-4)</li>
-     *     <li>Verifying that the specified card exists in the player's hand</li>
-     * </ul>
+     *
      *
      * @param cardName     The name of the card to select, such as "MoveI", "TurnLeft", etc.
      *                     If null or empty, clears the slot
@@ -536,6 +697,17 @@ public class Player {
     //TODO fix as rounds are implemented in game class game main loop
     //public void endRound(){}
 
+    /**
+     * Replaces a damage card in the specified register slot with a new programming card.
+     * 
+     * <p>This method is part of the damage system and is called when a damage card
+     * needs to be replaced with a functional programming card. The method draws
+     * a new card from the programming deck and places it directly into the specified
+     * register slot, effectively replacing the damage card that was there.</p>
+     *
+
+     * @param registerSlot the index of the register slot to replace (0-4)
+     */
     public void replaceDamageCard(int registerSlot) {
         RegisterCard newCard = programmingDeck.draw();
         register.set(registerSlot, newCard);

@@ -30,15 +30,32 @@ public class Belts extends BoardElement {
 
         private final int value;
 
+        /**
+         * Constructs a new BeltSpeed with the specified movement value.
+         *
+         * @param value the number of tiles this belt speed moves robots
+         */
         BeltSpeed(int value) {
             this.value = value;
         }
 
+        /**
+         * Gets the number of tiles this belt speed moves robots.
+         *
+         * @return the movement value (1 for SLOW, 2 for FAST)
+         */
         public int getValue() {
             return value;
         }
     }
 
+    /**
+     * Enumeration representing the color of conveyor belts.
+     *
+     * <p>The color is determined by the belt's speed and provides visual distinction
+     * between different types of conveyor belts on the game board.</p>
+     *
+     */
     public enum BeltColor {
         GREEN,
         BLUE
@@ -189,21 +206,46 @@ public class Belts extends BoardElement {
         return speed;
     }
 
+    /**
+     * Sets the speed of this conveyor belt and updates the color accordingly.
+     *
+     * @param speed the new speed for this belt
+     * @throws IllegalArgumentException if speed is null
+     */
     public void setSpeed(BeltSpeed speed) {
         this.speed = speed;
         this.color = (speed == BeltSpeed.SLOW) ? BeltColor.GREEN : BeltColor.BLUE;
     }
 
+    /**
+     * Gets the color of this conveyor belt.
+     *
+     * @return the belt color (GREEN for slow, BLUE for fast)
+     */
     public BeltColor getColor() {
         return color;
     }
 
+    /**
+     * Adds an output direction to this conveyor belt.
+     *
+     * <p>If the direction is not already in the output directions list, it will be added.
+     * This allows for belts with multiple possible output directions.</p>
+     *
+     * @param direction the direction to add as an output
+     * @throws IllegalArgumentException if direction is null
+     */
     public void addOutDirection(Direction direction) {
         if (!outDirections.contains(direction)) {
             outDirections.add(direction);
         }
     }
 
+    /**
+     * Gets a copy of the output directions for this conveyor belt.
+     *
+     * @return a new list containing all output directions
+     */
     public List<Direction> getOutDirections() {
         return new ArrayList<>(outDirections);
     }
@@ -217,52 +259,124 @@ public class Belts extends BoardElement {
         return outDirections.isEmpty() ? null : outDirections.get(0);
     }
 
+    /**
+     * Adds an input direction to this conveyor belt.
+     *
+     * <p>If the direction is not already in the input directions list, it will be added.
+     * This allows for belts with multiple possible input directions.</p>
+     *
+     * @param direction the direction to add as an input
+     * @throws IllegalArgumentException if direction is null
+     */
     public void addInDirection(Direction direction) {
         if (!inDirections.contains(direction)) {
             inDirections.add(direction);
         }
     }
 
+    /**
+     * Gets a copy of the input directions for this conveyor belt.
+     *
+     * @return a new list containing all input directions
+     */
     public List<Direction> getInDirections() {
         return new ArrayList<>(inDirections);
     }
 
+    /**
+     * Checks whether this conveyor belt rotates robots as they move.
+     *
+     * <p>A belt is considered rotating if the output direction differs from the input directions.
+     * Rotating belts can change a robot's facing direction as it moves.</p>
+     *
+     * @return true if this belt rotates robots, false otherwise
+     */
     public boolean isRotating() {
         return isRotating;
     }
 
+    /**
+     * Sets whether this conveyor belt rotates robots.
+     *
+     * @param rotating true to make this belt rotate robots, false otherwise
+     */
     public void setRotating(boolean rotating) {
         this.isRotating = rotating;
     }
 
+    /**
+     * Checks whether this conveyor belt is currently placed on a game board.
+     *
+     * @return true if the belt is on a board, false otherwise
+     */
     public boolean isOnBoard() {
         return isOnBoard;
     }
 
+    /**
+     * Sets whether this conveyor belt is placed on a game board.
+     *
+     * @param onBoard true to mark the belt as being on a board, false otherwise
+     */
     public void setIsOnBoard(boolean onBoard) {
         isOnBoard = onBoard;
     }
 
+    /**
+     * Gets the unique identifier of the board this conveyor belt belongs to.
+     *
+     * @return the board ID, or an empty string if not associated with any board
+     */
     public String getBoardId() {
         return boardId;
     }
 
+    /**
+     * Sets the board ID for this conveyor belt and updates the on-board status accordingly.
+     *
+     * <p>If the boardId is not empty, the belt is marked as being on a board.</p>
+     *
+     * @param boardId the unique identifier of the board this belt belongs to
+     * @throws IllegalArgumentException if boardId is null
+     */
     public void setBoardId(String boardId) {
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
     }
 
+    /**
+     * Activates the conveyor belt effect on a robot.
+     *
+     * <p>The conveyor belt does not trigger an effect when the robot enters.
+     * The actual movement effect is handled in the applyEffect method during the activation phase.</p>
+     *
+     * @param robot the robot to activate the belt effect on (unused)
+     */
     @Override
     public void activate(Robot robot) {
         // The conveyor belt does not trigger an effect when the robot enters.
         // The conveyor belt's movement effect should be handled in the applyEffect method.
     }
 
+    /**
+     * Checks whether a robot can pass through this conveyor belt.
+     *
+     * <p>Robots can freely move onto and off of conveyor belts. The belt itself
+     * does not block movement, but will move robots during the activation phase.</p>
+     *
+     * @param robot the robot attempting to pass through the belt
+     * @return true - robots can pass through conveyor belts
+     */
     @Override
     public boolean canPassThrough(Robot robot) {
         return true;
     }
 
+    /**
+     * Gets the type identifier for this board element.
+     *
+     * @return the string "ConveyorBelt" identifying this element type
+     */
     @Override
     public String getType() {
         return "ConveyorBelt";
@@ -440,6 +554,14 @@ public class Belts extends BoardElement {
         }
     }
 
+    /**
+     * Returns a string representation of this conveyor belt.
+     *
+     * <p>The string includes the belt's color, position, board association,
+     * input/output directions, and rotation status.</p>
+     *
+     * @return a detailed string describing the conveyor belt's properties
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

@@ -16,32 +16,73 @@ import org.apache.logging.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * The central game controller class for RoboRally, implementing the singleton pattern
+ * to manage the entire game state and flow.
+ *
+ * <p>The Game class serves as the main orchestrator for all game mechanics, including
+ * player management, game phases, card execution, board element activation, and
+ * network communication. It implements a robust state machine that progresses through
+ * distinct game phases while coordinating all game components.</p>
+ *
+ */
 public class Game {
-    // Constants
+
+    /** Logger for error-level messages and critical game events */
     private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
+
+    /** Logger for application-level messages and game flow tracking */
     private static final Logger appLogger = LogManager.getLogger(Game.class);
 
-    // Singleton instance
+    /** Singleton instance of the Game class */
     private static Game instance;
 
-    // Game state
+    /** Current game phase (SETUP, UPGRADE, PROGRAMMING, or ACTIVATION) */
     private GamePhase currentPhase;
+
+    /** Current register being executed (0-4, where 0 is the first register) */
     private int currentRegister = 0;
+
+    /** Current round number, incremented at the start of each new round */
     private int roundNumber = 0;
 
-    // Core game components
+    /** The game board containing tiles, board elements, and robot positions */
     private Board board;
+
+    /** Name of the currently selected map for the game */
     private String selectedMap;
+
+    /** List of all players participating in the current game */
     private final List<Player> players;
+
+    /** Stack of players in current turn order for register execution */
     private final Stack<Player> currentPlayerTurn;
 
-    // Card decks
+    /** Pool of damage cards for dealing damage to robots */
     private final DamageCardPool damageDeck = DamageCardPool.getInstance();
+
+    /** Deck of upgrade cards for player acquisition and application */
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
 
-
-    // 1. Initialization and Setup Methods
-
+    /**
+     * Private constructor for the Game singleton, initializing the game with a specific map.
+     *
+     * <p>This constructor sets up the initial game state, including the game board,
+     * player management structures, and card decks. The game starts in a null phase
+     * and must be explicitly started through the game loop.</p>
+     *
+     * <p>The constructor initializes:</p>
+     * <ul>
+     *   <li>Empty player list for dynamic player addition</li>
+     *   <li>Game board with the specified map type</li>
+     *   <li>Null initial phase (to be set during game start)</li>
+     *   <li>Selected map name for reference</li>
+     *   <li>Empty player turn stack for round execution</li>
+     * </ul>
+     *
+     * @param mapName the name of the map to use for this game
+     * @throws IllegalArgumentException if the map name is invalid or null
+     */
     private Game(String mapName) {
         players = new ArrayList<>();
         board = new Board(MapType.fromString(mapName));
@@ -50,6 +91,16 @@ public class Game {
         currentPlayerTurn = new Stack<>();
     }
 
+    /**
+     * Gets the singleton instance of the Game class.
+     *
+     * <p>This method returns the existing game instance if it has been initialized.
+     * If no instance exists, it throws an IllegalStateException indicating that
+     * the game must be initialized first using getInstance(String mapName).</p>
+     *
+     * @return the singleton Game instance
+     * @throws IllegalStateException if the game instance has not been initialized yet
+     */
     public static Game getInstance() {
         if (instance != null) {
             return instance;
@@ -57,6 +108,17 @@ public class Game {
         throw new IllegalStateException("Game instance has not been initialized yet.");
     }
 
+    /**
+     * Gets or creates the singleton instance of the Game class with the specified map.
+     *
+     * <p>This method implements lazy initialization of the Game singleton. If no
+     * instance exists, it creates a new one with the specified map. If an instance
+     * already exists, it returns the existing instance regardless of the map parameter.</p>
+     *
+     * @param mapName the name of the map to use for game initialization
+     * @return the singleton Game instance
+     * @throws IllegalArgumentException if the map name is invalid or null
+     */
     public static Game getInstance(String mapName) {
 
         if (instance == null) {
@@ -73,6 +135,14 @@ public class Game {
         return currentRegister;
     }
 
+    /**
+     * Initializes the upgrade card deck with all available upgrade cards according to the game rulebook.
+     *
+     * <p>This method populates the upgrade card deck with 40 upgrade cards, including
+     * both permanent (yellow) and temporary (red) upgrades. The cards are distributed
+     * according to the official RoboRally rulebook specifications.</p>
+     *
+     */
     private void initializeUpgradeCards() {
         //TODO @yu or @prajal
         // Initialize 40 upgrade cards according to the game rulebook.
@@ -148,7 +218,12 @@ public class Game {
     // 2. Game Flow Control Methods
 
     /**
-     * Start the game main loop
+     * Starts the main game loop, initializing the game and progressing through all phases.
+     *
+     * <p>This method initiates the complete game flow, starting from the setup phase
+     * and continuing through the main game loop until the game ends. The method runs
+     * in a separate thread to avoid blocking the main application thread.</p>
+     *
      */
     public void startGameLoop() {
         players.forEach(p -> p.getRobot().setBoard(board));
@@ -301,6 +376,14 @@ public class Game {
             this.value = value;
         }
 
+        /**
+         * Gets the integer value associated with this game phase.
+         *
+         * <p>This value is used for network communication and phase comparison
+         * operations throughout the game.</p>
+         *
+         * @return the integer value representing this phase
+         */
         public int getValue() {
             return value;
         }
@@ -702,6 +785,19 @@ public class Game {
         }
     }
 
+    /**
+     * Applies immediate board element effects to a robot at its current position.
+     *
+     * <p>This method processes board elements that have immediate effects when a
+     * robot moves to or lands on them. These effects are applied immediately after
+     * card execution and can significantly impact the robot's state.</p>
+     *
+     * <p>The method uses the board's hasRobotFallen method to detect if the robot
+     * has fallen, allowing it to stop processing effects when appropriate.</p>
+     *
+     * @param robot the robot to apply effects to
+     * @param position the position where the robot is located
+     */
     private void handleImmediateEffects(Robot robot, Position position) {
         List<BoardElement> elements = board.getElements(position.x(), position.y());
         for (BoardElement element : elements) {
@@ -1258,6 +1354,17 @@ public class Game {
 
     // 7. Utility and Getter Methods
 
+    /**
+     * Changes the game board to a new map, updating the game state accordingly.
+     *
+     * <p>This method allows the game to switch to a different map during runtime,
+     * creating a new board instance with the specified map configuration. This is
+     * useful for changing game scenarios or restarting with a different map.</p>
+     *
+     *
+     * @param newMapName the name of the new map to switch to
+     * @throws IllegalArgumentException if the map name is invalid or null
+     */
     public void setBoard(String newMapName) {
         if (newMapName.equalsIgnoreCase(selectedMap)) {
             errorLogger.warn("Tried to set board to same map as current board.");
@@ -1303,10 +1410,29 @@ public class Game {
         return null;
     }
 
+    /**
+     * Gets the current game phase as an integer value for network communication.
+     *
+     * <p>This method returns the integer value associated with the current game
+     * phase, which is used for network communication and client synchronization.
+     * The integer values correspond to the GamePhase enum values.</p>
+     *
+     * @return the integer value representing the current game phase, or -1 if no phase is set
+     */
     public int getCurrentPhase() {
         return currentPhase != null ? currentPhase.getValue() : -1;
     }
 
+    /**
+     * Gets a copy of the list of all players currently participating in the game.
+     *
+     * <p>This method returns a defensive copy of the players list, ensuring that
+     * the internal player list cannot be modified through the returned reference.
+     * This maintains encapsulation and prevents external code from accidentally
+     * modifying the game's player collection.</p>
+     *
+     * @return a new ArrayList containing all current players in the game
+     */
     public List<Player> getPlayers() {
         return new ArrayList<>(players);
     }
