@@ -497,17 +497,18 @@ public class Player {
                     new MessageDefinitions.BodyShuffleCoding(this.getRobot().getRobotID())
             ));
         }
-        RegisterCard card;
+        RegisterCard card = null;
         if (!programmingDeck.isEmpty()) {
             card = programmingDeck.draw();
-        } else {
-            // Draw from the robot's personal deck (mainly damage cards)
-            Deck<Card> personalDeck = robot.getPersonalDeck();
-            if (personalDeck.isEmpty()) {
-                personalDeck.reset();
-            }
-            card = (RegisterCard) personalDeck.draw();
         }
+//        } else {
+//            // Draw from the robot's personal deck (mainly damage cards)
+//            Deck<Card> personalDeck = robot.getPersonalDeck();
+//            if (personalDeck.isEmpty()) {
+//                personalDeck.reset();
+//            }
+//            card = (RegisterCard) personalDeck.draw();
+//        }
 
         if (card != null) {
             addToHand(card);
