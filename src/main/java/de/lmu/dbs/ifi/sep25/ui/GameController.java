@@ -1337,9 +1337,9 @@ public class GameController {
 
 
     private ImageView createClickableCard(String cardName) {
-        String imagePath;
+        final String imagePath;
         if (isDamageCard(cardName)) {
-            imagePath = "/assets/cards/damage_cards/" + cardName.toLowerCase() + ".png";
+            imagePath = "/assets/cards/damage_cards/" + cardName + ".png";
         } else {
             imagePath = "/assets/cards/" + cardName + ".png";
         }
