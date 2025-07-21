@@ -234,32 +234,18 @@
             <Button fx:id="zoomInButton"
                     onAction="#handleZoomIn"
                     styleClass="senden-button"
-                    prefWidth="20" prefHeight="20"
-                    maxWidth="40" maxHeight="40"
-                    pickOnBounds="true">
-                <graphic>
-                    <ImageView fitHeight="40" fitWidth="40" preserveRatio="true" mouseTransparent="true">
-                        <image>
-                            <Image url="/assets/icon_loupe_in.png"/>
-                        </image>
-                    </ImageView>
-                </graphic>
-            </Button>
+                    text="+"
+                    prefWidth="18" prefHeight="18"
+                    maxWidth="18" maxHeight="18"
+                    pickOnBounds="true"/>
 
             <Button fx:id="zoomOutButton"
                     onAction="#handleZoomOut"
                     styleClass="senden-button"
-                    prefWidth="20" prefHeight="20"
-                    maxWidth="40" maxHeight="40"
-                    pickOnBounds="true">
-                <graphic>
-                    <ImageView fitHeight="40" fitWidth="40" preserveRatio="true" mouseTransparent="true">
-                        <image>
-                            <Image url="/assets/icon_loupe_out.png"/>
-                        </image>
-                    </ImageView>
-                </graphic>
-            </Button>
+                    text="-"
+                    prefWidth="18" prefHeight="18"
+                    maxWidth="18" maxHeight="18"
+                    pickOnBounds="true"/>
 
         </HBox>
 

@@ -4272,6 +4272,10 @@ public class GameController {
         timeline.play();
     }
 
+    /**
+     * Displays an overlay in the center of the board indicating that the round has been completed.
+     * The overlay fades in and out with a scale animation and is automatically removed after a short delay.
+     */
     public void showRoundCompletedOverlay() {
         Label roundLabel = new Label("Runde beendet!");
         roundLabel.setStyle("""
@@ -4304,13 +4308,13 @@ public class GameController {
         fade.play();
     }
 
-
-
     /**
-     * Setup für draggable Map-Funktionalität
+     * Sets up mouse drag and scroll event handlers for the game board ScrollPane,
+     * enabling the user to pan (drag) and zoom the map using the mouse.
+     * - Dragging with the left mouse button moves the visible area.
+     * - Holding CTRL and using the mouse wheel zooms in/out.
      */
     private void setupDraggableMap() {
-
         gameBoardScrollPane.setOnMousePressed(event -> {
             if (event.getButton() == MouseButton.PRIMARY) {
                 dragStartX = event.getX();
@@ -4364,10 +4368,11 @@ public class GameController {
     }
 
     /**
-     * Setup für Map-Info-Popup
+     * Creates and displays a floating map info popup in the top right corner of the game view.
+     * The popup provides instructions for map controls (zoom, drag) and shows the current zoom and scroll position.
+     * The popup is added to the parent StackPane of the game board ScrollPane.
      */
     private void setupMapInfoPopup() {
-
         VBox infoBox = new VBox(8);
         infoBox.setStyle("-fx-background-color: #2F4F4F; -fx-padding: 15; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-color: #87CEEB; -fx-border-width: 2;");
         infoBox.setAlignment(Pos.CENTER_LEFT);
@@ -4420,7 +4425,9 @@ public class GameController {
     }
 
     /**
-     * Aktualisiert das Map-Info-Popup mit aktuellen Werten
+     * Updates the map info popup with the current zoom percentage and scroll position.
+     * This method is called whenever the zoom or scroll state changes.
+     * It updates the corresponding labels in the popup to reflect the latest values.
      */
     private void updateMapInfoPopup() {
         Platform.runLater(() -> {
@@ -4440,8 +4447,12 @@ public class GameController {
         });
     }
 
+    /**
+     * Sets up the help icon (question mark button) in the top right corner of the game view.
+     * When clicked, it opens a modal dialog with map control instructions.
+     * The help button is styled and positioned in the root pane.
+     */
     private void setupHelpIcon() {
-
         helpButton = new Button("?");
         helpButton.setStyle("-fx-background-radius: 50%; -fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 18; -fx-font-weight: bold; -fx-min-width: 36; -fx-min-height: 36; -fx-cursor: hand;");
         helpButton.setPrefSize(36, 36);
@@ -4455,8 +4466,12 @@ public class GameController {
         }
     }
 
+    /**
+     * Displays a modal dialog with information about map controls and navigation.
+     * The dialog includes instructions for zooming and dragging the map, as well as the current zoom and position.
+     * The dialog is styled for clarity and user guidance.
+     */
     private void showMapInfoDialog() {
-
         VBox infoBox = new VBox(8);
         infoBox.setStyle("-fx-background-color: #2F4F4F; -fx-padding: 18; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #87CEEB; -fx-border-width: 2;");
         infoBox.setAlignment(Pos.CENTER_LEFT);
@@ -4468,7 +4483,7 @@ public class GameController {
         Label zoomLabel = new Label("• Mausrad + STRG zum Zoomen");
         zoomLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        Label zoomIconLabel = new Label("• Lupen-Icons zum Zoomen verwenden");
+        Label zoomIconLabel = new Label("• Mit + und - Buttons kannst du ebenfalls zoomen");
         zoomIconLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
         Label dragLabel = new Label("• Karte mit der Maus verschieben");
