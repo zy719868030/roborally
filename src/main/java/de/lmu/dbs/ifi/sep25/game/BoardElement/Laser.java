@@ -200,8 +200,8 @@ public class Laser extends BoardElement {
     @Override
     public void applyEffect(Robot robot, Board board) {
         activate(robot);
-        // Shoot lasers and check all robots on the path.
         fireLaser(board);
+        fireBoardLaser(board);
     }
 
     /**
@@ -252,6 +252,69 @@ public class Laser extends BoardElement {
                 break;
             }
         }
+    }
+
+    /**
+     * Fires the board laser in the opposite direction of its orientation.
+     * This is specifically for board lasers, not robot lasers.
+     *
+     * @param board the game board to check for targets
+     */
+    private void fireBoardLaser(Board board) {
+        if (direction == null) {
+            System.err.println("Error: Board Laser direction is not set!");
+            return;
+        }
+        Position currentPos = new Position(position.x(), position.y());
+
+        // Board laser fires in the opposite direction of its orientation
+        Direction firingDirection = direction.turnAround();
+
+        // Check all cells along the opposite laser direction until a wall or board boundary is encountered.
+        while (true) {
+            // Move to the next position in the opposite direction
+            currentPos = currentPos.move(firingDirection);
+
+            // Check if it exceeds the board boundary
+            if (!board.isValidPosition(currentPos)) {
+                break;
+            }
+
+            // Check if there is a wall blocking the laser at this location
+            if (isBlockedByBoardLaser(currentPos, board, firingDirection)) {
+                break;
+            }
+
+            // Check if there are robots at this location
+            Robot targetRobot = board.getRobotAt(currentPos);
+            if (targetRobot != null) {
+                targetRobot.takeDamage(power);
+                System.out.println("Robot " + targetRobot.getRobotID() + " was hit by a board laser and took " + power + " damage!");
+                break;
+            }
+        }
+    }
+
+    /**
+     * Checks whether there is a wall blocking the board laser at the specified position.
+     *
+     * @param position the position to check for blocking walls
+     * @param board the game board containing the walls
+     * @param firingDirection the direction the board laser is firing
+     * @return true if there is a wall blocking the laser, false otherwise
+     */
+    private boolean isBlockedByBoardLaser(Position position, Board board, Direction firingDirection) {
+        for (BoardElement element : board.getElements(position.x(), position.y())) {
+            // Check if it is a wall
+            if (element instanceof Wall) {
+                Wall wall = (Wall) element;
+                // Check whether the wall is blocking the board laser's firing direction
+                if (!wall.canPassThroughFromDirection(firingDirection)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
