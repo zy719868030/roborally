@@ -391,7 +391,7 @@ public class Client {
                 if (selectorID == myID) {
                     controller.showMapSelection(message.messageBody().availableMaps());
                 } else {
-                    controller.hideMapSelection(); // sicherheitshalber
+                    controller.hideMapSelection();
                 }
             } else {
                 errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
@@ -576,7 +576,7 @@ public class Client {
             } else if (errorText.contains("Again card cannot be played in the first register")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
-                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.appendGameLog(errorText, "error");
                     gameCtrl.displayErrorAlert("Card placement error",
                             "The card Again cannot be placed in the first register position!\n" +
                                     "Please select the 2nd to 5th register positions.");
@@ -585,21 +585,21 @@ public class Client {
             } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
-                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.appendGameLog(errorText, "error");
                     gameCtrl.displayErrorAlert("Card operation error", errorText);
                 }
             } else if (errorText.toLowerCase().contains("starting position")) {
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
                     gameCtrl.deselectStartingPosition();
-                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.appendGameLog(errorText, "error");
                     gameCtrl.displayErrorAlert("Starting position selection error", errorText);
                 }
             } else {
 
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
-                    gameCtrl.appendChatMessage("[ERROR] " + errorText);
+                    gameCtrl.appendGameLog(errorText, "error");
                     gameCtrl.displayErrorAlert("Server Error", errorText);
                 }
             }
@@ -628,7 +628,7 @@ public class Client {
         Platform.runLater(() -> {
             GameController gameCtrl = ControllerRegistry.getGameController();
             if (gameCtrl != null) {
-                gameCtrl.appendChatMessage("[GAME] " + logMessage);
+                gameCtrl.appendGameLog(logMessage, "info");
                 gameCtrl.showPlayedCard(clientID, card);
             } else {
                 appLogger.warn("[WARN] GameController ist null in handleBodyCardPlayed");
@@ -666,9 +666,10 @@ public class Client {
     }
 
     /**
-     * Verarbeitet die Nachricht, welcher Spieler gerade am Zug ist.
+     * Processes the server message indicating which player is currently active.
+     * Calls the GameController to visually highlight the current player.
      *
-     * @param json JSON-String mit der Client-ID des aktiven Spielers
+     * @param json JSON string containing the client ID of the active player
      */
     private void handleBodyCurrentPlayer(String json) {
         Message<MessageDefinitions.BodyCurrentPlayer> message =
@@ -734,7 +735,6 @@ public class Client {
                     controller.deactivateStartPointClick();
                 }
                 controller.displayStartingPoint(x, y, clientID, direction);
-                //  Position merken!
                 controller.setRobotPosition(clientID, new Position(x, y));
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
@@ -934,7 +934,6 @@ public class Client {
                     registersByClient.computeIfAbsent(clientID, k -> new ArrayList<>()).add(cardName);
 
                     controller.showActiveCard(clientID, cardName);
-                    controller.animateRobotAction(clientID, cardName);
                 }
 
                 for (Map.Entry<Integer, List<String>> entry : registersByClient.entrySet()) {
@@ -1070,7 +1069,7 @@ public class Client {
             }
 
             if (blocked) {
-                controller.appendChatMessage("[BLOCKIERT] Bewegung durch Wand verhindert.");
+                controller.appendGameLog("Bewegung durch Wand verhindert.", "warn");
                 return;
             }
 
@@ -1101,6 +1100,16 @@ public class Client {
         });
     }
 
+    /**
+     * Handles the reception of damage cards from the server.
+     *
+     * <p>Parses the incoming JSON message and extracts the list of damage cards.
+     * Then updates the UI by displaying the received cards to the player.
+     *
+     * <p>This method is triggered when the server assigns damage cards to the client.
+     *
+     * @param json the JSON string containing the list of damage cards
+     */
     private void handleBodyDrawDamage(String json) {
         Message<BodyDrawDamage> message = JsonUtil.parseMessage(json, BodyDrawDamage.class);
         BodyDrawDamage body = message.messageBody();
@@ -1116,8 +1125,16 @@ public class Client {
             }
         });
     }
-
-    private void handleBodyPickDamage(String json) {
+    /**
+     * Handles the server request for the player to select damage cards.
+     *
+     * <p>Parses the incoming JSON to determine how many damage cards the player must pick
+     * and from which available piles. Then displays the selection UI and sends the
+     * chosen cards back to the server.
+     *
+     * @param json the JSON string containing the selection request details
+     */
+     private void handleBodyPickDamage(String json) {
         Message<BodyPickDamage> message = JsonUtil.parseMessage(json, BodyPickDamage.class);
         BodyPickDamage body = message.messageBody();
         int count = body.count();
@@ -1129,9 +1146,9 @@ public class Client {
                 controller.promptDamageCardSelection(count, availablePiles, selectedCards -> {
                     if (selectedCards != null && !selectedCards.isEmpty()) {
                         sendMessage(new Message<>(new MessageDefinitions.BodySelectedDamage(selectedCards)));
-                        controller.appendChatMessage("[INFO] Du hast folgende Schadenskarten gewählt: " + selectedCards);
+                        controller.appendGameLog("Du hast folgende Schadenskarten gewählt: " + selectedCards, "info");
                     } else {
-                        controller.appendChatMessage("[WARNUNG] Keine Schadenskarten ausgewählt.");
+                        controller.appendGameLog("Keine Schadenskarten ausgewählt.", "warn");
                     }
                 });
             } else {
@@ -1282,7 +1299,7 @@ public class Client {
                 if (controller != null) {
                     controller.updateRobotDirection(currentRebootingClient, direction);
                     controller.showRebootDirection(direction);
-                    controller.appendChatMessage("[INFO] The robot has been restarted in the direction " + direction);
+                    controller.appendGameLog("The robot has been restarted in the direction " + direction, "info");
                     Position currentPos = controller.getRobotPosition(rebootingInProgress);
                     if (currentPos != null && currentPos.x() >= 0 && currentPos.y() >= 0) {
                         controller.moveRobotTo(rebootingInProgress, currentPos.x(), currentPos.y());

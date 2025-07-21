@@ -515,6 +515,12 @@ public class Game {
                                 " completed.", 0, false)
                 )
         );
+        //ANIMATION
+        Server.getInstance().broadcastMessage(
+                new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyAnimation("RoundCompleted")
+                )
+        );
 
         startNewGameRound();
     }
