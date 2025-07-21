@@ -49,10 +49,11 @@
                             styleClass="not-ready-button" visible="false" managed="false" prefWidth="150" prefHeight="40"/>
                 </VBox>
 
-                <Region prefHeight="30"/>
+                <Region prefHeight="3"/>
                 <VBox fx:id="mapSelectionBox" spacing="10" alignment="CENTER" visible="false" managed="false">
                     <ComboBox fx:id="mapChoiceBox" promptText="Karte wählen..." prefWidth="150" styleClass="combo-recipient"/>
-                    <Button fx:id="selectMapButton" text="Karte wählen" onAction="#handleMapSelection" styleClass="senden-button"/>
+                    <Button fx:id="selectMapButton" text="Karte wählen" onAction="#handleMapSelection" styleClass="senden-button"
+                            prefWidth="130" prefHeight="36"/>
                 </VBox>
 
 
