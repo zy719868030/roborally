@@ -60,6 +60,8 @@ public class GameController {
     public HBox energyBox;
     public ImageView gameLogoView;
     @FXML
+    public Button notificationsToggleButton;
+    @FXML
     private GridPane gameBoardPane;
     @FXML
     private Pane laserLayer;
@@ -197,6 +199,20 @@ public class GameController {
 
 
     @FXML
+    private VBox gameLogArea;
+    @FXML
+    private ScrollPane gameLogScrollPane;
+
+
+    @FXML
+    private void toggleNotificationsPanel() {
+        boolean currentlyVisible = gameLogScrollPane.isVisible();
+        gameLogScrollPane.setVisible(!currentlyVisible);
+        gameLogScrollPane.setManaged(!currentlyVisible);
+    }
+
+
+    @FXML
     public void initialize() {
         loadTileImages();
         gameBoardScrollPane.setStyle("-fx-background-color: transparent;");
@@ -244,6 +260,7 @@ public class GameController {
 
         chatInput.setOnAction(e -> handleSendChat());
         addHoverAnimation(chatToggleButton);
+        addHoverAnimation(notificationsToggleButton);
         Tooltip.install(energyBox, new Tooltip("Deine Energieanzeige"));
 
         Platform.runLater(() -> {
@@ -518,7 +535,7 @@ public class GameController {
         Circle overlay = (Circle) selectedPane.getUserData();
         overlay.setFill(Color.rgb(39, 174, 96, 0.6)); // solid green
 
-        appendChatMessage("[INFO] Startposition gewählt bei (" + x + ", " + y + ")");
+        appendGameLog("Du hast deine Startposition bei (" + x + ", " + y + ") gewählt.", "info");
     }
 
     public void deselectStartingPosition() {
@@ -741,6 +758,30 @@ public class GameController {
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
     }
+
+
+    public void appendGameLog(String message, String type) {
+        Label label = new Label(message);
+
+        switch (type.toLowerCase()) {
+            case "error" -> label.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            case "warn" -> label.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
+            case "info" -> label.setStyle("-fx-text-fill: #00ffff;");
+            case "success" -> label.setStyle("-fx-text-fill: #00ff00;");
+            default -> label.setStyle("-fx-text-fill: white;");
+        }
+
+        label.setWrapText(true);
+
+        Platform.runLater(() -> {
+            gameLogArea.getChildren().add(label);
+
+             gameLogScrollPane.setVvalue(1.0);
+        });
+    }
+
+
+
 
     public int getCurrentPhaseID() {
         return currentPhaseID;
@@ -1082,7 +1123,7 @@ public class GameController {
         int phaseID = getCurrentPhaseID();
 
         if (phaseID == 2) {
-            appendChatMessage("[INFO] Programmieren...");
+            appendGameLog("Programmieren...", "info");
             statusLabel.setText("Spiel läuft...");
             return;
 
@@ -1096,7 +1137,7 @@ public class GameController {
         boolean isMyTurn = (myID == clientID);
 
         if (isMyTurn) {
-            appendChatMessage("[INFO] Du bist am Zug!");
+            appendGameLog("▶ Du bist am Zug!", "info");
             statusLabel.setText("Du bist am Zug.");
             statusLabel.getStyleClass().removeAll("status-other-turn");
             if (!statusLabel.getStyleClass().contains("dynamic-status")) {
@@ -1109,7 +1150,7 @@ public class GameController {
 
             switch (phaseID) {
                 case 0 -> {
-                    appendChatMessage("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.");
+                    appendGameLog("Bitte wähle deine Startposition durch Klick auf ein gelbes Feld.", "info");
 
                     startPointPanes.forEach(pane -> {
                         Circle yellow = (Circle) pane.getProperties().get("yellowGlow");
@@ -1153,7 +1194,7 @@ public class GameController {
             }
         } else {
             String name = getPlayerNameById(clientID);
-            appendChatMessage("[INFO] Spieler " + name + " ist am Zug.");
+            appendGameLog("Spieler " + name + " ist am Zug.", "info");
             statusLabel.setText(name + " ist am Zug.");
 
             statusLabel.getStyleClass().removeAll("dynamic-status");
@@ -1395,11 +1436,11 @@ public class GameController {
                 if (slot != -1) {
                     if (placeCardInRegisterSlot(cardName, slot)) {
                         handCardBox.getChildren().remove(view);
-                        appendChatMessage("[INFO] Karte " + cardName + " wurde ins Register " + (slot + 1) + " gelegt.");
+                        appendGameLog("Karte " + cardName + " wurde ins Register " + (slot + 1) + " gelegt.", "info");
 
                     }
                 } else {
-                    appendChatMessage("[WARN] Kein freier Register-Slot verfügbar.");
+                    appendGameLog("Kein freier Register-Slot verfügbar.", "warn");
                 }
             }
         });
@@ -1530,7 +1571,7 @@ public class GameController {
 
                 sendCardSelectionUpdate(null, slotIndex);
 
-                appendChatMessage("[INFO] Karte " + cardName + " wurde aus Register " + (slotIndex + 1) + " entfernt.");
+                appendGameLog("Karte " + cardName + " wurde aus Register " + (slotIndex + 1) + " entfernt.", "info");
             }
         });
 
@@ -1719,7 +1760,7 @@ public class GameController {
                 .toList();
 
         if (selectedCards.size() != 5) {
-            appendChatMessage("[WARNUNG] Du musst genau 5 Karten ins Register ziehen.");
+            appendGameLog("Du musst genau 5 Karten ins Register ziehen.", "warn");
             return;
         }
 
@@ -1733,7 +1774,7 @@ public class GameController {
         var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
         ClientSingleton.getInstance().sendMessage(finishedMsg);
         stopCountdownSound();
-        appendChatMessage("[INFO] Auswahl wurde erfolgreich gesendet.");
+        appendGameLog("Auswahl wurde erfolgreich gesendet.", "info");
 
         confirmSelectionButton.setVisible(false);
         confirmSelectionButton.setManaged(false);
@@ -1763,14 +1804,14 @@ public class GameController {
         }
 
         String playerName = getPlayerNameById(clientID);
-        // appendChatMessage("Spieler " + playerName + " hat " + count + " Karten erhalten.");
+        // appendGameLog("Spieler " + playerName + " hat " + count + " Karten erhalten.", "info");
     }
 
     /**
      * Displays an optional animation or message indicating that the deck has been shuffled.
      */
     public void showShuffleAnimation() {
-        appendChatMessage("[INFO] Das Programmierdeck wurde neu gemischt.");
+        appendGameLog("Das Programmierdeck wurde neu gemischt.", "info");
         playShuffleSound();
         shuffleHandCards();
 
@@ -1840,7 +1881,7 @@ public class GameController {
             registerState[register] = null;
 
             // No need to update the hand manually — will be handled by displayHandCards
-            appendChatMessage("[INFO] Deine Karte aus Register " + (register + 1) + " wurde entfernt.");
+            appendGameLog("Deine Karte aus Register " + (register + 1) + " wurde entfernt.", "info");
             appLogger.info("Card removed from register slot {} by server (isSelf).", register);
         }
     }
@@ -1941,9 +1982,9 @@ public class GameController {
         String playerName = getPlayerNameById(clientID);
 
         if (isSelf) {
-            appendChatMessage("[INFO] Du hast dein Programm fertiggestellt.");
+            appendGameLog("Du hast dein Programm fertiggestellt.", "info");
         } else {
-            appendChatMessage("[INFO] " + playerName + " hat sein Programm fertiggestellt.");
+            appendGameLog(playerName + " hat sein Programm fertiggestellt.", "info");
         }
     }
 
@@ -2115,21 +2156,20 @@ public class GameController {
 
         fadeOutCountdown();
         stopCountdownSound();
-        appendChatMessage("[TIMER] Zeit ist abgelaufen.");
+        appendGameLog("Zeit ist abgelaufen.", "warn");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
             List<String> slowNames = new ArrayList<>();
             for (Integer id : slowPlayers) {
                 slowNames.add(getPlayerNameById(id));
             }
-            appendChatMessage("Folgende Spieler waren zu langsam: " + slowNames);
+            appendGameLog("Folgende Spieler waren zu langsam: " + slowNames, "warn");
 
             for (PlayerEntry entry : recipientBox.getItems()) {
                 if (slowPlayers.contains(entry.getClientID())) {
                     entry.setName("✖ " + entry.getName());
                 }
             }
-            // Optional: Auswahl zurücksetzen, falls vorheriger Eintrag jetzt verändert wurde
             recipientBox.getSelectionModel().clearSelection();
         }
     }
@@ -2174,35 +2214,13 @@ public class GameController {
         handCardBox.getChildren().add(label);
     }
 
-    /**
-     * Basic placeholder animation for a robot action.
-     *
-     * @param clientID ID of the robot
-     * @param cardName The card causing the action
-     */
-    public void animateRobotAction(int clientID, String cardName) {
-        int x = 5;
-        int y = 5;
-
-        Label arrow = new Label("→");
-        arrow.setStyle("-fx-font-size: 30px; -fx-text-fill: red;");
-
-        StackPane cell = getCellAt(x, y);
-        if (cell != null) {
-            cell.getChildren().add(arrow);
-
-            PauseTransition pause = new PauseTransition(javafx.util.Duration.seconds(1));
-            pause.setOnFinished(e -> cell.getChildren().remove(arrow));
-            pause.play();
-        }
-    }
 
     /**
-     * Holt die StackPane für ein Spielfeldfeld bei (x, y).
+     * Retrieves the StackPane for a board tile at position (x, y).
      *
-     * @param x Spaltenindex
-     * @param y Zeilenindex
-     * @return StackPane der Zelle oder null, wenn nicht gefunden
+     * @param x Column index
+     * @param y Row index
+     * @return StackPane of the cell or null if not found
      */
     private StackPane getCellAt(int x, int y) {
         if (x < 0 || y < 0) {
@@ -2226,23 +2244,23 @@ public class GameController {
 
 
     /**
-     * Ersetzt eine Karte in einem bestimmten Register
+     * Replaces a card in a specific register.
      *
-     * @param clientID ID des Spielers
-     * @param register Register-Slot (0–4)
-     * @param newCard  Name der neuen Karte
+     * @param clientID ID of the player
+     * @param register Register slot (0–4)
+     * @param newCard  Name of the new card
      */
     public void replaceCardInRegister(int clientID, int register, String newCard) {
-        appendChatMessage("[INFO] Spieler " + clientID + " ersetzt Karte in Register " + register + " durch: " + newCard);
+        appendGameLog("Spieler " + clientID + " ersetzt Karte in Register " + register + " durch: " + newCard, "info");
 
     }
 
     /**
-     * Bewegt den Roboter eines Spielers auf das Feld (x, y).
+     * Moves a player's robot to the field at position (x, y).
      *
-     * @param clientID Die ID des Spielers
-     * @param x        Die Zielspalte
-     * @param y        Die Zielzeile
+     * @param clientID The ID of the player
+     * @param x        The target column
+     * @param y        The target row
      */
     public void moveRobotTo(int clientID, int x, int y) {
         messageLogger.info("clientToRobotID = {}", clientToRobotID);
@@ -2295,7 +2313,7 @@ public class GameController {
             applyMyRobotSpecialEffects(robotView, clientID);
 
             String playerName = getPlayerNameById(clientID);
-            appendChatMessage("[BEWEGUNG] Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.");
+            appendGameLog("Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.", "info");
         } catch (Exception e) {
             appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
@@ -2303,17 +2321,17 @@ public class GameController {
     }
 
     /**
-     * Dreht den Roboter eines Spielers in eine bestimmte Richtung.
+     * Rotates a player's robot in a specific direction.
      *
-     * @param clientID Die ID des Spielers
-     * @param rotation "clockwise" oder "counterclockwise"
+     * @param clientID The ID of the player
+     * @param rotation "clockwise" or "counterclockwise"
      */
     public void rotateRobot(int clientID, String rotation) {
         syncPlayerNames();
         Position pos = robotPositions.get(clientID);
         if (pos == null) {
             String playerName = getPlayerNameById(clientID);
-            appendChatMessage("[FEHLER] Position für Spieler " + playerName + " nicht gefunden.");
+            appendGameLog("Position für Spieler " + playerName + " nicht gefunden.", "error");
             return;
         }
 
@@ -2397,12 +2415,12 @@ public class GameController {
                     delay.play();
 
                     String playerName = getPlayerNameById(clientID);
-                    appendChatMessage("[DREHUNG] Spieler " + playerName + " dreht sich " + rotation + ".");
+                    appendGameLog("Spieler " + playerName + " dreht sich " + rotation + ".", "info");
                     break;
                 }
             }
         } else {
-            appendChatMessage("[FEHLER] Kein Zellen-StackPane an Position (" + pos.x() + ", " + pos.y() + ") gefunden.");
+            appendGameLog("Kein Zellen-StackPane an Position (" + pos.x() + ", " + pos.y() + ") gefunden.", "error");
         }
     }
 
@@ -2425,7 +2443,12 @@ public class GameController {
             default -> dir;
         };
     }
-
+    /**
+     * Sets the robot's position for the specified player.
+     *
+     * @param clientID The ID of the player
+     * @param position The position to assign to the robot
+     */
     public void setRobotPosition(int clientID, Position position) {
         robotPositions.put(clientID, position);
     }
@@ -2440,12 +2463,11 @@ public class GameController {
      * @param type the type of animation ("Movement", "Clockwise", "Checkpoint")
      */
     public void playAnimation(String type) {
-        //appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
         if ("PlayerShooting".equals(type)) {
             int meineClientID = ClientSingleton.getInstance().getID();
             spieleLaserAnimation(meineClientID);
         } else {
-            appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
+          //  appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
         }
     }
 
@@ -2457,7 +2479,7 @@ public class GameController {
      */
     public void showReboot(int clientID) {
         final String playerName = getPlayerNameById(clientID);
-        appendChatMessage("[REBOOT] Spieler " + playerName + " wurde rebootet.");
+        appendGameLog("Spieler " + playerName + " wurde rebootet.", "info");
 
         Position pos = robotPositions.get(clientID);
         if (pos == null) return;
@@ -2507,6 +2529,10 @@ public class GameController {
 
         }
     }
+    /**
+     * Displays a large "REBOOT!" label in the center of the screen with animation.
+     * This is shown only to the player whose robot has been rebooted.
+     */
     public void showBigRebootOverlay() {
         Label rebootOverlay = new Label("REBOOT!");
         rebootOverlay.setStyle("""
@@ -2684,27 +2710,67 @@ public class GameController {
         String playerName = getPlayerNameById(clientID);
 
         if (clientID == myID) {
-            appendChatMessage("[ENERGIE] Du hast jetzt " + energy + " ⚡ (Quelle: " + source + ")");
+            appendGameLog("Du hast jetzt " + energy + " ⚡ (Quelle: " + source + ")", "info");
             updateEnergyDisplay(energy);
         } else {
-            appendChatMessage("[ENERGIE] Spieler " + playerName
-                    + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")");
+            appendGameLog("Spieler " + playerName + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")", "info");
+
         }
     }
 
 
-
     /**
-     * Zeigt an, dass ein Spieler einen Checkpoint erreicht hat.
+     * Displays a message indicating that a player has reached a checkpoint.
      *
-     * @param clientID         Die ID des Spielers
-     * @param checkpointNumber Die Nummer des erreichten Checkpoints
+     * @param clientID         The ID of the player
+     * @param checkpointNumber The number of the checkpoint reached
      */
     public void showCheckpointReached(int clientID, int checkpointNumber) {
         String playerName = getPlayerNameById(clientID);
-        appendChatMessage("[ZIEL] Spieler " + playerName + " hat Checkpoint #" + checkpointNumber + " erreicht! 🏁");
+        appendGameLog("Spieler " + playerName + " hat Checkpoint #" + checkpointNumber + " erreicht! 🏁", "success");
 
-        // Optional: UI-Markierung im Spielfeld oder Spieleranzeige
+        Position pos = robotPositions.get(clientID);
+        if (pos == null) return;
+
+        StackPane cell = getCellAt(pos.x(), pos.y());
+        if (cell == null) return;
+
+        if (clientID == ClientSingleton.getInstance().getID()) {
+            showCheckpointLabel(cell, checkpointNumber);
+        }
+    }
+
+
+    /**
+     * Displays a floating label above the player's robot when a checkpoint is reached.
+     * This effect is shown only on the local client.
+     *
+     * @param cell             The board cell where the robot is located
+     * @param checkpointNumber The number of the checkpoint reached
+     */
+    public void showCheckpointLabel(StackPane cell, int checkpointNumber) {
+        Label cpLabel = new Label("🏴 Checkpoint #" + checkpointNumber + " erreicht!");
+        cpLabel.setStyle("""
+        -fx-font-size: 20px;
+        -fx-text-fill: #ff6600; 
+        -fx-font-weight: bold;
+        -fx-effect: dropshadow(gaussian, black, 8, 0.5, 0, 0);
+    """);
+
+        cpLabel.setTranslateY(-35);
+        cell.getChildren().add(cpLabel);
+
+        TranslateTransition moveUp = new TranslateTransition(Duration.millis(1000), cpLabel);
+        moveUp.setFromY(-35);
+        moveUp.setToY(-65);
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(1000), cpLabel);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+
+        ParallelTransition anim = new ParallelTransition(moveUp, fadeOut);
+        anim.setOnFinished(e -> cell.getChildren().remove(cpLabel));
+        anim.play();
     }
 
     /**
@@ -2720,7 +2786,7 @@ public class GameController {
                     ? " Glückwunsch, " + playerName + " hat das Rennen gemeistert! 🏆"
                     : "🔩 Du hast deine Schrauben verloren. " + playerName + " dominiert das Spielfeld!";
 
-            appendChatMessage("[SPIELENDE] " + message);
+            appendGameLog(message, isWinner ? "success" : "info");
 
             int robotId = clientToRobotID.getOrDefault(winnerClientId, 1);
             String imagePath = "/assets/robots/robot_0" + robotId + "_right.png";
@@ -2816,12 +2882,12 @@ public class GameController {
 // === DAMAGE ===
 
     /**
-     * Zeigt dem Spieler die gezogenen Schadenskarten an.
+     * Displays the damage cards drawn for the player.
      *
-     * <p>Diese Methode wird aufgerufen, wenn der Server dem Spieler automatisch Schadenskarten zuweist.
-     * Sie zeigt die entsprechenden Kartengrafiken im Handkartenbereich an.</p>
+     * <p>This method is called when the server automatically assigns damage cards to the player.
+     * It shows the corresponding card graphics in the hand area.</p>
      *
-     * @param cards Liste der Schadenskarten ["spam", "worm", "trojan_horse"]
+     * @param cards List of damage card names (e.g., ["spam", "worm", "trojan_horse"])
      */
     public void showDrawnDamageCards(List<String> cards) {
         handCardBox.getChildren().clear();
@@ -2845,9 +2911,19 @@ public class GameController {
             handCardBox.getChildren().add(view);
         }
 
-        appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten erhalten.");
+        appendGameLog("Du hast " + cards.size() + " Schadenskarten erhalten.", "warm");
     }
-
+    /**
+     * Prompts the player to select a specific number of damage cards from the available options.
+     *
+     * <p>This method clears the current hand card area and displays selectable damage cards.
+     * Once the player has selected the required number of cards, the given callback is invoked
+     * with the selected cards.</p>
+     *
+     * @param count    The number of damage cards the player must select
+     * @param options  A list of available damage card identifiers (e.g., "spam", "worm")
+     * @param callback A callback function that receives the list of selected cards once the selection is complete
+     */
     public void promptDamageCardSelection(int count, List<String> options, java.util.function.Consumer<List<String>> callback) {
         handCardBox.getChildren().clear();
         registerBox.getChildren().clear();
@@ -2890,7 +2966,11 @@ public class GameController {
             handCardBox.getChildren().add(view);
         }
 
-        appendChatMessage("[INFO] Wähle " + count + " Schadenskarte(n) durch Klick.");
+        String message = (count == 1)
+                ? "Wähle 1 Schadenskarte durch Klick."
+                : "Wähle " + count + " Schadenskarten durch Klick.";
+
+        appendGameLog(message, "warn");
     }
 
     /**
@@ -2966,7 +3046,11 @@ public class GameController {
         robotPositions.put(clientID, new Position(-1, -1));
 
         String playerName = getPlayerNameById(clientID);
-        appendChatMessage("[INFO] Spieler " + playerName + " fiel vom Spielbrett herunter!");
+        appendGameLog("Spieler " + playerName + " ist vom Spielbrett gefallen!", "error");
+
+        if (clientID == ClientSingleton.getInstance().getID()) {
+            showBigRebootOverlay();
+        }
 
     }
 
@@ -3095,8 +3179,8 @@ public class GameController {
     }
 
     /**
-     * Mischt die Handkarten visuell neu. Die Reihenfolge wird zufällig geändert.
-     * Dies beeinflusst nicht die Spielmechanik, da die Karten individuell gewählt werden.
+     * Visually shuffles the hand cards by randomly changing their order.
+     * This does not affect the game logic, as cards are selected individually by the player.
      */
     private void shuffleHandCards() {
         ObservableList<Node> cards = handCardBox.getChildren();
@@ -3154,8 +3238,7 @@ public class GameController {
         playShuffleSound();
         fadeOut.play();
 
-        // Informiere den Spieler
-        //appendChatMessage("[INFO] Deine Handkarten wurden gemischt.");
+        //appendGameLog("Deine Handkarten wurden gemischt.", "info");
     }
     private void playShuffleSound() {
         try {
@@ -3359,16 +3442,23 @@ public class GameController {
         animation.play();
     }
     /**
-     * Aktualisiert die Registerkarten eines anderen Spielers.
-     * Nach dem Update wird die Spielerstatusanzeige aktualisiert, um
-     * den neuen Zustand sichtbar zu machen.
-     * @param clientID       Die eindeutige ID des Spielers, dessen Register aktualisiert wird.
-     * @param registerCards  Eine Liste von Karten (als Strings), die der Spieler für diese Runde programmiert hat.
+     * Updates the register cards of another player.
+     * After the update, the player status panel is refreshed to reflect
+     * the new state.
+     *
+     * @param clientID       The unique ID of the player whose register is being updated.
+     * @param registerCards  A list of cards (as strings) that the player programmed for this round.
      */
     public void updateOtherPlayerRegister(int clientID, List<String> registerCards) {
+        int myID = ClientSingleton.getInstance().getID();
+        if (clientID == myID) {
+            return;
+        }
+
         otherPlayersRegisters.put(clientID, registerCards);
         refreshPlayerStatusUI();
     }
+
     private boolean activationPhaseActive = false;
 
     private void refreshPlayerStatusUI() {
@@ -4062,7 +4152,6 @@ public class GameController {
     /**
      * Draws animated lasers on the board based on hardcoded positions
      * for specific maps like "Dizzy Highway", "Extra Crispy", and "Lost Bearings".
-     *
      * This method clears the laser layer and redraws lasers in predefined positions
      * with direction, length, and color according to the selected map.
      *

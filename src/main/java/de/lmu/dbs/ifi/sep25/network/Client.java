@@ -391,7 +391,7 @@ public class Client {
                 if (selectorID == myID) {
                     controller.showMapSelection(message.messageBody().availableMaps());
                 } else {
-                    controller.hideMapSelection(); // sicherheitshalber
+                    controller.hideMapSelection();
                 }
             } else {
                 errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
@@ -668,9 +668,10 @@ public class Client {
     }
 
     /**
-     * Verarbeitet die Nachricht, welcher Spieler gerade am Zug ist.
+     * Processes the server message indicating which player is currently active.
+     * Calls the GameController to visually highlight the current player.
      *
-     * @param json JSON-String mit der Client-ID des aktiven Spielers
+     * @param json JSON string containing the client ID of the active player
      */
     private void handleBodyCurrentPlayer(String json) {
         Message<MessageDefinitions.BodyCurrentPlayer> message =
@@ -736,7 +737,6 @@ public class Client {
                     controller.deactivateStartPointClick();
                 }
                 controller.displayStartingPoint(x, y, clientID, direction);
-                //  Position merken!
                 controller.setRobotPosition(clientID, new Position(x, y));
             } else {
                 errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
@@ -936,7 +936,6 @@ public class Client {
                     registersByClient.computeIfAbsent(clientID, k -> new ArrayList<>()).add(cardName);
 
                     controller.showActiveCard(clientID, cardName);
-                    controller.animateRobotAction(clientID, cardName);
                 }
 
                 for (Map.Entry<Integer, List<String>> entry : registersByClient.entrySet()) {
