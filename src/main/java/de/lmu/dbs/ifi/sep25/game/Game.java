@@ -619,6 +619,7 @@ public class Game {
                                 List<String> damageCards = new ArrayList<>();
                                 for (int i = 0; i < hitRobot.getDamage() - oldDamage; i++) {
                                     damageCards.add("Spam");
+                                    hitRobot.addDamageCard(DamageCard.DamageType.SPAM);
                                 }
 
                                 Server.getInstance().broadcastMessage(
