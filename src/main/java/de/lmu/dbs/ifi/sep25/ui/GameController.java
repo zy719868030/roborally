@@ -295,6 +295,10 @@ public class GameController {
 
             gameBoardScrollPane.setHvalue(gameBoardScrollPane.getHmax() / 2);
             gameBoardScrollPane.setVvalue(gameBoardScrollPane.getVmax() / 2);
+            scrollContentWrapper.minWidthProperty().bind(gameBoardScrollPane.widthProperty());
+            scrollContentWrapper.minHeightProperty().bind(gameBoardScrollPane.heightProperty());
+            scrollContentWrapper.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
         });
 
         setupDraggableMap();
@@ -4309,63 +4313,53 @@ public class GameController {
     }
 
     /**
-     * Sets up mouse drag and scroll event handlers for the game board ScrollPane,
-     * enabling the user to pan (drag) and zoom the map using the mouse.
-     * - Dragging with the left mouse button moves the visible area.
-     * - Holding CTRL and using the mouse wheel zooms in/out.
+     * Enables mouse-based dragging (panning) of the game map within the ScrollPane.
+     * <p>
+     * By clicking and dragging with the primary (left) mouse button, the user can
+     * scroll the visible area of the game map. The drag movement is scaled using a
+     * configurable scroll speed factor to control responsiveness. While dragging,
+     * the cursor is set to a closed-hand icon for visual feedback.
+     * </p>
+     *
+     *
      */
     private void setupDraggableMap() {
-        gameBoardScrollPane.setOnMousePressed(event -> {
+        scrollContentWrapper.setOnMousePressed(event -> {
             if (event.getButton() == MouseButton.PRIMARY) {
-                dragStartX = event.getX();
-                dragStartY = event.getY();
+                dragStartX = event.getSceneX();
+                dragStartY = event.getSceneY();
                 gameBoardScrollPane.setCursor(Cursor.CLOSED_HAND);
             }
         });
 
-        gameBoardScrollPane.setOnMouseDragged(event -> {
+        scrollContentWrapper.setOnMouseDragged(event -> {
             if (event.getButton() == MouseButton.PRIMARY) {
-                double deltaX = dragStartX - event.getX();
-                double deltaY = dragStartY - event.getY();
+                double deltaX = dragStartX - event.getSceneX();
+                double deltaY = dragStartY - event.getSceneY();
 
-                double newHValue = gameBoardScrollPane.getHvalue() + (deltaX / gameBoardScrollPane.getHmax());
-                double newVValue = gameBoardScrollPane.getVvalue() + (deltaY / gameBoardScrollPane.getVmax());
+                double width = gameBoardScrollPane.getContent().getBoundsInLocal().getWidth();
+                double height = gameBoardScrollPane.getContent().getBoundsInLocal().getHeight();
+                double scrollSpeedFactor = 1.5;
 
-                gameBoardScrollPane.setHvalue(clamp(newHValue, 0.0, 1.0));
-                gameBoardScrollPane.setVvalue(clamp(newVValue, 0.0, 1.0));
+                double hValue = gameBoardScrollPane.getHvalue() + (deltaX * scrollSpeedFactor / width);
+                double vValue = gameBoardScrollPane.getVvalue() + (deltaY * scrollSpeedFactor / height);
 
-                dragStartX = event.getX();
-                dragStartY = event.getY();
 
-                updateMapInfoPopup();
+                gameBoardScrollPane.setHvalue(clamp(hValue, 0.0, 1.0));
+                gameBoardScrollPane.setVvalue(clamp(vValue, 0.0, 1.0));
+
+                dragStartX = event.getSceneX();
+                dragStartY = event.getSceneY();
             }
         });
 
-        gameBoardScrollPane.setOnMouseReleased(event -> {
+        scrollContentWrapper.setOnMouseReleased(event -> {
             if (event.getButton() == MouseButton.PRIMARY) {
                 gameBoardScrollPane.setCursor(Cursor.DEFAULT);
             }
         });
-
-        gameBoardScrollPane.setOnScroll(event -> {
-            if (event.isControlDown()) {
-                event.consume();
-                double oldScale = scaleValue;
-                if (event.getDeltaY() > 0) {
-                    scaleValue *= SCALE_DELTA;
-                } else {
-                    scaleValue /= SCALE_DELTA;
-                }
-
-                scaleValue = clamp(scaleValue, 0.5, 2.5);
-                zoomWrapper.setScaleX(scaleValue);
-                zoomWrapper.setScaleY(scaleValue);
-
-                repositionScrollPane(event.getX(), event.getY(), oldScale);
-                updateMapInfoPopup();
-            }
-        });
     }
+
 
     /**
      * Creates and displays a floating map info popup in the top right corner of the game view.
