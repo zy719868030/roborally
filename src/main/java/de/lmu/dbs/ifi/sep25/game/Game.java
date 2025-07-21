@@ -581,13 +581,11 @@ public class Game {
      * Board lasers fire continuously and deal damage to robots in their path.
      */
     private void handleBoardLasers() {
-        appLogger.info("=== Processing Board Lasers ===");
+//        appLogger.info("=== Processing Board Lasers ===");
         // Print all robot positions for debugging
         for (Player player : players) {
             Robot robot = player.getRobot();
             if (robot != null && robot.getPosition() != null) {
-                appLogger.info("Robot {} (clientID {}) is at position {}",
-                        robot.getRobotID(), robot.getClientID(), robot.getPosition());
             }
         }
         // Process all board laser emitters
@@ -595,11 +593,8 @@ public class Game {
             for (int x = 0; x < board.getWidth(); x++) {
                 for (BoardElement element : board.getElements(x, y)) {
                     if (element instanceof Laser laser) {
-                        appLogger.info("Found board laser at ({}, {}) with direction {}",
-                                x, y, laser.getDirection().getName());
                         // Fire board laser and get all hit robots
                         List<Robot> hitRobots = fireBoardLaserAndGetHits(laser, board);
-                        appLogger.info("Board laser at ({}, {}) hit {} robots", x, y, hitRobots.size());
 
                         // Apply damage to all hit robots
                         for (Robot hitRobot : hitRobots) {
@@ -636,7 +631,7 @@ public class Game {
                 }
             }
         }
-        appLogger.info("=== Board Laser processing complete ===");
+//        appLogger.info("=== Board Laser processing complete ===");
     }
 
     /**
@@ -654,9 +649,6 @@ public class Game {
         Position currentPos = new Position(laser.getPosition().x(), laser.getPosition().y());
         Direction firingDirection = laser.getDirection().turnAround(); // Board laser fires opposite to its orientation
 
-        appLogger.info("Board laser at {} fires in direction {} (opposite of {})",
-                laser.getPosition(), firingDirection.getName(), laser.getDirection().getName());
-
         // Scan along the firing direction until blocked
         int stepCount = 0;
         while (true) {
@@ -664,17 +656,13 @@ public class Game {
             // Move to the next position
             currentPos = currentPos.move(firingDirection);
 
-            appLogger.debug("  Step {}: Checking position {}", stepCount, currentPos);
-
             // Check if exceeds board boundary
             if (!board.isValidPosition(currentPos)) {
-                appLogger.debug("  Laser stopped: Out of bounds at {}", currentPos);
                 break;
             }
 
             // Check if blocked by wall
             if (isBoardLaserBlockedByWall(currentPos, board, firingDirection)) {
-                appLogger.debug("  Laser stopped: Blocked by wall at {}", currentPos);
                 break;
             }
 
@@ -682,8 +670,6 @@ public class Game {
             Robot targetRobot = board.getRobotAt(currentPos);
             if (targetRobot != null) {
                 hitRobots.add(targetRobot);
-                appLogger.info("  Board laser from {} HIT robot {} at {}",
-                        laser.getPosition(), targetRobot.getRobotID(), currentPos);
                 // Laser stops after hitting first robot
                 break;
             }
@@ -695,8 +681,6 @@ public class Game {
                 if (element instanceof Wall wall) {
                     if (wall.isDirectionBlocked(firingDirection)) {
                         blockedByWall = true;
-                        appLogger.debug("  Laser stopped: Blocked by wall at {} preventing exit in direction {}",
-                                currentPos, firingDirection.getName());
                         break;
                     }
                 }
@@ -706,11 +690,8 @@ public class Game {
                 break;
             }
 
-            appLogger.debug("  Position {} is empty", currentPos);
-
             // Safety check to prevent infinite loops
             if (stepCount > 20) {
-                appLogger.warn("  Laser scanning stopped: Too many steps ({})", stepCount);
                 break;
             }
         }
