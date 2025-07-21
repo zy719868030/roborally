@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
+import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
@@ -224,6 +225,18 @@ public class EnergySpace extends BoardElement {
                     )
             );
         }
+    }
+
+    /**
+     * Apply energy space effect to robot based on current register (with board parameter)
+     * This method overrides the base BoardElement method to maintain compatibility.
+     *
+     * @param robot Robot staying on energy space
+     * @param board Game board instance (for compatibility with BoardElement interface)
+     */
+    @Override
+    public void applyEffect(Robot robot, Board board) {
+        applyEffect(robot);
     }
 
     /**
