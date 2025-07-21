@@ -8,12 +8,21 @@ import java.util.List;
  * Unlike personal programming card decks, damage cards are shared resources that are distributed on demand.
  */
 public class DamageCardPool {
+    /** The sole instance of the damage card pool. */
     private static DamageCardPool instance;
+    /** List of available SPAM damage cards. */
     private final List<DamageCard> spamCards;
+    /** List of available WORM damage cards. */
     private final List<DamageCard> wormCards;
+    /** List of available VIRUS damage cards. */
     private final List<DamageCard> virusCards;
+    /** List of available TROJAN_HORSE damage cards. */
     private final List<DamageCard> trojanCards;
 
+    /**
+     * Private constructor. Initializes internal lists and populates
+     * them with the predefined number of damage cards per type.
+     */
     private DamageCardPool() {
         this.spamCards = new ArrayList<>();
         this.wormCards = new ArrayList<>();

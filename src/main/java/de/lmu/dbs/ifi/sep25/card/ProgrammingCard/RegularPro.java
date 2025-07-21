@@ -9,20 +9,60 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * A standard programming card that performs basic robot actions such as movement, rotation,
+ * power-up, and repeating the previous action.
+ * <p>
+ * Supports action types: "move", "backup", "turnLeft", "turnRight", "uTurn", "powerUp", and "again".
+ * </p>
+ */
 public class RegularPro extends ProgrammingCard {
+    /** Logger for application-level events and errors. */
     private final static Logger appLogger = LogManager.getLogger(RegularPro.class);
 
+    /** The distance to move when executing move or backup actions. */
     private int distance;
 
+    /**
+     * Constructs a new RegularPro card with the given description, action type, and distance.
+     *
+     * @param description descriptive text for this card
+     * @param actionType  the action keyword to perform (e.g., "move", "turnLeft")
+     * @param distance    the number of squares to move (positive for forward, negative for backup)
+     */
     public RegularPro(String description, String actionType, int distance) {
         super(description, actionType);
         this.distance = distance;
     }
 
+    /**
+     * Returns the configured movement distance for this card.
+     *
+     * @return the distance in board squares
+     */
     public int getDistance() {
         return distance;
     }
 
+    /**
+     * Executes the programming action on the specified robot.
+     * <p>
+     * If the robot is powered down or the board is null, logs an error and aborts.
+     * Supported actions:
+     * <ul>
+     *   <li>"move": move forward by {@link #distance} squares</li>
+     *   <li>"backup": move backward by {@link #distance} squares</li>
+     *   <li>"turnLeft": rotate left</li>
+     *   <li>"turnRight": rotate right</li>
+     *   <li>"uTurn": rotate 180 degrees</li>
+     *   <li>"powerUp": grant the player 1 energy</li>
+     *   <li>"again": repeat the last non-Again register action</li>
+     * </ul>
+     * </p>
+     *
+     * @param robot  the robot performing the action
+     * @param player the player controlling the robot
+     */
     @Override
     public void execute(Robot robot, Player player) {
         if (!canExecute(robot)) {
@@ -50,8 +90,11 @@ public class RegularPro extends ProgrammingCard {
     }
 
     /**
-     * Repeats the action of the previous register.
-     * **/
+     * Repeats the most recent non-Again card executed by this robot’s player.
+     * Logs errors if no valid previous action is found or on execution failure.
+     *
+     * @param robot the robot for which to repeat the previous action
+     */
     private void executeAgain(Robot robot) {
         final Player player = findPlayerByRobot(robot);
         if (player == null) {
@@ -76,8 +119,12 @@ public class RegularPro extends ProgrammingCard {
     }
 
     /**
-     * Recursively find the first non-Again card in previous registers
-     **/
+     * Finds the first non-Again programming card in earlier registers for the given player.
+     *
+     * @param player          the player whose history to search
+     * @param currentRegister the index of the current register slot
+     * @return the first non-Again RegisterCard, or {@code null} if none found
+     */
     private RegisterCard findPreviousNonAgainCard(Player player, int currentRegister) {
         // Start from the previous register
         for (int i = currentRegister - 1; i >= 0; i--) {
@@ -113,11 +160,22 @@ public class RegularPro extends ProgrammingCard {
         return null;
     }
 
-
+    /**
+     * Determines whether this card may be executed by the given robot.
+     * Cards cannot execute if the robot is powered down.
+     *
+     * @param robot the robot to check
+     * @return {@code true} if execution is permitted, {@code false} otherwise
+     */
     public boolean canExecute(Robot robot) {
         return !robot.isPoweredDown();
     }
 
+    /**
+     * Creates and returns a deep copy of this RegularPro card.
+     *
+     * @return a new RegularPro instance with identical description, actionType, and distance
+     */
     @Override
     public RegularPro clone() {
         return new RegularPro(this.description, this.actionType, this.distance);
