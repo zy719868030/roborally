@@ -535,7 +535,7 @@ public class GameController {
         Circle overlay = (Circle) selectedPane.getUserData();
         overlay.setFill(Color.rgb(39, 174, 96, 0.6)); // solid green
 
-        appendGameLog("Du hast deine Startposition bei (" + x + ", " + y + ") gewählt.", "info");
+        appendGameLog("▶ Du hast deine Startposition bei (" + x + ", " + y + ") gewählt.", "info");
     }
 
     public void deselectStartingPosition() {
@@ -748,7 +748,12 @@ public class GameController {
         chatArea.appendText(message + "\n");
     }
 
-
+    /**
+     * Adds a styled message to the game log with automatic scrolling.
+     *
+     * @param message the log message to display
+     * @param type    message type for styling: "info", "warn", "error", or "success"
+     */
     public void appendGameLog(String message, String type) {
         Label label = new Label(message);
 
@@ -771,7 +776,10 @@ public class GameController {
 
 
 
-
+    /**
+     * Gets the current game phase ID.
+     * @return the current phase ID
+     */
     public int getCurrentPhaseID() {
         return currentPhaseID;
     }
@@ -1027,7 +1035,11 @@ public class GameController {
         fade.play();
     }
 
-
+    /**
+     * Updates the discard pile UI with the given list of card images.
+     *
+     * @param discardedCards list of card names to display
+     */
     public void updateDiscardPile(List<String> discardedCards) {
         discardPileBox.getChildren().clear();
 
@@ -1075,6 +1087,12 @@ public class GameController {
         tt.play();
     }
 
+    /**
+     * Initializes the player stats at the start of the game.
+     *
+     * @param energy              map of client IDs to their initial energy values
+     * @param checkpointsReached  map of client IDs to the number of checkpoints reached
+     */
     public void setInitialPlayerStats(Map<Integer, Integer> energy, Map<Integer, Integer> checkpointsReached) {
     }
 
@@ -1753,7 +1771,7 @@ public class GameController {
                 .toList();
 
         if (selectedCards.size() != 5) {
-            appendGameLog("Du musst genau 5 Karten ins Register ziehen.", "warn");
+            appendGameLog("▶ Du musst genau 5 Karten ins Register ziehen.", "warn");
             return;
         }
 
@@ -1975,7 +1993,7 @@ public class GameController {
         String playerName = getPlayerNameById(clientID);
 
         if (isSelf) {
-            appendGameLog("Du hast dein Programm fertiggestellt.", "info");
+            appendGameLog("▶ Du hast dein Programm fertiggestellt.", "info");
         } else {
             appendGameLog(playerName + " hat sein Programm fertiggestellt.", "info");
         }
@@ -2455,14 +2473,19 @@ public class GameController {
      *
      * @param type the type of animation ("Movement", "Clockwise", "Checkpoint")
      */
+
     public void playAnimation(String type) {
         if ("PlayerShooting".equals(type)) {
             int meineClientID = ClientSingleton.getInstance().getID();
             spieleLaserAnimation(meineClientID);
+        } else if ("RoundCompleted".equals(type)) {
+            showRoundCompletedOverlay();
         } else {
-          //  appendChatMessage("[ANIMATION] " + type + " ausgeführt.");
+            // Optionally log unknown animation types
+            System.out.println("Unrecognized animation type: " + type);
         }
     }
+
 
 
     /**
@@ -2558,7 +2581,7 @@ public class GameController {
      * @param direction The direction chosen by the player ("up", "down", "left", "right")
      */
     public void showRebootDirection(String direction) {
-        appendChatMessage("[INFO] Reboot-Richtung: " + direction);
+        appendGameLog("Reboot-Richtung: " + direction, "info");
 
 //        // Update the direction for all robots during the restart process
 //        int rebootingClientID = ClientSingleton.getInstance().getRebootingInProgress();
@@ -2703,7 +2726,7 @@ public class GameController {
         String playerName = getPlayerNameById(clientID);
 
         if (clientID == myID) {
-            appendGameLog("Du hast jetzt " + energy + " ⚡ (Quelle: " + source + ")", "info");
+            appendGameLog("▶ Du hast jetzt " + energy + " ⚡ (Quelle: " + source + ")", "info");
             updateEnergyDisplay(energy);
         } else {
             appendGameLog("Spieler " + playerName + " hat jetzt " + energy + " ⚡ (Quelle: " + source + ")", "info");
@@ -2904,7 +2927,7 @@ public class GameController {
             handCardBox.getChildren().add(view);
         }
 
-        appendGameLog("Du hast " + cards.size() + " Schadenskarten erhalten.", "warm");
+        appendGameLog("▶ Du hast " + cards.size() + " Schadenskarten erhalten.", "warm");
     }
     /**
      * Prompts the player to select a specific number of damage cards from the available options.
@@ -3277,7 +3300,10 @@ public class GameController {
         }
     }
 
-
+    /**
+     * Shows a styled popup with drag-and-drop instructions.
+     * Automatically hides after 15 seconds.
+     */
     private void showDragAndDropInfoPopup() {
         Platform.runLater(() -> {
             // Label mit Info-Text und Styling
@@ -3660,12 +3686,12 @@ public class GameController {
     }
 
     /**
-     * Zeigt den aktuellen Energiewert in der UI an.
+     * Displays the current energy value in the UI.
      * <p>
-     * Setzt Text, Farbe und Fortschrittsbalken entsprechend dem Wert.
-     * Spielt eine Animation bei Änderung (Bounce bei Anstieg, Shake bei Abfall).
+     * Sets the text, color, and progress bar according to the value.
+     * Plays an animation on change (bounce on increase, shake on decrease).
      *
-     * @param energy Der neue Energiewert.
+     * @param energy The new energy value.
      */
     public void updateEnergyDisplay(int energy) {
         energyValue.setText(String.valueOf(energy));
@@ -4235,6 +4261,38 @@ public class GameController {
 
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+    }
+
+    public void showRoundCompletedOverlay() {
+        Label roundLabel = new Label("Runde beendet!");
+        roundLabel.setStyle("""
+        -fx-font-size: 48px;
+        -fx-text-fill: cyan;
+        -fx-font-weight: bold;
+        -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
+    """);
+
+        roundLabel.setVisible(true);
+        roundLabel.setManaged(true);
+
+        StackPane.setAlignment(roundLabel, Pos.CENTER);
+        zoomWrapper.setVisible(true);
+        zoomWrapper.setManaged(true);
+
+        zoomWrapper.getChildren().add(roundLabel);
+
+        ScaleTransition scale = new ScaleTransition(Duration.millis(300), roundLabel);
+        scale.setFromX(0.6);
+        scale.setFromY(0.6);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+        scale.play();
+
+        FadeTransition fade = new FadeTransition(Duration.seconds(2), roundLabel);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+        fade.setOnFinished(e -> zoomWrapper.getChildren().remove(roundLabel));
+        fade.play();
     }
 }
 
