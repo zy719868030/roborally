@@ -1,5 +1,6 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
+import de.lmu.dbs.ifi.sep25.game.Board;
 import de.lmu.dbs.ifi.sep25.game.Game;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.game.Robot;
@@ -56,22 +57,6 @@ public class EnergySpace extends BoardElement {
         this.boardId = boardId;
         this.isOnBoard = !boardId.isEmpty();
     }
-
-    /**
-     * Constructor with position and energy count parameters.
-     *
-     * @param position Position in energy space.
-     * @param energyCount Number of energy cubes.
-     */
-    /*
-    public EnergySpace(Position position, int energyCount) {
-        super(position);
-        this.energyCount = energyCount;
-        this.collected = false;
-        this.isOnBoard = false;
-        this.boardId = "";
-    }
-    */
 
     /**
      * Constructs an energy space at the specified position with a custom energy count.
@@ -243,6 +228,18 @@ public class EnergySpace extends BoardElement {
     }
 
     /**
+     * Apply energy space effect to robot based on current register (with board parameter)
+     * This method overrides the base BoardElement method to maintain compatibility.
+     *
+     * @param robot Robot staying on energy space
+     * @param board Game board instance (for compatibility with BoardElement interface)
+     */
+    @Override
+    public void applyEffect(Robot robot, Board board) {
+        applyEffect(robot);
+    }
+
+    /**
      * Returns a string representation of this energy space.
      *
      * <p>The string includes the energy space's position, board association,
@@ -267,14 +264,7 @@ public class EnergySpace extends BoardElement {
     @Override
     public MessageDefinitions.FieldEnergySpace toField() {
         int currentCount = getEnergyCount();
-        appLogger.info("EnergySpace.toField() called: position={}, energyCount={}, boardId={}", position, currentCount, boardId);
-
-        // Ensure that the correct parameter order and values are passed
-        MessageDefinitions.FieldEnergySpace field = new MessageDefinitions.FieldEnergySpace(boardId, currentCount);
-        appLogger.info("Created FieldEnergySpace with count: {}", field.count());
-//        return new MessageDefinitions.FieldEnergySpace(boardId, getEnergyCount());
-        appLogger.info("FieldEnergySpace type: {}", field.type());
-        appLogger.info("FieldEnergySpace isOnBoard: {}", field.isOnBoard());
-        return field;
+//        appLogger.info("EnergySpace.toField() called: position={}, energyCount={}, boardId={}", position, currentCount, boardId);
+        return new MessageDefinitions.FieldEnergySpace(boardId, currentCount);
     }
 }

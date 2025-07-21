@@ -1,7 +1,5 @@
 package de.lmu.dbs.ifi.sep25.network;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -247,11 +245,6 @@ public class MessageDefinitions {
         public FieldEnergySpace(String isOnBoard, Integer count) {
             super(isOnBoard);
             this.count = count;
-            System.out.println("[CONSTRUCTOR] FieldEnergySpace({" + isOnBoard + "}, {" + count + "}) called");
-        }
-
-        public Integer getCount() {
-            return count;
         }
 
         public Integer count() {

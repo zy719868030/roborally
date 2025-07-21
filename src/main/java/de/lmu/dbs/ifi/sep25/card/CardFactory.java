@@ -13,18 +13,34 @@ import de.lmu.dbs.ifi.sep25.game.Robot;
 import java.util.List;
 
 /**
- * Card factory class, responsible for creating various types of card objects and providing conversion between strings
- * and card objects.
+ * Factory class for creating and identifying card instances by string identifiers.
+ * <p>
+ * Provides methods to construct {@link RegisterCard} implementations (programming,
+ * special, and damage cards) based on their names, as well as utilities for looking
+ * up cards in a player's hand or retrieving the canonical string for upgrade cards.
+ * </p>
  */
 public class CardFactory {
 
+    /** Singleton pool used for drawing {@link DamageCard} instances. */
     private static final DamageCardPool damageCardPool = DamageCardPool.getInstance();
 
     /**
-     * Create a corresponding RegisterCard object based on the card name.
+     * Creates a {@link RegisterCard} instance corresponding to the given card name.
+     * <p>
+     * Recognized names include:
+     * <ul>
+     *   <li>Programming cards: MoveI, MoveII, MoveIII, TurnLeft, TurnRight, UTurn,
+     *       BackUp, PowerUp, Again</li>
+     *   <li>Special cards: RepeatRoutine, SpeedRoutine, EnergyRoutine, SpamFolder,
+     *       SandboxRoutine, WeaselRoutine</li>
+     *   <li>Damage cards: Spam, Worm, Virus, Trojan</li>
+     * </ul>
+     * Returns {@code null} if the name is unrecognized or {@code null/empty}.
+     * </p>
      *
-     * @param cardName Card name.
-     * @return The corresponding RegisterCard object. If there is no match, return null.
+     * @param cardName the string identifier of the desired card
+     * @return a new {@link RegisterCard} with the specified behavior, or {@code null}
      */
     public static RegisterCard createCard(String cardName) {
         if (cardName == null || cardName.isEmpty()) {
@@ -63,10 +79,16 @@ public class CardFactory {
     }
 
     /**
-     * Get the string identifier of the card.
+     * Returns the standard string identifier for a given {@link RegisterCard} instance.
+     * <p>
+     * Uses the card's runtime class and properties (e.g., distance for moves,
+     * special effect keyword, or damage type) to reverse-map to one of the names
+     * recognized by {@link #createCard(String)}. If no match is found, returns
+     * {@code card.toString()} or {@code null} if the card is {@code null}.
+     * </p>
      *
-     * @param card Card object.
-     * @return String identifier of the card.
+     * @param card the {@link RegisterCard} to name
+     * @return the canonical card name, or {@code null} if the card is {@code null}
      */
     public static String getCardName(RegisterCard card) {
         if (card == null) {
@@ -122,11 +144,11 @@ public class CardFactory {
     }
 
     /**
-     * Search for cards with the corresponding name in the player's hand.
+     * Searches the given hand (list) for a {@link RegisterCard} matching the specified name.
      *
-     * @param cardName Card name.
-     * @param hand Player's hand.
-     * @return The card found. If no card is found, return null.
+     * @param cardName the name to search for (as returned by {@link #getCardName(RegisterCard)})
+     * @param hand     the list of cards in the player's hand
+     * @return the first matching {@link RegisterCard}, or {@code null} if none found
      */
     public static RegisterCard findCardInHand(String cardName, List<RegisterCard> hand) {
         if (cardName == null || hand == null || hand.isEmpty()) {
@@ -201,10 +223,17 @@ public class CardFactory {
 //        };
 //    }
 
+
     /**
-     * Get the string identifier of the upgrade card.
-     * @param card Upgrade card object.
-     * @return String identifier of the upgrade card.
+     * Returns the canonical string identifier for an {@link UpgradeCard} instance.
+     * <p>
+     * Uses the card's simple class name to map back to the expected name used
+     * by clients or serialization. Known special cases (e.g., EnergyRoutineUpgrade
+     * &rarr; "EnergyRoutine", RebootUpgrade &rarr; "Reboot") are handled explicitly.
+     * </p>
+     *
+     * @param card the {@link UpgradeCard} to name
+     * @return the upgrade card’s string identifier, or {@code null} if the card is {@code null}
      */
     public static String getUpgradeCardName(UpgradeCard card) {
         if (card == null) {

@@ -429,8 +429,6 @@ public class Client {
      * @param json The JSON string representing the game started message.
      */
     private void handleBodyGameStarted(String json) {
-        appLogger.info("[CLIENT DEBUG] Received GameStarted JSON: {}", json);
-
         Message<BodyGameStarted> message = JsonUtil.parseMessage(json, BodyGameStarted.class);
         BodyGameStarted body = message.messageBody();
 
@@ -449,7 +447,7 @@ public class Client {
                     for (Field field : fields) {
                         if ("Energy-Space".equals(field.type())) {
                             MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) field;
-                            appLogger.info("[CLIENT DEBUG] Found EnergySpace at ({},{}) with count: {}", x, y, es.getCount());
+//                            appLogger.info("[CLIENT DEBUG] Found EnergySpace at ({},{}) with count: {}", x, y, es.count());
                         }
                     }
                 }

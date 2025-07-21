@@ -129,12 +129,22 @@ public class PlayerEntry {
     public String toString() {
         return String.format("Figur %d – %s [%s]", getFigure(), getName(), isReady() ? "bereit" : "nicht bereit");
     }
+    /**
+     * Returns a short string representation of the player, including their name and client ID.
+     *
+     * @return A string in the format "Name #ID".
+     */
     public String toShortString() {
         return getName() + " #" + getClientID();
     }
 
 
-public void setName(String name) { //@SEBAS
-    this.name.set(name);
-}
+    /**
+     * Sets the player's name to the specified value.
+     *
+     * @param name The new name of the player.
+     */
+    public void setName(String name) { //@SEBAS
+        this.name.set(name);
+    }
 }

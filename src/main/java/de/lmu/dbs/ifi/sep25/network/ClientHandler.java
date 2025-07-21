@@ -540,8 +540,6 @@ public class ClientHandler implements Runnable {
         appLogger.info("{} has finished their selection.", player.toString());
         player.setReadyRegister(true);
         server.markReadyRegister(myID);
-
-        broadcastMessage(new Message<>(new BodySelectionFinished(myID)));
     }
 
 

@@ -61,13 +61,21 @@ public class ViewModel {
         model.addNewListItem();
         input.requestFocus();
     }
-
+    /**
+     * Handles key press events within the scene.
+     * <p>
+     * If the Enter key is pressed, this method triggers the same action
+     * as a button click by calling {@code handleButtonPress(null)}.
+     *
+     * @param keyEvent The key event that was fired.
+     */
     @FXML
     public void handleKeyPressed(KeyEvent keyEvent){
         if (keyEvent.getCode() == KeyCode.ENTER) {
             handleButtonPress(null);
         }
     }
+
 }
 
 

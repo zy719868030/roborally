@@ -44,7 +44,7 @@ public class FieldSerializer implements JsonSerializer<MessageDefinitions.Field>
                 obj.addProperty("count", f.count());
                 obj.add("orientations", context.serialize(f.orientations()));
             }
-            case "EnergySpace" -> {
+            case "Energy-Space" -> {
                 MessageDefinitions.FieldEnergySpace f = (MessageDefinitions.FieldEnergySpace) src;
                 obj.addProperty("count", f.count());
             }
