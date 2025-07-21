@@ -1,10 +1,8 @@
 package de.lmu.dbs.ifi.sep25.game.BoardElement;
 
-import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.Direction;
-import de.lmu.dbs.ifi.sep25.game.Position;
-import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.*;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.network.Server;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
@@ -75,10 +73,16 @@ public class Belts extends BoardElement {
     }
 
     /**
-     * Improved rotation application logic
-     * Rotate according to the robot's actual source direction
+     * Öffentliche Schnittstelle: Wendet einen Rotationseffekt auf Roboter an, die sich auf dem Kurvenförderband befinden.
+     * Speziell für den Fall, dass der Roboter bereits von einem anderen Förderband auf das Kurvenförderband bewegt wurde.
+     *
+     * @param robot Der zu rotierende Roboter.
      */
-    private void applyConveyorRotation(Robot robot) {
+    public void applyConveyorRotation(Robot robot) {
+        if (!isRotating()) {
+            return;
+        }
+
         appLogger.info("=== ROTATION APPLIED === Robot {} at position ({}, {}) being rotated by belt",
                 robot.getRobotID(), position.x(), position.y());
         appLogger.info("Belt configuration - OutDir: {}, InDirs: {}, isRotating: {}",
@@ -94,7 +98,6 @@ public class Belts extends BoardElement {
         Direction currentDirection = robot.getDirection();
         Direction outDir = outDirections.get(0);
 
-        // Attempt to determine the direction from which the robot is coming, based on the robot's current orientation and conveyor belt configuration.
         Direction rotationInDir = null;
         for (Direction inDir : inDirections) {
             if (isNinetyDegreeTurn(inDir, outDir)) {
@@ -108,7 +111,6 @@ public class Belts extends BoardElement {
             return;
         }
 
-        // Determine the direction of rotation
         boolean isCounterClockwise = isCounterClockwiseTurn(rotationInDir, outDir);
         Direction newDirection;
         if (isCounterClockwise) {
@@ -124,6 +126,22 @@ public class Belts extends BoardElement {
         }
 
         robot.setDirection(newDirection);
+        Player player = Game.getInstance().getPlayers().stream()
+                .filter(p -> p.getRobot() == robot)
+                .findFirst()
+                .orElse(null);
+
+        if (player != null) {
+            String rotationDirection = isCounterClockwise ? "counterclockwise" : "clockwise";
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyPlayerTurning(
+                                    player.getClientID(),
+                                    rotationDirection
+                            )
+                    )
+            );
+        }
         appLogger.info("Robot {} rotated from {} to {} by rotating conveyor belt at position ({}, {})",
                 robot.getRobotID(), currentDirection.getName(), newDirection.getName(),
                 position.x(), position.y());
@@ -150,9 +168,9 @@ public class Belts extends BoardElement {
      */
     private boolean isCounterClockwiseTurn(Direction inDir, Direction outDir) {
         return (inDir == Direction.NORTH && outDir == Direction.WEST) ||
-                (inDir == Direction.WEST && outDir == Direction.SOUTH) ||
+                (inDir == Direction.WEST && outDir == Direction.NORTH) ||
                 (inDir == Direction.SOUTH && outDir == Direction.EAST) ||
-                (inDir == Direction.EAST && outDir == Direction.NORTH);
+                (inDir == Direction.EAST && outDir == Direction.SOUTH);
     }
 
     /**
