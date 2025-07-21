@@ -571,6 +571,9 @@ public class Game {
         // Activate board elements (e.g., belts, gears)
         activateBoardElements();
 
+        // Fire board lasers
+        handleBoardLasers();
+
         // Fire robot lasers
         handleRobotLasers();
 
@@ -579,6 +582,154 @@ public class Game {
         handlePendingReboots();
     }
 
+    /**
+     * Handles board laser effects during the activation phase.
+     * Board lasers fire continuously and deal damage to robots in their path.
+     */
+    private void handleBoardLasers() {
+        appLogger.info("=== Processing Board Lasers ===");
+        // Print all robot positions for debugging
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            if (robot != null && robot.getPosition() != null) {
+                appLogger.info("Robot {} (clientID {}) is at position {}",
+                        robot.getRobotID(), robot.getClientID(), robot.getPosition());
+            }
+        }
+        // Process all board laser emitters
+        for (int y = 0; y < board.getHeight(); y++) {
+            for (int x = 0; x < board.getWidth(); x++) {
+                for (BoardElement element : board.getElements(x, y)) {
+                    if (element instanceof Laser laser) {
+                        appLogger.info("Found board laser at ({}, {}) with direction {}",
+                                x, y, laser.getDirection().getName());
+                        // Fire board laser and get all hit robots
+                        List<Robot> hitRobots = fireBoardLaserAndGetHits(laser, board);
+                        appLogger.info("Board laser at ({}, {}) hit {} robots", x, y, hitRobots.size());
+
+                        // Apply damage to all hit robots
+                        for (Robot hitRobot : hitRobots) {
+                            int oldDamage = hitRobot.getDamage();
+                            hitRobot.takeDamage(laser.getPower());
+
+                            // If damage increased, broadcast damage
+                            if (hitRobot.getDamage() > oldDamage) {
+                                // Animation
+                                Server.getInstance().broadcastMessage(
+                                        new MessageDefinitions.Message<>(
+                                                new MessageDefinitions.BodyAnimation("WallShooting")
+                                        )
+                                );
+
+                                // Deal damage cards
+                                List<String> damageCards = new ArrayList<>();
+                                for (int i = 0; i < hitRobot.getDamage() - oldDamage; i++) {
+                                    damageCards.add("Spam");
+                                    hitRobot.addDamageCard(DamageCard.DamageType.SPAM);
+                                }
+
+                                Server.getInstance().broadcastMessage(
+                                        new MessageDefinitions.Message<>(
+                                                new MessageDefinitions.BodyDrawDamage(hitRobot.getClientID(), damageCards)
+                                        )
+                                );
+
+                                appLogger.info("Board laser at ({}, {}) hit robot {} for {} damage",
+                                        x, y, hitRobot.getRobotID(), laser.getPower());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        appLogger.info("=== Board Laser processing complete ===");
+    }
+
+    /**
+     * Fires a board laser and returns all robots hit by its beam.
+     * Board laser fires in the opposite direction of its orientation.
+     */
+    private List<Robot> fireBoardLaserAndGetHits(Laser laser, Board board) {
+        List<Robot> hitRobots = new ArrayList<>();
+
+        if (laser.getDirection() == null) {
+            appLogger.error("Board laser at {} has no direction set!", laser.getPosition());
+            return hitRobots;
+        }
+
+        Position currentPos = new Position(laser.getPosition().x(), laser.getPosition().y());
+        Direction firingDirection = laser.getDirection().turnAround(); // Board laser fires opposite to its orientation
+
+        appLogger.info("Board laser at {} fires in direction {} (opposite of {})",
+                laser.getPosition(), firingDirection.getName(), laser.getDirection().getName());
+
+        // Scan along the firing direction until blocked
+        int stepCount = 0;
+        while (true) {
+            stepCount++;
+            // Move to the next position
+            currentPos = currentPos.move(firingDirection);
+
+            appLogger.debug("  Step {}: Checking position {}", stepCount, currentPos);
+
+            // Check if exceeds board boundary
+            if (!board.isValidPosition(currentPos)) {
+                appLogger.debug("  Laser stopped: Out of bounds at {}", currentPos);
+                break;
+            }
+
+            // Check if blocked by wall
+            if (isBoardLaserBlockedByWall(currentPos, board, firingDirection)) {
+                appLogger.debug("  Laser stopped: Blocked by wall at {}", currentPos);
+                break;
+            }
+
+            // Check for robot first
+            Robot targetRobot = board.getRobotAt(currentPos);
+            if (targetRobot != null) {
+                hitRobots.add(targetRobot);
+                appLogger.info("  Board laser from {} HIT robot {} at {}",
+                        laser.getPosition(), targetRobot.getRobotID(), currentPos);
+                // Laser stops after hitting first robot
+                break;
+            }
+
+            // After checking for robot, check if laser can continue forward
+            // Check if current position has wall blocking the firing direction
+            boolean blockedByWall = false;
+            for (BoardElement element : board.getElements(currentPos.x(), currentPos.y())) {
+                if (element instanceof Wall wall) {
+                    if (wall.isDirectionBlocked(firingDirection)) {
+                        blockedByWall = true;
+                        appLogger.debug("  Laser stopped: Blocked by wall at {} preventing exit in direction {}",
+                                currentPos, firingDirection.getName());
+                        break;
+                    }
+                }
+            }
+
+            if (blockedByWall) {
+                break;
+            }
+
+            appLogger.debug("  Position {} is empty", currentPos);
+
+            // Safety check to prevent infinite loops
+            if (stepCount > 20) {
+                appLogger.warn("  Laser scanning stopped: Too many steps ({})", stepCount);
+                break;
+            }
+        }
+
+        return hitRobots;
+    }
+
+    /**
+     * Checks if a board laser is blocked by a wall at the given position.
+     */
+    private boolean isBoardLaserBlockedByWall(Position position, Board board, Direction firingDirection) {
+        return false;
+    }
 
     // 4. Player Management Methods
 

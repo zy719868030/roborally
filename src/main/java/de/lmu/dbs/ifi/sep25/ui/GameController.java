@@ -26,6 +26,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.scene.input.MouseButton;
+import javafx.scene.Cursor;
 import javafx.scene.layout.*;
 import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
@@ -42,7 +44,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -213,6 +214,11 @@ public class GameController {
 
 
     @FXML
+    private StackPane rootPane;
+
+    private Button helpButton;
+
+    @FXML
     public void initialize() {
         loadTileImages();
         gameBoardScrollPane.setStyle("-fx-background-color: transparent;");
@@ -291,6 +297,9 @@ public class GameController {
             gameBoardScrollPane.setVvalue(gameBoardScrollPane.getVmax() / 2);
         });
 
+        setupDraggableMap();
+        setupMapInfoPopup();
+        setupHelpIcon();
     }
 
 
@@ -884,7 +893,7 @@ public class GameController {
                 manuallyClearedSlots.clear();
                 swapProtectedSlots.clear();
                 confirmedCards.clear();
-                
+
                 Platform.runLater(() -> {
                     clearHandUI();
                     clearRegisterUI();
@@ -2473,7 +2482,6 @@ public class GameController {
      *
      * @param type the type of animation ("Movement", "Clockwise", "Checkpoint")
      */
-
     public void playAnimation(String type) {
         if ("PlayerShooting".equals(type)) {
             int meineClientID = ClientSingleton.getInstance().getID();
@@ -4162,6 +4170,7 @@ public class GameController {
     /**
      * Draws animated lasers on the board based on hardcoded positions
      * for specific maps like "Dizzy Highway", "Extra Crispy", and "Lost Bearings".
+     *
      * This method clears the laser layer and redraws lasers in predefined positions
      * with direction, length, and color according to the selected map.
      *
@@ -4293,6 +4302,213 @@ public class GameController {
         fade.setToValue(0.0);
         fade.setOnFinished(e -> zoomWrapper.getChildren().remove(roundLabel));
         fade.play();
+    }
+
+
+
+    /**
+     * Setup für draggable Map-Funktionalität
+     */
+    private void setupDraggableMap() {
+
+        gameBoardScrollPane.setOnMousePressed(event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                dragStartX = event.getX();
+                dragStartY = event.getY();
+                gameBoardScrollPane.setCursor(Cursor.CLOSED_HAND);
+            }
+        });
+
+        gameBoardScrollPane.setOnMouseDragged(event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                double deltaX = dragStartX - event.getX();
+                double deltaY = dragStartY - event.getY();
+
+                double newHValue = gameBoardScrollPane.getHvalue() + (deltaX / gameBoardScrollPane.getHmax());
+                double newVValue = gameBoardScrollPane.getVvalue() + (deltaY / gameBoardScrollPane.getVmax());
+
+                gameBoardScrollPane.setHvalue(clamp(newHValue, 0.0, 1.0));
+                gameBoardScrollPane.setVvalue(clamp(newVValue, 0.0, 1.0));
+
+                dragStartX = event.getX();
+                dragStartY = event.getY();
+
+                updateMapInfoPopup();
+            }
+        });
+
+        gameBoardScrollPane.setOnMouseReleased(event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                gameBoardScrollPane.setCursor(Cursor.DEFAULT);
+            }
+        });
+
+        gameBoardScrollPane.setOnScroll(event -> {
+            if (event.isControlDown()) {
+                event.consume();
+                double oldScale = scaleValue;
+                if (event.getDeltaY() > 0) {
+                    scaleValue *= SCALE_DELTA;
+                } else {
+                    scaleValue /= SCALE_DELTA;
+                }
+
+                scaleValue = clamp(scaleValue, 0.5, 2.5);
+                zoomWrapper.setScaleX(scaleValue);
+                zoomWrapper.setScaleY(scaleValue);
+
+                repositionScrollPane(event.getX(), event.getY(), oldScale);
+                updateMapInfoPopup();
+            }
+        });
+    }
+
+    /**
+     * Setup für Map-Info-Popup
+     */
+    private void setupMapInfoPopup() {
+
+        VBox infoBox = new VBox(8);
+        infoBox.setStyle("-fx-background-color: #2F4F4F; -fx-padding: 15; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-color: #87CEEB; -fx-border-width: 2;");
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setPrefWidth(280);
+
+        // Titel
+        Label titleLabel = new Label("MAP CONTROLS");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold; -fx-padding: 0 0 5 0;");
+
+        // Controls
+        Label zoomLabel1 = new Label("• Mit STRG + Mausrad kannst du hinein- oder herauszoomen.");
+        zoomLabel1.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+
+        Label zoomLabel2 = new Label("• Alternativ kannst du die Lupe-Symbole zum Zoomen verwenden.");
+        zoomLabel2.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+
+
+        // Status-Info
+        Label statusTitle = new Label("CURRENT STATUS");
+        statusTitle.setStyle("-fx-text-fill: #87CEEB; -fx-font-size: 12; -fx-font-weight: bold; -fx-padding: 10 0 5 0;");
+
+        Label zoomStatusLabel = new Label("Zoom: 100%");
+        zoomStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+        zoomStatusLabel.setId("zoomLabel");
+
+        Label positionStatusLabel = new Label("Position: 50%, 50%");
+        positionStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+        positionStatusLabel.setId("positionLabel");
+
+        infoBox.getChildren().addAll(
+                titleLabel,
+                zoomLabel1,
+                zoomLabel2,
+                statusTitle,
+                zoomStatusLabel,
+                positionStatusLabel
+        );
+
+
+        StackPane.setAlignment(infoBox, Pos.TOP_RIGHT);
+        infoBox.setTranslateX(-15);
+        infoBox.setTranslateY(15);
+
+        if (gameBoardScrollPane.getParent() instanceof StackPane parent) {
+            parent.getChildren().add(infoBox);
+        }
+
+        // Initial update
+        updateMapInfoPopup();
+    }
+
+    /**
+     * Aktualisiert das Map-Info-Popup mit aktuellen Werten
+     */
+    private void updateMapInfoPopup() {
+        Platform.runLater(() -> {
+            Node zoomLabel = gameBoardScrollPane.getScene().lookup("#zoomLabel");
+            Node positionLabel = gameBoardScrollPane.getScene().lookup("#positionLabel");
+
+            if (zoomLabel instanceof Label) {
+                int zoomPercent = (int) (scaleValue * 100);
+                ((Label) zoomLabel).setText("Zoom: " + zoomPercent + "%");
+            }
+
+            if (positionLabel instanceof Label) {
+                int hPercent = (int) (gameBoardScrollPane.getHvalue() * 100);
+                int vPercent = (int) (gameBoardScrollPane.getVvalue() * 100);
+                ((Label) positionLabel).setText("Position: " + hPercent + "%, " + vPercent + "%");
+            }
+        });
+    }
+
+    private void setupHelpIcon() {
+
+        helpButton = new Button("?");
+        helpButton.setStyle("-fx-background-radius: 50%; -fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 18; -fx-font-weight: bold; -fx-min-width: 36; -fx-min-height: 36; -fx-cursor: hand;");
+        helpButton.setPrefSize(36, 36);
+        StackPane.setAlignment(helpButton, Pos.TOP_RIGHT);
+        helpButton.setTranslateX(-18);
+        helpButton.setTranslateY(18);
+        helpButton.setFocusTraversable(false);
+        helpButton.setOnAction(e -> showMapInfoDialog());
+        if (rootPane != null) {
+            rootPane.getChildren().add(helpButton);
+        }
+    }
+
+    private void showMapInfoDialog() {
+
+        VBox infoBox = new VBox(8);
+        infoBox.setStyle("-fx-background-color: #2F4F4F; -fx-padding: 18; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #87CEEB; -fx-border-width: 2;");
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setPrefWidth(320);
+
+        Label titleLabel = new Label("KARTEN-STEUERUNG");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 0 0 8 0;");
+
+        Label zoomLabel = new Label("• Mausrad + STRG zum Zoomen");
+        zoomLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        Label zoomIconLabel = new Label("• Lupen-Icons zum Zoomen verwenden");
+        zoomIconLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        Label dragLabel = new Label("• Karte mit der Maus verschieben");
+        dragLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        Label statusTitle = new Label("AKTUELLER STATUS");
+        statusTitle.setStyle("-fx-text-fill: #87CEEB; -fx-font-size: 13; -fx-font-weight: bold; -fx-padding: 12 0 5 0;");
+
+        Label zoomStatusLabel = new Label("Zoom: " + (int)(scaleValue*100) + "%");
+        zoomStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        int hPercent = (int) (gameBoardScrollPane.getHvalue() * 100);
+        int vPercent = (int) (gameBoardScrollPane.getVvalue() * 100);
+        Label positionStatusLabel = new Label("Position: " + hPercent + "%, " + vPercent + "%");
+        positionStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        Button closeBtn = new Button("Schließen");
+        closeBtn.setStyle("-fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 13; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 6 18;");
+        closeBtn.setOnAction(e -> ((Stage) closeBtn.getScene().getWindow()).close());
+        closeBtn.setDefaultButton(true);
+
+        infoBox.getChildren().addAll(
+            titleLabel,
+            zoomLabel,
+            zoomIconLabel,
+            dragLabel,
+            statusTitle,
+            zoomStatusLabel,
+            positionStatusLabel,
+            closeBtn
+        );
+
+        Scene scene = new Scene(infoBox);
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.UTILITY);
+        dialog.setTitle("Karten-Steuerung");
+        dialog.setScene(scene);
+        dialog.setResizable(false);
+        dialog.show();
     }
 }
 
