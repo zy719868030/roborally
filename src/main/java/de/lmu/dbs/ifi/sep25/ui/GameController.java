@@ -11,7 +11,6 @@ import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -42,7 +41,6 @@ import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -2857,24 +2855,11 @@ public class GameController {
             title.setMaxWidth(600);
             title.setAlignment(Pos.CENTER);
 
-            Button backToMenuBtn = new Button("Zurück zum Hauptmenü");
-            backToMenuBtn.getStyleClass().add("senden-button");
-            backToMenuBtn.setOnAction(e -> {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-                    Parent menuRoot = loader.load();
-                    Scene menuScene = new Scene(menuRoot, 800, 600);
-                    menuScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            Button closeClientBtn = new Button("Client schließen");
+            closeClientBtn.getStyleClass().add("senden-button");
+            closeClientBtn.setOnAction(e -> Platform.exit());
 
-                    Stage stage = (Stage) root.getScene().getWindow();
-                    stage.setScene(menuScene);
-                } catch (IOException ex) {
-                    appLogger.error("Hauptmenü konnte nicht geladen werden.", ex);
-                    displayErrorAlert("Fehler", "Das Hauptmenü konnte nicht geladen werden.");
-                }
-            });
-
-            VBox layout = new VBox(30, title, robotImage, backToMenuBtn);
+            VBox layout = new VBox(30, title, robotImage, closeClientBtn);
             layout.setAlignment(Pos.CENTER);
             layout.getStyleClass().add("vbox");
 

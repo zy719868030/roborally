@@ -228,9 +228,12 @@ public class Server {
     public void stop() {
         running = false;
         try {
+            clients.keySet().forEach(ClientHandler::closeAll);
             serverSocket.close();
+            System.out.println("Server stopped.");
+            System.exit(0);
         } catch (IOException e) {
-            System.err.println("Error closing server socket: " + e.getMessage());
+            appLogger.error("Error closing server socket: {}", e.getMessage());
         }
     }
 

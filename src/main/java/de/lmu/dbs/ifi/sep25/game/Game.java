@@ -478,6 +478,7 @@ public class Game {
 
             if (checkGameEnd()) {
                 appLogger.info("Game ended during activation of register {}", currentRegister);
+                Server.getInstance().stop();
                 break;
             }
 
@@ -493,16 +494,6 @@ public class Game {
         }
 
         appLogger.info("All registers processed. Entering the end of round phase.");
-
-//        for (Player player : players) {
-//            player.resetRegister();
-//        }
-
-//        try {
-//            Thread.sleep(1000); // 10-second pause before starting next round
-//        } catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//        }
 
         // Reset the current register counter
         currentRegister = 0;
