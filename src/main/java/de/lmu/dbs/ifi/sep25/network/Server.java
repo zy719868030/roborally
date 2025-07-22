@@ -55,6 +55,7 @@ public class Server {
     // 4. State flags
     private volatile boolean running = true;
     private final int minPlayer;
+    private volatile boolean gameStarted = false;
     private volatile boolean mapSelectionOngoing = false;
     private final AtomicBoolean timerStarted = new AtomicBoolean(false);
     private final ScheduledExecutorService timerScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -103,9 +104,6 @@ public class Server {
      * @throws IllegalStateException if the server has not been initialized yet
      */
     public static Server getInstance() {
-        if (instance == null) {
-            throw new IllegalStateException("Server has not been initialized yet.");
-        }
         return instance;
     }
 
@@ -126,6 +124,13 @@ public class Server {
 
                 ClientHandler handler = new ClientHandler(clientSocket);
                 new Thread(handler).start();
+
+                if (gameStarted) {
+                    handler.sendMessage(new Message<>(new BodyError("Game has already started.")));
+                    handler.closeAll();
+                    System.out.println("Game has already started. Client disconnected.");
+                    continue;
+                }
 
                 handler.sendMessage(new Message<>(new BodyHelloClient(protocol)));
 
@@ -216,7 +221,6 @@ public class Server {
             System.err.println("Failed to serialize and broadcast message: " + e.getMessage());
         }
     }
-
 
     /**
      * Stops the server by closing the server socket and terminating the accept loop.
@@ -403,7 +407,6 @@ public class Server {
         return baseName + "#" + (maxSuffix + 1);
     }
 
-
     /**
      * Returns the client handler assigned to the given figure number.
      *
@@ -559,7 +562,7 @@ public class Server {
             game.addPlayer(client.getPlayer());
         }
 
-        if (lobby.allReady()) {
+        if (lobby.allReady() && lobby.size() >= minPlayer) {
             startGame();
         }
     }
@@ -569,6 +572,7 @@ public class Server {
      */
     public void startGame() {
         appLogger.info("Starting game with map {}", game.getMapType());
+        gameStarted = true;
         setMapSelectionOngoing(false);
         for (ClientHandler client : clients.keySet()) {
             client.setMapSelecting(false);

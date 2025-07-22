@@ -6,6 +6,7 @@ import de.lmu.dbs.ifi.sep25.game.Player;
 import de.lmu.dbs.ifi.sep25.game.Position;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
+import de.lmu.dbs.ifi.sep25.utils.ErrorDialogUtil;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -15,19 +16,15 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.Cursor;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.media.AudioClip;
 import javafx.scene.paint.Color;
@@ -44,6 +41,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -149,15 +147,16 @@ public class GameController {
     private Timeline blinkTimeline;
 
 
-
     private double currentZoom = 1.0;
     private final double ZOOM_STEP = 0.25;
     private final double MAX_ZOOM = 2.0;
     private final double MIN_ZOOM = 0.5;
 
 
-    @FXML private Group zoomContent;
-    @FXML private StackPane scrollContentWrapper;
+    @FXML
+    private Group zoomContent;
+    @FXML
+    private StackPane scrollContentWrapper;
 
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
@@ -264,7 +263,6 @@ public class GameController {
         });
 
 
-
         chatInput.setOnAction(e -> handleSendChat());
         addHoverAnimation(chatToggleButton);
         addHoverAnimation(notificationsToggleButton);
@@ -363,6 +361,7 @@ public class GameController {
 
         drawStaticLasers(boardMap);
     }
+
     /**
      * Adds a new player to the internal player mappings and the chat recipient list,
      * excluding the local client. If the player is already present in the recipient box,
@@ -791,9 +790,9 @@ public class GameController {
     }
 
 
-
     /**
      * Gets the current game phase ID.
+     *
      * @return the current phase ID
      */
     public int getCurrentPhaseID() {
@@ -802,6 +801,7 @@ public class GameController {
 
     /**
      * Updates the game phase to the specified ID
+     *
      * @param phaseID the new phase ID to set
      */
     public void updatePhase(int phaseID) {
@@ -1024,6 +1024,7 @@ public class GameController {
         pause.setOnFinished(e -> cardNode.getStyleClass().remove("card-active"));
         pause.play();
     }
+
     private ImageView findImageView(Node node) {
         if (node instanceof ImageView) {
             return (ImageView) node;
@@ -1106,8 +1107,8 @@ public class GameController {
     /**
      * Initializes the player stats at the start of the game.
      *
-     * @param energy              map of client IDs to their initial energy values
-     * @param checkpointsReached  map of client IDs to the number of checkpoints reached
+     * @param energy             map of client IDs to their initial energy values
+     * @param checkpointsReached map of client IDs to the number of checkpoints reached
      */
     public void setInitialPlayerStats(Map<Integer, Integer> energy, Map<Integer, Integer> checkpointsReached) {
     }
@@ -1245,9 +1246,11 @@ public class GameController {
             }
         }
     }
+
     /**
      * Displays a small robot icon representing the given client ID
      * in the player icon area. Applies a glow effect based on the robot ID.
+     *
      * @param clientID the ID of the client whose robot should be shown
      */
     private void showMiniRobot(int clientID) {
@@ -1376,7 +1379,6 @@ public class GameController {
                 placeCardInRegisterSlot(registerState[i], i);
             }
         }
-
 
 
 // 2. Filter used cards
@@ -1843,6 +1845,7 @@ public class GameController {
         shuffleHandCards();
 
     }
+
     /**
      * Handles the visual shuffle action triggered by the user.
      * <p>
@@ -2100,7 +2103,7 @@ public class GameController {
                 })
         );
         countdownTimer.setCycleCount(30);
-       // playCountdownSound();
+        // playCountdownSound();
         countdownTimer.play();
 
     }
@@ -2114,6 +2117,7 @@ public class GameController {
         zoom.setToY(1.0);
         zoom.play();
     }
+
     private void fadeOutCountdown() {
         FadeTransition fade = new FadeTransition(Duration.seconds(1), timerContainer);
         fade.setFromValue(1.0);
@@ -2125,6 +2129,7 @@ public class GameController {
         });
         fade.play();
     }
+
     private void updateCountdownColor(int secondsLeft) {
         if (blinkTimeline != null) {
             blinkTimeline.stop();
@@ -2159,13 +2164,12 @@ public class GameController {
 
             //PauseTransition stopSound = new PauseTransition(Duration.seconds(25));
             //stopSound.setOnFinished(e -> stopCountdownSound());
-          //  stopSound.play();
+            //  stopSound.play();
 
         } catch (Exception e) {
             System.err.println("Countdown-Sound konnte nicht geladen werden: " + e.getMessage());
         }
     }
-
 
 
     private void stopCountdownSound() {
@@ -2346,7 +2350,7 @@ public class GameController {
             applyMyRobotSpecialEffects(robotView, clientID);
 
             String playerName = getPlayerNameById(clientID);
-         //   appendGameLog("Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.", "info");
+            //   appendGameLog("Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.", "info");
         } catch (Exception e) {
             appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
@@ -2476,6 +2480,7 @@ public class GameController {
             default -> dir;
         };
     }
+
     /**
      * Sets the robot's position for the specified player.
      *
@@ -2506,7 +2511,6 @@ public class GameController {
             System.out.println("Unrecognized animation type: " + type);
         }
     }
-
 
 
     /**
@@ -2566,6 +2570,7 @@ public class GameController {
 
         }
     }
+
     /**
      * Displays a large "REBOOT!" label in the center of the screen with animation.
      * This is shown only to the player whose robot has been rebooted.
@@ -2573,11 +2578,11 @@ public class GameController {
     public void showBigRebootOverlay() {
         Label rebootOverlay = new Label("REBOOT!");
         rebootOverlay.setStyle("""
-        -fx-font-size: 64px;
-        -fx-text-fill: yellow;
-        -fx-font-weight: bold;
-        -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
-    """);
+                    -fx-font-size: 64px;
+                    -fx-text-fill: yellow;
+                    -fx-font-weight: bold;
+                    -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
+                """);
 
         StackPane.setAlignment(rebootOverlay, Pos.CENTER);
         zoomWrapper.getChildren().add(rebootOverlay);
@@ -2662,6 +2667,7 @@ public class GameController {
             }
         }
     }
+
     /**
      * Displays a dialog allowing the player to choose the reboot direction
      * for their robot after falling off the board.
@@ -2718,21 +2724,21 @@ public class GameController {
 
         dialog.showAndWait();
     }
+
     private Button createDirectionButton(String arrow, String direction) {
         Button btn = new Button(arrow);
         btn.setUserData(direction);
         btn.setPrefSize(60, 60);
         btn.setStyle("""
-        -fx-font-size: 24px;
-        -fx-font-weight: bold;
-        -fx-text-fill: black;
-        -fx-background-color: #00ffd0;
-        -fx-background-radius: 10px;
-        -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 6, 0.6, 0, 1);
-    """);
+                    -fx-font-size: 24px;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: black;
+                    -fx-background-color: #00ffd0;
+                    -fx-background-radius: 10px;
+                    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.7), 6, 0.6, 0, 1);
+                """);
         return btn;
     }
-
 
 
     /**
@@ -2788,11 +2794,11 @@ public class GameController {
     public void showCheckpointLabel(StackPane cell, int checkpointNumber) {
         Label cpLabel = new Label("🏴 Checkpoint #" + checkpointNumber + " erreicht!");
         cpLabel.setStyle("""
-        -fx-font-size: 20px;
-        -fx-text-fill: #ff6600; 
-        -fx-font-weight: bold;
-        -fx-effect: dropshadow(gaussian, black, 8, 0.5, 0, 0);
-    """);
+                    -fx-font-size: 20px;
+                    -fx-text-fill: #ff6600; 
+                    -fx-font-weight: bold;
+                    -fx-effect: dropshadow(gaussian, black, 8, 0.5, 0, 0);
+                """);
 
         cpLabel.setTranslateY(-35);
         cell.getChildren().add(cpLabel);
@@ -2893,7 +2899,6 @@ public class GameController {
     }
 
 
-
     public void showInstructionDialog() {
         Label title = new Label("Programmierphase");
         title.setStyle("-fx-text-fill: #00ffd0; -fx-font-size: 20px; -fx-font-weight: bold;");
@@ -2950,6 +2955,7 @@ public class GameController {
 
         appendGameLog("▶ Du hast " + cards.size() + " Schadenskarten erhalten.", "warm");
     }
+
     /**
      * Prompts the player to select a specific number of damage cards from the available options.
      *
@@ -3098,69 +3104,7 @@ public class GameController {
      * @param message Error message.
      */
     public void displayErrorAlert(String title, String message) {
-        Platform.runLater(() -> {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initStyle(StageStyle.TRANSPARENT);
-
-            Label titleLabel = new Label(title);
-            titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #b00020;");
-
-            Label messageLabel = new Label(message);
-            messageLabel.setWrapText(true);
-            messageLabel.setStyle("-fx-font-size: 13px;");
-
-            Button okButton = new Button("OK");
-            okButton.setDefaultButton(true); // ENTER works
-            okButton.setStyle("""
-                        -fx-background-color: #e0e0e0;
-                        -fx-text-fill: black;
-                        -fx-font-size: 13px;
-                        -fx-padding: 6 14 6 14;
-                        -fx-background-radius: 6;
-                        -fx-border-radius: 6;
-                        -fx-cursor: hand;
-                        -fx-transition: all 0.2s ease-in-out;
-                    """);
-
-            okButton.setOnMouseEntered(_ -> {
-                okButton.setScaleX(1.1);
-                okButton.setScaleY(1.1);
-            });
-
-            okButton.setOnMouseExited(_ -> {
-                okButton.setScaleX(1.0);
-                okButton.setScaleY(1.0);
-            });
-
-            okButton.setOnAction(_ -> dialog.close());
-
-            VBox layout = new VBox(12, titleLabel, messageLabel, okButton);
-            layout.setAlignment(Pos.CENTER);
-            layout.setPadding(new Insets(20));
-            layout.setStyle("""
-                        -fx-background-color: white;
-                        -fx-background-radius: 12;
-                        -fx-border-radius: 12;
-                        -fx-border-color: #b00020;
-                        -fx-border-width: 2;
-                    """);
-
-            Scene scene = new Scene(layout);
-            scene.setFill(Color.TRANSPARENT);
-
-            // ESC or SPACE to close
-            scene.setOnKeyPressed(event -> {
-                switch (event.getCode()) {
-                    case ESCAPE, SPACE, ENTER -> dialog.close();
-                }
-            });
-
-            dialog.setScene(scene);
-            dialog.setResizable(false);
-            dialog.show();
-            scene.getRoot().requestFocus(); // ensures key events are registered
-        });
+        ErrorDialogUtil.showError(title, message);
     }
 
     /**
@@ -3277,6 +3221,7 @@ public class GameController {
 
         //appendGameLog("Deine Handkarten wurden gemischt.", "info");
     }
+
     private void playShuffleSound() {
         try {
             AudioClip clip = new AudioClip(getClass().getResource("/audio/shuffle-cards.wav").toExternalForm());
@@ -3448,6 +3393,7 @@ public class GameController {
         glow.setOffsetY(0);
         robotView.setEffect(glow);
     }
+
     public void updateDiscardPile(String lastCardName) {
         discardPileBox.getChildren().clear();
 
@@ -3468,6 +3414,7 @@ public class GameController {
             discardPileBox.getChildren().add(view);
         }
     }
+
     private void animateDiscard(ImageView cardView) {
         TranslateTransition slide = new TranslateTransition(Duration.millis(300), cardView);
         slide.setFromY(-50);
@@ -3481,13 +3428,14 @@ public class GameController {
         ParallelTransition animation = new ParallelTransition(slide, fade);
         animation.play();
     }
+
     /**
      * Updates the register cards of another player.
      * After the update, the player status panel is refreshed to reflect
      * the new state.
      *
-     * @param clientID       The unique ID of the player whose register is being updated.
-     * @param registerCards  A list of cards (as strings) that the player programmed for this round.
+     * @param clientID      The unique ID of the player whose register is being updated.
+     * @param registerCards A list of cards (as strings) that the player programmed for this round.
      */
     public void updateOtherPlayerRegister(int clientID, List<String> registerCards) {
         int myID = ClientSingleton.getInstance().getID();
@@ -3527,6 +3475,7 @@ public class GameController {
             }
         });
     }
+
     private ImageView createCardBackOrFront(String cardName, boolean showFront) {
         Image img;
         try {
@@ -3610,7 +3559,6 @@ public class GameController {
 
         return new Point2D(centerX, centerY);
     }
-
 
 
     /**
@@ -3713,6 +3661,7 @@ public class GameController {
     public void setBoard(Board board) {
         this.board = board;
     }
+
     private List<List<List<MessageDefinitions.Field>>> boardMap;
 
     public List<MessageDefinitions.Field> getBoardElementsAt(int x, int y) {
@@ -3910,6 +3859,7 @@ public class GameController {
 
     private void clearProgrammingUI() {
     }
+
     public void animateHandCards(List<String> handCards) {
         handCardBox.getChildren().clear();
         Timeline timeline = new Timeline();
@@ -3937,6 +3887,7 @@ public class GameController {
 
         timeline.play();
     }
+
     private List<Player> players = new ArrayList<>();
 
     private Player getCurrentPlayer() {
@@ -3977,6 +3928,7 @@ public class GameController {
         zoomWrapper.setScaleX(currentZoom);
         zoomWrapper.setScaleY(currentZoom);
     }
+
     /**
      * Get the robot's current direction.
      *
@@ -3989,8 +3941,9 @@ public class GameController {
 
     /**
      * Set special size and highlight effects for your robot.
+     *
      * @param robotView The robot's ImageView.
-     * @param clientID Client ID.
+     * @param clientID  Client ID.
      */
     private void applyMyRobotSpecialEffects(ImageView robotView, int clientID) {
         int myID = ClientSingleton.getInstance().getID();
@@ -4124,7 +4077,7 @@ public class GameController {
                 yield "Laser (Stärke " + laser.count() + "):";
             }
             case "StartPoint" -> "Startposition:";
-            default -> "?" + element.type()+ ":";
+            default -> "?" + element.type() + ":";
         };
     }
 
@@ -4165,7 +4118,7 @@ public class GameController {
     /**
      * Update the robot's direction (mainly used for setting the direction after rebooting)
      *
-     * @param clientID Client ID
+     * @param clientID  Client ID
      * @param direction New direction
      */
     public void updateRobotDirection(int clientID, String direction) {
@@ -4200,10 +4153,11 @@ public class GameController {
             }
         }
     }
+
     /**
      * Draws animated lasers on the board based on hardcoded positions
      * for specific maps like "Dizzy Highway", "Extra Crispy", and "Lost Bearings".
-     *
+     * <p>
      * This method clears the laser layer and redraws lasers in predefined positions
      * with direction, length, and color according to the selected map.
      *
@@ -4245,8 +4199,6 @@ public class GameController {
             }
 
 
-
-
         }
     }
 
@@ -4258,7 +4210,7 @@ public class GameController {
      */
     private void createAnimatedLaser(int x, int y, Direction direction, double lengthInTiles, String mapName) {
         double startX = x * TILE_SIZE + TILE_SIZE / 1.0;
-        double startY = y * TILE_SIZE + TILE_SIZE /1.0;
+        double startY = y * TILE_SIZE + TILE_SIZE / 1.0;
 
         double endX = startX;
         double endY = startY;
@@ -4268,17 +4220,17 @@ public class GameController {
         switch (direction) {
             case NORTH -> endY -= length;
             case SOUTH -> endY += length;
-            case WEST  -> endX -= length;
-            case EAST  -> endX += length;
+            case WEST -> endX -= length;
+            case EAST -> endX += length;
         }
 
         Line laser = new Line(startX, startY, startX, startY);
 
         Color laserColor = switch (mapName) {
             case "Dizzy Highway" -> Color.WHITE;
-            case "Extra Crispy"  -> Color.ORANGE;
-            case "Death Trap"    -> Color.RED;
-            default              -> Color.YELLOW;
+            case "Extra Crispy" -> Color.ORANGE;
+            case "Death Trap" -> Color.RED;
+            default -> Color.YELLOW;
         };
 
         laser.setStroke(laserColor);
@@ -4312,11 +4264,11 @@ public class GameController {
     public void showRoundCompletedOverlay() {
         Label roundLabel = new Label("Runde beendet!");
         roundLabel.setStyle("""
-        -fx-font-size: 48px;
-        -fx-text-fill: cyan;
-        -fx-font-weight: bold;
-        -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
-    """);
+                    -fx-font-size: 48px;
+                    -fx-text-fill: cyan;
+                    -fx-font-weight: bold;
+                    -fx-effect: dropshadow(gaussian, black, 8, 0.7, 0, 0);
+                """);
 
         roundLabel.setVisible(true);
         roundLabel.setManaged(true);
@@ -4349,8 +4301,6 @@ public class GameController {
      * configurable scroll speed factor to control responsiveness. While dragging,
      * the cursor is set to a closed-hand icon for visual feedback.
      * </p>
-     *
-     *
      */
     private void setupDraggableMap() {
         scrollContentWrapper.setOnMousePressed(event -> {
@@ -4515,7 +4465,7 @@ public class GameController {
         Label statusTitle = new Label("AKTUELLER STATUS");
         statusTitle.setStyle("-fx-text-fill: #87CEEB; -fx-font-size: 13; -fx-font-weight: bold; -fx-padding: 12 0 5 0;");
 
-        Label zoomStatusLabel = new Label("Zoom: " + (int)(scaleValue*100) + "%");
+        Label zoomStatusLabel = new Label("Zoom: " + (int) (scaleValue * 100) + "%");
         zoomStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
         int hPercent = (int) (gameBoardScrollPane.getHvalue() * 100);
@@ -4529,14 +4479,14 @@ public class GameController {
         closeBtn.setDefaultButton(true);
 
         infoBox.getChildren().addAll(
-            titleLabel,
-            zoomLabel,
-            zoomIconLabel,
-            dragLabel,
-            statusTitle,
-            zoomStatusLabel,
-            positionStatusLabel,
-            closeBtn
+                titleLabel,
+                zoomLabel,
+                zoomIconLabel,
+                dragLabel,
+                statusTitle,
+                zoomStatusLabel,
+                positionStatusLabel,
+                closeBtn
         );
 
         Scene scene = new Scene(infoBox);
@@ -4549,7 +4499,8 @@ public class GameController {
         dialog.show();
     }
 
-    @FXML private Label gameLogCompactLabel;
+    @FXML
+    private Label gameLogCompactLabel;
 
     /**
      * Agrega un mensaje al historial y lo muestra dinámicamente como el último.

@@ -589,7 +589,16 @@ public class Client {
                     loginCtrl.setFigureTakenWarningShown(true);
                     loginCtrl.displayFigureAlreadyTaken();
                 }
+            } else if (errorText.contains("Game has already started.")) {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null) {
+                    loginCtrl.displayErrorAlert(
+                            "Spiel läuft bereits",
+                            "Das Spiel hat bereits begonnen. Bitte warte, bis eine neue Runde startet oder tritt einem neuen Spiel bei."
+                    );
+                }
             } else if (errorText.contains("Again card cannot be played in the first register")) {
+
                 GameController gameCtrl = ControllerRegistry.getGameController();
                 if (gameCtrl != null) {
                     gameCtrl.appendGameLog(errorText, "error");

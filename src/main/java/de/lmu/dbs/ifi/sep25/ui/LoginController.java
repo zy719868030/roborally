@@ -5,10 +5,10 @@ import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
+import de.lmu.dbs.ifi.sep25.utils.ErrorDialogUtil;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
-import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,8 +16,6 @@ import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -25,11 +23,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -323,96 +317,48 @@ public class LoginController {
     }
 
     /**
+     * Displays a styled error alert dialog on the login screen with the given title and message.
+     * The dialog is always shown on the JavaFX application thread and blocks input until dismissed.
+     *
+     * @param title   The title text of the error alert (e.g. highlighted in red).
+     * @param message The error message to display.
+     */
+    public void displayErrorAlert(String title, String message) {
+        ErrorDialogUtil.showError(title, message);
+    }
+
+    /**
      * Called by the client if the selected figure is already taken.
      * Shows a warning and re-enables the input.
      */
     public void displayFigureAlreadyTaken() {
+        ErrorDialogUtil.showError(
+                "Diese Spielfigur wurde bereits gewählt",
+                "Bitte wähle eine andere Figur aus.",
+                () -> {
+                    // Custom logic after closing the error dialog
+                    Toggle selectedToggle = figureToggleGroup.getSelectedToggle();
+                    if (selectedToggle != null) selectedToggle.setSelected(false);
 
-        Platform.runLater(() -> {
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initStyle(StageStyle.TRANSPARENT);
+                    selectedFigure.set(null);
+                    loginButton.setDisable(false);
+                    nameField.setDisable(false);
+                    figureTakenWarningShown = false;
 
-            Label titleLabel = new Label("Diese Spielfigur wurde bereits gewählt");
-            titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #b00020;");
+                    takenFigures.add(cachedFigure);
+                    for (Toggle toggle : figureToggleGroup.getToggles()) {
+                        int figID = (int) toggle.getUserData();
+                        ToggleButton button = (ToggleButton) toggle;
+                        if (takenFigures.contains(figID)) {
+                            button.setDisable(true);
+                            button.setOpacity(0.4);
+                        }
+                    }
 
-            Label messageLabel = new Label("Bitte wähle eine andere Figur aus.");
-            messageLabel.setWrapText(true);
-            messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: white;");
-            messageLabel.setMaxWidth(300);
-
-            Button okButton = new Button("OK");
-            okButton.setDefaultButton(true);
-            okButton.setStyle("""
-                        -fx-background-color: #e0e0e0;
-                        -fx-text-fill: black;
-                        -fx-font-size: 13px;
-                        -fx-padding: 6 14 6 14;
-                        -fx-background-radius: 6;
-                        -fx-border-radius: 6;
-                        -fx-cursor: hand;
-                    """);
-
-            okButton.setOnMouseEntered(e -> {
-                okButton.setScaleX(1.1);
-                okButton.setScaleY(1.1);
-            });
-
-            okButton.setOnMouseExited(e -> {
-                okButton.setScaleX(1.0);
-                okButton.setScaleY(1.0);
-            });
-
-            okButton.setOnAction(_ -> dialog.close());
-
-            VBox layout = new VBox(12, titleLabel, messageLabel, okButton);
-            layout.setAlignment(Pos.CENTER);
-            layout.setPadding(new Insets(20));
-            layout.setStyle("""
-                        -fx-background-color: #1a1a1a;
-                        -fx-background-radius: 12;
-                        -fx-border-radius: 12;
-                        -fx-border-color: #b00020;
-                        -fx-border-width: 2;
-                    """);
-
-            Scene scene = new Scene(layout);
-            scene.setFill(Color.TRANSPARENT);
-
-            scene.setOnKeyPressed(event -> {
-                switch (event.getCode()) {
-                    case ESCAPE, SPACE, ENTER -> dialog.close();
+                    cachedFigure = -1;
+                    new Timeline(new KeyFrame(Duration.seconds(2), _ -> loginButton.setDisable(false))).play();
                 }
-            });
-
-            dialog.setScene(scene);
-            dialog.setResizable(false);
-            dialog.show();
-            scene.getRoot().requestFocus();
-        });
-
-        // Logic for restoring UI state after error
-        Toggle selectedToggle = figureToggleGroup.getSelectedToggle();
-        if (selectedToggle != null) selectedToggle.setSelected(false);
-
-        selectedFigure.set(null);
-        loginButton.setDisable(false);
-        nameField.setDisable(false);
-        figureTakenWarningShown = false;
-
-        takenFigures.add(cachedFigure);
-        for (Toggle toggle : figureToggleGroup.getToggles()) {
-            int figID = (int) toggle.getUserData();
-            ToggleButton button = (ToggleButton) toggle;
-            if (takenFigures.contains(figID)) {
-                button.setDisable(true);
-                button.setOpacity(0.4);
-            }
-        }
-
-        cachedFigure = -1;
-        new Timeline(new KeyFrame(Duration.seconds(2), _ -> loginButton.setDisable(false))).play();
-
+        );
     }
 
     /**
