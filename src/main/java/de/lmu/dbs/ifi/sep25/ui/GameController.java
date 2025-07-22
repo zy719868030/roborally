@@ -222,21 +222,22 @@ public class GameController {
         gameBoardScrollPane.setStyle("-fx-background-color: transparent;");
         zoomWrapper.setStyle("-fx-background-color: transparent;");
         zoomWrapper.setOnScroll(event -> {
+            double zoomFactor = SCALE_DELTA;
+            // Use CTRL for fast zoom
             if (event.isControlDown()) {
-                event.consume();
-                double oldScale = scaleValue;
-                if (event.getDeltaY() > 0) {
-                    scaleValue *= SCALE_DELTA;
-                } else {
-                    scaleValue /= SCALE_DELTA;
-                }
-
-                scaleValue = clamp(scaleValue, 0.5, 2.5);
-                zoomWrapper.setScaleX(scaleValue);
-                zoomWrapper.setScaleY(scaleValue);
-
-                repositionScrollPane(event.getX(), event.getY(), oldScale);
+                zoomFactor = 1.25;
             }
+            double oldScale = scaleValue;
+            if (event.getDeltaY() > 0) {
+                scaleValue *= zoomFactor;
+            } else {
+                scaleValue /= zoomFactor;
+            }
+            scaleValue = clamp(scaleValue, 0.5, 2.5);
+            zoomWrapper.setScaleX(scaleValue);
+            zoomWrapper.setScaleY(scaleValue);
+            repositionScrollPane(event.getX(), event.getY(), oldScale);
+            event.consume();
         });
 
 
@@ -4297,11 +4298,12 @@ public class GameController {
 
                 double width = gameBoardScrollPane.getContent().getBoundsInLocal().getWidth();
                 double height = gameBoardScrollPane.getContent().getBoundsInLocal().getHeight();
-                double scrollSpeedFactor = 1.5;
+
+                // Make pan faster if shift is held
+                double scrollSpeedFactor = event.isControlDown() ? 5.0 : 2.7;
 
                 double hValue = gameBoardScrollPane.getHvalue() + (deltaX * scrollSpeedFactor / width);
                 double vValue = gameBoardScrollPane.getVvalue() + (deltaY * scrollSpeedFactor / height);
-
 
                 gameBoardScrollPane.setHvalue(clamp(hValue, 0.0, 1.0));
                 gameBoardScrollPane.setVvalue(clamp(vValue, 0.0, 1.0));
@@ -4465,14 +4467,17 @@ public class GameController {
         Label titleLabel = new Label("KARTEN-STEUERUNG");
         titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 0 0 8 0;");
 
-        Label zoomLabel = new Label("• Mausrad + STRG zum Zoomen");
+        Label zoomLabel = new Label("• Mausrad oder +/- Button zum Zoomen");
         zoomLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        Label zoomIconLabel = new Label("• Mit + und - Buttons kannst du ebenfalls zoomen");
-        zoomIconLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+        Label fastZoomLabel = new Label("• STRNG + Mausrad für schnelles Zoomen");
+        fastZoomLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        Label dragLabel = new Label("• Karte mit der Maus verschieben");
+        Label dragLabel = new Label("• Karte mit der Maus verschieben (ziehen)");
         dragLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        Label fastDragLabel = new Label("• STRNG + Ziehen für schnelleres Verschieben");
+        fastDragLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
         Label statusTitle = new Label("AKTUELLER STATUS");
         statusTitle.setStyle("-fx-text-fill: #87CEEB; -fx-font-size: 13; -fx-font-weight: bold; -fx-padding: 12 0 5 0;");
@@ -4504,8 +4509,9 @@ public class GameController {
         infoBox.getChildren().addAll(
                 titleLabel,
                 zoomLabel,
-                zoomIconLabel,
+                fastZoomLabel,
                 dragLabel,
+                fastDragLabel,
                 statusTitle,
                 zoomStatusLabel,
                 positionStatusLabel,
