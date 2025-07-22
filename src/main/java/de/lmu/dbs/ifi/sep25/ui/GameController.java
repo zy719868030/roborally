@@ -4452,8 +4452,14 @@ public class GameController {
      */
     private void showMapInfoDialog() {
         VBox infoBox = new VBox(8);
-        infoBox.setStyle("-fx-background-color: #2F4F4F; -fx-padding: 18; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #87CEEB; -fx-border-width: 2;");
-        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setStyle(
+                "-fx-background-color: #2F4F4F;" +
+                        "-fx-padding: 18;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-color: #87CEEB;" +
+                        "-fx-border-width: 2;"
+        );        infoBox.setAlignment(Pos.CENTER_LEFT);
         infoBox.setPrefWidth(320);
 
         Label titleLabel = new Label("KARTEN-STEUERUNG");
@@ -4510,9 +4516,10 @@ public class GameController {
         scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
 
         Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initStyle(StageStyle.UNDECORATED);
-        dialog.setTitle("Karten-Steuerung");
+        dialog.initStyle(StageStyle.TRANSPARENT);
+        dialog.initModality(Modality.NONE);
+        dialog.setAlwaysOnTop(true);
+        dialog.initOwner(null);
         dialog.setScene(scene);
 
         scene.setOnKeyPressed(event -> {
@@ -4521,10 +4528,20 @@ public class GameController {
             }
         });
 
+        final double[] dragDelta = new double[2];
+        infoBox.setOnMousePressed(event -> {
+            dragDelta[0] = dialog.getX() - event.getScreenX();
+            dragDelta[1] = dialog.getY() - event.getScreenY();
+        });
+        infoBox.setOnMouseDragged(event -> {
+            dialog.setX(event.getScreenX() + dragDelta[0]);
+            dialog.setY(event.getScreenY() + dragDelta[1]);
+        });
+
+
         dialog.setResizable(false);
         dialog.show();
     }
-
     @FXML
     private Label gameLogCompactLabel;
 
