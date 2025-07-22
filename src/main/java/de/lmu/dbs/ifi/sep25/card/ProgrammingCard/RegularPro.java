@@ -2,10 +2,7 @@ package de.lmu.dbs.ifi.sep25.card.ProgrammingCard;
 
 import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
-import de.lmu.dbs.ifi.sep25.game.Board;
-import de.lmu.dbs.ifi.sep25.game.Game;
-import de.lmu.dbs.ifi.sep25.game.Player;
-import de.lmu.dbs.ifi.sep25.game.Robot;
+import de.lmu.dbs.ifi.sep25.game.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -79,13 +76,90 @@ public class RegularPro extends ProgrammingCard {
 //        appLogger.debug("Executing regular programmed action: {} for robot {}", actionType, robot.getRobotID());
 
         switch (actionType.toLowerCase()) {
-            case "move" -> robot.applyMove(board, distance);
-            case "backup" -> robot.applyMove(board, -distance);
-            case "turnleft" -> robot.turnLeft();
-            case "turnright" -> robot.turnRight();
-            case "uturn" -> robot.turnAround();
-            case "powerup" -> player.addEnergy(1, "Power Up");
-            case "again" -> executeAgain(robot);
+            case "move" -> {
+                Position oldPos = robot.getPosition();
+                Direction facing = robot.getDirection();
+                appLogger.info("=== CARD EXECUTION === Robot {} executing MoveI/II/III: moving {} steps forward from {} facing {}",
+                        robot.getRobotID(), distance, oldPos, facing.getName());
+
+                robot.applyMove(board, distance);
+
+                Position newPos = robot.getPosition();
+                appLogger.info("=== CARD RESULT === Robot {} moved from {} to {} (delta: dx={}, dy={})",
+                        robot.getRobotID(), oldPos, newPos,
+                        newPos.x() - oldPos.x(), newPos.y() - oldPos.y());
+            }
+
+            case "backup" -> {
+                Position oldPos = robot.getPosition();
+                Direction facing = robot.getDirection();
+                appLogger.info("=== CARD EXECUTION === Robot {} executing BackUp: moving {} steps backward from {} facing {}",
+                        robot.getRobotID(), distance, oldPos, facing.getName());
+
+                robot.applyMove(board, -distance);
+
+                Position newPos = robot.getPosition();
+                appLogger.info("=== CARD RESULT === Robot {} moved from {} to {} (delta: dx={}, dy={})",
+                        robot.getRobotID(), oldPos, newPos,
+                        newPos.x() - oldPos.x(), newPos.y() - oldPos.y());
+            }
+
+            case "turnleft" -> {
+                Direction oldDir = robot.getDirection();
+                appLogger.info("=== CARD EXECUTION === Robot {} executing TurnLeft: rotating from {} to counterclockwise",
+                        robot.getRobotID(), oldDir.getName());
+
+                robot.turnLeft();
+
+                Direction newDir = robot.getDirection();
+                appLogger.info("=== CARD RESULT === Robot {} rotated from {} to {} at position {}",
+                        robot.getRobotID(), oldDir.getName(), newDir.getName(), robot.getPosition());
+            }
+
+            case "turnright" -> {
+                Direction oldDir = robot.getDirection();
+                appLogger.info("=== CARD EXECUTION === Robot {} executing TurnRight: rotating from {} clockwise",
+                        robot.getRobotID(), oldDir.getName());
+
+                robot.turnRight();
+
+                Direction newDir = robot.getDirection();
+                appLogger.info("=== CARD RESULT === Robot {} rotated from {} to {} at position {}",
+                        robot.getRobotID(), oldDir.getName(), newDir.getName(), robot.getPosition());
+            }
+
+            case "powerup" -> {
+                appLogger.info("=== CARD EXECUTION === Robot {} executing PowerUp: gaining 1 energy",
+                        robot.getRobotID());
+
+                player.addEnergy(1, "Power Up");
+
+                appLogger.info("=== CARD RESULT === Robot {} gained 1 energy",
+                        robot.getRobotID());
+            }
+
+            case "again" -> {
+                appLogger.info("=== CARD EXECUTION === Robot {} executing Again card",
+                        robot.getRobotID());
+
+                executeAgain(robot);
+
+                appLogger.info("=== CARD RESULT === Robot {} completed Again execution",
+                        robot.getRobotID());
+            }
+
+            case "uturn" -> {
+                Direction oldDir = robot.getDirection();
+                appLogger.info("=== CARD EXECUTION === Robot {} executing UTurn: rotating from {} 180 degrees",
+                        robot.getRobotID(), oldDir.getName());
+
+                robot.turnAround();
+
+                Direction newDir = robot.getDirection();
+                appLogger.info("=== CARD RESULT === Robot {} rotated from {} to {} at position {}",
+                        robot.getRobotID(), oldDir.getName(), newDir.getName(), robot.getPosition());
+
+            }
         }
     }
 
@@ -108,13 +182,26 @@ public class RegularPro extends ProgrammingCard {
             return;
         }
 
-        appLogger.debug("Robot {} executing Again: Repeating {}", robot.getRobotID(), CardFactory.getCardName(prevCard));
+        String prevCardName = CardFactory.getCardName(prevCard);
+        appLogger.info("=== AGAIN EXECUTION === Robot {} executing Again: Repeating {} from register {}",
+                robot.getRobotID(), prevCardName, Game.getInstance().getCurrentRegister() - 1);
 
         try {
+            // 记录执行前状态
+            Position oldPos = robot.getPosition();
+            Direction oldDir = robot.getDirection();
+
             // Directly execute the previous card
             prevCard.execute(robot, player);
+
+            // 记录执行后状态
+            Position newPos = robot.getPosition();
+            Direction newDir = robot.getDirection();
+
+            appLogger.info("=== AGAIN RESULT === Robot {} repeated {} - Position: {} -> {}, Direction: {} -> {}",
+                    robot.getRobotID(), prevCardName, oldPos, newPos, oldDir.getName(), newDir.getName());
         } catch (Exception e) {
-            appLogger.error("Error executing Again card: {}", e.getMessage(), e);
+            appLogger.error("Error executing Again card for Robot {}: {}", robot.getRobotID(), e.getMessage(), e);
         }
     }
 

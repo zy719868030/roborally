@@ -580,6 +580,20 @@ public class Game {
         // IMPORTANT: Handle any robots that have fallen and are waiting for reboot
         // This should happen at the end of each register, not immediately when they fall
         handlePendingReboots();
+        appLogger.info("=== REGISTER {} SUMMARY ===", currentRegister);
+        for (Player player : players) {
+            Robot robot = player.getRobot();
+            if (board.hasRobotFallen(robot)) {
+                appLogger.info("Player {} (Robot {}): FALLEN - awaiting reboot direction",
+                        player.getConnection().getMyID(), robot.getRobotID());
+            } else {
+                appLogger.info("Player {} (Robot {}): Position {} facing {} - Damage: {}",
+                        player.getConnection().getMyID(), robot.getRobotID(),
+                        robot.getPosition(), robot.getDirection().getName(),
+                        robot.getDamage());
+            }
+        }
+        appLogger.info("=== REGISTER {} COMPLETE ===", currentRegister);
     }
 
     /**
@@ -1035,23 +1049,28 @@ public class Game {
         final Set<Robot> movedByBelt = new HashSet<>();
 
         // 1. Blue conveyor belts (fast)
+        appLogger.info("=== BOARD ELEMENTS ACTIVATION === Activating blue conveyor belts (FAST)");
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
                 for (BoardElement element : board.getElements(x, y)) {
                     if (element instanceof Belts belt &&
                             belt.getSpeed() == Belts.BeltSpeed.FAST) {
-                        // Find robot at this position and activate belt
                         Robot robot = board.getRobotAt(new Position(x, y));
                         if (robot != null && !movedByBelt.contains(robot)) {
+                            appLogger.info("Activating BLUE belt at ({},{}) for Robot {} - outDir: {}",
+                                    x, y, robot.getRobotID(), belt.getMainOutDirection().getName());
                             belt.applyEffect(robot, board);
                             movedByBelt.add(robot);
+                            appLogger.info("Robot {} final position after BLUE belt: {}",
+                                    robot.getRobotID(), robot.getPosition());
                         }
                     }
                 }
             }
         }
 
-        // 2. Green conveyor belts (slow)
+// 2. Green conveyor belts (slow)
+        appLogger.info("=== BOARD ELEMENTS ACTIVATION === Activating green conveyor belts (SLOW)");
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
                 for (BoardElement element : board.getElements(x, y)) {
@@ -1059,8 +1078,12 @@ public class Game {
                             belt.getSpeed() == Belts.BeltSpeed.SLOW) {
                         Robot robot = board.getRobotAt(new Position(x, y));
                         if (robot != null && !movedByBelt.contains(robot)) {
+                            appLogger.info("Activating GREEN belt at ({},{}) for Robot {} - outDir: {}",
+                                    x, y, robot.getRobotID(), belt.getMainOutDirection().getName());
                             belt.applyEffect(robot, board);
                             movedByBelt.add(robot);
+                            appLogger.info("Robot {} final position after GREEN belt: {}",
+                                    robot.getRobotID(), robot.getPosition());
                         }
                     }
                 }

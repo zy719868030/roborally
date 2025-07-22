@@ -340,10 +340,22 @@ public class Robot {
             }
 
             if (canEnter && board.getRobotAt(newPos) == null) {
+                Position oldPos = position;
                 position = newPos;
                 board.updateRobotPosition(this, position);
                 pushRobot(board, direction);
+
+                System.out.println("Robot {"+robotID+"} MOVED from {"+oldPos+"} to {"+position+"} facing {"+direction.getName()+"} - SUCCESS");
                 notifyMovement();
+            } else {
+                if (!canEnter) {
+                    System.out.println("Robot {"+robotID+"} BLOCKED at {"+position+"} - cannot enter target position " +
+                            "{"+newPos+"} due to wall/obstacle");
+                } else {
+                    Robot blockingRobot = board.getRobotAt(newPos);
+                    System.out.println("Robot {"+robotID+"} BLOCKED at {"+position+"} - target position  " +
+                            "{"+newPos+"} occupied by Robot {"+position+blockingRobot.getRobotID()+ "}");
+                }
             }
         } else {
             board.handleFall(this);
