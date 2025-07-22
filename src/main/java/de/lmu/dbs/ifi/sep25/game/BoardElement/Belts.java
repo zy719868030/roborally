@@ -73,65 +73,55 @@ public class Belts extends BoardElement {
     }
 
     /**
-     * Öffentliche Schnittstelle: Wendet einen Rotationseffekt auf Roboter an, die sich auf dem Kurvenförderband befinden.
-     * Speziell für den Fall, dass der Roboter bereits von einem anderen Förderband auf das Kurvenförderband bewegt wurde.
-     *
-     * @param robot Der zu rotierende Roboter.
+     * Wendet den Effekt „Förderband drehen“ auf den Roboter an.
+     * @param robot Der zu drehende Roboter.
+     * @param entryDirection Die tatsächliche Richtung, in der der Roboter auf das Förderband fährt.
      */
-    public void applyConveyorRotation(Robot robot) {
+    public void applyConveyorRotation(Robot robot, Direction entryDirection) {
         if (!isRotating()) {
             return;
         }
-
-        appLogger.info("=== ROTATION APPLIED === Robot {} at position ({}, {}) being rotated by belt",
-                robot.getRobotID(), position.x(), position.y());
-        appLogger.info("Belt configuration - OutDir: {}, InDirs: {}, isRotating: {}",
-                outDirections.isEmpty() ? "NONE" : outDirections.get(0).getName(),
-                inDirections.stream().map(Direction::getName).collect(Collectors.toList()),
-                isRotating);
 
         if (inDirections.isEmpty() || outDirections.isEmpty()) {
             appLogger.info("No rotation: missing in/out directions");
             return;
         }
 
-        Direction currentDirection = robot.getDirection();
         Direction outDir = outDirections.get(0);
 
-        Direction rotationInDir = null;
-        for (Direction inDir : inDirections) {
-            if (isNinetyDegreeTurn(inDir, outDir)) {
-                rotationInDir = inDir;
-                break;
-            }
-        }
+//        appLogger.info("=== CHECKING EACH INPUT DIRECTION ===");
+//        for (Direction inDir : inDirections) {
+//            boolean is90Turn = isNinetyDegreeTurn(inDir, outDir);
+//            appLogger.info("InDir: {} -> OutDir: {} forms 90-degree turn: {}",
+//                    inDir.getName(), outDir.getName(), is90Turn);
+//            if (is90Turn && inDir.equals(entryDirection)) {
+//                appLogger.info("*** MATCH FOUND *** EntryDir {} matches rotating InDir {}",
+//                        entryDirection.getName(), inDir.getName());
+//            }
+//        }
 
-        if (rotationInDir == null) {
-            appLogger.info("No rotation: no valid turning configuration found");
+        // Überprüfen Sie, ob die Einfahrtsrichtung in der Liste der zulässigen Einfahrten des Förderbands enthalten ist.
+        if (!inDirections.contains(entryDirection)) {
             return;
         }
 
-        boolean isCounterClockwise = isCounterClockwiseTurn(rotationInDir, outDir);
-        Direction newDirection;
-        if (isCounterClockwise) {
-            newDirection = currentDirection.turnLeft();
-            appLogger.info("Applying counter-clockwise rotation based on belt config {}->{}: {} -> {}",
-                    rotationInDir.getName(), outDir.getName(),
-                    currentDirection.getName(), newDirection.getName());
-        } else {
-            newDirection = currentDirection.turnRight();
-            appLogger.info("Applying clockwise rotation based on belt config {}->{}: {} -> {}",
-                    rotationInDir.getName(), outDir.getName(),
-                    currentDirection.getName(), newDirection.getName());
+        // Nur wenn der Roboter durch den Eingang mit einer 90-Grad-Kurve fährt, dreht er sich.
+        if (!isNinetyDegreeTurn(entryDirection, outDir)) {
+            return;
         }
 
-        robot.setDirection(newDirection);
+        // Setzen Sie die Ausrichtung des Roboters direkt auf die Ausgangsrichtung.
+        Direction oldDirection = robot.getDirection();
+//        Direction robotFromDirection = entryDirection.turnAround(); // Richtung, aus der sich der Roboter nähert
+        robot.setDirection(outDir);
+//        Direction robotToDirection = outDir; // Die Bewegungsrichtung des Roboters
         Player player = Game.getInstance().getPlayers().stream()
                 .filter(p -> p.getRobot() == robot)
                 .findFirst()
                 .orElse(null);
 
         if (player != null) {
+            boolean isCounterClockwise = isCounterClockwiseTurn(entryDirection, outDir);
             String rotationDirection = isCounterClockwise ? "counterclockwise" : "clockwise";
             Server.getInstance().broadcastMessage(
                     new MessageDefinitions.Message<>(
@@ -143,10 +133,20 @@ public class Belts extends BoardElement {
             );
         }
         appLogger.info("Robot {} rotated from {} to {} by rotating conveyor belt at position ({}, {})",
-                robot.getRobotID(), currentDirection.getName(), newDirection.getName(),
+                robot.getRobotID(), oldDirection.getName(), outDir.getName(),
                 position.x(), position.y());
     }
 
+    /**
+     * Rotationsmethode, die mit der alten Schnittstelle kompatibel ist.
+     * @param robot Der zu rotierende Roboter.
+     * @deprecated Ersetzt durch applyConveyorRotation(Robot robot, Direction entryDirection).
+     */
+    @Deprecated
+    public void applyConveyorRotation(Robot robot) {
+        Direction entryDirection = robot.getDirection().turnAround();
+        applyConveyorRotation(robot, entryDirection);
+    }
 
     /**
      * Check whether there is a 90-degree turn from the entrance to the exit.
@@ -167,10 +167,10 @@ public class Belts extends BoardElement {
      * @return true If it is a counterclockwise turn.
      */
     private boolean isCounterClockwiseTurn(Direction inDir, Direction outDir) {
-        return (inDir == Direction.NORTH && outDir == Direction.WEST) ||
-                (inDir == Direction.WEST && outDir == Direction.NORTH) ||
-                (inDir == Direction.SOUTH && outDir == Direction.EAST) ||
-                (inDir == Direction.EAST && outDir == Direction.SOUTH);
+        return (inDir == Direction.NORTH && outDir == Direction.EAST) ||
+                (inDir == Direction.EAST && outDir == Direction.SOUTH) ||
+                (inDir == Direction.SOUTH && outDir == Direction.WEST) ||
+                (inDir == Direction.WEST && outDir == Direction.NORTH);
     }
 
     /**
@@ -494,25 +494,20 @@ public class Belts extends BoardElement {
             board.updateRobotPosition(robot, nextPos);
             currentPos = nextPos;
 
-
             // Check if there's a conveyor belt at the new position
             Belts nextBelt = findBeltAt(board, nextPos);
             if (nextBelt != null) {
-
                 // Check if the movement from current belt to next belt is valid
                 if (isValidBeltMovement(outDir, nextBelt)) {
-                    // Apply rotation if the next belt is rotating - 只有传送带移动才触发旋转
+                    // Apply rotation if the next belt is rotating
                     if (nextBelt.isRotating()) {
-                        nextBelt.applyConveyorRotation(robot);
+                        Direction entryDir = outDir.turnAround(); // Korrektur: Die Einfahrtsrichtung ist die entgegengesetzte Richtung der Ausfahrtsrichtung.
+                        nextBelt.applyConveyorRotation(robot, entryDir);
                     }
 
                     // Continue with the next belt's direction for subsequent steps
                     outDir = nextBelt.getMainOutDirection();
                 } else {
-                    // Still apply rotation if this belt is rotating - 只有传送带移动才触发旋转
-                    if (nextBelt.isRotating()) {
-                        nextBelt.applyConveyorRotation(robot);
-                    }
                     break; // Stop belt movement
                 }
             } else {
