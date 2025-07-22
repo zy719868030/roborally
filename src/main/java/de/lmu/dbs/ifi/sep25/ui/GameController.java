@@ -3216,7 +3216,6 @@ public class GameController {
         }
     }
 
-
     /**
      * Synchronize the current player's nickname mapping.
      * This method ensures that the latest username mapping is obtained from ClientSingleton and
@@ -3289,7 +3288,6 @@ public class GameController {
         });
     }
 
-
     private void playWavingAnimation(Label label) {
         TranslateTransition wave = new TranslateTransition(Duration.millis(600), label);
         wave.setFromX(-5);
@@ -3307,7 +3305,6 @@ public class GameController {
             label.setTranslateX(0);
         }
     }
-
 
     private void updateMiniRobotInPhase(boolean isSetupPhase, boolean isProgrammingPhase, boolean isActivationPhase) {
         int myID = ClientSingleton.getInstance().getID();
@@ -3544,7 +3541,6 @@ public class GameController {
 
         return new Point2D(centerX, centerY);
     }
-
 
     /**
      * Calculates the laser end point considering walls and robots.
@@ -3841,7 +3837,6 @@ public class GameController {
         sequence.play();
     }
 
-
     private void clearProgrammingUI() {
     }
 
@@ -3891,7 +3886,6 @@ public class GameController {
             updateEnergyDisplay(energy);
         }
     }
-
 
     @FXML
     private void handleZoomIn() {
@@ -4324,7 +4318,6 @@ public class GameController {
         });
     }
 
-
     /**
      * Creates and displays a floating map info popup in the top right corner of the game view.
      * The popup provides instructions for map controls (zoom, drag) and shows the current zoom and scroll position.
@@ -4412,13 +4405,41 @@ public class GameController {
      */
     private void setupHelpIcon() {
         helpButton = new Button("?");
-        helpButton.setStyle("-fx-background-radius: 50%; -fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 18; -fx-font-weight: bold; -fx-min-width: 36; -fx-min-height: 36; -fx-cursor: hand;");
+        helpButton.setStyle(
+                "-fx-background-radius: 50%;"
+                        + "-fx-background-color: #87CEEB;"
+                        + "-fx-text-fill: #2F4F4F;"
+                        + "-fx-font-size: 18;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-min-width: 36;"
+                        + "-fx-min-height: 36;"
+                        + "-fx-cursor: hand;"
+                        + "-fx-opacity: 0.45;"
+                        + "-fx-transition: all 0.2s;"
+        );
         helpButton.setPrefSize(36, 36);
         StackPane.setAlignment(helpButton, Pos.TOP_RIGHT);
         helpButton.setTranslateX(-18);
         helpButton.setTranslateY(18);
         helpButton.setFocusTraversable(false);
-        helpButton.setOnAction(e -> showMapInfoDialog());
+
+        helpButton.setOpacity(0.45); // Default (faded)
+
+        helpButton.setOnMouseEntered(e -> {
+            helpButton.setOpacity(1.0);          // Full opacity on hover
+            helpButton.setScaleX(1.13);
+            helpButton.setScaleY(1.13);
+            helpButton.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        helpButton.setOnMouseExited(e -> {
+            helpButton.setOpacity(0.45);         // Fade out again
+            helpButton.setScaleX(1.0);
+            helpButton.setScaleY(1.0);
+            helpButton.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        helpButton.setOnAction(_ -> showMapInfoDialog());
         if (rootPane != null) {
             rootPane.getChildren().add(helpButton);
         }
@@ -4459,7 +4480,18 @@ public class GameController {
         positionStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
         Button closeBtn = new Button("Schließen");
-        closeBtn.setStyle("-fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 13; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 6 18;");
+        closeBtn.setStyle("-fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 13; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 6 18; -fx-cursor: hand;");
+
+        closeBtn.setOnMouseEntered(_ -> {
+            closeBtn.setScaleX(1.13);
+            closeBtn.setScaleY(1.13);
+            closeBtn.setCursor(javafx.scene.Cursor.HAND);
+        });
+        closeBtn.setOnMouseExited(_ -> {
+            closeBtn.setScaleX(1.0);
+            closeBtn.setScaleY(1.0);
+            closeBtn.setCursor(javafx.scene.Cursor.HAND);
+        });
         closeBtn.setOnAction(e -> ((Stage) closeBtn.getScene().getWindow()).close());
         closeBtn.setDefaultButton(true);
 
@@ -4475,11 +4507,20 @@ public class GameController {
         );
 
         Scene scene = new Scene(infoBox);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+
         Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initStyle(StageStyle.UTILITY);
+        dialog.initStyle(StageStyle.UNDECORATED);
         dialog.setTitle("Karten-Steuerung");
         dialog.setScene(scene);
+
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case ESCAPE, ENTER -> dialog.close();
+            }
+        });
+
         dialog.setResizable(false);
         dialog.show();
     }
