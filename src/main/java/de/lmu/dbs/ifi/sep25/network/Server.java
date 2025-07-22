@@ -672,19 +672,39 @@ public class Server {
     public ConcurrentBidirectionalMap<ClientHandler, Integer> getFigures() {
         return figures;
     }
-
+    /**
+     * Indicates whether the map selection process is currently ongoing.
+     *
+     * @return {@code true} if map selection is in progress; {@code false} otherwise
+     */
     public synchronized boolean isMapSelectionOngoing() {
         return mapSelectionOngoing;
     }
 
+    /**
+     * Sets the map selection state.
+     *
+     * @param mapSelectionOngoing {@code true} to indicate that map selection is ongoing;
+     *                            {@code false} to indicate it has finished or not started
+     */
     public synchronized void setMapSelectionOngoing(boolean mapSelectionOngoing) {
         this.mapSelectionOngoing = mapSelectionOngoing;
     }
 
+    /**
+     * Returns whether the timer has been started.
+     *
+     * @return {@code true} if the timer is currently running; {@code false} otherwise
+     */
     public boolean getTimerStarted() {
         return timerStarted.get();
     }
 
+    /**
+     * Sets the timer's started state.
+     *
+     * @param timerStarted {@code true} to indicate the timer has started; {@code false} otherwise
+     */
     public void setTimerStarted(boolean timerStarted) {
         this.timerStarted.set(timerStarted);
     }
@@ -739,7 +759,15 @@ public class Server {
             }
         }, 30, TimeUnit.SECONDS);
     }
-
+    /**
+     * Cancels the currently active timer if it is running.
+     * <p>
+     * If a timer is active and not yet completed, this method will cancel it,
+     * reset the {@code timerStarted} flag, log the cancellation, and reset any related state,
+     * such as clearing ready registers.
+     * <p>
+     * If no active timer exists or it is already finished, a warning is logged instead.
+     */
     public void cancelTimer() {
         if (activeTimer != null && !activeTimer.isDone()) {
             activeTimer.cancel(false);

@@ -74,11 +74,26 @@ public class Client {
     private List<List<List<MessageDefinitions.Field>>> currentGameMap;
 
     private String selectedMap;
-
+    /**
+     * Sets the current game map.
+     * <p>
+     * The game map is represented as a 3D list structure containing {@link MessageDefinitions.Field}
+     * objects. It typically models the board layout, where each tile may contain multiple fields.
+     *
+     * @param map the new game map to set
+     */
     public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
         this.currentGameMap = map;
     }
 
+    /**
+     * Returns the current game map.
+     * <p>
+     * The game map is a 3D list structure of {@link MessageDefinitions.Field} elements that describe
+     * the current state or layout of the game board.
+     *
+     * @return the current game map
+     */
     public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
         return currentGameMap;
     }
@@ -856,7 +871,13 @@ public class Client {
             }
         });
     }
-
+    /**
+     * Handles the start of a countdown timer by triggering the UI update on the JavaFX application thread.
+     * <p>
+     * This method retrieves the {@link GameController} from the {@link ControllerRegistry}
+     * and invokes its {@code startCountdown()} method. If the controller is not yet initialized,
+     * an error is logged.
+     */
 
     private void handleBodyTimerStarted() {
         Platform.runLater(() -> {
@@ -1519,11 +1540,25 @@ public class Client {
     public List<BodyPlayerAdded> getPendingPlayers() {
         return pendingPlayers;
     }
-
+    /**
+     * Returns the username associated with the current client ID.
+     * <p>
+     * If no matching username is found, the string {@code "Unbekannt"} is returned.
+     *
+     * @return the username of the current client or {@code "Unbekannt"} if not found
+     */
     public String getMyName() {
         return usernames.getByKeyOrDefault(ID, "Unbekannt");
     }
 
+    /**
+     * Retrieves the figure ID associated with the current client from the pending lobby players.
+     * <p>
+     * This method searches through the list of {@link BodyPlayerAdded} entries to find the
+     * one matching this client's ID and returns its figure.
+     *
+     * @return the figure ID of the current client, or {@code -1} if not found
+     */
     public int getMyFigureFromLobby() {
         for (BodyPlayerAdded player : pendingPlayers) {
             if (player.clientID() == ID) {
@@ -1534,6 +1569,7 @@ public class Client {
     }
 
 
+
     /**
      * Returns the selected map variable, stored in handleMapSelected.
      *
@@ -1542,7 +1578,14 @@ public class Client {
     public String getSelectedMap() {
         return selectedMap;
     }
-
+    /**
+     * Returns a thread-safe bidirectional map of client IDs and usernames.
+     * <p>
+     * This map allows efficient lookup in both directions:
+     * from client ID to username and vice versa.
+     *
+     * @return a {@link ConcurrentBidirectionalMap} mapping client IDs to usernames
+     */
     public ConcurrentBidirectionalMap<Integer, String> getUsernames() {
         return usernames;
     }
