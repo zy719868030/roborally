@@ -1,9 +1,11 @@
 package de.lmu.dbs.ifi.sep25.card.DamageCard;
 
 import de.lmu.dbs.ifi.sep25.card.Card;
+import de.lmu.dbs.ifi.sep25.card.CardFactory;
 import de.lmu.dbs.ifi.sep25.card.RegisterCard;
 import de.lmu.dbs.ifi.sep25.game.*;
 import de.lmu.dbs.ifi.sep25.game.BoardElement.Reboot;
+import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 
 import java.util.List;
 
@@ -67,8 +69,23 @@ public class DamageCard extends Card implements RegisterCard{
     public void execute(Robot robot, Player player) {
         switch (damageType) {
             case SPAM:
-                // SPAM Card: Simple damage, no additional effects.
-                System.out.println("Robot " + robot.getRobotID() + " executes SPAM damage card");
+                // Correct handling logic for SPAM cards: Discard(Return to the damage card pool)
+                // → Draw new card (Draw new cards from the programming card deck.)
+                // → Execute new card(Activate new card immediately)
+                System.out.println("Robot " + robot.getRobotID() + " executes SPAM damage card - replacing with new card");
+                DamageCardPool.getInstance().returnCard(this);
+
+                RegisterCard newCard = player.drawCardFromProgrammingDeck();
+                String newCardName = CardFactory.getCardName(newCard);
+                int currentRegister = Game.getInstance().getCurrentRegister();
+                player.getConnection().broadcastMessage(new MessageDefinitions.Message<>(
+                        new MessageDefinitions.BodyReplaceCard(currentRegister, newCardName, player.getClientID())
+                ));
+
+                if (newCard != null) {
+                    System.out.println("Robot " + robot.getRobotID() + " executing replacement card: " + newCardName);
+                    newCard.execute(robot, player);
+                }
                 break;
 
             case WORM:
@@ -94,7 +111,7 @@ public class DamageCard extends Card implements RegisterCard{
                 break;
         }
         // After the damage card is executed, remove it from the deck and draw a new programming card.
-        robot.replaceDamageCard();
+//        robot.replaceDamageCard();
     }
 
     /**

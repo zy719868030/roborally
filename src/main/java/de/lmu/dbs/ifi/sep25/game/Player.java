@@ -519,6 +519,25 @@ public class Player {
     }
 
     /**
+     * Draw a card from the programming card deck specifically for SPAM card replacement.
+     */
+    public RegisterCard drawCardFromProgrammingDeck() {
+        if (programmingDeck.isEmpty()) {
+            programmingDeck.reset();
+            connection.broadcastMessage(new MessageDefinitions.Message<>(
+                    new MessageDefinitions.BodyShuffleCoding(this.getRobot().getRobotID())
+            ));
+        }
+
+        RegisterCard card = null;
+        if (!programmingDeck.isEmpty()) {
+            card = programmingDeck.draw();
+        }
+
+        return card;
+    }
+
+    /**
      * Discards a card from the hand and adds it to the discard pile.
      * 
      * <p>This method removes a card from the player's hand and adds it to the

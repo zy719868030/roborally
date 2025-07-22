@@ -931,9 +931,9 @@ public class Robot {
                             new MessageDefinitions.BodyDrawDamage(this.clientID, cards)
                     ));
                 }
-                if (type == DamageCard.DamageType.SPAM && Game.getInstance().getCurrentPhase() == 3) {
-                    player.replaceDamageCard(0); // Replace first register slot for SPAM
-                }
+//                if (type == DamageCard.DamageType.SPAM && Game.getInstance().getCurrentPhase() == 3) {
+//                    player.replaceDamageCard(0); // Replace first register slot for SPAM
+//                }
             } else {
                 System.err.println("Error: Could not find player for robot " + robotID);
             }

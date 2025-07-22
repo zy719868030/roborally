@@ -912,12 +912,7 @@ public class Game {
 
             // Handle DamageCard effects explicitly
             try {
-                if (card instanceof DamageCard damageCard) {
-                    handleDamageCardEffect(damageCard, player);
-                } else {
-//                    appLogger.debug("Executing card: {} for {}", cardName, player.toString());
-                    card.execute(player.getRobot(), player);
-                }
+                card.execute(player.getRobot(), player);
                 Position robotPosition = player.getRobot().getPosition();
                 Server.getInstance().broadcastMessage(
                         new MessageDefinitions.Message<>(

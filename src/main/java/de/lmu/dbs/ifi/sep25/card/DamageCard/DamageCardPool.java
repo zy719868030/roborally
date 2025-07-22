@@ -124,6 +124,18 @@ public class DamageCardPool {
     }
 
     /**
+     * Return damage cards to their corresponding card pools (used for discarding SPAM cards)
+     */
+    public void returnCard(DamageCard card) {
+        if (card != null) {
+            List<DamageCard> targetList = getCardListByType(card.getDamageType());
+            if (targetList != null) {
+                targetList.add(card);
+            }
+        }
+    }
+
+    /**
      * Get the total number of damage cards
      */
     public int getTotalCards() {
