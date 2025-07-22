@@ -94,6 +94,7 @@
 
 }
 
+
 .senden-button:hover {
     -fx-background-color: #00e6c0;
 }
@@ -487,7 +488,7 @@
     -fx-effect: dropshadow(gaussian, #ffe664, 12, 0.6, 0, 0);
 }
 .zoom-button {
-    -fx-font-size: 14px;
+    -fx-font-size: 8px;
     -fx-font-weight: bold;
     -fx-background-color: linear-gradient(to bottom, #aaffaa, #44ff44);
     -fx-text-fill: black;
@@ -522,4 +523,30 @@
 .my-robot-enlarged {
     -fx-effect: dropshadow(gaussian, cyan, 18, 0.7, 0, 0);
     -fx-view-order: -1;
+}
+.game-log-area {
+    -fx-background-color: rgba(20, 20, 30, 0.85);
+    -fx-background-radius: 12;
+    -fx-padding: 10;
+    -fx-spacing: 6;
+    -fx-border-color: #00ffd0;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 5, 0.5, 0, 0);
+}
+
+.log-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.game-log-compact {
+    -fx-background-color: rgba(20, 20, 30, 0.7);
+    -fx-text-fill: #00ffd0;
+    -fx-font-family: "Consolas", monospace;
+    -fx-padding: 10;
+    -fx-background-radius: 10;
+    -fx-border-color: #00ffd0;
+    -fx-border-radius: 10;
+    -fx-font-size: 13px;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 4, 0.5, 0, 0);
 }

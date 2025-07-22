@@ -1199,11 +1199,12 @@ public class Client {
                 case "movement" -> MOVEMENT;
                 case "clockwise" -> CLOCKWISE;
                 case "counterclockwise" -> COUNTERCLOCKWISE;
+                case "playershooting" -> PLAYERSHOOTING;
+
                 default -> ANIMATION_NOT_SUPPORTED;
             };
         }
     }
-
     /**
      * Handles the body animation logic based on the provided JSON input.
      * This method processes the input to determine the type of animation
@@ -1299,7 +1300,7 @@ public class Client {
                 if (controller != null) {
                     controller.updateRobotDirection(currentRebootingClient, direction);
                     controller.showRebootDirection(direction);
-                    controller.appendGameLog("The robot has been restarted in the direction " + direction, "info");
+                    controller.appendGameLog("Der Roboter wurde in Richtung " + direction + " neu gestartet.", "info");
                     Position currentPos = controller.getRobotPosition(rebootingInProgress);
                     if (currentPos != null && currentPos.x() >= 0 && currentPos.y() >= 0) {
                         controller.moveRobotTo(rebootingInProgress, currentPos.x(), currentPos.y());

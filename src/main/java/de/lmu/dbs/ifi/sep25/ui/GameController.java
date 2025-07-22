@@ -149,6 +149,7 @@ public class GameController {
     private Timeline blinkTimeline;
 
 
+
     private double currentZoom = 1.0;
     private final double ZOOM_STEP = 0.25;
     private final double MAX_ZOOM = 2.0;
@@ -779,7 +780,9 @@ public class GameController {
         Platform.runLater(() -> {
             gameLogArea.getChildren().add(label);
 
-             gameLogScrollPane.setVvalue(1.0);
+            gameLogCompactLabel.setText(message);
+
+            gameLogScrollPane.setVvalue(1.0);
         });
     }
 
@@ -2042,6 +2045,7 @@ public class GameController {
         timerCircle.setStrokeType(StrokeType.CENTERED);
         timerCircle.getStrokeDashArray().add(fullLength);
         timerCircle.setStrokeDashOffset(0);
+        timerCircle.setRotate(-90);
 
 
         timerContainer = new StackPane(timerCircle, timerLabel);
@@ -2073,6 +2077,11 @@ public class GameController {
                     animatePulse(timerLabel);
                     updateCountdownColor(secondsLeft);
 
+                    //ONLY LAST 5 SEC
+                    if (secondsLeft == 5) {
+                        playCountdownSound();
+                    }
+
                     if (secondsLeft <= 0) {
                         countdownTimer.stop();
                         stopCountdownSound();
@@ -2087,7 +2096,7 @@ public class GameController {
                 })
         );
         countdownTimer.setCycleCount(30);
-        playCountdownSound();
+       // playCountdownSound();
         countdownTimer.play();
 
     }
@@ -2144,9 +2153,9 @@ public class GameController {
             countdownClip.setCycleCount(1);
             countdownClip.play();
 
-            PauseTransition stopSound = new PauseTransition(Duration.seconds(25));
-            stopSound.setOnFinished(e -> stopCountdownSound());
-            stopSound.play();
+            //PauseTransition stopSound = new PauseTransition(Duration.seconds(25));
+            //stopSound.setOnFinished(e -> stopCountdownSound());
+          //  stopSound.play();
 
         } catch (Exception e) {
             System.err.println("Countdown-Sound konnte nicht geladen werden: " + e.getMessage());
@@ -2333,7 +2342,7 @@ public class GameController {
             applyMyRobotSpecialEffects(robotView, clientID);
 
             String playerName = getPlayerNameById(clientID);
-            appendGameLog("Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.", "info");
+         //   appendGameLog("Spieler " + playerName + " wurde nach (" + x + ", " + y + ") bewegt.", "info");
         } catch (Exception e) {
             appLogger.error("Roboterbild konnte nicht geladen werden für Spieler {}", clientID);
             e.printStackTrace();
@@ -2485,7 +2494,7 @@ public class GameController {
     public void playAnimation(String type) {
         if ("PlayerShooting".equals(type)) {
             int meineClientID = ClientSingleton.getInstance().getID();
-            spieleLaserAnimation(meineClientID);
+            playLaserAnimation(meineClientID);
         } else if ("RoundCompleted".equals(type)) {
             showRoundCompletedOverlay();
         } else {
@@ -3532,25 +3541,21 @@ public class GameController {
         iv.setSmooth(true);
         return iv;
     }
-    public void spieleLaserAnimation(int clientID) {
+
+    public void playLaserAnimation(int clientID) {
         Position startPos = robotPositions.get(clientID);
-        if (startPos == null) {
-            appLogger.warn("Keine Position für Roboter von Client {} gefunden.", clientID);
-            return;
-        }
+        if (startPos == null) return;
 
         String richtung = robotDirections.get(clientID);
-        if (richtung == null) {
-            appLogger.warn("Keine Richtung für Roboter von Client {} gefunden.", clientID);
-            return;
-        }
+        if (richtung == null) return;
 
-        // Startpunkt (Pixel-Koordinaten, Mitte der Zelle)
-        double startX = startPos.x() * TILE_SIZE + TILE_SIZE / 2.0;
-        double startY = startPos.y() * TILE_SIZE + TILE_SIZE / 2.0;
+        Point2D startPunkt = calculateLaserStartPoint(startPos);
+        double startX = startPunkt.getX();
+        double startY = startPunkt.getY();
 
-        // Endpunkt des Lasers berechnen (Raycast)
-        Point2D endPunkt = berechneLaserEndpunkt(startPos.x(), startPos.y(), richtung);
+        Point2D endPunkt = calculateLaserEndPoint(startPos.x(), startPos.y(), richtung);
+        double endX = endPunkt.getX();
+        double endY = endPunkt.getY();
 
         Line laserLinie = new Line();
         laserLinie.setStartX(startX);
@@ -3560,16 +3565,16 @@ public class GameController {
         laserLinie.setStroke(Color.RED);
         laserLinie.setStrokeWidth(4);
         laserLinie.setOpacity(0.8);
-        // DropShadow-Glow hinzufügen
+
+        // Glow visual
         DropShadow glow = new DropShadow();
         glow.setColor(Color.RED);
         glow.setRadius(10);
         glow.setSpread(0.5);
         laserLinie.setEffect(glow);
 
-        gameBoardPane.getChildren().add(laserLinie);
+        laserLayer.getChildren().add(laserLinie);
 
-        // Animation: Linie wächst und wird dann ausgeblendet
         Timeline animation = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(laserLinie.endXProperty(), startX),
@@ -3577,36 +3582,48 @@ public class GameController {
                         new KeyValue(laserLinie.opacityProperty(), 0.8)
                 ),
                 new KeyFrame(Duration.seconds(0.3),
-                        new KeyValue(laserLinie.endXProperty(), endPunkt.getX()),
-                        new KeyValue(laserLinie.endYProperty(), endPunkt.getY())
+                        new KeyValue(laserLinie.endXProperty(), endX),
+                        new KeyValue(laserLinie.endYProperty(), endY)
                 ),
-                new KeyFrame(Duration.seconds(0.8),
-                        new KeyValue(laserLinie.opacityProperty(), 0.8)
-                ),
-                new KeyFrame(Duration.seconds(1.3),
-                        new KeyValue(laserLinie.opacityProperty(), 0)
+                new KeyFrame(Duration.seconds(1.0),
+                        new KeyValue(laserLinie.opacityProperty(), 0.0)
                 )
         );
 
-        animation.setOnFinished(e -> gameBoardPane.getChildren().remove(laserLinie));
+        animation.setOnFinished(e -> laserLayer.getChildren().remove(laserLinie));
         animation.play();
     }
 
+    private Point2D calculateLaserStartPoint(Position pos) {
+        StackPane cell = getCellAt(pos.x(), pos.y());
+        if (cell == null) return new Point2D(0, 0);
+
+        Bounds sceneBounds = cell.localToScene(cell.getBoundsInLocal());
+        Bounds laserBounds = laserLayer.sceneToLocal(sceneBounds);
+
+        double centerX = laserBounds.getMinX() + laserBounds.getWidth() / 2;
+        double centerY = laserBounds.getMinY() + laserBounds.getHeight() / 2;
+
+        return new Point2D(centerX, centerY);
+    }
+
+
+
     /**
-     * Berechnet den Endpunkt des Laserstrahls mit Wänden und Robotern.
+     * Calculates the laser end point considering walls and robots.
      */
-    private Point2D berechneLaserEndpunkt(int startX, int startY, String richtung) {
+    private Point2D calculateLaserEndPoint(int startX, int startY, String direction) {
         final int MAX_DISTANZ = 10;
 
         int dx = 0, dy = 0;
-        switch (richtung.toLowerCase()) {
+        switch (direction.toLowerCase()) {
             case "right" -> dx = 1;
             case "left" -> dx = -1;
             case "top" -> dy = -1;
             case "bottom" -> dy = 1;
             default -> {
-                appLogger.warn("Ungültige Richtung für Laser: {}", richtung);
-                return new Point2D(startX * TILE_SIZE + TILE_SIZE / 2.0, startY * TILE_SIZE + TILE_SIZE / 2.0);
+                appLogger.warn("Invalid laser direction: {}", direction);
+                return calculateLaserStartPoint(new Position(startX, startY));
             }
         }
 
@@ -3614,39 +3631,46 @@ public class GameController {
         int y = startY;
 
         for (int i = 0; i < MAX_DISTANZ; i++) {
-            // Prüfe Wand vor dem nächsten Feld
-            if (hatWand(x, y, dx, dy)) {
+            if (hasWall(x, y, dx, dy)) break;
+
+            int nextX = x + dx;
+            int nextY = y + dy;
+
+            if (isRobotAtPosition(nextX, nextY)) {
+                x = nextX;
+                y = nextY;
                 break;
             }
 
-            x += dx;
-            y += dy;
+            x = nextX;
+            y = nextY;
 
-            StackPane zelle = getCellAt(x, y);
-            if (zelle == null) break;
-
-            if (istRoboterAnPosition(x, y)) {
-                break;
-            }
+            if (getCellAt(x, y) == null) break;
         }
 
-        double endX = x * TILE_SIZE + TILE_SIZE / 2.0;
-        double endY = y * TILE_SIZE + TILE_SIZE / 2.0;
-        return new Point2D(endX, endY);
+        StackPane targetCell = getCellAt(x, y);
+        if (targetCell != null) {
+            Bounds bounds = targetCell.localToScene(targetCell.getBoundsInLocal());
+            Bounds relative = laserLayer.sceneToLocal(bounds);
+            double endX = relative.getMinX() + relative.getWidth() / 2;
+            double endY = relative.getMinY() + relative.getHeight() / 2;
+            return new Point2D(endX, endY);
+        }
+
+        return calculateLaserStartPoint(new Position(x, y));
     }
 
     /**
-     * Prüft, ob zwischen Feld (x,y) und dem Feld in Richtung (dx, dy) eine Wand den Laser blockiert.
+     * Checks if there is a wall at (x, y) that blocks laser movement in direction (dx, dy).
      */
-    private boolean hatWand(int x, int y, int dx, int dy) {
-        // Hole die Board-Elemente an Position (x, y)
+    private boolean hasWall(int x, int y, int dx, int dy) {
         List<MessageDefinitions.Field> elements = getBoardElementsAt(x, y);
         if (elements == null) return false;
 
         for (MessageDefinitions.Field element : elements) {
             if ("Wall".equals(element.type())) {
                 MessageDefinitions.FieldWall wall = (MessageDefinitions.FieldWall) element;
-                if (wandBlockiertRichtung(wall, dx, dy)) {
+                if (wallBlocksDirection(wall, dx, dy)) {
                     return true;
                 }
             }
@@ -3655,9 +3679,9 @@ public class GameController {
     }
 
     /**
-     * Hilfsmethode, um zu prüfen, ob die Wand die Laser-Richtung blockiert.
+     * Helper: determines if the given wall blocks the specified laser direction.
      */
-    private boolean wandBlockiertRichtung(MessageDefinitions.FieldWall wall, int dx, int dy) {
+    private boolean wallBlocksDirection(MessageDefinitions.FieldWall wall, int dx, int dy) {
         List<String> orientations = wall.orientations();
 
         if (dx == 1 && orientations.contains("left")) return true;
@@ -3669,9 +3693,9 @@ public class GameController {
     }
 
     /**
-     * Prüft, ob ein Roboter an der Position (x, y) steht.
+     * Checks if there is a robot at the given board position (x, y).
      */
-    private boolean istRoboterAnPosition(int x, int y) {
+    private boolean isRobotAtPosition(int x, int y) {
         for (Position pos : robotPositions.values()) {
             if (pos.x() == x && pos.y() == y) {
                 return true;
@@ -3679,6 +3703,7 @@ public class GameController {
         }
         return false;
     }
+
     private Board board;
 
     public void setBoard(Board board) {
@@ -3831,12 +3856,10 @@ public class GameController {
         });
         fadeIn.play();
     }
+
     /**
-     * Displays the game logo with an elaborate transition animation.
-     * <p>
-     * The logo appears from the bottom of the screen, scales up,
-     * and fades out again after a short pause.
-     * Useful for game start or transitions between phases.
+     * Displays the game logo with a transition animation.
+     * The logo slides in from below, scales up, pauses, then fades out.
      */
     public void showLogoTransition() {
         gameLogoView.setVisible(true);
@@ -3918,6 +3941,10 @@ public class GameController {
                 .findFirst()
                 .orElse(null);
     }
+
+    /**
+     * Updates the energy display if the update is for the local player.
+     */
     public void updateEnergyIfLocal(int clientID, int energy) {
         int myID = ClientSingleton.getInstance().getID();
         if (clientID == myID) {
@@ -3965,8 +3992,10 @@ public class GameController {
         int myID = ClientSingleton.getInstance().getID();
 
         if (clientID == myID) {
-            robotView.setFitWidth(MY_ROBOT_SIZE);
-            robotView.setFitHeight(MY_ROBOT_SIZE);
+            //robotView.setFitWidth(MY_ROBOT_SIZE);
+            //robotView.setFitHeight(MY_ROBOT_SIZE);
+            robotView.setFitWidth(NORMAL_ROBOT_SIZE);
+            robotView.setFitHeight(NORMAL_ROBOT_SIZE);
             robotView.setTranslateX(0);
             robotView.setTranslateY(0);
             DropShadow highlight = new DropShadow();
@@ -4224,8 +4253,8 @@ public class GameController {
      * The animation simulates the beam expanding and fading over time.
      */
     private void createAnimatedLaser(int x, int y, Direction direction, double lengthInTiles, String mapName) {
-        double startX = x * TILE_SIZE + TILE_SIZE / 1.0+0.5;
-        double startY = y * TILE_SIZE + TILE_SIZE / 1.0+0.5;
+        double startX = x * TILE_SIZE + TILE_SIZE / 1.0;
+        double startY = y * TILE_SIZE + TILE_SIZE /1.0;
 
         double endX = startX;
         double endY = startY;
@@ -4420,7 +4449,7 @@ public class GameController {
     }
 
     /**
-     * Aktualisiert das Map-Info-Popup mit aktuellen Werten
+     * Updates the map info popup with current values.
      */
     private void updateMapInfoPopup() {
         Platform.runLater(() -> {
@@ -4510,5 +4539,37 @@ public class GameController {
         dialog.setResizable(false);
         dialog.show();
     }
-}
 
+    @FXML private Label gameLogCompactLabel;
+
+    /**
+     * Agrega un mensaje al historial y lo muestra dinámicamente como el último.
+     */
+    public void addLogEntry(String message) {
+        gameLogCompactLabel.setText(message);
+
+        Label entry = new Label(message);
+        entry.getStyleClass().add("game-log-entry");
+        gameLogArea.getChildren().add(entry);
+
+        Platform.runLater(() -> gameLogScrollPane.setVvalue(1.0));
+    }
+
+    @FXML
+    private void expandGameLog() {
+        gameLogScrollPane.setVisible(true);
+        gameLogScrollPane.setManaged(true);
+        gameLogCompactLabel.setVisible(false);
+        gameLogCompactLabel.setManaged(false);
+    }
+
+    @FXML
+    private void collapseGameLog() {
+        gameLogScrollPane.setVisible(false);
+        gameLogScrollPane.setManaged(false);
+        gameLogCompactLabel.setVisible(true);
+        gameLogCompactLabel.setManaged(true);
+    }
+
+
+}

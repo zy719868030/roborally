@@ -57,7 +57,7 @@
                 styleClass="button-dorado"
                 prefWidth="200" prefHeight="60">
             <tooltip>
-                <Tooltip text="Show game notifications"/>
+                <Tooltip text="Spielmeldungen anzeigen"/>
             </tooltip>
             <graphic>
                 <HBox alignment="CENTER" spacing="10">
@@ -74,19 +74,39 @@
             </graphic>
         </Button>
         <!-- Game Log Panel -->
-        <ScrollPane prefHeight="160" prefWidth="220"
-                    fitToWidth="true"
-                    fx:id="gameLogScrollPane"
-                    vbarPolicy="ALWAYS"
-                    hbarPolicy="NEVER"
-                    styleClass="log-scroll-pane">
+        <VBox fx:id="gameLogContainer"
+              onMouseEntered="#expandGameLog"
+              onMouseExited="#collapseGameLog"
+              maxWidth="300"
+              spacing="5">
 
-            <VBox fx:id="gameLogArea"
-                  spacing="4"
-                  alignment="TOP_LEFT"
-                  styleClass="chat-area"
-                  prefWidth="220" />
-        </ScrollPane>
+            <!-- 🔹 Siempre visible: muestra el último mensaje -->
+            <Label fx:id="gameLogCompactLabel"
+                   styleClass="game-log-compact"
+                   text="System bereit..."
+                   maxWidth="300"
+                   wrapText="true" />
+
+            <!-- 🔹 Historial solo visible al pasar el mouse -->
+            <ScrollPane fx:id="gameLogScrollPane"
+                        visible="false"
+                        managed="false"
+                        fitToWidth="true"
+                        vbarPolicy="AS_NEEDED"
+                        styleClass="log-scroll-pane"
+                        prefHeight="120"
+                        prefWidth="300">
+                <VBox fx:id="gameLogArea"
+                      styleClass="game-log-area"
+                      spacing="4"
+                      alignment="TOP_LEFT"
+                      prefWidth="280"/>
+            </ScrollPane>
+        </VBox>
+
+
+
+
         <!-- Chat Minimieren -->
         <Button fx:id="chatToggleButton"
                 onAction="#toggleChatBox"
@@ -196,7 +216,7 @@
 
             <HBox spacing="10" alignment="CENTER" style="-fx-padding: 10;">
                 <HBox fx:id="handCardBox" spacing="10" alignment="CENTER"/>
-                <Button text="Sortieren"
+                <Button text="Mischen"
                         fx:id="shuffleVisualButton"
                         onAction="#handleShuffleVisual"
                         styleClass="senden-button"

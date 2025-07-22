@@ -3,12 +3,12 @@ package de.lmu.dbs.ifi.sep25.ui;
 import javafx.beans.property.*;
 
 /**
- * Repräsentiert einen Spieler in der Lobby mit unterstütztem JavaFX-Databinding.
+ * Represents a player in the lobby with JavaFX data binding support.
  *
  * <p>
- * Diese Klasse nutzt JavaFX Properties (StringProperty, IntegerProperty, BooleanProperty),
- * um Änderungen an den Werten automatisch in der GUI widerspiegeln zu können. Das
- * ist notwendig, um die Anforderungen aus Milestone III (Databinding) zu erfüllen.
+ * This class uses JavaFX properties (StringProperty, IntegerProperty, BooleanProperty)
+ * to automatically reflect value changes in the GUI. This is necessary to meet the
+ * requirements of Milestone III (data binding).
  * </p>
  */
 public class PlayerEntry {
@@ -25,12 +25,12 @@ public class PlayerEntry {
     private final BooleanProperty ready = new SimpleBooleanProperty();
 
     /**
-     * Konstruktor zur Initialisierung eines Spielerobjekts.
+     * Constructor to initialize a player object.
      *
-     * @param clientID die eindeutige ID des Clients
-     * @param name     der Spielername
-     * @param figure   die gewählte Spielfigur (0–5)
-     * @param ready    der Bereitschaftsstatus
+     * @param clientID the unique ID of the client
+     * @param name     the player's name
+     * @param figure   the selected game figure (0–5)
+     * @param ready    the readiness status
      */
     public PlayerEntry(int clientID, String name, int figure, boolean ready) {
         this.clientID.set(clientID);
@@ -40,9 +40,9 @@ public class PlayerEntry {
     }
 
     /**
-     * Gibt die Client-ID zurück.
+     * Returns the client ID.
      *
-     * @return die Client-ID
+     * @return the client ID
      */
     public int getClientID() {
         return clientID.get();
@@ -58,72 +58,72 @@ public class PlayerEntry {
     }
 
     /**
-     * Gibt den Namen des Spielers zurück.
+     * Returns the name of the player.
      *
-     * @return der Spielername
+     * @return the player's name
      */
     public String getName() {
         return name.get();
     }
 
     /**
-     * Property für den Spielernamen.
+     * Property for the player's name.
      *
-     * @return die Property für den Namen
+     * @return the property for the name
      */
     public StringProperty nameProperty() {
         return name;
     }
 
     /**
-     * Gibt die gewählte Spielfigur zurück.
+     * Returns the selected game figure.
      *
-     * @return die Figur-Nummer
+     * @return the figure number
      */
     public int getFigure() {
         return figure.get();
     }
 
     /**
-     * Property für die Spielfigur.
+     * Property for the game figure.
      *
-     * @return die Property für die Figur
+     * @return the property for the figure
      */
     public IntegerProperty figureProperty() {
         return figure;
     }
 
     /**
-     * Gibt zurück, ob der Spieler bereit ist.
+     * Returns whether the player is ready.
      *
-     * @return {@code true}, wenn bereit
+     * @return {@code true} if ready
      */
     public boolean isReady() {
         return ready.get();
     }
 
     /**
-     * Setzt den Bereitschaftsstatus.
+     * Sets the ready status.
      *
-     * @param ready {@code true}, wenn bereit
+     * @param ready {@code true} if ready
      */
     public void setReady(boolean ready) {
         this.ready.set(ready);
     }
 
     /**
-     * Property für den Bereitschaftsstatus.
+     * Property for the ready status.
      *
-     * @return die Property für "ready"
+     * @return the property representing "ready"
      */
     public BooleanProperty readyProperty() {
         return ready;
     }
 
     /**
-     * Gibt eine textuelle Darstellung des Spielers für die Anzeige im ListView zurück.
+     * Returns a textual representation of the player for display in the ListView.
      *
-     * @return z.B. "Figur 3 – Anna [bereit]"
+     * @return e.g. "Figure 3 – Anna [ready]"
      */
     @Override
     public String toString() {
