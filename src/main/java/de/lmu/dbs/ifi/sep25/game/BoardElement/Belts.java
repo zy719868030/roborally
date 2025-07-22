@@ -468,6 +468,8 @@ public class Belts extends BoardElement {
             }
 
             if (board.getRobotAt(nextPos) != null) {
+                appLogger.info("Robot {} blocked by robot at position {} during belt movement, stopping",
+                        robot.getRobotID(), nextPos);
                 return;
             }
 
