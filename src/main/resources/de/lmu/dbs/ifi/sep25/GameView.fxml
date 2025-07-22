@@ -175,6 +175,8 @@
             <ScrollPane fx:id="gameBoardScrollPane"
                         fitToWidth="false"
                         fitToHeight="false"
+                        vbarPolicy="NEVER"
+                        hbarPolicy="NEVER"
                         style="-fx-background-color: transparent;"
                         prefViewportWidth="1000"
                         prefViewportHeight="800"
