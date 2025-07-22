@@ -13,7 +13,7 @@
 
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.control.ScrollPane?>
-<VBox alignment="CENTER" spacing="20"
+<VBox alignment="CENTER" spacing="26"
       prefWidth="800" prefHeight="600"
       style="-fx-padding: 30; -fx-background-image: url('/assets/cover.png'); -fx-background-size: cover;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
 
@@ -45,10 +45,12 @@
 
     </StackPane>
 
-    <Button fx:id="loginButton" onAction="#handleLogin" text="Verbinden" styleClass="senden-button">
+    <Button fx:id="loginButton" onAction="#handleLogin" text="Verbinden" styleClass="senden-button"
+            prefWidth="140" prefHeight="38">
         <font>
-            <Font name="Berlin Sans FB Demi Bold" size="12.0" />
-        </font></Button>
+            <Font name="Berlin Sans FB Demi Bold" size="14.0" />
+        </font>
+    </Button>
     <!-- KI lOGIN -->
     <Button onAction="#handleBotLogin" text="Mit KI starten" styleClass="senden-button">
         <font>

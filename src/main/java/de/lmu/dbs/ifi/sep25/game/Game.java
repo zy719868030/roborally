@@ -1099,26 +1099,26 @@ public class Game {
                             gear.applyEffect(robot, board);
 
                             // TODO @lukas:Broadcast rotation if direction changed
-                            if (oldDirection != robot.getDirection()) {
-                                // Fixed: Use the actual robot rotation direction, not the gear's rotation direction
-                                String rotation;
-                                if (gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE) {
-                                    rotation = "clockwise";  // Robot turned right (clockwise)
-                                } else {
-                                    rotation = "counterclockwise";  // Robot turned left (counterclockwise)
-                                }
-
-                                Server.getInstance().broadcastMessage(
-                                        new MessageDefinitions.Message<>(
-                                                new MessageDefinitions.BodyPlayerTurning(
-                                                        robot.getClientID(), rotation
-                                                )
-                                        )
-                                );
-
-                                appLogger.info("Gear at " + gear.getPosition() + " rotated Robot " + robot.getClientID() +
-                                        " " + rotation);
-                            }
+//                            if (oldDirection != robot.getDirection()) {
+//                                // Fixed: Use the actual robot rotation direction, not the gear's rotation direction
+//                                String rotation;
+//                                if (gear.getRotationDirection() == Gear.RotationDirection.CLOCKWISE) {
+//                                    rotation = "clockwise";  // Robot turned right (clockwise)
+//                                } else {
+//                                    rotation = "counterclockwise";  // Robot turned left (counterclockwise)
+//                                }
+//
+//                                Server.getInstance().broadcastMessage(
+//                                        new MessageDefinitions.Message<>(
+//                                                new MessageDefinitions.BodyPlayerTurning(
+//                                                        robot.getClientID(), rotation
+//                                                )
+//                                        )
+//                                );
+//
+//                                appLogger.info("Gear at " + gear.getPosition() + " rotated Robot " + robot.getClientID() +
+//                                        " " + rotation);
+//                            }
                         }
                     }
                 }

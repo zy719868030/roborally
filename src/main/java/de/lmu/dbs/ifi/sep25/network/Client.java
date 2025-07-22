@@ -487,6 +487,7 @@ public class Client {
                     scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
                     stage.setScene(scene);
                     stage.show();
+                    stage.setResizable(true);
                     stage.setWidth(1400);
                     stage.setHeight(1000);
                     stage.setMinWidth(600);
