@@ -33,70 +33,45 @@ import java.util.List;
 import java.util.Map;
 
 public class Client {
-    // 0. Logging
+    // ===== 0. Logging =====
     private static final Logger clientLogger = LogManager.getLogger("PerClientLogger");
     private static final Logger appLogger = LogManager.getLogger(Client.class);
     private static final Logger errorLogger = LogManager.getLogger("ErrorLogger");
     private static final Logger heartbeatLogger = LogManager.getLogger("heartbeatLogger");
 
-    // 1. Constants / configuration
+    // ===== 1. Configuration / Serialization =====
+
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldDeserializer())
             .registerTypeAdapter(MessageDefinitions.Field.class, new FieldSerializer())
             .create();
-
     private final Gson gsonPretty = new GsonBuilder()
             .setPrettyPrinting()
             .create();
-
     private final String protocol = "Version 1.0";
-    private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
 
-    // 2. Main identity/data
+    // ===== 2. Client State =====
+
     private Integer ID;
     private final boolean isAI = false;
-    private volatile boolean firstReadyRegistry = true;
+    private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
+    private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
+    private final Map<Integer, Integer> energy = new HashMap<>();
+    private final Map<Integer, Integer> checkpointsReached = new HashMap<>();
 
-    // 3. Networking / I/O
+    // ===== 3. Networking =====
+
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
 
-    // 4. Game state
-    private final List<String> hand = new ArrayList<>();
-    private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
-    private int currentRegister = 0;
-    private BodyMovement rebootPosition;
-    private int rebootingInProgress = -1;
-    private final Map<Integer, Integer> energy = new HashMap<>();
-    private final Map<Integer, Integer> checkpointsReached = new HashMap<>();
+    // ===== 4. Game Session State =====
 
     private List<List<List<MessageDefinitions.Field>>> currentGameMap;
-
     private String selectedMap;
-    /**
-     * Sets the current game map.
-     * <p>
-     * The game map is represented as a 3D list structure containing {@link MessageDefinitions.Field}
-     * objects. It typically models the board layout, where each tile may contain multiple fields.
-     *
-     * @param map the new game map to set
-     */
-    public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
-        this.currentGameMap = map;
-    }
+    private int rebootingInProgress = -1;
 
-    /**
-     * Returns the current game map.
-     * <p>
-     * The game map is a 3D list structure of {@link MessageDefinitions.Field} elements that describe
-     * the current state or layout of the game board.
-     *
-     * @return the current game map
-     */
-    public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
-        return currentGameMap;
-    }
+    // ===== 5. Networking Setup & Listening =====
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -207,6 +182,8 @@ public class Client {
         }
     }
 
+    // ===== 6. Message Handlers (Order = Switch Statement) =====
+
     /**
      * Handles the BodyHelloClient message received from the server.
      * This method processes the JSON message, extracts connection protocol information,
@@ -312,34 +289,6 @@ public class Client {
     }
 
     /**
-     * If the LobbyController is not yet initialized (e.g., UI not ready),
-     * the received player information is temporarily stored in the pendingPlayers list.
-     * This allows the application to process and display the player data later,
-     * once the lobby UI is available and ready to render the list of players.
-     * The block is synchronized to ensure thread safety, as this method might be
-     * accessed from different threads (e.g., the network listener thread).
-     */
-    public void flushPendingPlayers() {
-        javafx.application.Platform.runLater(() -> {
-            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-            if (lobbyCtrl == null) return;
-
-            synchronized (pendingPlayers) {
-                for (BodyPlayerAdded body : pendingPlayers) {
-                    int clientID = body.clientID();
-                    String name = body.name();
-                    int figure = body.figure();
-                    boolean isMe = (clientID == this.ID);
-                    String finalName = name;
-
-                    lobbyCtrl.addPlayer(clientID, finalName, figure, false);
-                }
-                pendingPlayers.clear();
-            }
-        });
-    }
-
-    /**
      * Handles the event of a player being renamed by parsing the provided JSON message
      * and updating the player name in the lobby controller.
      *
@@ -413,7 +362,6 @@ public class Client {
             }
         });
     }
-
 
     /**
      * Handles the selected body map event provided in JSON format.
@@ -660,35 +608,6 @@ public class Client {
             }
         });
     }
-    /**
-     * Waits for the GameController instance to become available.
-     * <p>
-     * Tries to retrieve the GameController from the ControllerRegistry, retrying up to
-     * {@code maxRetries} times with a delay between attempts. If the controller is not
-     * available after all retries, returns {@code null}.
-     *
-     * @return the GameController instance if available, or {@code null} if not found after retries
-     */
-    private GameController waitForGameController() {
-        int maxRetries = 10;
-        int delayMillis = 100;
-
-        for (int i = 0; i < maxRetries; i++) {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                return controller;
-            }
-
-            try {
-                Thread.sleep(delayMillis);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        return null;
-    }
 
     /**
      * Processes the server message indicating which player is currently active.
@@ -736,7 +655,6 @@ public class Client {
         });
     }
 
-
     /**
      * Handles the "StartingPointTaken" message from the server, indicating that a player
      * has selected and occupied a starting position on the board.
@@ -776,9 +694,6 @@ public class Client {
     private void handleBodyYourCards(String json) {
         Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
         BodyYourCards body = message.messageBody();
-
-        hand.clear();  // Clear old cards
-        hand.addAll(body.cardsInHand());
 
         Platform.runLater(() -> {
             GameController controller = waitForGameController();
@@ -880,14 +795,15 @@ public class Client {
             }
         });
     }
-    /**
-     * Handles the start of a countdown timer by triggering the UI update on the JavaFX application thread.
-     * <p>
-     * This method retrieves the {@link GameController} from the {@link ControllerRegistry}
-     * and invokes its {@code startCountdown()} method. If the controller is not yet initialized,
-     * an error is logged.
-     */
 
+    /**
+     * Handles the "BodyTimerStarted" message from the server, indicating that the programming
+     * timer has started for the current game phase. This method triggers the countdown timer
+     * in the game UI by invoking {@code startCountdown()} on the {@link GameController}.
+     * <p>
+     * If the {@code GameController} is not yet available, an error is logged.
+     * This method runs the UI update asynchronously on the JavaFX application thread.
+     */
     private void handleBodyTimerStarted() {
         Platform.runLater(() -> {
             GameController controller = ControllerRegistry.getGameController();
@@ -972,8 +888,6 @@ public class Client {
                 }
             }
         });
-
-        currentRegister++;
     }
 
     /**
@@ -1006,7 +920,7 @@ public class Client {
      *
      * @param json JSON string containing the new coordinates and client ID
      */
-    public void handleBodyMovement(String json) {
+    private void handleBodyMovement(String json) {
 //        clientLogger.info("[CLIENT] handleBodyMovement called");
 //        clientLogger.info("json = {}", json);
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
@@ -1027,7 +941,7 @@ public class Client {
 
             if (newX < 0 || newY < 0 ||
                     (currentGameMap != null && (newX >= currentGameMap.size() ||
-                            (currentGameMap.get(0) != null && newY >= currentGameMap.get(0).size())))) {
+                            (currentGameMap.getFirst() != null && newY >= currentGameMap.getFirst().size())))) {
                 clientLogger.info("Robot {} fell off the board to point ({}, {})", clientID, newX, newY);
                 controller.handleRobotFellOffBoard(clientID);
                 return;
@@ -1071,8 +985,8 @@ public class Client {
             }
 
             // Check if the current map range is valid
-            if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.get(0).size() ||
-                    oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.get(0).size()) {
+            if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.getFirst().size() ||
+                    oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.getFirst().size()) {
                 errorLogger.warn("[WARN] Ungültige Kartenkoordinaten: alt ({},{}) neu ({},{})", oldPos.x(), oldPos.y(), newX, newY);
                 controller.moveRobotTo(clientID, newX, newY);
                 return;
@@ -1107,7 +1021,6 @@ public class Client {
             controller.moveRobotTo(clientID, newX, newY);
         });
     }
-
 
     /**
      * Handles a message indicating that a player's robot should rotate.
@@ -1156,6 +1069,7 @@ public class Client {
             }
         });
     }
+
     /**
      * Handles the server request for the player to select damage cards.
      *
@@ -1165,7 +1079,7 @@ public class Client {
      *
      * @param json the JSON string containing the selection request details
      */
-     private void handleBodyPickDamage(String json) {
+    private void handleBodyPickDamage(String json) {
         Message<BodyPickDamage> message = JsonUtil.parseMessage(json, BodyPickDamage.class);
         BodyPickDamage body = message.messageBody();
         int count = body.count();
@@ -1188,54 +1102,6 @@ public class Client {
         });
     }
 
-
-    /**
-     * Represents the various types of animations available within the system.
-     * Each animation type corresponds to a specific visual or interactive behavior.
-     * This can include player actions, environmental interactions, and system states.
-     * <p>
-     * The enum provides methods to get a string representation of an animation type
-     * and to create an AnimationType instance based on a string input.
-     */
-    public enum AnimationType {
-        MOVEMENT("Movement"),
-        CLOCKWISE("Clockwise"),
-        COUNTERCLOCKWISE("Counterclockwise"),
-        BLUECONVEYORBELT("BlueConveyorBelt"),
-        GREENCONVEYORBELT("GreenConveyorBelt"),
-        PUSHPANEL("PushPanel"),
-        GEAR("Gear"),
-        CHECKPOINT("Checkpoint"),
-        PLAYERSHOOTING("PlayerShooting"),
-        WALLSHOOTING("WallShooting"),
-        PLAYERHURT("PlayerHurt"),
-        ENERGYSPACE("EnergySpace"),
-        ENERGYCONSUMPTION("EnergyConsumption"),
-        ANIMATION_NOT_SUPPORTED("AnimationNotSupported");
-
-        //TODO add animation types depending whats need for UI
-
-        private final String asString;
-
-        AnimationType(String asString) {
-            this.asString = asString;
-        }
-
-        public String asString() {
-            return asString;
-        }
-
-        public static AnimationType fromString(String str) {
-            return switch (str.toLowerCase()) {
-                case "movement" -> MOVEMENT;
-                case "clockwise" -> CLOCKWISE;
-                case "counterclockwise" -> COUNTERCLOCKWISE;
-                case "playershooting" -> PLAYERSHOOTING;
-
-                default -> ANIMATION_NOT_SUPPORTED;
-            };
-        }
-    }
     /**
      * Handles the body animation logic based on the provided JSON input.
      * This method processes the input to determine the type of animation
@@ -1243,7 +1109,6 @@ public class Client {
      *
      * @param json the input JSON string containing information about the body animation
      */
-
     private void handleBodyAnimation(String json) {
         Message<BodyAnimation> message = JsonUtil.parseMessage(json, BodyAnimation.class);
         BodyAnimation body = message.messageBody();
@@ -1266,7 +1131,7 @@ public class Client {
      *
      * @param json the JSON string containing the reboot message
      */
-    public void handleBodyReboot(String json) {
+    private void handleBodyReboot(String json) {
         Message<BodyReboot> message = JsonUtil.parseMessage(json, BodyReboot.class);
         BodyReboot body = message.messageBody();
         int robotID = body.clientID(); // Note: this is actually robotID, not clientID
@@ -1305,14 +1170,13 @@ public class Client {
         }
     }
 
-
     /**
      * Handles the server response indicating the direction chosen for a rebooted robot.
      * Sends the saved reboot movement and triggers an optional reboot animation.
      *
      * @param json JSON string containing the reboot direction
      */
-    public void handleBodyRebootDirection(String json) {
+    private void handleBodyRebootDirection(String json) {
         Message<BodyRebootDirection> message = JsonUtil.parseMessage(json, BodyRebootDirection.class);
         String direction = message.messageBody().direction();
         clientLogger.info("Received reboot direction confirmation from server: {}", direction);
@@ -1431,9 +1295,67 @@ public class Client {
         });
     }
 
+    // ===== 7. Utility / Helper Methods =====
 
-    //----------------------
+    /**
+     * If the LobbyController is not yet initialized (e.g., UI not ready),
+     * the received player information is temporarily stored in the pendingPlayers list.
+     * This allows the application to process and display the player data later,
+     * once the lobby UI is available and ready to render the list of players.
+     * The block is synchronized to ensure thread safety, as this method might be
+     * accessed from different threads (e.g., the network listener thread).
+     */
+    public void flushPendingPlayers() {
+        javafx.application.Platform.runLater(() -> {
+            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+            if (lobbyCtrl == null) return;
 
+            synchronized (pendingPlayers) {
+                for (BodyPlayerAdded body : pendingPlayers) {
+                    int clientID = body.clientID();
+                    String name = body.name();
+                    int figure = body.figure();
+                    boolean isMe = (clientID == this.ID);
+                    String finalName = name;
+
+                    lobbyCtrl.addPlayer(clientID, finalName, figure, false);
+                }
+                pendingPlayers.clear();
+            }
+        });
+    }
+
+    /**
+     * Waits for the GameController instance to become available.
+     * <p>
+     * Tries to retrieve the GameController from the ControllerRegistry, retrying up to
+     * {@code maxRetries} times with a delay between attempts. If the controller is not
+     * available after all retries, returns {@code null}.
+     *
+     * @return the GameController instance if available, or {@code null} if not found after retries
+     */
+    private GameController waitForGameController() {
+        int maxRetries = 10;
+        int delayMillis = 100;
+
+        for (int i = 0; i < maxRetries; i++) {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                return controller;
+            }
+
+            try {
+                Thread.sleep(delayMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    // ===== 8. Messaging Methods =====
 
     /**
      * Sends a text message through the output stream to the connected server or client.
@@ -1511,6 +1433,8 @@ public class Client {
         Server.getInstance().broadcastMessage(msg, exclude);
     }
 
+    // ===== 9. Resource Management =====
+
     /**
      * Releases resources associated with the client connection.
      * <p>
@@ -1534,6 +1458,16 @@ public class Client {
         }
     }
 
+    // ===== 10. Getters and Client Info =====
+
+    /**
+     * Returns the client ID assigned by the server.
+     * <p>
+     * If the client has not yet received an ID (e.g., before the "Welcome" message),
+     * this method returns {@code -1} as a fallback value.
+     *
+     * @return the integer client ID, or {@code -1} if not yet initialized
+     */
     public int getID() {
         return ID != null ? ID : -1;
     }
@@ -1549,6 +1483,7 @@ public class Client {
     public List<BodyPlayerAdded> getPendingPlayers() {
         return pendingPlayers;
     }
+
     /**
      * Returns the username associated with the current client ID.
      * <p>
@@ -1577,8 +1512,6 @@ public class Client {
         return -1; // Default/fallback
     }
 
-
-
     /**
      * Returns the selected map variable, stored in handleMapSelected.
      *
@@ -1587,6 +1520,7 @@ public class Client {
     public String getSelectedMap() {
         return selectedMap;
     }
+
     /**
      * Returns a thread-safe bidirectional map of client IDs and usernames.
      * <p>
@@ -1609,10 +1543,77 @@ public class Client {
     }
 
     /**
-     * Clear the status of the restart in progress.
+     * Returns the current game map.
+     * <p>
+     * The game map is a 3D list structure of {@link MessageDefinitions.Field} elements that describe
+     * the current state or layout of the game board.
+     *
+     * @return the current game map
      */
-    public void clearRebootingInProgress() {
-        this.rebootingInProgress = -1;
+    public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
+        return currentGameMap;
+    }
+
+    /**
+     * Sets the current game map.
+     * <p>
+     * The game map is represented as a 3D list structure containing {@link MessageDefinitions.Field}
+     * objects. It typically models the board layout, where each tile may contain multiple fields.
+     *
+     * @param map the new game map to set
+     */
+    public void setCurrentGameMap(List<List<List<MessageDefinitions.Field>>> map) {
+        this.currentGameMap = map;
+    }
+
+    // ===== 11. Animation Types (Inner Enum) =====
+
+    /**
+     * Represents the various types of animations available within the system.
+     * Each animation type corresponds to a specific visual or interactive behavior.
+     * This can include player actions, environmental interactions, and system states.
+     * <p>
+     * The enum provides methods to get a string representation of an animation type
+     * and to create an AnimationType instance based on a string input.
+     */
+    public enum AnimationType {
+        MOVEMENT("Movement"),
+        CLOCKWISE("Clockwise"),
+        COUNTERCLOCKWISE("Counterclockwise"),
+        BLUECONVEYORBELT("BlueConveyorBelt"),
+        GREENCONVEYORBELT("GreenConveyorBelt"),
+        PUSHPANEL("PushPanel"),
+        GEAR("Gear"),
+        CHECKPOINT("Checkpoint"),
+        PLAYERSHOOTING("PlayerShooting"),
+        WALLSHOOTING("WallShooting"),
+        PLAYERHURT("PlayerHurt"),
+        ENERGYSPACE("EnergySpace"),
+        ENERGYCONSUMPTION("EnergyConsumption"),
+        ANIMATION_NOT_SUPPORTED("AnimationNotSupported");
+
+        //TODO add animation types depending whats need for UI
+
+        private final String asString;
+
+        AnimationType(String asString) {
+            this.asString = asString;
+        }
+
+        public String asString() {
+            return asString;
+        }
+
+        public static AnimationType fromString(String str) {
+            return switch (str.toLowerCase()) {
+                case "movement" -> MOVEMENT;
+                case "clockwise" -> CLOCKWISE;
+                case "counterclockwise" -> COUNTERCLOCKWISE;
+                case "playershooting" -> PLAYERSHOOTING;
+
+                default -> ANIMATION_NOT_SUPPORTED;
+            };
+        }
     }
 
 }
