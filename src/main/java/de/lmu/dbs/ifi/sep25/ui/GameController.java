@@ -997,7 +997,13 @@ public class GameController {
 
                     activationTimeline.getKeyFrames().add(frame);
                 }
+                activationTimeline.setOnFinished(event -> {
+                    activationPhaseActive = false;
 
+                    for (Integer robotId : robotPositions.keySet()) {
+                        playLaserAnimation(robotId);
+                    }
+                });
                 activationTimeline.play();
 
 
