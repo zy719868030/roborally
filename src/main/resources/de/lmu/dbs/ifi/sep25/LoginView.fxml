@@ -15,6 +15,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <VBox alignment="CENTER" spacing="26"
       prefWidth="800" prefHeight="600"
+      styleClass="glass-root"
       style="-fx-padding: 30; -fx-background-image: url('/assets/cover.png'); -fx-background-size: cover;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.lmu.dbs.ifi.sep25.ui.LoginController">
 
 
