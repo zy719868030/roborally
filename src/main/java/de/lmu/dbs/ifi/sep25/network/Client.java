@@ -338,6 +338,9 @@ public class Client {
         boolean isMe = body.clientID().equals(getID());
         if (isMe) {
             usernames.put(ID, username);
+            if (isAI) {
+                sendMessage(new Message<>(new BodySetStatus(true)));
+            }
         }
 
         //  FINAL variables for lambda use
@@ -718,8 +721,10 @@ public class Client {
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyCurrentPlayer.class);
 
         if (isAI) {
-            // Call the bot logic/hook
-            onSelectStartingPoint(getStartingPoints());
+            if (message.messageBody().clientID().equals(ID)) {
+                // Call the bot logic/hook
+                onSelectStartingPoint(getStartingPoints());
+            }
         } else {
             // Let the JavaFX UI handle the selection
             int currentClientID = message.messageBody().clientID();

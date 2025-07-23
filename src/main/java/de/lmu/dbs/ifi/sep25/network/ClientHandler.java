@@ -297,6 +297,8 @@ public class ClientHandler implements Runnable {
                     }
                 }
             }
+        } else {
+            server.markBotReady(this);
         }
     }
 
@@ -683,6 +685,7 @@ public class ClientHandler implements Runnable {
     public int getMyID() {
         return myID;
     }
+
     /**
      * Checks if the client is currently in the map selection phase.
      *
@@ -691,6 +694,7 @@ public class ClientHandler implements Runnable {
     public boolean isMapSelecting() {
         return mapSelecting;
     }
+
     /**
      * Sets whether the client is currently in the map selection phase.
      *

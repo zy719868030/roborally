@@ -18,6 +18,7 @@ public class BotClient extends Client {
     private String botName;
     private Queue<Integer> figureQueue = null;
 
+
     /**
      * Constructs a new bot client using the specified strategy.
      *

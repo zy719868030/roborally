@@ -846,7 +846,7 @@ public class Game {
         switch (currentPhase) {
             case SETUP -> {
                 List<Player> setupOrder = Server.getInstance()
-                        .getSnapshotReadyOrder().stream()
+                        .getRealReadyOrder().stream()
                         .map(ClientHandler::getPlayer)
                         .toList();
 

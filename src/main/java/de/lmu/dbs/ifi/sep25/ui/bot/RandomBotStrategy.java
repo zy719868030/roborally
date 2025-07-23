@@ -64,7 +64,6 @@ public class RandomBotStrategy implements BotStrategy {
         do {
             Collections.shuffle(copy, rnd);
         } while (copy.getFirst().equalsIgnoreCase("again"));
-        Collections.shuffle(copy, rnd);
         return copy.subList(0, Math.min(5, copy.size()));
     }
 
