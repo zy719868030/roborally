@@ -11,7 +11,7 @@ public class BotClient extends Client {
     private final BotStrategy strategy;
 
     public BotClient(BotStrategy strategy) {
-        super(); // call Client constructor
+        super(true); // call Client constructor
         this.strategy = strategy;
     }
 

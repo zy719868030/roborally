@@ -53,7 +53,7 @@ public class Client {
     // ===== 2. Client State =====
 
     private Integer ID;
-    private final boolean isAI = false;
+    private final boolean isAI;
     private final ConcurrentBidirectionalMap<Integer, String> usernames = new ConcurrentBidirectionalMap<>();
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
     private final Map<Integer, Integer> energy = new HashMap<>();
@@ -72,6 +72,16 @@ public class Client {
     private int rebootingInProgress = -1;
 
     // ===== 5. Networking Setup & Listening =====
+
+    public Client() {
+        this(false);
+    }
+
+    public Client(boolean isAI) {
+        this.isAI = isAI;
+    }
+
+    // ===== 5.1 Networking Setup & Listening =====
 
     /**
      * Establishes a connection to a server and initializes the necessary input and output streams
@@ -181,6 +191,34 @@ public class Client {
             closeAll();
         }
     }
+
+    // ===== 5.9 Hooks for Player Decisions (Override in Bots) ======
+
+    /**
+     * Called when the server sends your new hand and expects you to program registers.
+     * Override in bot clients to automate register selection.
+     */
+    protected void onYourCards(List<String> hand) {}
+
+    /**
+     * Called when the server requests you to select a starting point.
+     */
+    protected void onSelectStartingPoint(List<Position> available) {}
+
+    /**
+     * Called when the server asks you to select a map (if you're the selector).
+     */
+    protected void onSelectMap(List<String> availableMaps) {}
+
+    /**
+     * Called when the server requires you to pick a reboot direction.
+     */
+    protected void onRebootDirectionRequest() {}
+
+    /**
+     * Called when the server requests you to pick damage cards.
+     */
+    protected void onPickDamage(int count, List<String> availablePiles) {}
 
     // ===== 6. Message Handlers (Order = Switch Statement) =====
 

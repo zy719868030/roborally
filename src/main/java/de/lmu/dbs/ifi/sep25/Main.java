@@ -2,47 +2,59 @@ package de.lmu.dbs.ifi.sep25;
 
 import de.lmu.dbs.ifi.sep25.network.Server;
 import de.lmu.dbs.ifi.sep25.ui.HelloApplication;
+import de.lmu.dbs.ifi.sep25.ui.bot.BotClient;
+import de.lmu.dbs.ifi.sep25.ui.bot.BotStrategy;
+import de.lmu.dbs.ifi.sep25.ui.bot.PathfindingBotStrategy;
+import de.lmu.dbs.ifi.sep25.ui.bot.RandomBotStrategy;
 import javafx.application.Application;
+
+import java.io.IOException;
 
 /**
  * Entry point for the RoboRally application.
  * <p>
- * <b>Usage:</b><br>
- * <code>java -jar EEJar.jar --server [-port &lt;port&gt;] [-minplayer &lt;players&gt;]</code><br>
- * <code>java -jar EEJar.jar --client</code>
- * </p>
+ * <b>Usage:</b>
+ * <pre>
+ * java -jar YourGame.jar --server [-port &lt;port&gt;] [-minplayer &lt;players&gt;]
+ * java -jar YourGame.jar --client
+ * java -jar YourGame.jar --bot -random [host] [port]
+ * java -jar YourGame.jar --bot -smart  [host] [port]
+ * </pre>
  * <ul>
  *   <li><b>--server [-port &lt;port&gt;] [-minplayer &lt;players&gt;]</b>:
- *     Starts the game server. <br>
+ *     Starts the game server.
  *     <ul>
- *         <li><b>-port &lt;port&gt;</b>: (Optional) TCP port to bind the server to (default: 12345).</li>
- *         <li><b>-minplayer &lt;players&gt;</b>: (Optional) Minimum number of players required to start (1–6, default: 2).</li>
- *         <li>Arguments can be provided in any order and are optional.</li>
+ *       <li><b>-port &lt;port&gt;</b>: (Optional) TCP port to use (default: 12345).</li>
+ *       <li><b>-minplayer &lt;players&gt;</b>: (Optional) Minimum players to start (1–6, default: 2).</li>
  *     </ul>
  *   </li>
- *   <li><b>--client</b>:
- *     Starts the JavaFX client application.
- *   </li>
+ *   <li><b>--client</b>: Starts the JavaFX client application.</li>
+ *   <li><b>--bot -random [host] [port]</b>: Starts a headless bot that plays randomly.</li>
+ *   <li><b>--bot -smart [host] [port]</b>: Starts a headless bot that uses pathfinding logic.</li>
  * </ul>
  * <p>
- * Example usages:<br>
- * <code>java -jar EEJar.jar --server</code><br>
- * <code>java -jar EEJar.jar --server -minplayer 4 -port 24680</code><br>
- * <code>java -jar EEJar.jar --server -port 24680 -minplayer 3</code><br>
- * <code>java -jar EEJar.jar --client</code>
- * </p>
+ * Example usages:
+ * <pre>
+ * java -jar YourGame.jar --server
+ * java -jar YourGame.jar --server -minplayer 4 -port 24680
+ * java -jar YourGame.jar --bot -random
+ * java -jar YourGame.jar --bot -smart my.server.com 23456
+ * java -jar YourGame.jar --client
+ * </pre>
  * <p>
- * Invalid arguments will cause the application to print an error and exit.
+ * Invalid arguments print usage and exit.
  * </p>
  */
 public class Main {
     /**
-     * Starts the server or client depending on the command line arguments.
+     * Launches the RoboRally server, client, or bot, depending on command-line arguments.
      *
-     * @param args Command line arguments.
+     * @param args Command-line arguments:
      *             <ul>
-     *                 <li><code>--server</code> to launch the server (optional: <code>-port &lt;port&gt;</code> and/or <code>-minplayer &lt;players&gt;</code>).</li>
-     *                 <li><code>--client</code> to launch the client UI.</li>
+     *                 <li><b>--server</b> to launch the server (optional: <b>-port &lt;port&gt;</b> and/or <b>-minplayer &lt;players&gt;</b>).</li>
+     *                 <li><b>--client</b> to launch the GUI client.</li>
+     *                 <li><b>--bot -random [host] [port]</b> to launch a random-move bot.</li>
+     *                 <li><b>--bot -smart [host] [port]</b> to launch a pathfinding bot.</li>
      *             </ul>
      */
     public static void main(String[] args) {
@@ -92,12 +104,34 @@ public class Main {
                 System.err.println("[ERROR] Server failed to start: " + e.getMessage());
                 System.exit(1);
             }
+        } else if (args.length > 1 && args[0].equalsIgnoreCase("--bot")) {
+            String botType = args[1].toLowerCase();
+            BotStrategy strategy;
+            switch (botType) {
+                case "-random" -> strategy = new RandomBotStrategy();
+                case "-smart" -> strategy = new PathfindingBotStrategy();
+                default -> {
+                    System.err.println("Unknown bot type: " + botType);
+                    return;
+                }
+            }
+            BotClient bot = new BotClient(strategy);
+            // Optionally allow host/port as further args
+            String host = (args.length > 2) ? args[2] : "localhost";
+            int port = (args.length > 3) ? Integer.parseInt(args[3]) : 12345;
+            try {
+                bot.start(host, port);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else if (args.length > 0 && args[0].equalsIgnoreCase("--client")) {
             System.out.println("[SYSTEM] Launching client...");
             Application.launch(HelloApplication.class, args);
         } else {
-            System.err.println("[ERROR] Invalid arguments. Please use --server or --client.");
-            System.exit(1);
+            System.out.println("Usage:");
+            System.out.println("  java -jar YourGame.jar --bot -random [host] [port]");
+            System.out.println("  java -jar YourGame.jar --bot -smart  [host] [port]");
+            System.out.println("  java -jar YourGame.jar --client");
         }
     }
 }
