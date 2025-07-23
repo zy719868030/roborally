@@ -1555,7 +1555,7 @@ public class Client {
      * This method is typically called to clean up resources when the client
      * disconnects or an issue occurs, ensuring no resource leaks.
      */
-    public final void closeAll() {
+    public void closeAll() {
         try {
             if (reader != null) reader.close();
             if (writer != null) writer.close();
