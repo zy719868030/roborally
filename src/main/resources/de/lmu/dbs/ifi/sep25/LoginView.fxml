@@ -46,18 +46,24 @@
 
     </StackPane>
 
-    <Button fx:id="loginButton" onAction="#handleLogin" text="Verbinden" styleClass="senden-button"
+    <Button fx:id="loginButton" onAction="#handleLogin" text="Verbinden" styleClass="login-button"
             prefWidth="140" prefHeight="38">
         <font>
             <Font name="Berlin Sans FB Demi Bold" size="14.0" />
         </font>
     </Button>
     <!-- KI lOGIN -->
-    <Button onAction="#onBotStartButton" text="Bot starten" styleClass="senden-button">
+    <Button onAction="#onBotStartButton" text="Bot starten"
+            prefWidth="140" prefHeight="38"
+            styleClass="bot-button">
+               -fx-text-fill: white;
+               -fx-background-radius: 10;
+               -fx-border-radius: 10;">
         <font>
-            <Font name="Berlin Sans FB Demi Bold" size="12.0" />
+            <Font name="Berlin Sans FB Demi Bold" size="14.0" />
         </font>
     </Button>
+
 
     <HBox spacing="10" alignment="CENTER">
         <Label text="Host:">

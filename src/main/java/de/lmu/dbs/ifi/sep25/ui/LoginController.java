@@ -235,14 +235,10 @@ public class LoginController {
         // Popup root
         VBox content = new VBox(22);
         content.setAlignment(Pos.CENTER);
-        content.setStyle("-fx-background-color: rgba(20, 20, 30, 0.95);"
-                + "-fx-padding: 32 36;"
-                + "-fx-background-radius: 18; "
-                + "-fx-effect: dropshadow(gaussian, #00ffd0, 16, 0.7, 0, 0);");
+        content.getStyleClass().addAll("glass-root", "popup-box");
 
         Label title = new Label("Bot-Schwierigkeit wählen");
-        title.getStyleClass().add("status-label");
-        title.setStyle("-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #00ffd0;");
+        title.getStyleClass().addAll("status-label", "sourcetext-cyan-soft");
 
         // Dropdown styled as map selection
         ComboBox<String> botTypeBox = new ComboBox<>();
@@ -251,30 +247,18 @@ public class LoginController {
         botTypeBox.getStyleClass().add("combo-recipient");
         botTypeBox.setPrefWidth(210);
 
-        // Button row (like info popup)
-        HBox btnBox = new HBox(18);
-        btnBox.setAlignment(Pos.CENTER);
-
         Button startBtn = new Button("Bot starten");
-        startBtn.getStyleClass().add("senden-button");
-        startBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 10px;");
-        startBtn.setPrefWidth(170);
+        startBtn.getStyleClass().add("bot-button");
+        startBtn.setPrefWidth(140);
         startBtn.setCursor(Cursor.HAND);
-
-        // Shrink effect on hover
-        startBtn.setOnMouseEntered(e -> startBtn.setStyle(
-                "-fx-font-size: 17px; -fx-background-radius: 10px;"
-        ));
-        startBtn.setOnMouseExited(e -> startBtn.setStyle(
-                "-fx-font-size: 20px; -fx-background-radius: 10px;"
-        ));
 
         Button cancelBtn = new Button("Abbrechen");
         cancelBtn.getStyleClass().add("not-ready-button");
         cancelBtn.setPrefWidth(120);
         cancelBtn.setCursor(Cursor.HAND);
 
-        btnBox.getChildren().addAll(startBtn, cancelBtn);
+        HBox btnBox = new HBox(18, startBtn, cancelBtn);
+        btnBox.setAlignment(Pos.CENTER);
 
         content.getChildren().addAll(title, botTypeBox, btnBox);
 
@@ -305,27 +289,22 @@ public class LoginController {
         scaleIn.setToX(1.0); scaleIn.setToY(1.0);
         FadeTransition fadeIn = new FadeTransition(Duration.millis(280), content);
         fadeIn.setFromValue(0); fadeIn.setToValue(1);
-        ParallelTransition anim = new ParallelTransition(scaleIn, fadeIn);
-        anim.play();
+        new ParallelTransition(scaleIn, fadeIn).play();
 
         // Setup scene with transparent background, hand cursor on combo, rounded corners
         Scene scene = new Scene(content);
         scene.setFill(Color.TRANSPARENT);
-        botTypeBox.setCursor(Cursor.HAND);
-        content.setStyle(content.getStyle() + "-fx-cursor: default;");
+        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         popup.setScene(scene);
-
-        // Remove window borders
         popup.initStyle(StageStyle.TRANSPARENT);
 
-        // Button logic
+        botTypeBox.setCursor(Cursor.HAND);
         startBtn.setOnAction(ev -> {
             String botType = botTypeBox.getValue();
             if (botType == null) {
                 botTypeBox.setStyle("-fx-border-color: #ff4444; -fx-border-width: 2px;");
                 return;
             }
-            // LAUNCH BOT here (with ProcessBuilder or other, as discussed)
             launchBot(botType);
             popup.close();
         });

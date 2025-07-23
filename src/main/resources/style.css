@@ -562,3 +562,62 @@
     -fx-border-width: 1;
 }
 
+.bot-button {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-padding: 10 20;
+    -fx-background-color: linear-gradient(to bottom, #00ffd0, #007777);
+    -fx-background-radius: 12;
+    -fx-border-color: #005555;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 6, 0.4, 0, 0);
+    -fx-font-family: "Orbitron", sans-serif;
+    -fx-cursor: hand;
+}
+.login-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #33ffee, #008888);
+    -fx-effect: dropshadow(gaussian, #33ffee, 10, 0.6, 0, 0);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+
+.login-button {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-padding: 10 20;
+    -fx-background-color: linear-gradient(to bottom, #ff9900, #cc6600);
+    -fx-background-radius: 12;
+    -fx-border-color: #4b2e1d; /* café oscuro */
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, #cc6600, 6, 0.4, 0, 0);
+    -fx-font-family: "Orbitron", sans-serif;
+    -fx-cursor: hand;
+}
+.login-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #ffaa33, #cc5500);
+    -fx-effect: dropshadow(gaussian, #ffbb66, 10, 0.6, 0, 0);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+.popup-box {
+    -fx-background-color: linear-gradient(to bottom, #003B4A, #001f2e);
+    -fx-border-color: #00ffd0; /* Línea azul neón */
+    -fx-border-width: 2px;
+    -fx-border-radius: 18;
+    -fx-background-radius: 18;
+    -fx-padding: 32 36;
+    -fx-effect: dropshadow(gaussian, #00ffd0, 12, 0.4, 0, 0);
+}
+
+
+
+
+.sourcetext-cyan-soft {
+    -fx-text-fill: #00cccc;
+    -fx-font-weight: bold;
+}
