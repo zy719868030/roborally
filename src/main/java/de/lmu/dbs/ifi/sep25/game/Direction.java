@@ -79,6 +79,14 @@ public enum Direction {
         return name;
     }
 
+    public int getDx() {
+        return dx;
+    }
+
+    public int getDy() {
+        return dy;
+    }
+
     /**
      * Rotates this direction 90 degrees counterclockwise (to the left).
      * 

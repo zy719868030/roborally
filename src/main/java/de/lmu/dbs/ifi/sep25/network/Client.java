@@ -9,6 +9,7 @@ import de.lmu.dbs.ifi.sep25.ui.ControllerRegistry;
 import de.lmu.dbs.ifi.sep25.ui.GameController;
 import de.lmu.dbs.ifi.sep25.ui.LobbyController;
 import de.lmu.dbs.ifi.sep25.ui.LoginController;
+import de.lmu.dbs.ifi.sep25.ui.bot.RobotInfo;
 import de.lmu.dbs.ifi.sep25.utils.ConcurrentBidirectionalMap;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
 import de.lmu.dbs.ifi.sep25.utils.FieldSerializer;
@@ -18,6 +19,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -27,10 +29,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Client {
     // ===== 0. Logging =====
@@ -58,6 +57,11 @@ public class Client {
     private final List<BodyPlayerAdded> pendingPlayers = new ArrayList<>();
     private final Map<Integer, Integer> energy = new HashMap<>();
     private final Map<Integer, Integer> checkpointsReached = new HashMap<>();
+
+    // ===== 2.5. Bot State =====
+
+    private final Map<Integer, RobotInfo> robots = new HashMap<>();
+    private final List<Position> checkpoints = new ArrayList<>();
 
     // ===== 3. Networking =====
 
@@ -348,7 +352,7 @@ public class Client {
         final int finalFigure = body.figure();
         final int clientID = body.clientID();
 
-        if(!isAI) {
+        if (!isAI) {
             javafx.application.Platform.runLater(() -> {
                 LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
                 if (lobbyCtrl != null) {
@@ -494,6 +498,27 @@ public class Client {
             return;
         }
 
+        List<Pair<Integer, Position>> temp = new ArrayList<>();
+
+        for (int x = 0; x < boardMap.size(); x++) {
+            for (int y = 0; y < boardMap.get(x).size(); y++) {
+                for (MessageDefinitions.Field field : boardMap.get(x).get(y)) {
+                    if (field.type().equalsIgnoreCase("checkpoint")) {
+                        int cpNum = ((MessageDefinitions.FieldCheckPoint) field).count(); // or .number()
+                        temp.add(new Pair<>(cpNum, new Position(x, y)));
+                    }
+                }
+            }
+        }
+
+        // Sort by checkpoint number
+        temp.sort(Comparator.comparingInt(Pair::getKey));
+
+        checkpoints.clear();
+        for (Pair<Integer, Position> pair : temp) {
+            checkpoints.add(pair.getValue());
+        }
+
         appLogger.info("[CLIENT DEBUG] BoardMap size: {}x{}", boardMap.size(), boardMap.getFirst().size());
 //        for (int x = 0; x < boardMap.size(); x++) {
 //            for (int y = 0; y < boardMap.get(x).size(); y++) {
@@ -628,55 +653,55 @@ public class Client {
 
         if (!isAI) {
             Platform.runLater(() -> {
-            if (errorText.contains("Robot already taken.")) {
-                LoginController loginCtrl = ControllerRegistry.getLoginController();
-                if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
-                    loginCtrl.setFigureTakenWarningShown(true);
-                    loginCtrl.displayFigureAlreadyTaken();
-                }
-                if (isAI) onSelectNameAndFigure();
-            } else if (errorText.contains("Game has already started.")) {
-                LoginController loginCtrl = ControllerRegistry.getLoginController();
-                if (loginCtrl != null) {
-                    loginCtrl.displayErrorAlert(
-                            "Spiel läuft bereits",
-                            "Das Spiel hat bereits begonnen. Bitte warte, bis eine neue Runde startet oder tritt einem neuen Spiel bei."
-                    );
-                }
-            } else if (errorText.contains("Again card cannot be played in the first register")) {
+                if (errorText.contains("Robot already taken.")) {
+                    LoginController loginCtrl = ControllerRegistry.getLoginController();
+                    if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
+                        loginCtrl.setFigureTakenWarningShown(true);
+                        loginCtrl.displayFigureAlreadyTaken();
+                    }
+                    if (isAI) onSelectNameAndFigure();
+                } else if (errorText.contains("Game has already started.")) {
+                    LoginController loginCtrl = ControllerRegistry.getLoginController();
+                    if (loginCtrl != null) {
+                        loginCtrl.displayErrorAlert(
+                                "Spiel läuft bereits",
+                                "Das Spiel hat bereits begonnen. Bitte warte, bis eine neue Runde startet oder tritt einem neuen Spiel bei."
+                        );
+                    }
+                } else if (errorText.contains("Again card cannot be played in the first register")) {
 
-                GameController gameCtrl = ControllerRegistry.getGameController();
-                if (gameCtrl != null) {
-                    gameCtrl.appendGameLog(errorText, "error");
-                    gameCtrl.displayErrorAlert("Card placement error",
-                            "The card Again cannot be placed in the first register position!\n" +
-                                    "Please select the 2nd to 5th register positions.");
-                    gameCtrl.highlightRegisterSlot(0);
-                }
-            } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
-                GameController gameCtrl = ControllerRegistry.getGameController();
-                if (gameCtrl != null) {
-                    gameCtrl.appendGameLog(errorText, "error");
-                    gameCtrl.displayErrorAlert("Card operation error", errorText);
-                }
-            } else if (errorText.toLowerCase().contains("starting position")) {
-                GameController gameCtrl = ControllerRegistry.getGameController();
-                if (gameCtrl != null) {
-                    gameCtrl.deselectStartingPosition();
-                    gameCtrl.appendGameLog(errorText, "error");
-                    gameCtrl.displayErrorAlert("Starting position selection error", errorText);
-                }
-                if (isAI) onSelectStartingPoint(getStartingPoints());
-            } else {
+                    GameController gameCtrl = ControllerRegistry.getGameController();
+                    if (gameCtrl != null) {
+                        gameCtrl.appendGameLog(errorText, "error");
+                        gameCtrl.displayErrorAlert("Card placement error",
+                                "The card Again cannot be placed in the first register position!\n" +
+                                        "Please select the 2nd to 5th register positions.");
+                        gameCtrl.highlightRegisterSlot(0);
+                    }
+                } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
+                    GameController gameCtrl = ControllerRegistry.getGameController();
+                    if (gameCtrl != null) {
+                        gameCtrl.appendGameLog(errorText, "error");
+                        gameCtrl.displayErrorAlert("Card operation error", errorText);
+                    }
+                } else if (errorText.toLowerCase().contains("starting position")) {
+                    GameController gameCtrl = ControllerRegistry.getGameController();
+                    if (gameCtrl != null) {
+                        gameCtrl.deselectStartingPosition();
+                        gameCtrl.appendGameLog(errorText, "error");
+                        gameCtrl.displayErrorAlert("Starting position selection error", errorText);
+                    }
+                    if (isAI) onSelectStartingPoint(getStartingPoints());
+                } else {
 
-                GameController gameCtrl = ControllerRegistry.getGameController();
-                if (gameCtrl != null) {
-                    gameCtrl.appendGameLog(errorText, "error");
-                    gameCtrl.displayErrorAlert("Server Error", errorText);
+                    GameController gameCtrl = ControllerRegistry.getGameController();
+                    if (gameCtrl != null) {
+                        gameCtrl.appendGameLog(errorText, "error");
+                        gameCtrl.displayErrorAlert("Server Error", errorText);
+                    }
                 }
-            }
-        });
-            }
+            });
+        }
     }
 
     /**
@@ -782,6 +807,15 @@ public class Client {
         int clientID = body.clientID();
         String direction = body.direction();
 
+        this.robots.put(clientID, new RobotInfo(
+                clientID,
+                new Position(x, y),
+                Direction.fromString(direction),
+                -1,
+                5,
+                0
+        ));
+
         if (!isAI) {
             Platform.runLater(() -> {
                 GameController controller = ControllerRegistry.getGameController();
@@ -840,7 +874,6 @@ public class Client {
     /**
      * Handles a message indicating that the programming deck was shuffled.
      * Can be used to trigger a visual animation or log event.
-     *
      */
     private void handleBodyShuffleCoding() {
         if (!isAI) {
@@ -1049,9 +1082,20 @@ public class Client {
         Message<BodyMovement> message = JsonUtil.parseMessage(json, BodyMovement.class);
         BodyMovement body = message.messageBody();
 
-        int clientID = body.clientID();
-        int newX = body.x();
-        int newY = body.y();
+        final int clientID = body.clientID();
+        final int newX = body.x();
+        final int newY = body.y();
+
+        if (robots.containsKey(clientID)) {
+            robots.computeIfPresent(clientID, (_, old) -> new RobotInfo(
+                    clientID,
+                    new Position(newX, newY),
+                    old.direction(),
+                    old.checkpointsReached(),
+                    old.energy(),
+                    old.damage()
+            ));
+        }
 
         if (!isAI) {
             Platform.runLater(() -> {
@@ -1156,8 +1200,21 @@ public class Client {
         Message<BodyPlayerTurning> message = JsonUtil.parseMessage(json, BodyPlayerTurning.class);
         BodyPlayerTurning body = message.messageBody();
 
-        int clientID = body.clientID();
-        String rotation = body.rotation(); // "clockwise" or "counterclockwise"
+        final int clientID = body.clientID();
+        final String rotation = body.rotation(); // "clockwise" or "counterclockwise"
+
+        if (robots.containsKey(clientID)) {
+            robots.computeIfPresent(clientID, (_, old) -> new RobotInfo(
+                    clientID,
+                    old.position(),
+                    rotation.equalsIgnoreCase("clockwise")
+                            ? old.direction().turnRight()
+                            : old.direction().turnLeft(),
+                    old.checkpointsReached(),
+                    old.energy(),
+                    old.damage()
+            ));
+        }
 
         if (!isAI) {
             Platform.runLater(() -> {
@@ -1185,6 +1242,17 @@ public class Client {
         Message<BodyDrawDamage> message = JsonUtil.parseMessage(json, BodyDrawDamage.class);
         BodyDrawDamage body = message.messageBody();
         List<String> cards = body.cards();
+
+        if (robots.containsKey(body.clientID())) {
+            robots.computeIfPresent(body.clientID(), (_, old) -> new RobotInfo(
+                    body.clientID(),
+                    old.position(),
+                    old.direction(),
+                    old.checkpointsReached(),
+                    old.energy(),
+                    old.damage() + cards.size()
+            ));
+        }
 
         if (!isAI) {
             Platform.runLater(() -> {
@@ -1289,6 +1357,17 @@ public class Client {
         String direction = message.messageBody().direction();
         clientLogger.info("Received reboot direction confirmation from server: {}", direction);
 
+        if (robots.containsKey(rebootingInProgress)) {
+            robots.computeIfPresent(rebootingInProgress, (_, old) -> new RobotInfo(
+                    rebootingInProgress,
+                    old.position(),
+                    Direction.fromString(direction),
+                    old.checkpointsReached(),
+                    old.energy(),
+                    old.damage()
+            ));
+        }
+
         // Update local robot direction records
         if (rebootingInProgress != -1) {
             final int currentRebootingClient = rebootingInProgress;
@@ -1338,6 +1417,17 @@ public class Client {
 
         energy.put(clientID, count);  // update internal tracking
 
+        if (robots.containsKey(clientID)) {
+            robots.computeIfPresent(clientID, (_, old) -> new RobotInfo(
+                    clientID,
+                    old.position(),
+                    old.direction(),
+                    old.checkpointsReached(),
+                    count,
+                    old.damage()
+            ));
+        }
+
         if (!isAI) {
             Platform.runLater(() -> {
                 GameController controller = ControllerRegistry.getGameController();
@@ -1365,6 +1455,17 @@ public class Client {
         int number = body.number();  // Checkpoint number
 
         checkpointsReached.put(clientID, number);
+
+        if (robots.containsKey(clientID)) {
+            robots.computeIfPresent(clientID, (_, old) -> new RobotInfo(
+                    clientID,
+                    old.position(),
+                    old.direction(),
+                    number,
+                    old.energy(),
+                    old.damage()
+            ));
+        }
 
         if (!isAI) {
             Platform.runLater(() -> {
@@ -1580,6 +1681,16 @@ public class Client {
      */
     public int getID() {
         return ID != null ? ID : -1;
+    }
+
+    /**
+     * Returns the RobotInfo record for the current player (bot or human).
+     * May return null if not yet initialized (e.g. before start position is chosen).
+     *
+     * @return RobotInfo for this client, or null if not available.
+     */
+    public RobotInfo getMyRobotInfo() {
+        return robots.get(this.ID);
     }
 
     /**

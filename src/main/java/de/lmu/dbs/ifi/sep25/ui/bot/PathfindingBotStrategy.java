@@ -11,7 +11,7 @@ public class PathfindingBotStrategy implements BotStrategy {
 
     @Override
     public String chooseName() {
-        return "smartBot #" + botCount.getAndIncrement();
+        return "BFSBot #" + botCount.getAndIncrement();
     }
 
     @Override
