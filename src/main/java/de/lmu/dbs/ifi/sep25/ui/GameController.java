@@ -143,6 +143,8 @@ public class GameController {
     private static final double MY_ROBOT_SCALE = 1.4;
     private Label discardCounter;
     private Timeline blinkTimeline;
+    private Board board;
+
 
 
     private double currentZoom = 1.0;
@@ -155,6 +157,12 @@ public class GameController {
     private Group zoomContent;
     @FXML
     private StackPane scrollContentWrapper;
+    @FXML
+    private Label gameLogCompactLabel;
+    @FXML
+    private VBox gameLogArea;
+    @FXML
+    private ScrollPane gameLogScrollPane;
 
     private int currentPlayerID = -1;
     private final Map<Integer, Integer> clientToRobotID = new HashMap<>();
@@ -197,10 +205,7 @@ public class GameController {
     private final Set<Integer> swapProtectedSlots = new HashSet<>();
 
 
-    @FXML
-    private VBox gameLogArea;
-    @FXML
-    private ScrollPane gameLogScrollPane;
+
 
 
     @FXML
@@ -391,6 +396,11 @@ public class GameController {
     }
 
 
+    /**
+     * Adds players from a lobby list.
+     *
+     * @param players list of lobby players
+     */
     public void setPlayersFromLobby(List<PlayerEntry> players) {
         for (PlayerEntry p : players) {
             addPlayer(p.getClientID(), p.getName(), p.getFigure(), p.isReady());
@@ -726,14 +736,28 @@ public class GameController {
     }
 
 
+    /**
+     * Sets the root node of the scene.
+     *
+     * @param root the root node
+     */
     public void setRoot(Parent root) {
         this.root = root;
     }
 
+    /**
+     * Returns the root node of the scene.
+     *
+     * @return the root node
+     */
     public Parent getRoot() {
         return root;
     }
 
+    /**
+     * Handles sending a chat message to the selected recipient.
+     * Sends the message through the client and appends it to the chat area.
+     */
     @FXML
     private void handleSendChat() {
         String msg = chatInput.getText();
@@ -755,7 +779,11 @@ public class GameController {
         appendChatMessage(prefix + ": " + msg);
         chatInput.clear();
     }
-
+    /**
+     * Appends a chat message to the chat area.
+     *
+     * @param message the message to display
+     */
     public void appendChatMessage(String message) {
         chatArea.appendText(message + "\n");
     }
@@ -952,8 +980,6 @@ public class GameController {
                 }
 
                 fadeOutCountdown();
-                stopCountdownSound();
-
                 Platform.runLater(this::clearHandUI);
 
                 if (!confirmedCards.isEmpty()) {
@@ -991,28 +1017,16 @@ public class GameController {
             default -> throw new IllegalStateException("Unexpected value: " + phaseID);
         }
     }
-    private void playCardEffect(int index) {
-        Node cardNode = registerBox.getChildren().get(index);
 
-        if (cardNode instanceof VBox vbox) {
-            StackPane pane = (StackPane) vbox.getChildren().get(1);
-            if (!pane.getChildren().isEmpty() && pane.getChildren().get(0) instanceof ImageView image) {
-                ScaleTransition bounce = new ScaleTransition(Duration.millis(500), image);
-                bounce.setFromX(1.0);
-                bounce.setFromY(1.0);
-                bounce.setToX(1.2);
-                bounce.setToY(1.2);
-                bounce.setAutoReverse(true);
-                bounce.setCycleCount(2);
-                bounce.play();
-            }
-        }
-    }
-
+    /**
+     * Clears all cards from the hand UI.
+     */
     private void clearHandUI() {
         handCardBox.getChildren().clear();
     }
-
+    /**
+     * Clears all cards from the register UI slots.
+     */
     private void clearRegisterUI() {
         registerBox.getChildren().forEach(node -> {
             if (node instanceof VBox vbox) {
@@ -1043,7 +1057,12 @@ public class GameController {
         pause.setOnFinished(e -> cardNode.getStyleClass().remove("card-active"));
         pause.play();
     }
-
+    /**
+     * Recursively searches for an ImageView in the given node.
+     *
+     * @param node the root node to search
+     * @return the first found ImageView, or null if none found
+     */
     private ImageView findImageView(Node node) {
         if (node instanceof ImageView) {
             return (ImageView) node;
@@ -1056,7 +1075,12 @@ public class GameController {
         return null;
     }
 
-
+    /**
+     * Sets the phase label text and style with a fade-in effect.
+     *
+     * @param phaseText the text to display
+     * @param cssClass the CSS class to apply for styling
+     */
     private void setPhaseLabel(String phaseText, String cssClass) {
         phaseLabel.setText(phaseText);
 
@@ -1103,7 +1127,11 @@ public class GameController {
 
         }
     }
-
+    /**
+     * Slides a node out of view and hides it.
+     *
+     * @param node the node to slide out
+     */
     private void slideOut(Node node) {
         TranslateTransition tt = new TranslateTransition(Duration.millis(200), node);
         tt.setToY(50);
@@ -1113,7 +1141,11 @@ public class GameController {
         });
         tt.play();
     }
-
+    /**
+     * Slides a node into view and shows it.
+     *
+     * @param node the node to slide in
+     */
     private void slideIn(Node node) {
         node.setVisible(true);
         node.setManaged(true);
@@ -1431,7 +1463,13 @@ public class GameController {
         shuffleHandCards();
     }
 
-
+    /**
+     * Creates a clickable ImageView for a card with the given name.
+     * Loads the appropriate image based on card type (damage or normal).
+     *
+     * @param cardName the name of the card
+     * @return an ImageView displaying the card image
+     */
     private ImageView createClickableCard(String cardName) {
         final String imagePath;
         if (isDamageCard(cardName)) {
@@ -1509,7 +1547,12 @@ public class GameController {
 
         return view;
     }
-
+    /**
+     * Checks if the given card name represents a damage card.
+     *
+     * @param cardName the name of the card
+     * @return true if it's a damage card, false otherwise
+     */
     private boolean isDamageCard(String cardName) {
         return "Spam".equalsIgnoreCase(cardName) ||
                 "Worm".equalsIgnoreCase(cardName) ||
@@ -1545,7 +1588,13 @@ public class GameController {
         }
         return -1;
     }
-
+    /**
+     * Places a card in the specified register slot using default behavior.
+     *
+     * @param cardName the name of the card
+     * @param slotIndex the index of the register slot
+     * @return true if the card was placed successfully, false otherwise
+     */
     private boolean placeCardInRegisterSlot(String cardName, int slotIndex) {
         return placeCardInRegisterSlot(cardName, slotIndex, true, true);
     }
@@ -1553,7 +1602,16 @@ public class GameController {
     private boolean placeCardInRegisterSlot(String cardName, int slotIndex, boolean returnToHand) {
         return placeCardInRegisterSlot(cardName, slotIndex, returnToHand, true);
     }
-
+    /**
+     * Places a card into the specified register slot.
+     * Optionally returns a previously placed card to the hand and sends an update.
+     *
+     * @param cardName the name of the card to place
+     * @param slotIndex the index of the register slot (0–4)
+     * @param returnToHand whether to return any previously placed card to the hand
+     * @param sendUpdate whether to send an update after placing the card
+     * @return true if the card was placed successfully, false otherwise
+     */
     private boolean placeCardInRegisterSlot(String cardName, int slotIndex, boolean returnToHand, boolean sendUpdate) {
         if (slotIndex < 0 || slotIndex >= registerBox.getChildren().size()) return false;
 
@@ -1771,7 +1829,12 @@ public class GameController {
 
         return true;
     }
-
+    /**
+     * Retrieves the StackPane representing a register slot at the given index.
+     *
+     * @param index the index of the register slot
+     * @return the StackPane of the slot, or null if not found or invalid
+     */
     private StackPane getRegisterPane(int index) {
         if (index < 0 || index >= registerBox.getChildren().size()) return null;
         Node node = registerBox.getChildren().get(index);
@@ -1781,7 +1844,12 @@ public class GameController {
         }
         return null;
     }
-
+    /**
+     * Sends a message to the server with the selected card and register index.
+     *
+     * @param cardName the name of the selected card, or null to remove a card
+     * @param registerIndex the index of the register being updated
+     */
     private void sendCardSelectionUpdate(String cardName, int registerIndex) {
         ClientSingleton.getInstance().sendMessage(
                 new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectedCard(cardName, registerIndex))
@@ -1830,7 +1898,6 @@ public class GameController {
         var finishedBody = new MessageDefinitions.BodySelectionFinished(clientID);
         var finishedMsg = new MessageDefinitions.Message<>(finishedBody);
         ClientSingleton.getInstance().sendMessage(finishedMsg);
-        stopCountdownSound();
         appendGameLog("Auswahl wurde erfolgreich gesendet.", "info");
 
         confirmSelectionButton.setVisible(false);
@@ -1943,7 +2010,12 @@ public class GameController {
             appLogger.info("Card removed from register slot {} by server (isSelf).", register);
         }
     }
-
+    /**
+     * Checks whether the given card is currently placed in any register slot.
+     *
+     * @param cardName the name of the card to check
+     * @return true if the card is found in any slot, false otherwise
+     */
     private boolean isCardInAnyRegisterSlot(String cardName) {
         for (int i = 0; i < registerBox.getChildren().size(); i++) {
             StackPane pane = getRegisterPane(i);
@@ -1956,7 +2028,13 @@ public class GameController {
         }
         return false;
     }
-
+    /**
+     * Retrieves the player's name by their ID.
+     * Looks up the ID first in client usernames, then in robot ID mappings.
+     *
+     * @param id the client or robot ID
+     * @return the player's name, or null if not found
+     */
     private String getPlayerNameById(int id) {
         // Attempt to retrieve from ClientSingleton (via clientID)
         String name = ClientSingleton.getInstance().getUsernames().getByKeyOrDefault(id, null);
@@ -2112,14 +2190,10 @@ public class GameController {
                     animatePulse(timerLabel);
                     updateCountdownColor(secondsLeft);
 
-                    //ONLY LAST 5 SEC
-                    if (secondsLeft == 5) {
-                        playCountdownSound();
-                    }
+
 
                     if (secondsLeft <= 0) {
                         countdownTimer.stop();
-                        stopCountdownSound();
 
                         if (blinkTimeline != null) blinkTimeline.stop();
                         timerLabel.setOpacity(1);
@@ -2136,7 +2210,11 @@ public class GameController {
 
     }
 
-
+    /**
+     * Applies a quick pulse (scale) animation to the given label.
+     *
+     * @param label the label to animate
+     */
     private void animatePulse(Label label) {
         ScaleTransition zoom = new ScaleTransition(Duration.millis(200), label);
         zoom.setFromX(1.3);
@@ -2145,7 +2223,9 @@ public class GameController {
         zoom.setToY(1.0);
         zoom.play();
     }
-
+    /**
+     * Fades out the countdown timer and removes it from the UI.
+     */
     private void fadeOutCountdown() {
         FadeTransition fade = new FadeTransition(Duration.seconds(1), timerContainer);
         fade.setFromValue(1.0);
@@ -2157,7 +2237,12 @@ public class GameController {
         });
         fade.play();
     }
-
+    /**
+     * Updates the countdown timer's color or blinking behavior based on time left.
+     * Stops any ongoing blink animation if present.
+     *
+     * @param secondsLeft the number of seconds remaining in the countdown
+     */
     private void updateCountdownColor(int secondsLeft) {
         if (blinkTimeline != null) {
             blinkTimeline.stop();
@@ -2182,31 +2267,6 @@ public class GameController {
         }
     }
 
-    private AudioClip countdownClip;
-
-    private void playCountdownSound() {
-        try {
-            countdownClip = new AudioClip(getClass().getResource("/audio/timer.wav").toExternalForm());
-            countdownClip.setCycleCount(1);
-            countdownClip.play();
-
-            //PauseTransition stopSound = new PauseTransition(Duration.seconds(25));
-            //stopSound.setOnFinished(e -> stopCountdownSound());
-            //  stopSound.play();
-
-        } catch (Exception e) {
-            System.err.println("Countdown-Sound konnte nicht geladen werden: " + e.getMessage());
-        }
-    }
-
-
-    private void stopCountdownSound() {
-        if (countdownClip != null && countdownClip.isPlaying()) {
-            System.out.println("stop.");
-            countdownClip.stop();
-        }
-    }
-
 
     /**
      * Indicates that the timer has expired and marks players who were too slow.
@@ -2220,7 +2280,6 @@ public class GameController {
         }
 
         fadeOutCountdown();
-        stopCountdownSound();
         appendGameLog("Zeit ist abgelaufen.", "warn");
 
         if (slowPlayers != null && !slowPlayers.isEmpty()) {
@@ -2488,7 +2547,12 @@ public class GameController {
             appendGameLog("Kein Zellen-StackPane an Position (" + pos.x() + ", " + pos.y() + ") gefunden.", "error");
         }
     }
-
+    /**
+     * Rotates the given direction 90 degrees clockwise.
+     *
+     * @param dir the current direction ("top", "right", "bottom", or "left")
+     * @return the new direction after rotation
+     */
     private String rotateClockwise(String dir) {
         return switch (dir) {
             case "top" -> "right";
@@ -2498,7 +2562,12 @@ public class GameController {
             default -> dir;
         };
     }
-
+    /**
+     * Rotates the given direction 90 degrees counterclockwise.
+     *
+     * @param dir the current direction ("top", "right", "bottom", or "left")
+     * @return the new direction after rotation
+     */
     private String rotateCounterClockwise(String dir) {
         return switch (dir) {
             case "top" -> "left";
@@ -2518,7 +2587,12 @@ public class GameController {
     public void setRobotPosition(int clientID, Position position) {
         robotPositions.put(clientID, position);
     }
-
+    /**
+     * Returns the position of the robot for the given client ID.
+     *
+     * @param clientID the ID of the client
+     * @return the robot's position, or null if not found
+     */
     public Position getRobotPosition(int clientID) {
         return robotPositions.get(clientID);
     }
@@ -2539,7 +2613,12 @@ public class GameController {
         }
     }
 
-
+    /**
+     * Plays the pitfall animation for the robot of the given client.
+     * Shrinks and fades out the robot, then removes it from the UI and logs the event.
+     *
+     * @param clientID the ID of the client whose robot fell into a pit
+     */
     public void playPitAnimation(int clientID) {
         Position pos = robotPositions.get(clientID);
         if (pos == null) return;
@@ -2563,7 +2642,7 @@ public class GameController {
                 ParallelTransition fallIntoPit = new ParallelTransition(shrink, fade);
                 fallIntoPit.setOnFinished(e -> {
                     cell.getChildren().remove(img); // remove robot
-                    appendGameLog("💥 Spieler " + getPlayerNameById(clientID) + " ist in eine Grube gefallen!", "warn");
+                    appendGameLog("Spieler " + getPlayerNameById(clientID) + " ist in eine Grube gefallen!", "warn");
                 });
 
                 fallIntoPit.play();
@@ -3269,7 +3348,10 @@ public class GameController {
 
         //appendGameLog("Deine Handkarten wurden gemischt.", "info");
     }
-
+    /**
+     * Plays the card shuffle sound effect.
+     * Logs an error if the audio file cannot be played.
+     */
     private void playShuffleSound() {
         try {
             AudioClip clip = new AudioClip(getClass().getResource("/audio/shuffle-cards.wav").toExternalForm());
@@ -3350,7 +3432,11 @@ public class GameController {
             delay.play();
         });
     }
-
+    /**
+     * Starts a waving (side-to-side) animation on the given label.
+     *
+     * @param label the label to animate
+     */
     private void playWavingAnimation(Label label) {
         TranslateTransition wave = new TranslateTransition(Duration.millis(600), label);
         wave.setFromX(-5);
@@ -3360,7 +3446,11 @@ public class GameController {
         wave.play();
         label.setUserData(wave);
     }
-
+    /**
+     * Stops the waving animation on the given label.
+     *
+     * @param label the label whose animation should be stopped
+     */
     private void stopWavingAnimation(Label label) {
         Object userData = label.getUserData();
         if (userData instanceof Animation anim) {
@@ -3368,7 +3458,14 @@ public class GameController {
             label.setTranslateX(0);
         }
     }
-
+    /**
+     * Updates the mini robot icon based on the current game phase.
+     * Changes its image and visibility, and starts/stops float animation accordingly.
+     *
+     * @param isSetupPhase whether the game is in setup phase
+     * @param isProgrammingPhase whether the game is in programming phase
+     * @param isActivationPhase whether the game is in activation phase
+     */
     private void updateMiniRobotInPhase(boolean isSetupPhase, boolean isProgrammingPhase, boolean isActivationPhase) {
         int myID = ClientSingleton.getInstance().getID();
 
@@ -3398,6 +3495,9 @@ public class GameController {
         }
     }
 
+    /**
+     * Starts a floating animation for the mini robot icon.
+     */
     private void startMiniRobotFloatAnimation() {
         if (robotFloat != null) robotFloat.stop();
 
@@ -3408,14 +3508,21 @@ public class GameController {
         robotFloat.setCycleCount(TranslateTransition.INDEFINITE);
         robotFloat.play();
     }
-
+    /**
+     * Stops the floating animation for the mini robot icon.
+     */
     private void stopMiniRobotFloatAnimation() {
         if (robotFloat != null) {
             robotFloat.stop();
             robotFloat = null;
         }
     }
-
+    /**
+     * Returns the glow color associated with a robot ID.
+     *
+     * @param robotID the robot's ID
+     * @return the corresponding color
+     */
     private Color getRobotGlowColor(int robotID) {
         return switch (robotID) {
             case 0 -> Color.RED;
@@ -3427,7 +3534,12 @@ public class GameController {
             default -> Color.WHITE;
         };
     }
-
+    /**
+     * Returns the glow color associated with a robot ID.
+     *
+     * @param robotID the robot's ID
+     * @return the corresponding color
+     */
     private void applyRobotGlow(ImageView robotView, int robotID) {
         Color glowColor = getRobotGlowColor(robotID);
         DropShadow glow = new DropShadow();
@@ -3439,40 +3551,7 @@ public class GameController {
         robotView.setEffect(glow);
     }
 
-    public void updateDiscardPile(String lastCardName) {
-        discardPileBox.getChildren().clear();
 
-        if (lastCardName != null) {
-            String path = "/assets/cards/" + lastCardName + ".png";
-            Image image;
-            try {
-                image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
-            } catch (Exception e) {
-                image = new Image(getClass().getResourceAsStream("/assets/cover_card.png"));
-            }
-
-            ImageView view = new ImageView(image);
-            view.setFitWidth(60);
-            view.setFitHeight(90);
-            view.setPreserveRatio(true);
-            view.setSmooth(true);
-            discardPileBox.getChildren().add(view);
-        }
-    }
-
-    private void animateDiscard(ImageView cardView) {
-        TranslateTransition slide = new TranslateTransition(Duration.millis(300), cardView);
-        slide.setFromY(-50);
-        slide.setToY(0);
-        slide.setInterpolator(Interpolator.EASE_OUT);
-
-        FadeTransition fade = new FadeTransition(Duration.millis(300), cardView);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-
-        ParallelTransition animation = new ParallelTransition(slide, fade);
-        animation.play();
-    }
 
     /**
      * Updates the register cards of another player.
@@ -3491,9 +3570,17 @@ public class GameController {
         otherPlayersRegisters.put(clientID, registerCards);
         refreshPlayerStatusUI();
     }
-
+    /**
+     * Indicates whether the activation phase is currently active.
+     * Used to determine whether player cards are shown face-up or face-down.
+     */
     private boolean activationPhaseActive = false;
 
+    /**
+     * Refreshes the UI displaying other players' statuses.
+     * Clears and rebuilds the display of each player's register cards and name,
+     * adjusting card visibility based on the current phase.
+     */
     private void refreshPlayerStatusUI() {
         Platform.runLater(() -> {
             playerStatusBox.getChildren().clear();
@@ -3520,7 +3607,13 @@ public class GameController {
             }
         });
     }
-
+    /**
+     * Creates an ImageView for a card, showing either its front or back.
+     *
+     * @param cardName the name of the card
+     * @param showFront true to show the front image, false to show the back
+     * @return the configured ImageView for the card
+     */
     private ImageView createCardBackOrFront(String cardName, boolean showFront) {
         Image img;
         try {
@@ -3539,7 +3632,12 @@ public class GameController {
         iv.setSmooth(true);
         return iv;
     }
-
+    /**
+     * Plays a laser shooting animation from the robot of the given client.
+     * Draws a red line in the direction the robot is facing and fades it out.
+     *
+     * @param clientID the ID of the robot's owner
+     */
     public void playLaserAnimation(int clientID) {
         Position startPos = robotPositions.get(clientID);
         if (startPos == null) return;
@@ -3591,7 +3689,12 @@ public class GameController {
         animation.setOnFinished(e -> laserLayer.getChildren().remove(laserLinie));
         animation.play();
     }
-
+    /**
+     * Calculates the laser's starting point in the scene based on the robot's position.
+     *
+     * @param pos the position of the robot
+     * @return the starting Point2D in laserLayer coordinates
+     */
     private Point2D calculateLaserStartPoint(Position pos) {
         StackPane cell = getCellAt(pos.x(), pos.y());
         if (cell == null) return new Point2D(0, 0);
@@ -3700,7 +3803,6 @@ public class GameController {
         return false;
     }
 
-    private Board board;
 
     public void setBoard(Board board) {
         this.board = board;
@@ -3764,6 +3866,10 @@ public class GameController {
         lastEnergy = energy;
     }
 
+    /**
+     * Initializes the discard pile UI component.
+     * Adds a card back image and a counter label, and sets a click handler to open the discard view.
+     */
     public void setupDiscardPileBox() {
         // Image of the back of a card
         ImageView discardImage = new ImageView(new Image(Objects.requireNonNull(
@@ -3782,16 +3888,25 @@ public class GameController {
         // Click to open discard view
         discardPileBox.setOnMouseClicked(e -> showDiscardPile());
     }
-
+    /**
+     * Adds a card to the discard pile and updates the counter.
+     *
+     * @param cardName the name of the card to add
+     */
     public void addCardToDiscard(String cardName) {
         discardPile.add(cardName);
         updateDiscardCounter();
     }
-
+    /**
+     * Updates the discard counter label to reflect the current pile size.
+     */
     private void updateDiscardCounter() {
         discardCounter.setText(String.valueOf(discardPile.size()));
     }
-
+    /**
+     * Displays the contents of the discard pile in a new window.
+     * Shows each discarded card in a scrollable layout.
+     */
     public void showDiscardPile() {
         Stage stage = new Stage();
         stage.setTitle("Discard Pile");
@@ -3826,9 +3941,9 @@ public class GameController {
     }
 
     /**
-     * Zeigt das Spiellogo mit einer einfachen Ein- und Ausblendanimation.
+     * Displays the game logo with a simple fade-in and fade-out animation.
      * <p>
-     * Eignet sich für diskrete Hinweise oder einfache Übergänge.
+     * Suitable for subtle hints or basic transitions.
      */
     public void showGameLogoAnimation() {
         gameLogoView.setVisible(true);
@@ -3900,39 +4015,15 @@ public class GameController {
         sequence.play();
     }
 
-    private void clearProgrammingUI() {
-    }
 
-    public void animateHandCards(List<String> handCards) {
-        handCardBox.getChildren().clear();
-        Timeline timeline = new Timeline();
-
-        for (int i = 0; i < handCards.size(); i++) {
-            String cardName = handCards.get(i);
-            ImageView card = createClickableCard(cardName);
-            card.setOpacity(0);
-            card.setTranslateY(30);
-
-            handCardBox.getChildren().add(card);
-
-            FadeTransition fade = new FadeTransition(Duration.millis(200), card);
-            fade.setFromValue(0);
-            fade.setToValue(1);
-
-            TranslateTransition slide = new TranslateTransition(Duration.millis(200), card);
-            slide.setFromY(30);
-            slide.setToY(0);
-
-            ParallelTransition entry = new ParallelTransition(fade, slide);
-            KeyFrame kf = new KeyFrame(Duration.millis(i * 120), e -> entry.play());
-            timeline.getKeyFrames().add(kf);
-        }
-
-        timeline.play();
-    }
 
     private List<Player> players = new ArrayList<>();
 
+    /**
+     * Returns the player whose client ID matches the current player ID.
+     *
+     * @return the current {@link Player}, or null if not found
+     */
     private Player getCurrentPlayer() {
         return players.stream()
                 .filter(p -> p.getClientID() == currentPlayerID)
@@ -4309,6 +4400,13 @@ public class GameController {
             showLaserHitLabel(myPosition, laserColor);
         }
     }
+    /**
+     * Displays a "Hit!" label at the given position with animation and a colored border.
+     * The label moves upward and fades out, then is removed from the UI.
+     *
+     * @param pos the position where the hit occurred
+     * @param borderColor the color of the label's border
+     */
     private void showLaserHitLabel(Position pos, Color borderColor) {
         StackPane cell = getCellAt(pos.x(), pos.y());
         if (cell == null) return;
@@ -4342,7 +4440,12 @@ public class GameController {
         anim.setOnFinished(e -> cell.getChildren().remove(hitLabel));
         anim.play();
     }
-
+    /**
+     * Converts a {@link Color} to its hexadecimal RGB representation.
+     *
+     * @param color the color to convert
+     * @return the hex string (e.g. "#FF0000" for red)
+     */
     private String toHex(Color color) {
         return String.format("#%02X%02X%02X",
                 (int)(color.getRed()*255),
@@ -4521,6 +4624,7 @@ public class GameController {
      */
     private void setupHelpIcon() {
         helpButton = new Button("?");
+        Tooltip.install(helpButton, new Tooltip("Hilfe"));
         helpButton.setStyle(
                 "-fx-background-radius: 50%;"
                         + "-fx-background-color: #87CEEB;"
@@ -5090,8 +5194,7 @@ public class GameController {
         return box;
     }
 
-    @FXML
-    private Label gameLogCompactLabel;
+
 
     /**
      * Adds a message to the history and dynamically displays it as the latest one.
@@ -5105,7 +5208,10 @@ public class GameController {
 
         Platform.runLater(() -> gameLogScrollPane.setVvalue(1.0));
     }
-
+    /**
+     * Expands the game log view by showing the full scroll pane
+     * and hiding the compact label.
+     */
     @FXML
     private void expandGameLog() {
         gameLogScrollPane.setVisible(true);
@@ -5113,7 +5219,10 @@ public class GameController {
         gameLogCompactLabel.setVisible(false);
         gameLogCompactLabel.setManaged(false);
     }
-
+    /**
+     * Collapses the game log view by hiding the scroll pane
+     * and showing the compact label instead.
+     */
     @FXML
     private void collapseGameLog() {
         gameLogScrollPane.setVisible(false);
