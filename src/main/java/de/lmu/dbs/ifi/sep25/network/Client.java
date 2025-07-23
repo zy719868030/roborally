@@ -160,7 +160,7 @@ public class Client {
                         case "Alive" -> handleBodyAlive(json);
                         case "Welcome" -> handleBodyWelcome(json);
                         case "PlayerAdded" -> handleBodyPlayerAdded(json);
-                        case "PlayerRenamed" -> handleBodyPlayerRenamed(json);//@SEBAS
+                        case "PlayerRenamed" -> handleBodyPlayerRenamed(json);
                         case "PlayerStatus" -> handleBodyPlayerStatus(json);
                         case "SelectMap" -> handleBodySelectMap(json);
                         case "MapSelected" -> handleBodyMapSelected(json);

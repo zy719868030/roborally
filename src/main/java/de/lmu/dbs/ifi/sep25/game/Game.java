@@ -486,7 +486,7 @@ public class Game {
             appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
 
             try {
-                Thread.sleep(1000); // <-- Delay of x millis
+                Thread.sleep(5000); // <-- Delay of x millis
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 appLogger.warn("Activation delay interrupted");

@@ -80,14 +80,14 @@
               maxWidth="300"
               spacing="5">
 
-            <!-- 🔹 Siempre visible: muestra el último mensaje -->
+            <!--  Always visible: displays the latest message -->
             <Label fx:id="gameLogCompactLabel"
                    styleClass="game-log-compact"
                    text="System bereit..."
                    maxWidth="300"
                    wrapText="true" />
 
-            <!-- 🔹 Historial solo visible al pasar el mouse -->
+            <!--  History only visible on mouse hover -->
             <ScrollPane fx:id="gameLogScrollPane"
                         visible="false"
                         managed="false"
@@ -103,8 +103,6 @@
                       prefWidth="280"/>
             </ScrollPane>
         </VBox>
-
-
 
 
         <!-- Chat Minimieren -->
@@ -264,7 +262,7 @@
             <Button fx:id="zoomOutButton"
                     onAction="#handleZoomOut"
                     styleClass="senden-button"
-                    text="-"
+                    text="−"
                     prefWidth="18" prefHeight="18"
                     maxWidth="18" maxHeight="18"
                     pickOnBounds="true"/>
