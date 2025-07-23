@@ -2,13 +2,8 @@ package de.lmu.dbs.ifi.sep25.ui;
 
 import de.lmu.dbs.ifi.sep25.network.Client;
 import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.BodyPlayerValues;
-import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.Message;
 import de.lmu.dbs.ifi.sep25.utils.ErrorDialogUtil;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.animation.TranslateTransition;
+import javafx.animation.*;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,20 +11,26 @@ import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 
@@ -223,64 +224,129 @@ public class LoginController {
         ((Node) event.getSource()).setDisable(false);
     }
 
-
-    /**
-     * Called when the user clicks "Bot Login".
-     * <p>
-     * Disables the input fields, selects a random name and figure for the bot,
-     * uses default values for host and port, connects to the server, and sends the bot and player information.
-     * Shows appropriate warnings on errors and re-enables the input fields.
-     *
-     * @param event The associated ActionEvent.
-     */
     @FXML
-    private void handleBotLogin(ActionEvent event) {
-        // Eingabefelder deaktivieren, damit der Nutzer nichts mehr ändern kann
-        nameField.setDisable(true);
-        figureBox.setDisable(true);
-        hostField.setDisable(true);
-        portField.setDisable(true);
-
-        // Zufälligen Namen und Figur für den Bot wählen
-        String name = "KI-Spieler";
-        int figure = new Random().nextInt(6); // Zufällige Figur (0–5)
-
-        // Host und Port auslesen oder Standard setzen
-        String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
-        String portText = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
-
-        int port;
-        try {
-            port = Integer.parseInt(portText);
-        } catch (NumberFormatException e) {
-            showAlert("Ungültiger Port. Bitte eine gültige Zahl eingeben.");
-            return;
-        }
-
-        try {
-            // Client erstellen und starten
-            Client client = new Client();
-            client.start(host, port);
-            ClientSingleton.setInstance(client);
-
-            // Bot als KI markieren (AI = true)
-            Message<MessageDefinitions.BodyHelloServer> hello = new Message<>(new MessageDefinitions.BodyHelloServer("Edle Eisbecher", true, "Version 0.1"));
-            client.sendMessage(hello);
-
-            // Spielerinformationen (Name, Figur) an den Server senden
-            client.sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
-
-        } catch (Exception e) {
-            showAlert("Verbindung fehlgeschlagen: " + e.getMessage());
-
-            // Falls Verbindung fehlschlägt, Felder wieder aktivieren
-            nameField.setDisable(false);
-            figureBox.setDisable(false);
-            hostField.setDisable(false);
-            portField.setDisable(false);
-        }
+    public void onBotStartButton(ActionEvent event) {
+        // Get the Stage from the event (the window the button is in)
+        Stage owner = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        showBotPopup(owner);
     }
 
+    private void showBotPopup(Stage owner) {
+        // Popup root
+        VBox content = new VBox(22);
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: rgba(20, 20, 30, 0.95);"
+                + "-fx-padding: 32 36;"
+                + "-fx-background-radius: 18; "
+                + "-fx-effect: dropshadow(gaussian, #00ffd0, 16, 0.7, 0, 0);");
+
+        Label title = new Label("Bot-Schwierigkeit wählen");
+        title.getStyleClass().add("status-label");
+        title.setStyle("-fx-font-size: 21px; -fx-font-weight: bold; -fx-text-fill: #00ffd0;");
+
+        // Dropdown styled as map selection
+        ComboBox<String> botTypeBox = new ComboBox<>();
+        botTypeBox.getItems().addAll("Random Bot", "Pathfinding Bot");
+        botTypeBox.setPromptText("Bot auswählen...");
+        botTypeBox.getStyleClass().add("combo-recipient");
+        botTypeBox.setPrefWidth(210);
+
+        // Button row (like info popup)
+        HBox btnBox = new HBox(18);
+        btnBox.setAlignment(Pos.CENTER);
+
+        Button startBtn = new Button("Bot starten");
+        startBtn.getStyleClass().add("senden-button");
+        startBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 10px;");
+        startBtn.setPrefWidth(170);
+        startBtn.setCursor(Cursor.HAND);
+
+        // Shrink effect on hover
+        startBtn.setOnMouseEntered(e -> startBtn.setStyle(
+                "-fx-font-size: 17px; -fx-background-radius: 10px;"
+        ));
+        startBtn.setOnMouseExited(e -> startBtn.setStyle(
+                "-fx-font-size: 20px; -fx-background-radius: 10px;"
+        ));
+
+        Button cancelBtn = new Button("Abbrechen");
+        cancelBtn.getStyleClass().add("not-ready-button");
+        cancelBtn.setPrefWidth(120);
+        cancelBtn.setCursor(Cursor.HAND);
+
+        btnBox.getChildren().addAll(startBtn, cancelBtn);
+
+        content.getChildren().addAll(title, botTypeBox, btnBox);
+
+        // Create a draggable undecorated Stage
+        Stage popup = new Stage(StageStyle.TRANSPARENT);
+        popup.initModality(Modality.APPLICATION_MODAL);
+        if (owner != null) popup.initOwner(owner);
+
+        // Draggable logic
+        final double[] dragOffset = new double[2];
+        content.setOnMousePressed(e -> {
+            if (e.getButton() == MouseButton.PRIMARY) {
+                dragOffset[0] = e.getSceneX();
+                dragOffset[1] = e.getSceneY();
+            }
+        });
+        content.setOnMouseDragged(e -> {
+            if (e.getButton() == MouseButton.PRIMARY) {
+                popup.setX(e.getScreenX() - dragOffset[0]);
+                popup.setY(e.getScreenY() - dragOffset[1]);
+            }
+        });
+
+        // Animate in
+        content.setOpacity(0);
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(300), content);
+        scaleIn.setFromX(0.84); scaleIn.setFromY(0.84);
+        scaleIn.setToX(1.0); scaleIn.setToY(1.0);
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(280), content);
+        fadeIn.setFromValue(0); fadeIn.setToValue(1);
+        ParallelTransition anim = new ParallelTransition(scaleIn, fadeIn);
+        anim.play();
+
+        // Setup scene with transparent background, hand cursor on combo, rounded corners
+        Scene scene = new Scene(content);
+        scene.setFill(Color.TRANSPARENT);
+        botTypeBox.setCursor(Cursor.HAND);
+        content.setStyle(content.getStyle() + "-fx-cursor: default;");
+        popup.setScene(scene);
+
+        // Remove window borders
+        popup.initStyle(StageStyle.TRANSPARENT);
+
+        // Button logic
+        startBtn.setOnAction(ev -> {
+            String botType = botTypeBox.getValue();
+            if (botType == null) {
+                botTypeBox.setStyle("-fx-border-color: #ff4444; -fx-border-width: 2px;");
+                return;
+            }
+            // LAUNCH BOT here (with ProcessBuilder or other, as discussed)
+            launchBot(botType);
+            popup.close();
+        });
+        cancelBtn.setOnAction(ev -> popup.close());
+
+        popup.show();
+    }
+
+    // Sample bot launch method
+    private void launchBot(String botType) {
+        // Map type to cmdline arg
+        String typeArg = botType.equals("Pathfinding Bot") ? "-smart" : "-random";
+        String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
+        String port = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+        try {
+            new ProcessBuilder("java", "-jar", "roborally.jar", "--bot", typeArg, host, port)
+                    .start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Called after a successful login and loads the lobby UI.
