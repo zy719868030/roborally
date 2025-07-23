@@ -4832,8 +4832,8 @@ public class GameController {
         title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
         Label phases = wrappedLabel("""
                 Jede Runde besteht aus zwei Phasen:
-                1. Programmierphase
-                2. Aktivierungsphase
+                1. Programmierphase: Alle Spieler wählen verdeckt ihre Aktionen für diese Runde aus.
+                2. Aktivierungsphase: Die gewählten Aktionen werden in Reihenfolge ausgeführt und das Spielfeld bewegt sich automatisch.
                 """);
         phases.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
@@ -4857,9 +4857,10 @@ public class GameController {
         Label title = wrappedLabel("PROGRAMMIERPHASE");
         title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
         Label programming = wrappedLabel("""
-                Ziehe 9 Karten. Wähle 5 davon und lege sie verdeckt in die Registerfelder.
-                Diese bestimmen die Aktionen deines Roboters in dieser Runde (Bewegung, Drehen, usw.).
-                Nicht verwendete Karten werden abgelegt.
+                • Ziehe 9 Karten. Wähle 5 davon und lege sie verdeckt in die Registerfelder – diese bestimmen die Aktionen deines Roboters in dieser Runde (Bewegung, Drehung usw.).
+                • Sobald der erste Spieler seine Karten gewählt hat, startet ein 30-Sekunden-Timer. Alle anderen Spieler müssen ihre Register innerhalb dieser Zeit füllen.
+                • Spieler, die nicht rechtzeitig fertig sind, erhalten automatisch zufällig gewählte Karten.
+                • Nicht verwendete Karten kommen auf den Ablagestapel.
                 """);
         programming.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
@@ -4883,10 +4884,11 @@ public class GameController {
         Label title = wrappedLabel("AKTIVIERUNGSPHASE");
         title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
         Label activation = wrappedLabel("""
-                Die Karten werden Register für Register aufgedeckt.
-                In Prioritätsreihenfolge führt jeder Roboter seine Aktion aus.
-                Danach werden die Spielelemente (Förderbänder, Zahnräder, usw.) automatisch aktiviert.
-                Dann geht es zum nächsten Register.
+                • Die Karten werden Register für Register (1–5) aufgedeckt.
+                • In Prioritätsreihenfolge führt jeder Roboter seine Aktion aus.
+                • Karten mit höherer Priorität (z.B. Move 3) kommen vor niedrigen (z.B. Rotate Left).
+                • Danach werden die Spielelemente (Förderbänder, Zahnräder, usw.) aktiviert.
+                • Dann geht es zum nächsten Register.
                 """);
         activation.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
@@ -4909,19 +4911,23 @@ public class GameController {
 
         Label title = wrappedLabel("SPIELFELDELEMENTE");
         title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label intro = wrappedLabel("Fahre mit der Maus über das Spielfeld, um kurze Infos zu den Feldern und Spielelementen als Tooltip zu erhalten.");
+        intro.setStyle("-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;");
+
         Label elements = wrappedLabel("""
-                • Förderbänder: Bewegen deinen Roboter automatisch.
-                • Zahnräder: Drehen deinen Roboter.
-                • Schiebefelder: Schieben Roboter, wenn aktiviert.
-                • Laser: Fügen Schaden zu.
-                • Gruben: Roboter stürzt ab und rebootet.
-                • Energie-Felder: Hier kannst du Energie sammeln.
-                • Wände: Blockieren Bewegung und Laser.
-                • Checkpoints: Erreiche alle der Reihe nach, um zu gewinnen.
+                • Förderbänder: Bewegen deinen Roboter automatisch in Pfeilrichtung.
+                • Zahnräder: Drehen deinen Roboter je nach Richtung um 90°.
+                • Schiebefelder: Schieben Roboter bei Aktivierung in Pfeilrichtung.
+                • Laser: Fügen Schaden zu, wenn du in ihrer Schusslinie stehst.
+                • Gruben: Der Roboter stürzt ab, rebootet und setzt eine Runde aus.
+                • Energie-Felder:  Hier kannst du Energie sammeln.
+                • Wände: Blockieren Bewegung und Laserschüsse.
+                • Checkpoints: Erreiche alle in der richtigen Reihenfolge, um zu gewinnen.
+                
                 """);
         elements.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        box.getChildren().addAll(title, elements);
+        box.getChildren().addAll(title, intro, elements);
         return box;
     }
 
@@ -4943,7 +4949,10 @@ public class GameController {
         Label interaction = wrappedLabel("""
                 • Roboter schieben sich gegenseitig bei Bewegung.
                 • Wirst du von einem Laser getroffen, erhältst du eine Schadenskarte.
-                • Bei zu viel Schaden oder Sturz in eine Grube musst du rebooten (Roboter startet neu).
+                • Bei 5+ Schaden werden Register gesperrt (von rechts nach links).
+                • Bei Absturz oder zu viel Schaden muss dein Roboter rebooten:
+                    - Er wird zum Startpunkt zurückgesetzt und
+                    - setzt eine Runde aus.
                 """);
         interaction.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
