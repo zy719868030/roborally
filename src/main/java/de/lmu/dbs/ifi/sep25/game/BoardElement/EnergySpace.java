@@ -225,6 +225,8 @@ public class EnergySpace extends BoardElement {
                     )
             );
         }
+        Server.getInstance().broadcastMessage(
+                Game.getInstance().getBoard().getSerializedBoardAsMessage());
     }
 
     /**

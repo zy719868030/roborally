@@ -101,14 +101,14 @@ public class Player {
         }
 
         List<RegisterCard> defaultProgrammingCards = Stream.of(
-                "MoveI", "MoveI", // 2 Move 1 Space
-                "MoveII", "MoveII", // 2 Move 2 Spaces
+                "MoveI", "MoveI","MoveI", "MoveI", // 4 Move 1 Space
+                "MoveII", "MoveII", "MoveII",// 3 Move 2 Spaces
                 "MoveIII", // 1 Move 3 Spaces
-                "BackUp", "BackUp", // 2 Back Up
-                "TurnLeft", "TurnLeft", // 2 Turn Left
-                "TurnRight", "TurnRight", // 2 Turn Right
-                "UTurn", "UTurn", // 2 U-Turn
-                "Again", "Again", // 2 Again
+                "BackUp",  // 1 Back Up
+                "TurnLeft", "TurnLeft", "TurnLeft", "TurnLeft",// 4 Turn Left
+                "TurnRight", "TurnRight", "TurnRight", "TurnRight", // 4 Turn Right
+                "UTurn", // 1 U-Turn
+                "Again", // 1 Again
                 "PowerUp" // 1 Power Up
         ).map(CardFactory::createCard).toList();
 
@@ -464,9 +464,7 @@ public class Player {
         // Clear hand
         resetHand();
 
-        // Falsch!!!Draw 9 cards (or fewer if damaged)
-//        int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
-        // Draw 9 cards each round, regardless of damage taken.
+        // Draw 9 cards (or fewer if damaged)
         int cardsToDraw = 9;
         appLogger.debug("{} draws {} cards", getPlayerIdentifier(), cardsToDraw);
         for (int i = 0; i < cardsToDraw; i++) {
