@@ -464,9 +464,7 @@ public class Player {
         // Clear hand
         resetHand();
 
-        // Falsch!!!Draw 9 cards (or fewer if damaged)
-//        int cardsToDraw = Math.max(9 - robot.getDamage(), 1);
-        // Draw 9 cards each round, regardless of damage taken.
+        // Draw 9 cards (or fewer if damaged)
         int cardsToDraw = 9;
         appLogger.debug("{} draws {} cards", getPlayerIdentifier(), cardsToDraw);
         for (int i = 0; i < cardsToDraw; i++) {
