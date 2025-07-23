@@ -33,7 +33,7 @@ public interface BotStrategy {
      * @param boardState the current state of the board (positions, goals, etc.), if needed for strategy
      * @return a list of card names (or objects) to be placed in registers 0–4, in order
      */
-    List<String> chooseRegisterCards(List<String> hand, Object boardState);
+    List<String> chooseRegisterCards(List<String> hand, BotGameState boardState);
 
     /**
      * Determines which direction the robot should face when rebooting.

@@ -115,7 +115,7 @@ public class BotClient extends Client {
     @Override
     protected void onYourCards(List<String> hand) {
         delayedDecision(() -> {
-            List<String> selected = strategy.chooseRegisterCards(hand, getCurrentGameMap());
+            List<String> selected = strategy.chooseRegisterCards(hand, new BotGameState(getMyRobotInfo(), getCheckpoints(), getCurrentGameMap()));
             for (int i = 0; i < selected.size(); i++) {
                 String cardName = selected.get(i);
                 sendMessage(new MessageDefinitions.Message<>(new MessageDefinitions.BodySelectedCard(cardName, i)));

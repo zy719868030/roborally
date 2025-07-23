@@ -59,7 +59,7 @@ public class RandomBotStrategy implements BotStrategy {
      * @return a list of up to five randomly selected cards for the registers
      */
     @Override
-    public List<String> chooseRegisterCards(List<String> hand, Object boardState) {
+    public List<String> chooseRegisterCards(List<String> hand, BotGameState boardState) {
         List<String> copy = new ArrayList<>(hand);
         do {
             Collections.shuffle(copy, rnd);

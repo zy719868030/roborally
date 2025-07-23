@@ -1775,6 +1775,10 @@ public class Client {
         return currentGameMap;
     }
 
+    public List<Position> getCheckpoints() {
+        return checkpoints;
+    }
+
     /**
      * Returns a list of all starting point positions on the current game map.
      * <p>

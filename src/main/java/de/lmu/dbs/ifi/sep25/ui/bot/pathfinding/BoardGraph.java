@@ -65,7 +65,41 @@ public class BoardGraph {
 
                         if (!wallBlocks && !pitBlocks) {
                             int weight = 1;
-                            if (nodes[nx][ny].isLaser) weight += 5; // Example: Avoid lasers if possible
+                            List<Field> targetFields = boardMap.get(nx).get(ny);
+
+                            // --- LASERS ---
+                            for (Field f : targetFields) {
+                                if (f instanceof FieldLaser laser) {
+                                    // Only penalize if entering in the laser's orientation
+                                    for (String orient : laser.orientations()) {
+                                        if (Direction.fromString(orient) == dir) {
+                                            weight += 7 * Math.max(1, laser.count());
+                                        }
+                                    }
+                                }
+                            }
+
+                            // --- CONVEYORS ---
+                            for (Field f : targetFields) {
+                                if (f instanceof FieldConveyorBelt belt) {
+                                    // Only favor if moving onto the belt in its push direction
+                                    String pushOrient = belt.orientations().getFirst();
+                                    if (Direction.fromString(pushOrient) == dir) {
+                                        weight -= (belt.speed() == 2 ? 2 : 1); // fast belt -2, slow belt -1
+                                    }
+                                }
+                            }
+
+                            // --- PUSH PANELS ---
+                            for (Field f : targetFields) {
+                                if (f instanceof FieldPushPanel) {
+                                    weight += 4; // Penalize any push panel tile
+                                }
+                            }
+
+                            // Always clamp weight >= 1
+                            weight = Math.max(weight, 1);
+
                             node.edges.add(new Edge(nodes[nx][ny], dir, weight));
                         }
                     }
