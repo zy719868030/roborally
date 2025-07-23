@@ -1,9 +1,7 @@
-package de.lmu.dbs.ifi.sep25.ui.bot;
+package de.lmu.dbs.ifi.sep25.ui.PrajalBots;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.lmu.dbs.ifi.sep25.ui.bot.SimpleRandomBot.*;
-import de.lmu.dbs.ifi.sep25.network.ClientSingleton;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.network.MessageDefinitions.*;
 import de.lmu.dbs.ifi.sep25.utils.FieldDeserializer;
