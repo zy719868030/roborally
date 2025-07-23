@@ -1087,6 +1087,16 @@ public class Game {
                             Robot robot = board.getRobotAt(new Position(x, y));
                             if (robot != null) {
                                 panel.applyEffect(robot, board);
+                                if (board.hasRobotFallen(robot)) {
+                                    Player fallenPlayer = players.stream()
+                                            .filter(p -> p.getRobot() == robot)
+                                            .findFirst()
+                                            .orElse(null);
+                                    if (fallenPlayer != null) {
+                                        robot.cancelProgramming();
+                                        appLogger.info("Robot {} programming has been cancelled for this round.", robot.getRobotID());
+                                    }
+                                }
                             }
                         }
                     }
