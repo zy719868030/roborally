@@ -1,0 +1,14 @@
+de.lmu.dbs.ifi.sep25
+de.lmu.dbs.ifi.sep25.card
+de.lmu.dbs.ifi.sep25.card.DamageCard
+de.lmu.dbs.ifi.sep25.card.ProgrammingCard
+de.lmu.dbs.ifi.sep25.card.UpgradeCard
+de.lmu.dbs.ifi.sep25.game
+de.lmu.dbs.ifi.sep25.game.BoardElement
+de.lmu.dbs.ifi.sep25.game.Maps
+de.lmu.dbs.ifi.sep25.network
+de.lmu.dbs.ifi.sep25.ui
+de.lmu.dbs.ifi.sep25.ui.bot
+de.lmu.dbs.ifi.sep25.ui.bot.pathfinding
+de.lmu.dbs.ifi.sep25.ui.PrajalBots
+de.lmu.dbs.ifi.sep25.utils
