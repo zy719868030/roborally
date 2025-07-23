@@ -337,6 +337,7 @@ public class LoginController {
     // Sample bot launch method
     private void launchBot(String botType) {
         // Map type to cmdline arg
+        //TODO change path
         String typeArg = botType.equals("Pathfinding Bot") ? "-smart" : "-random";
         String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
         String port = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
