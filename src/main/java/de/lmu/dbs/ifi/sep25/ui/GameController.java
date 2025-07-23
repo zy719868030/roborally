@@ -9,6 +9,8 @@ import de.lmu.dbs.ifi.sep25.network.MessageDefinitions;
 import de.lmu.dbs.ifi.sep25.utils.ErrorDialogUtil;
 import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
@@ -222,21 +224,22 @@ public class GameController {
         gameBoardScrollPane.setStyle("-fx-background-color: transparent;");
         zoomWrapper.setStyle("-fx-background-color: transparent;");
         zoomWrapper.setOnScroll(event -> {
+            double zoomFactor = SCALE_DELTA;
+            // Use CTRL for fast zoom
             if (event.isControlDown()) {
-                event.consume();
-                double oldScale = scaleValue;
-                if (event.getDeltaY() > 0) {
-                    scaleValue *= SCALE_DELTA;
-                } else {
-                    scaleValue /= SCALE_DELTA;
-                }
-
-                scaleValue = clamp(scaleValue, 0.5, 2.5);
-                zoomWrapper.setScaleX(scaleValue);
-                zoomWrapper.setScaleY(scaleValue);
-
-                repositionScrollPane(event.getX(), event.getY(), oldScale);
+                zoomFactor = 1.25;
             }
+            double oldScale = scaleValue;
+            if (event.getDeltaY() > 0) {
+                scaleValue *= zoomFactor;
+            } else {
+                scaleValue /= zoomFactor;
+            }
+            scaleValue = clamp(scaleValue, 0.5, 2.5);
+            zoomWrapper.setScaleX(scaleValue);
+            zoomWrapper.setScaleY(scaleValue);
+            repositionScrollPane(event.getX(), event.getY(), oldScale);
+            event.consume();
         });
 
 
@@ -4297,11 +4300,12 @@ public class GameController {
 
                 double width = gameBoardScrollPane.getContent().getBoundsInLocal().getWidth();
                 double height = gameBoardScrollPane.getContent().getBoundsInLocal().getHeight();
-                double scrollSpeedFactor = 1.5;
+
+                // Make pan faster if shift is held
+                double scrollSpeedFactor = event.isControlDown() ? 5.0 : 2.7;
 
                 double hValue = gameBoardScrollPane.getHvalue() + (deltaX * scrollSpeedFactor / width);
                 double vValue = gameBoardScrollPane.getVvalue() + (deltaY * scrollSpeedFactor / height);
-
 
                 gameBoardScrollPane.setHvalue(clamp(hValue, 0.0, 1.0));
                 gameBoardScrollPane.setVvalue(clamp(vValue, 0.0, 1.0));
@@ -4425,104 +4429,553 @@ public class GameController {
 
         helpButton.setOpacity(0.45); // Default (faded)
 
-        helpButton.setOnMouseEntered(e -> {
+        helpButton.setOnMouseEntered(_ -> {
             helpButton.setOpacity(1.0);          // Full opacity on hover
             helpButton.setScaleX(1.13);
             helpButton.setScaleY(1.13);
             helpButton.setCursor(javafx.scene.Cursor.HAND);
         });
 
-        helpButton.setOnMouseExited(e -> {
+        helpButton.setOnMouseExited(_ -> {
             helpButton.setOpacity(0.45);         // Fade out again
             helpButton.setScaleX(1.0);
             helpButton.setScaleY(1.0);
             helpButton.setCursor(javafx.scene.Cursor.HAND);
         });
 
-        helpButton.setOnAction(_ -> showMapInfoDialog());
+        helpButton.setOnAction(_ -> {
+            if (infoDialog != null && infoDialog.isShowing()) {
+                animateAndCloseInfoDialog();
+            } else {
+                showInfoPagesDialog();
+            }
+        });
+
         if (rootPane != null) {
             rootPane.getChildren().add(helpButton);
         }
     }
 
+    private Double lastInfoDialogX = null;
+    private Double lastInfoDialogY = null;
+
+    private Stage infoDialog = null;
+
+    private int currentPage = 0;
+    private final List<Node> pages = new ArrayList<>();
+    private boolean animatingInfoDialog = false;
+
     /**
-     * Displays a modal dialog with information about map controls and navigation.
-     * The dialog includes instructions for zooming and dragging the map, as well as the current zoom and position.
-     * The dialog is styled for clarity and user guidance.
+     * Remembers the current position of the info dialog window (if open).
+     * Called before the dialog closes to enable position restoration on next open.
      */
-    private void showMapInfoDialog() {
+    private void saveInfoDialogPosition() {
+        if (infoDialog != null) {
+            lastInfoDialogX = infoDialog.getX();
+            lastInfoDialogY = infoDialog.getY();
+        }
+    }
+
+    /**
+     * Closes the info dialog window with an animated effect:
+     * The dialog scales down, fades out, and moves towards the help button
+     * before closing. The last position is saved before the animation.
+     * If an animation is already running or no dialog is open, this is a no-op.
+     */
+    private void animateAndCloseInfoDialog() {
+        if (infoDialog == null || animatingInfoDialog) return;
+        animatingInfoDialog = true;
+
+        saveInfoDialogPosition(); // <-- Save BEFORE starting animation!
+
+        Bounds buttonBounds = helpButton.localToScreen(helpButton.getBoundsInLocal());
+        double buttonCenterX = buttonBounds.getMinX() + buttonBounds.getWidth() / 2;
+        double buttonCenterY = buttonBounds.getMinY() + buttonBounds.getHeight() / 2;
+
+        double startX = infoDialog.getX();
+        double startY = infoDialog.getY();
+
+        DoubleProperty animX = new SimpleDoubleProperty(startX);
+        DoubleProperty animY = new SimpleDoubleProperty(startY);
+        animX.addListener((_, _, newVal) -> infoDialog.setX(newVal.doubleValue()));
+        animY.addListener((_, _, newVal) -> infoDialog.setY(newVal.doubleValue()));
+
+        VBox rootBox = (VBox) infoDialog.getScene().getRoot();
+
+        // Use your existing rootBox
+        Timeline closeTimeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(animX, startX),
+                        new KeyValue(animY, startY),
+                        new KeyValue(infoDialog.opacityProperty(), 1),
+                        new KeyValue(rootBox.scaleXProperty(), 1),
+                        new KeyValue(rootBox.scaleYProperty(), 1)
+                ),
+                new KeyFrame(Duration.millis(340),
+                        new KeyValue(animX, buttonCenterX - infoDialog.getWidth() / 2, Interpolator.EASE_BOTH),
+                        new KeyValue(animY, buttonCenterY - infoDialog.getHeight() / 2, Interpolator.EASE_BOTH),
+                        new KeyValue(infoDialog.opacityProperty(), 0, Interpolator.EASE_IN),
+                        new KeyValue(rootBox.scaleXProperty(), 0.4, Interpolator.EASE_IN),
+                        new KeyValue(rootBox.scaleYProperty(), 0.4, Interpolator.EASE_IN)
+                )
+        );
+        closeTimeline.setOnFinished(_ -> {
+            infoDialog.close();
+            infoDialog = null;
+            animatingInfoDialog = false;
+        });
+        closeTimeline.play();
+    }
+
+    /**
+     * Shows the info/rules dialog as a multipage popup with animated opening
+     * (scaling up and moving out from the help button), page navigation,
+     * and bottom-aligned controls. Remembers its last position, otherwise
+     * opens at the bottom left of the map view. If already open, closes the dialog with animation.
+     */
+    private void showInfoPagesDialog() {
+        if (infoDialog != null && infoDialog.isShowing()) {
+            animateAndCloseInfoDialog();
+            return;
+        }
+
+        pages.clear();
+        pages.addAll(List.of(
+                buildMapControlPage(),
+                buildGameObjectivePage(),
+                buildRoundStructurePage(),
+                buildProgrammingPage(),
+                buildActivationPage(),
+                buildBoardElementsPage(),
+                buildInteractionPage(),
+                buildTipsPage()));
+
+        infoDialog = new Stage();
+        infoDialog.initStyle(StageStyle.TRANSPARENT);
+        infoDialog.initModality(Modality.NONE);
+        infoDialog.setAlwaysOnTop(true);
+
+        VBox rootBox = new VBox(0);
+        rootBox.setStyle(
+                "-fx-background-color: #2F4F4F;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-color: #87CEEB;" +
+                        "-fx-border-width: 2;"
+        );
+        rootBox.setPrefWidth(340);
+
+        // --- Content (only the info page itself) ---
+        StackPane pageContent = new StackPane();
+        pageContent.getChildren().add(pages.getFirst());
+        pageContent.setPadding(new Insets(20, 18, 20, 18));
+
+        // --- Bottom Bar ---
+        Button leftBtn = new Button("←");
+        Button rightBtn = new Button("→");
+        Button closeBtn = new Button("Schließen");
+        styleNavButton(leftBtn);
+        styleNavButton(rightBtn);
+        styleNavButton(closeBtn);
+
+        Label pageLabel = new Label();
+        pageLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #87CEEB; -fx-font-weight: bold;");
+        HBox.setHgrow(pageLabel, Priority.ALWAYS);
+        pageLabel.setMaxWidth(Double.MAX_VALUE);
+        pageLabel.setAlignment(Pos.CENTER);
+
+        Region leftSpacer = new Region();
+        Region rightSpacer = new Region();
+        HBox.setHgrow(leftSpacer, Priority.ALWAYS);
+        HBox.setHgrow(rightSpacer, Priority.ALWAYS);
+
+        HBox navBar = new HBox(10, leftBtn, leftSpacer, pageLabel, rightSpacer, rightBtn, closeBtn);
+        navBar.setAlignment(Pos.CENTER);
+        navBar.setPadding(new Insets(0, 18, 18, 18));
+        navBar.setMaxWidth(Double.MAX_VALUE);
+
+        // --- Navigation logic (loop) ---
+        leftBtn.setOnAction(_ -> {
+            currentPage = (currentPage == 0) ? (pages.size() - 1) : (currentPage - 1);
+            pageContent.getChildren().setAll(pages.get(currentPage));
+            updatePageLabel(pageLabel);
+            updateDialogHeight(infoDialog, rootBox);
+        });
+        rightBtn.setOnAction(_ -> {
+            currentPage = (currentPage == pages.size() - 1) ? 0 : (currentPage + 1);
+            pageContent.getChildren().setAll(pages.get(currentPage));
+            updatePageLabel(pageLabel);
+            updateDialogHeight(infoDialog, rootBox);
+        });
+        closeBtn.setOnAction(_ -> {
+            animateAndCloseInfoDialog();
+        });
+
+        // Keyboard nav
+        Scene scene = new Scene(rootBox);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case ESCAPE, ENTER -> animateAndCloseInfoDialog();
+                case LEFT -> leftBtn.fire();
+                case RIGHT -> rightBtn.fire();
+            }
+        });
+
+        // Drag to move
+        final double[] dragDelta = new double[2];
+        rootBox.setOnMousePressed(event -> {
+            dragDelta[0] = infoDialog.getX() - event.getScreenX();
+            dragDelta[1] = infoDialog.getY() - event.getScreenY();
+        });
+        rootBox.setOnMouseDragged(event -> {
+            infoDialog.setX(event.getScreenX() + dragDelta[0]);
+            infoDialog.setY(event.getScreenY() + dragDelta[1]);
+        });
+
+        rootBox.getChildren().addAll(pageContent, navBar);
+
+        infoDialog.setScene(scene);
+        infoDialog.setResizable(false);
+        infoDialog.show();
+
+        Bounds buttonBounds = helpButton.localToScreen(helpButton.getBoundsInLocal());
+        double buttonCenterX = buttonBounds.getMinX() + buttonBounds.getWidth() / 2;
+        double buttonCenterY = buttonBounds.getMinY() + buttonBounds.getHeight() / 2;
+
+        Platform.runLater(() -> {
+            double dialogHeight = infoDialog.getHeight();
+            double dialogWidth = infoDialog.getWidth();
+            double margin = 16;
+
+            double finalX, finalY;
+            if (lastInfoDialogX != null && lastInfoDialogY != null) {
+                finalX = lastInfoDialogX;
+                finalY = lastInfoDialogY;
+            } else {
+                Bounds mapBounds = gameBoardScrollPane.localToScreen(gameBoardScrollPane.getBoundsInLocal());
+                finalX = mapBounds.getMinX() + margin;
+                finalY = mapBounds.getMaxY() - dialogHeight - margin;
+                if (finalX < 0) finalX = margin;
+                if (finalY < 0) finalY = margin;
+            }
+
+            // Use animatable proxy for X/Y, animate scale on rootBox
+            DoubleProperty animX = new SimpleDoubleProperty(buttonCenterX - dialogWidth / 2);
+            DoubleProperty animY = new SimpleDoubleProperty(buttonCenterY - dialogHeight / 2);
+            animX.addListener((_, _, newVal) -> infoDialog.setX(newVal.doubleValue()));
+            animY.addListener((_, _, newVal) -> infoDialog.setY(newVal.doubleValue()));
+
+            rootBox.setScaleX(0.35);
+            rootBox.setScaleY(0.35);
+
+            infoDialog.setOpacity(0);
+            infoDialog.setX(animX.get());
+            infoDialog.setY(animY.get());
+
+            Timeline openTimeline = new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(animX, animX.get()),
+                            new KeyValue(animY, animY.get()),
+                            new KeyValue(infoDialog.opacityProperty(), 0),
+                            new KeyValue(rootBox.scaleXProperty(), 0.35),
+                            new KeyValue(rootBox.scaleYProperty(), 0.35)
+                    ),
+                    new KeyFrame(Duration.millis(430),
+                            new KeyValue(animX, finalX, Interpolator.EASE_BOTH),
+                            new KeyValue(animY, finalY, Interpolator.EASE_BOTH),
+                            new KeyValue(infoDialog.opacityProperty(), 1, Interpolator.EASE_OUT),
+                            new KeyValue(rootBox.scaleXProperty(), 1, Interpolator.EASE_OUT),
+                            new KeyValue(rootBox.scaleYProperty(), 1, Interpolator.EASE_OUT)
+                    )
+            );
+            openTimeline.play();
+        });
+
+        updatePageLabel(pageLabel);
+        updateDialogHeight(infoDialog, rootBox);
+    }
+
+    /**
+     * Updates the label showing the current page number (format: x / max).
+     *
+     * @param label the label to update
+     */
+    private void updatePageLabel(Label label) {
+        label.setText((currentPage + 1) + " / " + pages.size());
+    }
+
+    /**
+     * Ensures the info dialog window height matches its content and
+     * keeps the bottom edge fixed when resizing (so navigation buttons don't move).
+     *
+     * @param dialog the Stage of the info dialog
+     * @param root   the root VBox of the dialog content
+     */
+    private void updateDialogHeight(Stage dialog, VBox root) {
+        // Remember where the bottom edge is
+        double oldBottom = dialog.getY() + dialog.getHeight();
+        dialog.sizeToScene();
+        // Move the window so the bottom edge stays where it was
+        dialog.setY(oldBottom - dialog.getHeight());
+    }
+
+    /**
+     * Styles a navigation or close button with color, size, rounded corners,
+     * and a hover animation (scale and cursor change).
+     *
+     * @param btn the button to style
+     */
+    private void styleNavButton(Button btn) {
+        btn.setStyle("-fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 13; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 6 18; -fx-cursor: hand;");
+        btn.setOnMouseEntered(_ -> {
+            btn.setScaleX(1.13);
+            btn.setScaleY(1.13);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+        btn.setOnMouseExited(_ -> {
+            btn.setScaleX(1.0);
+            btn.setScaleY(1.0);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+    }
+
+    /**
+     * Creates a white, wrapped info label for use in the info box,
+     * with a maximum width to fit the dialog.
+     *
+     * @param text the text to display
+     * @return a styled, wrapped Label
+     */
+    private Label wrappedLabel(String text) {
+        Label label = new Label(text);
+        label.setWrapText(true);
+        label.setMaxWidth(320); // Match or slightly less than your VBox width
+        label.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+        return label;
+    }
+
+    /**
+     * Builds the info page explaining the map controls and navigation options.
+     *
+     * @return a VBox containing the map controls info page
+     */
+    private VBox buildMapControlPage() {
         VBox infoBox = new VBox(8);
-        infoBox.setStyle("-fx-background-color: #2F4F4F; -fx-padding: 18; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #87CEEB; -fx-border-width: 2;");
+        infoBox.setStyle("-fx-background-color: transparent;");
         infoBox.setAlignment(Pos.CENTER_LEFT);
         infoBox.setPrefWidth(320);
 
-        Label titleLabel = new Label("KARTEN-STEUERUNG");
+        Label titleLabel = wrappedLabel("KARTEN-STEUERUNG");
         titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold; -fx-padding: 0 0 8 0;");
 
-        Label zoomLabel = new Label("• Mausrad + STRG zum Zoomen");
+        Label zoomLabel = wrappedLabel("• Mausrad oder +/- Button zum Zoomen");
         zoomLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        Label zoomIconLabel = new Label("• Mit + und - Buttons kannst du ebenfalls zoomen");
-        zoomIconLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+        Label fastZoomLabel = wrappedLabel("• STRG + Mausrad für schnelles Zoomen");
+        fastZoomLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        Label dragLabel = new Label("• Karte mit der Maus verschieben");
+        Label dragLabel = wrappedLabel("• Karte mit der Maus verschieben (ziehen)");
         dragLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        Label statusTitle = new Label("AKTUELLER STATUS");
-        statusTitle.setStyle("-fx-text-fill: #87CEEB; -fx-font-size: 13; -fx-font-weight: bold; -fx-padding: 12 0 5 0;");
-
-        Label zoomStatusLabel = new Label("Zoom: " + (int) (scaleValue * 100) + "%");
-        zoomStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
-
-        int hPercent = (int) (gameBoardScrollPane.getHvalue() * 100);
-        int vPercent = (int) (gameBoardScrollPane.getVvalue() * 100);
-        Label positionStatusLabel = new Label("Position: " + hPercent + "%, " + vPercent + "%");
-        positionStatusLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
-
-        Button closeBtn = new Button("Schließen");
-        closeBtn.setStyle("-fx-background-color: #87CEEB; -fx-text-fill: #2F4F4F; -fx-font-size: 13; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 6 18; -fx-cursor: hand;");
-
-        closeBtn.setOnMouseEntered(_ -> {
-            closeBtn.setScaleX(1.13);
-            closeBtn.setScaleY(1.13);
-            closeBtn.setCursor(javafx.scene.Cursor.HAND);
-        });
-        closeBtn.setOnMouseExited(_ -> {
-            closeBtn.setScaleX(1.0);
-            closeBtn.setScaleY(1.0);
-            closeBtn.setCursor(javafx.scene.Cursor.HAND);
-        });
-        closeBtn.setOnAction(e -> ((Stage) closeBtn.getScene().getWindow()).close());
-        closeBtn.setDefaultButton(true);
+        Label fastDragLabel = wrappedLabel("• STRG + Ziehen für schnelleres Verschieben");
+        fastDragLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
         infoBox.getChildren().addAll(
                 titleLabel,
                 zoomLabel,
-                zoomIconLabel,
+                fastZoomLabel,
                 dragLabel,
-                statusTitle,
-                zoomStatusLabel,
-                positionStatusLabel,
-                closeBtn
+                fastDragLabel
         );
+        return infoBox;
+    }
 
-        Scene scene = new Scene(infoBox);
-        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+    // PAGE 1: Game Objective
 
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initStyle(StageStyle.UNDECORATED);
-        dialog.setTitle("Karten-Steuerung");
-        dialog.setScene(scene);
+    /**
+     * Builds the info page that explains the main game objective.
+     *
+     * @return a VBox containing the game objective page
+     */
+    private VBox buildGameObjectivePage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
 
-        scene.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case ESCAPE, ENTER -> dialog.close();
-            }
-        });
+        Label title = wrappedLabel("SPIELZIEL");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label rule = wrappedLabel("""
+                Steuere deinen Roboter durch die Fabrik und erreiche als Erster alle Checkpoints (in Reihenfolge), um zu gewinnen.
+                """);
+        rule.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
 
-        dialog.setResizable(false);
-        dialog.show();
+        box.getChildren().addAll(title, rule);
+        return box;
+    }
+
+    // PAGE 2: Spielablauf (Rundenstruktur)
+
+    /**
+     * Builds the info page describing the overall round structure.
+     *
+     * @return a VBox containing the round structure page
+     */
+    private VBox buildRoundStructurePage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
+
+        Label title = wrappedLabel("RUNDENABLAUF");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label phases = wrappedLabel("""
+                Jede Runde besteht aus zwei Phasen:
+                1. Programmierphase
+                2. Aktivierungsphase
+                """);
+        phases.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        box.getChildren().addAll(title, phases);
+        return box;
+    }
+
+    // PAGE 3: Programmierphase
+
+    /**
+     * Builds the info page for the programming phase.
+     *
+     * @return a VBox containing the programming phase info
+     */
+    private VBox buildProgrammingPage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
+
+        Label title = wrappedLabel("PROGRAMMIERPHASE");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label programming = wrappedLabel("""
+                Ziehe 9 Karten. Wähle 5 davon und lege sie verdeckt in die Registerfelder.
+                Diese bestimmen die Aktionen deines Roboters in dieser Runde (Bewegung, Drehen, usw.).
+                Nicht verwendete Karten werden abgelegt.
+                """);
+        programming.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        box.getChildren().addAll(title, programming);
+        return box;
+    }
+
+    // PAGE 4: Aktivierungsphase
+
+    /**
+     * Builds the info page for the activation phase.
+     *
+     * @return a VBox containing the activation phase info
+     */
+    private VBox buildActivationPage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
+
+        Label title = wrappedLabel("AKTIVIERUNGSPHASE");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label activation = wrappedLabel("""
+                Die Karten werden Register für Register aufgedeckt.
+                In Prioritätsreihenfolge führt jeder Roboter seine Aktion aus.
+                Danach werden die Spielelemente (Förderbänder, Zahnräder, usw.) automatisch aktiviert.
+                Dann geht es zum nächsten Register.
+                """);
+        activation.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        box.getChildren().addAll(title, activation);
+        return box;
+    }
+
+    // PAGE 5: Spielfeldelemente
+
+    /**
+     * Builds the info page listing board elements and their functions.
+     *
+     * @return a VBox containing the board elements page
+     */
+    private VBox buildBoardElementsPage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
+
+        Label title = wrappedLabel("SPIELFELDELEMENTE");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label elements = wrappedLabel("""
+                • Förderbänder: Bewegen deinen Roboter automatisch.
+                • Zahnräder: Drehen deinen Roboter.
+                • Schiebefelder: Schieben Roboter, wenn aktiviert.
+                • Laser: Fügen Schaden zu.
+                • Gruben: Roboter stürzt ab und rebootet.
+                • Energie-Felder: Hier kannst du Energie sammeln.
+                • Wände: Blockieren Bewegung und Laser.
+                • Checkpoints: Erreiche alle der Reihe nach, um zu gewinnen.
+                """);
+        elements.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        box.getChildren().addAll(title, elements);
+        return box;
+    }
+
+    // PAGE 6: Roboter-Interaktion & Schaden
+
+    /**
+     * Builds the info page for robot interaction and damage.
+     *
+     * @return a VBox containing the robot interaction page
+     */
+    private VBox buildInteractionPage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
+
+        Label title = wrappedLabel("ROBOTER & SCHADEN");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label interaction = wrappedLabel("""
+                • Roboter schieben sich gegenseitig bei Bewegung.
+                • Wirst du von einem Laser getroffen, erhältst du eine Schadenskarte.
+                • Bei zu viel Schaden oder Sturz in eine Grube musst du rebooten (Roboter startet neu).
+                """);
+        interaction.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        box.getChildren().addAll(title, interaction);
+        return box;
+    }
+
+    // PAGE 7: Tipps für Einsteiger
+
+    /**
+     * Builds the info page with beginner tips.
+     *
+     * @return a VBox containing the tips page
+     */
+    private VBox buildTipsPage() {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: transparent;");
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(320);
+
+        Label title = wrappedLabel("TIPPS FÜR EINSTEIGER");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label tips = wrappedLabel("""
+                • Konzentriere dich auf einfache Züge.
+                • Förderbänder, Laser und Gruben können dich aus der Bahn werfen!
+                • Überlege, wie sich das Spielfeld nach deiner Aktion verändert.
+                • Das Spiel ist chaotisch – sei flexibel und plane voraus!
+                """);
+        tips.setStyle("-fx-text-fill: white; -fx-font-size: 13;");
+
+        box.getChildren().addAll(title, tips);
+        return box;
     }
 
     @FXML
