@@ -32,14 +32,12 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.shape.StrokeType;
+import javafx.scene.shape.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import javafx.animation.PauseTransition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -416,8 +414,8 @@ public class GameController {
     }
 
     /**
-     * Erstellt ein einzelnes Feld basierend auf BoardElementen
-     **/
+     * Creates a single tile based on the board elements.
+     */
     private StackPane createTile(List<MessageDefinitions.Field> elements) {
         StackPane pane = new StackPane();
         if (elements == null || elements.isEmpty()) return pane;
@@ -965,9 +963,12 @@ public class GameController {
 
                 for (int i = 0; i < registerBox.getChildren().size(); i++) {
                     int index = i;
-                    KeyFrame frame = new KeyFrame(Duration.seconds(index * 1.5), e -> {
+                    double timePerCard = 4.0;
+
+                    KeyFrame frame = new KeyFrame(Duration.seconds(index * timePerCard), e -> {
                         highlightRegisterCard(index);
                     });
+
                     activationTimeline.getKeyFrames().add(frame);
                 }
 
@@ -988,6 +989,23 @@ public class GameController {
             }
 
             default -> throw new IllegalStateException("Unexpected value: " + phaseID);
+        }
+    }
+    private void playCardEffect(int index) {
+        Node cardNode = registerBox.getChildren().get(index);
+
+        if (cardNode instanceof VBox vbox) {
+            StackPane pane = (StackPane) vbox.getChildren().get(1);
+            if (!pane.getChildren().isEmpty() && pane.getChildren().get(0) instanceof ImageView image) {
+                ScaleTransition bounce = new ScaleTransition(Duration.millis(500), image);
+                bounce.setFromX(1.0);
+                bounce.setFromY(1.0);
+                bounce.setToX(1.2);
+                bounce.setToY(1.2);
+                bounce.setAutoReverse(true);
+                bounce.setCycleCount(2);
+                bounce.play();
+            }
         }
     }
 
@@ -1021,7 +1039,7 @@ public class GameController {
             cardImage.getStyleClass().add("card-active");
         }
 
-        PauseTransition pause = new PauseTransition(Duration.seconds(2));
+        PauseTransition pause = new PauseTransition(Duration.seconds(3.5));
         pause.setOnFinished(e -> cardNode.getStyleClass().remove("card-active"));
         pause.play();
     }
@@ -1690,7 +1708,16 @@ public class GameController {
         });
     }
 
-
+    /**
+     * Swaps two cards in the player's register, handling validation and sync with the server.
+     *
+     * Prevents illegal swaps such as placing an "Again" card in the first register slot.
+     * Clears the UI, updates internal state, and sends card selection updates accordingly.
+     *
+     * @param indexA the first register index
+     * @param indexB the second register index
+     * @return true if the swap was successful; false otherwise
+     */
     private boolean swapRegisterCards(int indexA, int indexB) {
         String cardA = registerState[indexA];
         String cardB = registerState[indexB];
@@ -2502,16 +2529,49 @@ public class GameController {
      * @param type the type of animation ("Movement", "Clockwise", "Checkpoint")
      */
     public void playAnimation(String type) {
-        if ("PlayerShooting".equals(type)) {
-            int meineClientID = ClientSingleton.getInstance().getID();
-            playLaserAnimation(meineClientID);
-        } else if ("RoundCompleted".equals(type)) {
-            showRoundCompletedOverlay();
-        } else {
-            // Optionally log unknown animation types
-            System.out.println("Unrecognized animation type: " + type);
+        int myID = ClientSingleton.getInstance().getID();
+
+        switch (type) {
+            case "PlayerShooting" -> playLaserAnimation(myID);
+            case "RoundCompleted" -> showRoundCompletedOverlay();
+            case "Pit" -> playPitAnimation(myID);
+            default -> System.out.println("Unrecognized animation type: " + type);
         }
     }
+
+
+    public void playPitAnimation(int clientID) {
+        Position pos = robotPositions.get(clientID);
+        if (pos == null) return;
+
+        StackPane cell = getCellAt(pos.x(), pos.y());
+        if (cell == null) return;
+
+        for (Node node : cell.getChildren()) {
+            if (node instanceof ImageView img && "robot".equals(img.getUserData())) {
+
+                ScaleTransition shrink = new ScaleTransition(Duration.millis(800), img);
+                shrink.setFromX(1.0);
+                shrink.setFromY(1.0);
+                shrink.setToX(0.0);
+                shrink.setToY(0.0);
+
+                FadeTransition fade = new FadeTransition(Duration.millis(800), img);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+
+                ParallelTransition fallIntoPit = new ParallelTransition(shrink, fade);
+                fallIntoPit.setOnFinished(e -> {
+                    cell.getChildren().remove(img); // remove robot
+                    appendGameLog("💥 Spieler " + getPlayerNameById(clientID) + " ist in eine Grube gefallen!", "warn");
+                });
+
+                fallIntoPit.play();
+                break;
+            }
+        }
+    }
+
 
 
     /**
@@ -4209,11 +4269,17 @@ public class GameController {
         Line laser = new Line(startX, startY, startX, startY);
 
         Color laserColor = switch (mapName) {
-            case "Dizzy Highway" -> Color.WHITE;
-            case "Extra Crispy" -> Color.ORANGE;
-            case "Death Trap" -> Color.RED;
-            default -> Color.YELLOW;
+            case "Dizzy Highway" -> Color.web("#FFFFFF");
+            case "Extra Crispy"  -> Color.web("#FFA500");
+            case "Death Trap"    -> Color.web("#FF4C4C");
+            default              -> Color.web("#FFFF66");
         };
+
+        DropShadow glow = new DropShadow();
+        glow.setColor(laserColor);
+        glow.setRadius(15);
+        glow.setSpread(0.4);
+        laser.setEffect(glow);
 
         laser.setStroke(laserColor);
         laser.setStrokeWidth(4);
@@ -4228,16 +4294,62 @@ public class GameController {
                         new KeyValue(laser.endYProperty(), startY),
                         new KeyValue(laser.opacityProperty(), 1.0)
                 ),
-                new KeyFrame(Duration.millis(4000),
+                new KeyFrame(Duration.millis(3000),
                         new KeyValue(laser.endXProperty(), endX),
                         new KeyValue(laser.endYProperty(), endY),
                         new KeyValue(laser.opacityProperty(), 0.0)
                 )
         );
-
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+
+        // Check for hit on local robot
+        Position myPosition = robotPositions.get(ClientSingleton.getInstance().getID());
+        if (myPosition != null && myPosition.x() == x && myPosition.y() == y) {
+            showLaserHitLabel(myPosition, laserColor);
+        }
     }
+    private void showLaserHitLabel(Position pos, Color borderColor) {
+        StackPane cell = getCellAt(pos.x(), pos.y());
+        if (cell == null) return;
+
+        Label hitLabel = new Label("Treffer!");
+        hitLabel.setStyle(
+                "-fx-font-size: 20px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: red;" +
+                        "-fx-background-color: rgba(0,0,0,0.6);" +
+                        "-fx-border-color: " + toHex(borderColor) + ";" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-border-radius: 8px;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-padding: 6px;" +
+                        "-fx-effect: dropshadow(gaussian, black, 6, 0.7, 0, 0);"
+        );
+
+        hitLabel.setTranslateY(-35);
+        cell.getChildren().add(hitLabel);
+
+        TranslateTransition moveUp = new TranslateTransition(Duration.millis(900), hitLabel);
+        moveUp.setFromY(-35);
+        moveUp.setToY(-65);
+
+        FadeTransition fade = new FadeTransition(Duration.millis(1000), hitLabel);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+
+        ParallelTransition anim = new ParallelTransition(moveUp, fade);
+        anim.setOnFinished(e -> cell.getChildren().remove(hitLabel));
+        anim.play();
+    }
+
+    private String toHex(Color color) {
+        return String.format("#%02X%02X%02X",
+                (int)(color.getRed()*255),
+                (int)(color.getGreen()*255),
+                (int)(color.getBlue()*255));
+    }
+
 
     /**
      * Displays an overlay in the center of the board indicating that the round has been completed.
@@ -4982,7 +5094,7 @@ public class GameController {
     private Label gameLogCompactLabel;
 
     /**
-     * Agrega un mensaje al historial y lo muestra dinámicamente como el último.
+     * Adds a message to the history and dynamically displays it as the latest one.
      */
     public void addLogEntry(String message) {
         gameLogCompactLabel.setText(message);
