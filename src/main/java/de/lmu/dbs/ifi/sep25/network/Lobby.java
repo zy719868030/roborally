@@ -70,10 +70,7 @@ public class Lobby {
      * @return {@code true} if all clients are AI; {@code false} otherwise.
      */
     public boolean allAreAi(ConcurrentMap<ClientHandler, Boolean> isAI) {
-        for (ClientHandler client : clients)
-            if (!Boolean.TRUE.equals(isAI.get(client)))
-                return false;
-        return true;
+        return clients.stream().allMatch(c -> Boolean.TRUE.equals(isAI.get(c)));
     }
 
     /**

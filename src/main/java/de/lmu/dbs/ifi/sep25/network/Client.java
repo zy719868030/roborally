@@ -158,7 +158,7 @@ public class Client {
                         case "StartingPointTaken" -> handleBodyStartingPointTaken(json);
                         case "YourCards" -> handleBodyYourCards(json);
                         case "NotYourCards" -> handleBodyNotYourCards(json);
-                        case "ShuffleCoding" -> handleBodyShuffleCoding(json);
+                        case "ShuffleCoding" -> handleBodyShuffleCoding();
                         case "CardSelected" -> handleBodyCardSelected(json);
                         case "SelectionFinished" -> handleBodySelectionFinished(json);
                         case "TimerStarted" -> handleBodyTimerStarted();
@@ -195,30 +195,76 @@ public class Client {
     // ===== 5.9 Hooks for Player Decisions (Override in Bots) ======
 
     /**
-     * Called when the server sends your new hand and expects you to program registers.
-     * Override in bot clients to automate register selection.
-     */
-    protected void onYourCards(List<String> hand) {}
+     * Called when the client is required to choose a name and figure.
+     **/
+    protected void onSelectNameAndFigure() {
+        LoginController loginCtrl = ControllerRegistry.getLoginController();
+        if (loginCtrl != null && loginCtrl.cachedName != null) {
+            String name = loginCtrl.cachedName;
+            int figure = loginCtrl.cachedFigure;
+            sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
+        }
+    }
 
     /**
      * Called when the server requests you to select a starting point.
      */
-    protected void onSelectStartingPoint(List<Position> available) {}
+    protected void onSelectStartingPoint(List<Position> available) {
+        appLogger.error("This method should not be called in a bot client or in a human client. Override in bot clients to automate starting point selection.");
+        throw new UnsupportedOperationException("Override in bot clients to automate starting point selection.");
+    }
 
     /**
-     * Called when the server asks you to select a map (if you're the selector).
+     * Called when the server sends your new hand and expects you to program registers.
+     * Override in bot clients to automate register selection.
      */
-    protected void onSelectMap(List<String> availableMaps) {}
+    protected void onYourCards(List<String> hand) {
+        Platform.runLater(() -> {
+            GameController controller = waitForGameController();
+            if (controller != null) {
+                controller.displayHandCards(hand);
+            } else {
+                errorLogger.error("[FEHLER] GameController ist null nach Warten in handleBodyYourCards");
+            }
+        });
+    }
 
     /**
      * Called when the server requires you to pick a reboot direction.
      */
-    protected void onRebootDirectionRequest() {}
+    protected void onRebootDirectionRequest() {
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.askRebootDirection(direction -> sendMessage(new Message<>(new BodyRebootDirection(direction))));
+            } else {
+                // Fallback falls kein Controller verfügbar
+                clientLogger.warn("GameController not available, using default direction");
+                sendMessage(new Message<>(new BodyRebootDirection("top")));
+            }
+        });
+    }
 
     /**
      * Called when the server requests you to pick damage cards.
      */
-    protected void onPickDamage(int count, List<String> availablePiles) {}
+    protected void onPickDamage(int count, List<String> availablePiles) {
+        Platform.runLater(() -> {
+            GameController controller = ControllerRegistry.getGameController();
+            if (controller != null) {
+                controller.promptDamageCardSelection(count, availablePiles, selectedCards -> {
+                    if (selectedCards != null && !selectedCards.isEmpty()) {
+                        sendMessage(new Message<>(new MessageDefinitions.BodySelectedDamage(selectedCards)));
+                        controller.appendGameLog("Du hast folgende Schadenskarten gewählt: " + selectedCards, "info");
+                    } else {
+                        controller.appendGameLog("Keine Schadenskarten ausgewählt.", "warn");
+                    }
+                });
+            } else {
+                errorLogger.error("[WARN] GameController ist null in handleBodyPickDamage");
+            }
+        });
+    }
 
     // ===== 6. Message Handlers (Order = Switch Statement) =====
 
@@ -247,8 +293,8 @@ public class Client {
         heartbeatLogger.info("Alive received from server: {}, {}", ID, JsonUtil.parseMessage(json, BodyAlive.class));
 
 //        System.out.println("[DEBUG] handleBodyAlive called at " + System.currentTimeMillis());
-        if (socket.isClosed())
-            System.out.println("[DEBUG] socket closed? " + socket.isClosed());
+//        if (socket.isClosed())
+//            System.out.println("[DEBUG] socket closed? " + socket.isClosed());
         sendMessage(new Message<>(new BodyAlive()));
 //        System.out.println("[DEBUG] handleBodyAlive finished. Alive message sent.");
 
@@ -271,12 +317,7 @@ public class Client {
         usernames.put(ID, "(me)");
 
         //  PlayerValues only after Welcome
-        LoginController loginCtrl = ControllerRegistry.getLoginController();
-        if (loginCtrl != null && loginCtrl.cachedName != null) {
-            String name = loginCtrl.cachedName;
-            int figure = loginCtrl.cachedFigure;
-            sendMessage(new Message<>(new BodyPlayerValues(name, figure)));
-        }
+        onSelectNameAndFigure();
     }
 
     /**
@@ -304,26 +345,28 @@ public class Client {
         final int finalFigure = body.figure();
         final int clientID = body.clientID();
 
-        javafx.application.Platform.runLater(() -> {
-            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-            if (lobbyCtrl != null) {
-                boolean isReady = false;
-                lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
+        if(!isAI) {
+            javafx.application.Platform.runLater(() -> {
+                LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+                if (lobbyCtrl != null) {
+                    boolean isReady = false;
+                    lobbyCtrl.addPlayer(clientID, finalUsername, finalFigure, isReady);
 
-            } else {
-                synchronized (pendingPlayers) {
-                    pendingPlayers.add(body);
+                } else {
+                    synchronized (pendingPlayers) {
+                        pendingPlayers.add(body);
+                    }
+
                 }
 
-            }
-
-            if (isMe) {
-                LoginController loginCtrl = ControllerRegistry.getLoginController();
-                if (loginCtrl != null) {
-                    loginCtrl.loginSuccess();
+                if (isMe) {
+                    LoginController loginCtrl = ControllerRegistry.getLoginController();
+                    if (loginCtrl != null) {
+                        loginCtrl.loginSuccess();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -338,12 +381,14 @@ public class Client {
         int clientID = msg.messageBody().clientID();
         String newName = msg.messageBody().newName();
 
-        javafx.application.Platform.runLater(() -> {
-            LobbyController ctrl = ControllerRegistry.getLobbyController();
-            if (ctrl != null) {
-                ctrl.renamePlayer(clientID, newName);
-            }
-        });
+        if (!isAI) {
+            javafx.application.Platform.runLater(() -> {
+                LobbyController ctrl = ControllerRegistry.getLobbyController();
+                if (ctrl != null) {
+                    ctrl.renamePlayer(clientID, newName);
+                }
+            });
+        }
     }
 
     /**
@@ -359,12 +404,14 @@ public class Client {
         int clientID = body.clientID();
         boolean ready = body.ready();
         // JavaFX-Thread für GUI-Update
-        javafx.application.Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            if (controller != null) {
-                controller.updatePlayerStatus(clientID, ready);
-            }
-        });
+        if (!isAI) {
+            javafx.application.Platform.runLater(() -> {
+                LobbyController controller = ControllerRegistry.getLobbyController();
+                if (controller != null) {
+                    controller.updatePlayerStatus(clientID, ready);
+                }
+            });
+        }
     }
 
     /**
@@ -385,20 +432,22 @@ public class Client {
             return;
         }
 
-        Platform.runLater(() -> {
-            LobbyController controller = ControllerRegistry.getLobbyController();
-            if (controller != null) {
-                int selectorID = message.messageBody().selectorID();
-                int myID = ClientSingleton.getInstance().getID();
-                if (selectorID == myID) {
-                    controller.showMapSelection(message.messageBody().availableMaps());
+        if (!isAI) {
+            Platform.runLater(() -> {
+                LobbyController controller = ControllerRegistry.getLobbyController();
+                if (controller != null) {
+                    int selectorID = message.messageBody().selectorID();
+                    int myID = ClientSingleton.getInstance().getID();
+                    if (selectorID == myID) {
+                        controller.showMapSelection(message.messageBody().availableMaps());
+                    } else {
+                        controller.hideMapSelection();
+                    }
                 } else {
-                    controller.hideMapSelection();
+                    errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
                 }
-            } else {
-                errorLogger.error("[SelectMap] LobbyController ist null in handleBodySelectMap");
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -414,12 +463,14 @@ public class Client {
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyMapSelected.class);
         selectedMap = message.messageBody().map();
 
-        Platform.runLater(() -> {
-            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-            if (lobbyCtrl != null) {
-                lobbyCtrl.setMapLabel("Ausgewählte Karte: " + selectedMap);
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+                if (lobbyCtrl != null) {
+                    lobbyCtrl.setMapLabel("Ausgewählte Karte: " + selectedMap);
+                }
+            });
+        }
     }
 
     /**
@@ -440,20 +491,20 @@ public class Client {
             return;
         }
 
-        appLogger.info("[CLIENT DEBUG] BoardMap size: {}x{}", boardMap.size(), boardMap.get(0).size());
-        for (int x = 0; x < boardMap.size(); x++) {
-            for (int y = 0; y < boardMap.get(x).size(); y++) {
-                List<Field> fields = boardMap.get(x).get(y);
-                if (fields != null) {
-                    for (Field field : fields) {
-                        if ("Energy-Space".equals(field.type())) {
-                            MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) field;
+        appLogger.info("[CLIENT DEBUG] BoardMap size: {}x{}", boardMap.size(), boardMap.getFirst().size());
+//        for (int x = 0; x < boardMap.size(); x++) {
+//            for (int y = 0; y < boardMap.get(x).size(); y++) {
+//                List<Field> fields = boardMap.get(x).get(y);
+//                if (fields != null) {
+//                    for (Field field : fields) {
+//                        if ("Energy-Space".equals(field.type())) {
+//                            MessageDefinitions.FieldEnergySpace es = (MessageDefinitions.FieldEnergySpace) field;
 //                            appLogger.info("[CLIENT DEBUG] Found EnergySpace at ({},{}) with count: {}", x, y, es.count());
-                        }
-                    }
-                }
-            }
-        }
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         // Energie und Checkpoints initialisieren
         for (Integer playerId : usernames.keySet()) {
@@ -468,44 +519,46 @@ public class Client {
 //        System.out.println("Map-Größe: " + boardMap.size() + " × " + boardMap.getFirst().size());
 
         // Szenewechsel zur GameView
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
-                Parent root = loader.load();
-                GameController controller = loader.getController();
-                controller.setRoot(root);
-                // Im Controller-Registry speichern
-                ControllerRegistry.setGameController(controller);
+        if (!isAI) {
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/lmu/dbs/ifi/sep25/GameView.fxml"));
+                    Parent root = loader.load();
+                    GameController controller = loader.getController();
+                    controller.setRoot(root);
+                    // Im Controller-Registry speichern
+                    ControllerRegistry.setGameController(controller);
 
-                controller.drawBoard(boardMap);
-                controller.setInitialPlayerStats(energy, checkpointsReached);
+                    controller.drawBoard(boardMap);
+                    controller.setInitialPlayerStats(energy, checkpointsReached);
 
 
-                // Szene wechseln
-                Stage stage = ControllerRegistry.getPrimaryStage();
-                if (stage != null) {
-                    Scene scene = new Scene(root);
-                    scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-                    stage.setScene(scene);
-                    stage.show();
-                    stage.setResizable(true);
-                    stage.setWidth(1400);
-                    stage.setHeight(1000);
-                    stage.setMinWidth(600);
-                    stage.setMinHeight(400);
-                    stage.setTitle("Robo Rally Game");
-                    controller.setPlayersFromLobby(ControllerRegistry.getLobbyController().getPlayers());
+                    // Szene wechseln
+                    Stage stage = ControllerRegistry.getPrimaryStage();
+                    if (stage != null) {
+                        Scene scene = new Scene(root);
+                        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+                        stage.setScene(scene);
+                        stage.show();
+                        stage.setResizable(true);
+                        stage.setWidth(1400);
+                        stage.setHeight(1000);
+                        stage.setMinWidth(600);
+                        stage.setMinHeight(400);
+                        stage.setTitle("Robo Rally Game");
+                        controller.setPlayersFromLobby(ControllerRegistry.getLobbyController().getPlayers());
 
-                } else {
-                    errorLogger.error("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
+                    } else {
+                        errorLogger.error("[ERROR] Kein gültiges Fenster (Stage) gefunden!");
+                    }
+
+
+                } catch (IOException e) {
+                    errorLogger.error("[GameStarted] Fehler beim Laden der GameView: ", e);
+                    e.printStackTrace();
                 }
-
-
-            } catch (IOException e) {
-                errorLogger.error("[GameStarted] Fehler beim Laden der GameView: ", e);
-                e.printStackTrace();
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -540,16 +593,18 @@ public class Client {
 
             String fullMessage = sender + ": " + body.message();
 
-            javafx.application.Platform.runLater(() -> {
-                GameController gameController = ControllerRegistry.getGameController();
-                LobbyController lobbyController = ControllerRegistry.getLobbyController();
-                if (gameController != null && gameController.getRoot().isVisible()) {
-                    gameController.appendChatMessage(fullMessage);
-                } else if (lobbyController != null) {
-                    lobbyController.appendChatMessage(fullMessage);
-                }
+            if (!isAI) {
+                javafx.application.Platform.runLater(() -> {
+                    GameController gameController = ControllerRegistry.getGameController();
+                    LobbyController lobbyController = ControllerRegistry.getLobbyController();
+                    if (gameController != null && gameController.getRoot().isVisible()) {
+                        gameController.appendChatMessage(fullMessage);
+                    } else if (lobbyController != null) {
+                        lobbyController.appendChatMessage(fullMessage);
+                    }
 
-            });
+                });
+            }
         }
     }
 
@@ -568,13 +623,15 @@ public class Client {
         String errorText = msg.messageBody().error();
         errorLogger.error("[RECEIVED]  ERROR  {}", errorText);
 
-        Platform.runLater(() -> {
+        if (!isAI) {
+            Platform.runLater(() -> {
             if (errorText.contains("Robot already taken.")) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
                     loginCtrl.setFigureTakenWarningShown(true);
                     loginCtrl.displayFigureAlreadyTaken();
                 }
+                if (isAI) onSelectNameAndFigure();
             } else if (errorText.contains("Game has already started.")) {
                 LoginController loginCtrl = ControllerRegistry.getLoginController();
                 if (loginCtrl != null) {
@@ -606,6 +663,7 @@ public class Client {
                     gameCtrl.appendGameLog(errorText, "error");
                     gameCtrl.displayErrorAlert("Starting position selection error", errorText);
                 }
+                if (isAI) onSelectStartingPoint(getStartingPoints());
             } else {
 
                 GameController gameCtrl = ControllerRegistry.getGameController();
@@ -615,6 +673,7 @@ public class Client {
                 }
             }
         });
+            }
     }
 
     /**
@@ -632,19 +691,20 @@ public class Client {
         int clientID = body.clientID();
         String card = body.card();
         String playerName = usernames.getByKeyOrDefault(clientID, null);
-//        String playerName = usernames.getByKeyOrDefault(clientID, "Spieler" + clientID);
         String logMessage = "Spieler " + playerName + " hat Karte " + card + " gespielt.";
         appLogger.info("[GAME] {}", logMessage);
 
-        Platform.runLater(() -> {
-            GameController gameCtrl = ControllerRegistry.getGameController();
-            if (gameCtrl != null) {
-                gameCtrl.appendGameLog(logMessage, "info");
-                gameCtrl.showPlayedCard(clientID, card);
-            } else {
-                appLogger.warn("[WARN] GameController ist null in handleBodyCardPlayed");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendGameLog(logMessage, "info");
+                    gameCtrl.showPlayedCard(clientID, card);
+                } else {
+                    appLogger.warn("[WARN] GameController ist null in handleBodyCardPlayed");
+                }
+            });
+        }
     }
 
     /**
@@ -657,21 +717,27 @@ public class Client {
         Message<MessageDefinitions.BodyCurrentPlayer> message =
                 JsonUtil.parseMessage(json, MessageDefinitions.BodyCurrentPlayer.class);
 
-        int currentClientID = message.messageBody().clientID();
+        if (isAI) {
+            // Call the bot logic/hook
+            onSelectStartingPoint(getStartingPoints());
+        } else {
+            // Let the JavaFX UI handle the selection
+            int currentClientID = message.messageBody().clientID();
 
-        Platform.runLater(() -> {
-            GameController controller = waitForGameController();
-            if (controller != null) {
-                int phase = controller.getCurrentPhaseID();
+            Platform.runLater(() -> {
+                GameController controller = waitForGameController();
+                if (controller != null) {
+                    int phase = controller.getCurrentPhaseID();
 
-                if (phase == 2) {
-                    appLogger.warn(" not markCurrentPlayer in Programmierphase (Phase 2)");
-                    return;
+                    if (phase == 2) {
+                        appLogger.warn(" not markCurrentPlayer in Programmierphase (Phase 2)");
+                        return;
+                    }
+
+                    controller.markCurrentPlayer(currentClientID);
                 }
-
-                controller.markCurrentPlayer(currentClientID);
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -685,12 +751,14 @@ public class Client {
         Message<BodyActivePhase> message = JsonUtil.parseMessage(json, BodyActivePhase.class);
         int phaseID = message.messageBody().phase();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.updatePhase(phaseID);
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.updatePhase(phaseID);
+                }
+            });
+        }
     }
 
     /**
@@ -709,18 +777,20 @@ public class Client {
         int clientID = body.clientID();
         String direction = body.direction();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                if (clientID == ID) {
-                    controller.deactivateStartPointClick();
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    if (clientID == ID) {
+                        controller.deactivateStartPointClick();
+                    }
+                    controller.displayStartingPoint(x, y, clientID, direction);
+                    controller.setRobotPosition(clientID, new Position(x, y));
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
                 }
-                controller.displayStartingPoint(x, y, clientID, direction);
-                controller.setRobotPosition(clientID, new Position(x, y));
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyStartingPointTaken");
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -733,14 +803,7 @@ public class Client {
         Message<BodyYourCards> message = JsonUtil.parseMessage(json, BodyYourCards.class);
         BodyYourCards body = message.messageBody();
 
-        Platform.runLater(() -> {
-            GameController controller = waitForGameController();
-            if (controller != null) {
-                controller.displayHandCards(body.cardsInHand());
-            } else {
-                errorLogger.error("[FEHLER] GameController ist null nach Warten in handleBodyYourCards");
-            }
-        });
+        onYourCards(body.cardsInHand());
     }
 
     /**
@@ -757,32 +820,35 @@ public class Client {
         int clientID = body.clientID();
         int count = body.cardsInHand();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.displayHiddenCardsForPlayer(clientID, count);
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyNotYourCards");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.displayHiddenCardsForPlayer(clientID, count);
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyNotYourCards");
+                }
+            });
+        }
     }
 
     /**
      * Handles a message indicating that the programming deck was shuffled.
      * Can be used to trigger a visual animation or log event.
      *
-     * @param json JSON string with no additional body information
      */
-    private void handleBodyShuffleCoding(String json) {
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showShuffleAnimation(); // Optional UI effect
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyShuffleCoding");
-            }
+    private void handleBodyShuffleCoding() {
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showShuffleAnimation(); // Optional UI effect
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyShuffleCoding");
+                }
 
-        });
+            });
+        }
     }
 
     /**
@@ -799,15 +865,17 @@ public class Client {
         int register = body.register();
         boolean filled = body.filled();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
 //                appLogger.info("Calling handleCardSelection for clientID: {} register: {} filled: {}", clientID, register, filled);
-                controller.handleCardSelection(clientID, register, filled); // implement in GameController
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
-            }
-        });
+                    controller.handleCardSelection(clientID, register, filled); // implement in GameController
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyCardSelected");
+                }
+            });
+        }
     }
 
     /**
@@ -824,14 +892,16 @@ public class Client {
         BodySelectionFinished body = message.messageBody();
         int clientID = body.clientID();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.markPlayerReady(clientID);
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodySelectionFinished");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.markPlayerReady(clientID);
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodySelectionFinished");
+                }
+            });
+        }
     }
 
     /**
@@ -843,14 +913,16 @@ public class Client {
      * This method runs the UI update asynchronously on the JavaFX application thread.
      */
     private void handleBodyTimerStarted() {
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.startCountdown();
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyTimerStarted");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.startCountdown();
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyTimerStarted");
+                }
+            });
+        }
     }
 
     /**
@@ -865,14 +937,16 @@ public class Client {
 
         List<Integer> clientIDs = body.clientIDs();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showTimerEnded(clientIDs);
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyTimerEnded");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showTimerEnded(clientIDs);
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyTimerEnded");
+                }
+            });
+        }
     }
 
     /**
@@ -887,14 +961,16 @@ public class Client {
 
         List<String> cards = body.cards();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.displayConfirmedCards(cards); //
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyCardsYouGotNow");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.displayConfirmedCards(cards); //
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyCardsYouGotNow");
+                }
+            });
+        }
     }
 
     /**
@@ -907,25 +983,27 @@ public class Client {
         Message<BodyCurrentCards> message = JsonUtil.parseMessage(json, BodyCurrentCards.class);
         List<ActiveCard> activeCards = message.messageBody().activeCards();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                Map<Integer, List<String>> registersByClient = new HashMap<>();
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    Map<Integer, List<String>> registersByClient = new HashMap<>();
 
-                for (ActiveCard card : activeCards) {
-                    int clientID = card.clientID();
-                    String cardName = card.card();
+                    for (ActiveCard card : activeCards) {
+                        int clientID = card.clientID();
+                        String cardName = card.card();
 
-                    registersByClient.computeIfAbsent(clientID, k -> new ArrayList<>()).add(cardName);
+                        registersByClient.computeIfAbsent(clientID, k -> new ArrayList<>()).add(cardName);
 
-                    controller.showActiveCard(clientID, cardName);
+                        controller.showActiveCard(clientID, cardName);
+                    }
+
+                    for (Map.Entry<Integer, List<String>> entry : registersByClient.entrySet()) {
+                        controller.updateOtherPlayerRegister(entry.getKey(), entry.getValue());
+                    }
                 }
-
-                for (Map.Entry<Integer, List<String>> entry : registersByClient.entrySet()) {
-                    controller.updateOtherPlayerRegister(entry.getKey(), entry.getValue());
-                }
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -942,14 +1020,16 @@ public class Client {
         String newCard = body.newCard();
         int clientID = body.clientID();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.replaceCardInRegister(clientID, register, newCard);
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyReplaceCard");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.replaceCardInRegister(clientID, register, newCard);
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyReplaceCard");
+                }
+            });
+        }
     }
 
     /**
@@ -968,96 +1048,98 @@ public class Client {
         int newX = body.x();
         int newY = body.y();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller == null) {
-                errorLogger.error("[WARN] GameController is null in handleBodyMovement");
-                return;
-            }
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller == null) {
+                    errorLogger.error("[WARN] GameController is null in handleBodyMovement");
+                    return;
+                }
 
-            controller.syncPlayerNames();
+                controller.syncPlayerNames();
 
-            if (newX < 0 || newY < 0 ||
-                    (currentGameMap != null && (newX >= currentGameMap.size() ||
-                            (currentGameMap.getFirst() != null && newY >= currentGameMap.getFirst().size())))) {
-                clientLogger.info("Robot {} fell off the board to point ({}, {})", clientID, newX, newY);
-                controller.handleRobotFellOffBoard(clientID);
-                return;
-            }
+                if (newX < 0 || newY < 0 ||
+                        (currentGameMap != null && (newX >= currentGameMap.size() ||
+                                (currentGameMap.getFirst() != null && newY >= currentGameMap.getFirst().size())))) {
+                    clientLogger.info("Robot {} fell off the board to point ({}, {})", clientID, newX, newY);
+                    controller.handleRobotFellOffBoard(clientID);
+                    return;
+                }
 
 
-            Position oldPos = controller.getRobotPosition(clientID);
+                Position oldPos = controller.getRobotPosition(clientID);
 //            if (oldPos == null) {
 //                errorLogger.warn("[WARN] Keine alte Roboterposition bekannt für Client {}", clientID);
 //                return;
 //            }
 
-            //  // Special case: Robot restarts from outside the board (reboot situation)
-            if (oldPos == null || oldPos.x() == -1 || oldPos.y() == -1) {
-                clientLogger.info("Robot {} is being placed/rebooted to ({}, {})", clientID, newX, newY);
-                controller.moveRobotTo(clientID, newX, newY);
+                //  // Special case: Robot restarts from outside the board (reboot situation)
+                if (oldPos == null || oldPos.x() == -1 || oldPos.y() == -1) {
+                    clientLogger.info("Robot {} is being placed/rebooted to ({}, {})", clientID, newX, newY);
+                    controller.moveRobotTo(clientID, newX, newY);
 
-                // Ensure that the robot is set in the correct direction.
-                String direction = controller.getRobotDirection(clientID);
-                if (direction != null) {
-                    controller.updateRobotDirection(clientID, direction);
+                    // Ensure that the robot is set in the correct direction.
+                    String direction = controller.getRobotDirection(clientID);
+                    if (direction != null) {
+                        controller.updateRobotDirection(clientID, direction);
+                    }
+                    return;
                 }
-                return;
-            }
 
 
-            int dx = newX - oldPos.x();
-            int dy = newY - oldPos.y();
-            Direction moveDir = null;
+                int dx = newX - oldPos.x();
+                int dy = newY - oldPos.y();
+                Direction moveDir = null;
 
-            if (dx == 1) moveDir = Direction.EAST;
-            else if (dx == -1) moveDir = Direction.WEST;
-            else if (dy == 1) moveDir = Direction.SOUTH;
-            else if (dy == -1) moveDir = Direction.NORTH;
+                if (dx == 1) moveDir = Direction.EAST;
+                else if (dx == -1) moveDir = Direction.WEST;
+                else if (dy == 1) moveDir = Direction.SOUTH;
+                else if (dy == -1) moveDir = Direction.NORTH;
 
 
-            if (moveDir == null) {
-                errorLogger.warn("[WARN] Ungültige Bewegungsrichtung von ({},{}) nach ({},{})", oldPos.x(), oldPos.y(), newX, newY);
-                controller.moveRobotTo(clientID, newX, newY);
-                return;
-            }
-
-            // Check if the current map range is valid
-            if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.getFirst().size() ||
-                    oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.getFirst().size()) {
-                errorLogger.warn("[WARN] Ungültige Kartenkoordinaten: alt ({},{}) neu ({},{})", oldPos.x(), oldPos.y(), newX, newY);
-                controller.moveRobotTo(clientID, newX, newY);
-                return;
-            }
-
-            List<MessageDefinitions.Field> sourceFields = currentGameMap.get(oldPos.x()).get(oldPos.y());
-            List<MessageDefinitions.Field> targetFields = currentGameMap.get(newX).get(newY);
-
-            boolean blocked = false;
-
-            for (MessageDefinitions.Field f : sourceFields) {
-                if (f instanceof MessageDefinitions.FieldWall wall &&
-                        wall.orientations().contains(moveDir.toString().toLowerCase())) {
-                    blocked = true;
-                    break;
+                if (moveDir == null) {
+                    errorLogger.warn("[WARN] Ungültige Bewegungsrichtung von ({},{}) nach ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                    controller.moveRobotTo(clientID, newX, newY);
+                    return;
                 }
-            }
 
-            for (MessageDefinitions.Field f : targetFields) {
-                if (f instanceof MessageDefinitions.FieldWall wall &&
-                        wall.orientations().contains(moveDir.turnAround().toString().toLowerCase())) {
-                    blocked = true;
-                    break;
+                // Check if the current map range is valid
+                if (currentGameMap == null || newX >= currentGameMap.size() || newY >= currentGameMap.getFirst().size() ||
+                        oldPos.x() >= currentGameMap.size() || oldPos.y() >= currentGameMap.getFirst().size()) {
+                    errorLogger.warn("[WARN] Ungültige Kartenkoordinaten: alt ({},{}) neu ({},{})", oldPos.x(), oldPos.y(), newX, newY);
+                    controller.moveRobotTo(clientID, newX, newY);
+                    return;
                 }
-            }
 
-            if (blocked) {
-                controller.appendGameLog("Bewegung durch Wand verhindert.", "warn");
-                return;
-            }
+                List<MessageDefinitions.Field> sourceFields = currentGameMap.get(oldPos.x()).get(oldPos.y());
+                List<MessageDefinitions.Field> targetFields = currentGameMap.get(newX).get(newY);
 
-            controller.moveRobotTo(clientID, newX, newY);
-        });
+                boolean blocked = false;
+
+                for (MessageDefinitions.Field f : sourceFields) {
+                    if (f instanceof MessageDefinitions.FieldWall wall &&
+                            wall.orientations().contains(moveDir.toString().toLowerCase())) {
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                for (MessageDefinitions.Field f : targetFields) {
+                    if (f instanceof MessageDefinitions.FieldWall wall &&
+                            wall.orientations().contains(moveDir.turnAround().toString().toLowerCase())) {
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                if (blocked) {
+                    controller.appendGameLog("Bewegung durch Wand verhindert.", "warn");
+                    return;
+                }
+
+                controller.moveRobotTo(clientID, newX, newY);
+            });
+        }
     }
 
     /**
@@ -1072,14 +1154,16 @@ public class Client {
         int clientID = body.clientID();
         String rotation = body.rotation(); // "clockwise" or "counterclockwise"
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.rotateRobot(clientID, rotation);
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyPlayerTurning");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.rotateRobot(clientID, rotation);
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyPlayerTurning");
+                }
+            });
+        }
     }
 
     /**
@@ -1123,21 +1207,7 @@ public class Client {
         int count = body.count();
         List<String> availablePiles = body.availablePiles();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.promptDamageCardSelection(count, availablePiles, selectedCards -> {
-                    if (selectedCards != null && !selectedCards.isEmpty()) {
-                        sendMessage(new Message<>(new MessageDefinitions.BodySelectedDamage(selectedCards)));
-                        controller.appendGameLog("Du hast folgende Schadenskarten gewählt: " + selectedCards, "info");
-                    } else {
-                        controller.appendGameLog("Keine Schadenskarten ausgewählt.", "warn");
-                    }
-                });
-            } else {
-                errorLogger.error("[WARN] GameController ist null in handleBodyPickDamage");
-            }
-        });
+        onPickDamage(count, availablePiles);
     }
 
     /**
@@ -1153,14 +1223,16 @@ public class Client {
 
         String type = body.type(); // e.g., "Movement", "Clockwise", "Checkpoint"
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.playAnimation(type);  // Visual feedback in GUI
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyAnimation");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.playAnimation(type);  // Visual feedback in GUI
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyAnimation");
+                }
+            });
+        }
     }
 
     /**
@@ -1177,12 +1249,14 @@ public class Client {
         rebootingInProgress = body.clientID(); // Mark that a reboot is pending
 
         // Zeige Reboot-Animation/Info im Spiel
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showReboot(body.clientID());
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showReboot(body.clientID());
+                }
+            });
+        }
 
         // Check if this is MY robot that needs to reboot
         // Need to compare with my clientID, not robotID
@@ -1193,18 +1267,7 @@ public class Client {
         // Wenn der eigene Roboter rebooted wird → Richtung auswählen lassen
         if (isMyRobot) {
             clientLogger.info("My robot is rebooting - asking for direction");
-            Platform.runLater(() -> {
-                GameController controller = ControllerRegistry.getGameController();
-                if (controller != null) {
-                    controller.askRebootDirection(direction -> {
-                        sendMessage(new Message<>(new BodyRebootDirection(direction)));
-                    });
-                } else {
-                    // Fallback falls kein Controller verfügbar
-                    clientLogger.warn("GameController not available, using default direction");
-                    sendMessage(new Message<>(new BodyRebootDirection("top")));
-                }
-            });
+            onRebootDirectionRequest();
         }
     }
 
@@ -1219,27 +1282,23 @@ public class Client {
         String direction = message.messageBody().direction();
         clientLogger.info("Received reboot direction confirmation from server: {}", direction);
 
-//        // Send the previously saved reboot movement
-//        if (rebootPosition != null) {
-//            sendMessageSelf(new Message<>(rebootPosition));
-//            rebootPosition = null;
-//        }
-
         // Update local robot direction records
         if (rebootingInProgress != -1) {
             final int currentRebootingClient = rebootingInProgress;
-            Platform.runLater(() -> {
-                GameController controller = ControllerRegistry.getGameController();
-                if (controller != null) {
-                    controller.updateRobotDirection(currentRebootingClient, direction);
-                    controller.showRebootDirection(direction);
-                    controller.appendGameLog("Der Roboter wurde in Richtung " + direction + " neu gestartet.", "info");
-                    Position currentPos = controller.getRobotPosition(rebootingInProgress);
-                    if (currentPos != null && currentPos.x() >= 0 && currentPos.y() >= 0) {
-                        controller.moveRobotTo(rebootingInProgress, currentPos.x(), currentPos.y());
+            if (!isAI) {
+                Platform.runLater(() -> {
+                    GameController controller = ControllerRegistry.getGameController();
+                    if (controller != null) {
+                        controller.updateRobotDirection(currentRebootingClient, direction);
+                        controller.showRebootDirection(direction);
+                        controller.appendGameLog("Der Roboter wurde in Richtung " + direction + " neu gestartet.", "info");
+                        Position currentPos = controller.getRobotPosition(rebootingInProgress);
+                        if (currentPos != null && currentPos.x() >= 0 && currentPos.y() >= 0) {
+                            controller.moveRobotTo(rebootingInProgress, currentPos.x(), currentPos.y());
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Clear the status of the restart in progress
             rebootingInProgress = -1;
@@ -1272,16 +1331,18 @@ public class Client {
 
         energy.put(clientID, count);  // update internal tracking
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showEnergyChange(clientID, count, source);
-                controller.updateEnergyIfLocal(clientID, count);
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showEnergyChange(clientID, count, source);
+                    controller.updateEnergyIfLocal(clientID, count);
 
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyEnergy");
-            }
-        });
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyEnergy");
+                }
+            });
+        }
     }
 
     /**
@@ -1298,14 +1359,16 @@ public class Client {
 
         checkpointsReached.put(clientID, number);
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showCheckpointReached(clientID, number);
-            } else {
-                errorLogger.error("[WARN] GameController is null in handleBodyCheckPointReached");
-            }
-        });
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showCheckpointReached(clientID, number);
+                } else {
+                    errorLogger.error("[WARN] GameController is null in handleBodyCheckPointReached");
+                }
+            });
+        }
     }
 
     /**
@@ -1322,15 +1385,17 @@ public class Client {
         int winnerID = body.clientID();
         boolean isWinner = (winnerID == this.ID);
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showGameResult(isWinner, winnerID);
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showGameResult(isWinner, winnerID);
 
-            } else {
-                appLogger.error("[WARN] GameController is null in handleBodyGameFinished");
-            }
-        });
+                } else {
+                    appLogger.error("[WARN] GameController is null in handleBodyGameFinished");
+                }
+            });
+        }
     }
 
     // ===== 7. Utility / Helper Methods =====
@@ -1344,23 +1409,23 @@ public class Client {
      * accessed from different threads (e.g., the network listener thread).
      */
     public void flushPendingPlayers() {
-        javafx.application.Platform.runLater(() -> {
-            LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
-            if (lobbyCtrl == null) return;
+        if (!isAI) {
+            javafx.application.Platform.runLater(() -> {
+                LobbyController lobbyCtrl = ControllerRegistry.getLobbyController();
+                if (lobbyCtrl == null) return;
 
-            synchronized (pendingPlayers) {
-                for (BodyPlayerAdded body : pendingPlayers) {
-                    int clientID = body.clientID();
-                    String name = body.name();
-                    int figure = body.figure();
-                    boolean isMe = (clientID == this.ID);
-                    String finalName = name;
+                synchronized (pendingPlayers) {
+                    for (BodyPlayerAdded body : pendingPlayers) {
+                        int clientID = body.clientID();
+                        String name = body.name();
+                        int figure = body.figure();
 
-                    lobbyCtrl.addPlayer(clientID, finalName, figure, false);
+                        lobbyCtrl.addPlayer(clientID, name, figure, false);
+                    }
+                    pendingPlayers.clear();
                 }
-                pendingPlayers.clear();
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -1590,6 +1655,28 @@ public class Client {
      */
     public List<List<List<MessageDefinitions.Field>>> getCurrentGameMap() {
         return currentGameMap;
+    }
+
+    /**
+     * Returns a list of all starting point positions on the current game map.
+     * <p>
+     * This method scans the locally stored game map and collects all tile positions
+     * that contain a field of type "startpoint", regardless of occupation status.
+     *
+     * @return a list of {@link Position} objects representing all starting points on the map
+     */
+    public List<Position> getStartingPoints() {
+        List<Position> positions = new ArrayList<>();
+        for (int i = 0; i < currentGameMap.size(); i++) {
+            for (int j = 0; j < currentGameMap.getFirst().size(); j++) {
+                final List<MessageDefinitions.Field> elements = currentGameMap.get(i).get(j);
+                for (Field field : elements) {
+                    if (field.type().equalsIgnoreCase("startpoint"))
+                        positions.add(new Position(i, j));
+                }
+            }
+        }
+        return positions;
     }
 
     /**

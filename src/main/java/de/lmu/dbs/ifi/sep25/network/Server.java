@@ -766,6 +766,7 @@ public class Server {
             }
         }, 30, TimeUnit.SECONDS);
     }
+
     /**
      * Cancels the currently active timer if it is running.
      * <p>
