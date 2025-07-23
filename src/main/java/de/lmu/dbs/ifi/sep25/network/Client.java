@@ -1186,15 +1186,17 @@ public class Client {
         BodyDrawDamage body = message.messageBody();
         List<String> cards = body.cards();
 
-        Platform.runLater(() -> {
-            GameController controller = ControllerRegistry.getGameController();
-            if (controller != null) {
-                controller.showDrawnDamageCards(cards);
+        if (!isAI) {
+            Platform.runLater(() -> {
+                GameController controller = ControllerRegistry.getGameController();
+                if (controller != null) {
+                    controller.showDrawnDamageCards(cards);
 //                controller.appendChatMessage("[INFO] Du hast " + cards.size() + " Schadenskarten erhalten.");
-            } else {
-                errorLogger.error("[WARN] GameController ist null in handleBodyDrawDamage");
-            }
-        });
+                } else {
+                    errorLogger.error("[WARN] GameController ist null in handleBodyDrawDamage");
+                }
+            });
+        }
     }
 
     /**

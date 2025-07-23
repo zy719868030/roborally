@@ -22,7 +22,7 @@ public class BotClient extends Client {
     private Queue<Integer> figureQueue = null;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    public final static int DEFAULT_DECISION_DELAY_SECONDS = 5;
+    public final static int DEFAULT_DECISION_DELAY_SECONDS = 3;
 
     /**
      * Constructs a new bot client using the specified strategy.

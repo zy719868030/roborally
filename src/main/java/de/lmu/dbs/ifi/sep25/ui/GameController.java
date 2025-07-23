@@ -273,6 +273,7 @@ public class GameController {
         Tooltip.install(energyBox, new Tooltip("Deine Energieanzeige"));
 
         Platform.runLater(() -> {
+            scrollContentWrapper.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
             Bounds viewportBounds = gameBoardScrollPane.getViewportBounds();
             Bounds boardBounds = zoomWrapper.getLayoutBounds();
 
@@ -300,7 +301,7 @@ public class GameController {
             gameBoardScrollPane.setVvalue(gameBoardScrollPane.getVmax() / 2);
             scrollContentWrapper.minWidthProperty().bind(gameBoardScrollPane.widthProperty());
             scrollContentWrapper.minHeightProperty().bind(gameBoardScrollPane.heightProperty());
-            scrollContentWrapper.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+//            scrollContentWrapper.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
         });
 

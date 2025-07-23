@@ -13,8 +13,12 @@ import de.lmu.dbs.ifi.sep25.network.Server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The central game controller class for RoboRally, implementing the singleton pattern
@@ -63,6 +67,9 @@ public class Game {
 
     /** Deck of upgrade cards for player acquisition and application */
     private final Deck<UpgradeCard> upgradeCards = new Deck<>();
+
+    /** Scheduler for handling register processing delays */
+    private final ScheduledExecutorService registerScheduler = Executors.newSingleThreadScheduledExecutor();
 
     /**
      * Private constructor for the Game singleton, initializing the game with a specific map.
@@ -468,51 +475,91 @@ public class Game {
             appLogger.warn("currentRegister has not been reset properly. currentRegister: {}", currentRegister);
         }
 
-        for (currentRegister = 0; currentRegister < 5; currentRegister++) {
-            appLogger.debug("Processing register {}", currentRegister);
+        // Start processing the first register
+        processNextRegister();
+    }
 
-            determinePlayerOrder();
-            handleCurrentRegister();
+    /**
+     * Processes the next register in the activation phase using asynchronous scheduling.
+     * This method avoids blocking threads by using a scheduler for delays between registers.
+     */
+    private void processNextRegister() {
+        if (currentRegister >= 5) {
+            // All registrations completed
+            appLogger.info("All registers processed. Entering the end of round phase.");
 
-            appLogger.debug("Processing register {} complete. Checking game end.", currentRegister);
+            // Reset the current register counter
+            currentRegister = 0;
+            appLogger.info("Resetting current register to {}.", currentRegister);
 
-            if (checkGameEnd()) {
-                appLogger.info("Game ended during activation of register {}", currentRegister);
-                Server.getInstance().stop();
-                break;
-            }
+            // Broadcast end of round message
+            Server.getInstance().broadcastMessage(
+                    new MessageDefinitions.Message<>(
+                            new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
+                                    " completed.", 0, false)
+                    )
+            );
 
-            appLogger.info("No game end condition met.");
-            appLogger.info("Register {} completed. Moving to register {}.", currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
-
-            try {
-                Thread.sleep(5000); // <-- Delay of x millis
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                appLogger.warn("Activation delay interrupted");
-            }
+            // Continue with end of round logic
+            handleEndOfRound();
+            return;
         }
 
-        appLogger.info("All registers processed. Entering the end of round phase.");
+        appLogger.debug("Processing register {}", currentRegister);
 
-        // Reset the current register counter
-        currentRegister = 0;
-        appLogger.info("Resetting current register to {}.", currentRegister);
+        determinePlayerOrder();
+        handleCurrentRegister();
 
-        // TODO @lukas：Broadcast end of round message
-        Server.getInstance().broadcastMessage(
-                new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyReceivedChat("Round " + roundNumber +
-                                " completed.", 0, false)
-                )
-        );
-        //ANIMATION
-        Server.getInstance().broadcastMessage(
-                new MessageDefinitions.Message<>(
-                        new MessageDefinitions.BodyAnimation("RoundCompleted")
-                )
-        );
+        appLogger.debug("Processing register {} complete. Checking game end.", currentRegister);
 
+        if (checkGameEnd()) {
+            appLogger.info("Game ended during activation of register {}", currentRegister);
+            Server.getInstance().stop();
+            return;
+        }
+
+        appLogger.info("No game end condition met.");
+        appLogger.info("Register {} completed. Moving to register {}.",
+                currentRegister, currentRegister == 4 ? "none, since this was the last register" : currentRegister + 1);
+
+        currentRegister++;
+
+        // Use the scheduler to asynchronously process the next register to avoid blocking the thread.
+        registerScheduler.schedule(() -> {
+            processNextRegister();
+        }, 5, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shuts down the register scheduler when the game ends.
+     * Should be called when the game is completely finished.
+     */
+    public void shutdown() {
+        if (registerScheduler != null && !registerScheduler.isShutdown()) {
+            registerScheduler.shutdown();
+            try {
+                if (!registerScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    registerScheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                registerScheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /**
+     * Handles the end of round logic and starts a new round.
+     */
+    private void handleEndOfRound() {
+        // Handle any pending reboots
+        handlePendingReboots();
+
+        // Reset all players for the new round
+        resetPlayersRound();
+        Server.getInstance().resetReadyRegister();
+
+        // Start new round
         startNewGameRound();
     }
 
