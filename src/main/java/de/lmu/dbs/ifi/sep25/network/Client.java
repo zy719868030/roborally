@@ -651,57 +651,60 @@ public class Client {
         String errorText = msg.messageBody().error();
         errorLogger.error("[RECEIVED]  ERROR  {}", errorText);
 
-        if (!isAI) {
-            Platform.runLater(() -> {
-                if (errorText.contains("Robot already taken.")) {
-                    LoginController loginCtrl = ControllerRegistry.getLoginController();
-                    if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
-                        loginCtrl.setFigureTakenWarningShown(true);
-                        loginCtrl.displayFigureAlreadyTaken();
-                    }
-                    if (isAI) onSelectNameAndFigure();
-                } else if (errorText.contains("Game has already started.")) {
-                    LoginController loginCtrl = ControllerRegistry.getLoginController();
-                    if (loginCtrl != null) {
-                        loginCtrl.displayErrorAlert(
-                                "Spiel läuft bereits",
-                                "Das Spiel hat bereits begonnen. Bitte warte, bis eine neue Runde startet oder tritt einem neuen Spiel bei."
-                        );
-                    }
-                } else if (errorText.contains("Again card cannot be played in the first register")) {
-
-                    GameController gameCtrl = ControllerRegistry.getGameController();
-                    if (gameCtrl != null) {
-                        gameCtrl.appendGameLog(errorText, "error");
-                        gameCtrl.displayErrorAlert("Card placement error",
-                                "The card Again cannot be placed in the first register position!\n" +
-                                        "Please select the 2nd to 5th register positions.");
-                        gameCtrl.highlightRegisterSlot(0);
-                    }
-                } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
-                    GameController gameCtrl = ControllerRegistry.getGameController();
-                    if (gameCtrl != null) {
-                        gameCtrl.appendGameLog(errorText, "error");
-                        gameCtrl.displayErrorAlert("Card operation error", errorText);
-                    }
-                } else if (errorText.toLowerCase().contains("starting position")) {
-                    GameController gameCtrl = ControllerRegistry.getGameController();
-                    if (gameCtrl != null) {
-                        gameCtrl.deselectStartingPosition();
-                        gameCtrl.appendGameLog(errorText, "error");
-                        gameCtrl.displayErrorAlert("Starting position selection error", errorText);
-                    }
-                    if (isAI) onSelectStartingPoint(getStartingPoints());
-                } else {
-
-                    GameController gameCtrl = ControllerRegistry.getGameController();
-                    if (gameCtrl != null) {
-                        gameCtrl.appendGameLog(errorText, "error");
-                        gameCtrl.displayErrorAlert("Server Error", errorText);
-                    }
-                }
-            });
+        if (isAI) {
+            if (errorText.contains("Robot already taken.")) {
+                onSelectNameAndFigure();
+            } else if (errorText.toLowerCase().contains("starting position")) {
+                onSelectStartingPoint(getStartingPoints());
+            }
+            return;
         }
+
+        Platform.runLater(() -> {
+            if (errorText.contains("Robot already taken.")) {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null && !loginCtrl.isFigureTakenWarningShown()) {
+                    loginCtrl.setFigureTakenWarningShown(true);
+                    loginCtrl.displayFigureAlreadyTaken();
+                }
+            } else if (errorText.contains("Game has already started.")) {
+                LoginController loginCtrl = ControllerRegistry.getLoginController();
+                if (loginCtrl != null) {
+                    loginCtrl.displayErrorAlert(
+                            "Spiel läuft bereits",
+                            "Das Spiel hat bereits begonnen. Bitte warte, bis eine neue Runde startet oder tritt einem neuen Spiel bei."
+                    );
+                }
+            } else if (errorText.contains("Again card cannot be played in the first register")) {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendGameLog(errorText, "error");
+                    gameCtrl.displayErrorAlert("Card placement error",
+                            "The card Again cannot be placed in the first register position!\n" +
+                                    "Please select the 2nd to 5th register positions.");
+                    gameCtrl.highlightRegisterSlot(0);
+                }
+            } else if (errorText.contains("Card") || errorText.contains("register") || errorText.contains("hand")) {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendGameLog(errorText, "error");
+                    gameCtrl.displayErrorAlert("Card operation error", errorText);
+                }
+            } else if (errorText.toLowerCase().contains("starting position")) {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.deselectStartingPosition();
+                    gameCtrl.appendGameLog(errorText, "error");
+                    gameCtrl.displayErrorAlert("Starting position selection error", errorText);
+                }
+            } else {
+                GameController gameCtrl = ControllerRegistry.getGameController();
+                if (gameCtrl != null) {
+                    gameCtrl.appendGameLog(errorText, "error");
+                    gameCtrl.displayErrorAlert("Server Error", errorText);
+                }
+            }
+        });
     }
 
     /**

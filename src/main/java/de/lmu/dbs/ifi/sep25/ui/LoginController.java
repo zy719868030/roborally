@@ -313,19 +313,23 @@ public class LoginController {
         popup.show();
     }
 
-    // Sample bot launch method
+    /**
+     * Launches a bot process with the given bot type.
+     *
+     * @param botType "Pathfinding Bot" for smart, anything else for random.
+     */
     private void launchBot(String botType) {
-        // Map type to cmdline arg
-        //TODO change path
         String typeArg = botType.equals("Pathfinding Bot") ? "-smart" : "-random";
         String host = (hostField.getText() == null || hostField.getText().isBlank()) ? "localhost" : hostField.getText();
         String port = (portField.getText() == null || portField.getText().isBlank()) ? "12345" : portField.getText();
+
+        String jarPath = "target/EdleEisbecher-Client.jar";
+        ProcessBuilder pb = new ProcessBuilder(
+                "java", "-jar", jarPath, "--bot", typeArg, host, port
+        );
         try {
-            new ProcessBuilder("java", "-jar", "roborally.jar", "--bot", typeArg, host, port)
-                    .start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            pb.start();
+        } catch (Exception ignored) {}
     }
 
     /**
